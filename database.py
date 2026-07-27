@@ -1,28 +1,12 @@
 import sqlite3
-import os
-
 from config import DB_PATH
 
 
 def get_connection():
-    """
-    SQLite 데이터베이스 연결
-    """
-
-    os.makedirs(
-        os.path.dirname(DB_PATH),
-        exist_ok=True
-    )
-
-    conn = sqlite3.connect(DB_PATH)
-
-    return conn
+    return sqlite3.connect(DB_PATH)
 
 
 def initialize_database():
-    """
-    데이터베이스 초기 테이블 생성
-    """
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -34,6 +18,30 @@ def initialize_database():
             ticker TEXT NOT NULL,
             date TEXT NOT NULL,
             close_price REAL NOT NULL
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS etf_info (
+            ticker TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            market TEXT
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS etf_scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticker TEXT NOT NULL,
+            return_score REAL,
+            trend_score REAL,
+            volume_score REAL,
+            final_score REAL,
+            created_at TEXT
         )
         """
     )
