@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# GPT Quant Platform
+# Database files
+data/
+*.db
+
+# Log files
+logs/
+
+# VS Code workspace
+.vscode/
