@@ -39,3 +39,28 @@ DEFAULT_MARKET = "KR"
 # Score Settings
 # --------------------------------------------------
 MIN_RETURN_3M = 0.15      # 15%
+
+import os
+
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+
+DB_DIR = os.path.join(
+    BASE_DIR,
+    "data"
+)
+
+
+DB_PATH = os.path.join(
+    DB_DIR,
+    "quant.db"
+)
+
+
+LOG_DIR = os.path.join(
+    BASE_DIR,
+    "logs"
+)
