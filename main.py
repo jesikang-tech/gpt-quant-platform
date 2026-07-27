@@ -3,6 +3,7 @@ from repository import save_etf_price, get_etf_prices
 from factor_engine import calculate_return, calculate_trend_score
 from core.logger import get_logger
 from repository import save_etf_score, get_top_scores
+from etf_analyzer import analyze_etf
 
 
 logger = get_logger()
@@ -71,4 +72,22 @@ ranking = get_top_scores()
 
 logger.info(
     f"ETF Ranking: {ranking}"
+)
+
+analysis = analyze_etf(
+    "069500",
+    [
+        10000,
+        10200,
+        10400,
+        10600,
+        10800,
+        11000,
+        11500
+    ]
+)
+
+
+logger.info(
+    f"ETF Analysis: {analysis}"
 )
