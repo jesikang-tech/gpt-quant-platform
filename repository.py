@@ -124,3 +124,29 @@ def save_etf_score(
 
     conn.commit()
     conn.close()
+
+def get_top_scores(limit=10):
+    """
+    ETF Score Ranking 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            final_score
+        FROM etf_scores
+        ORDER BY final_score DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results

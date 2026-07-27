@@ -2,6 +2,7 @@ from database import initialize_database
 from repository import save_etf_price, get_etf_prices
 from factor_engine import calculate_return, calculate_trend_score
 from core.logger import get_logger
+from repository import save_etf_score, get_top_scores
 
 
 logger = get_logger()
@@ -53,6 +54,21 @@ def main():
         f"Trend Score: {score}"
     )
 
-
 if __name__ == "__main__":
     main()
+
+    save_etf_score(
+    "069500",
+    90,
+    100,
+    80,
+    90,
+    "2026-07-27"
+)
+
+
+ranking = get_top_scores()
+
+logger.info(
+    f"ETF Ranking: {ranking}"
+)
