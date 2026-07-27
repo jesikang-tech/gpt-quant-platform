@@ -57,3 +57,70 @@ def get_etf_prices(ticker):
     conn.close()
 
     return result
+
+def save_etf_info(
+    ticker,
+    name,
+    market
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO etf_info
+        (
+            ticker,
+            name,
+            market
+        )
+        VALUES (?, ?, ?)
+        """,
+        (
+            ticker,
+            name,
+            market
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+
+def save_etf_score(
+    ticker,
+    return_score,
+    trend_score,
+    volume_score,
+    final_score,
+    created_at
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO etf_scores
+        (
+            ticker,
+            return_score,
+            trend_score,
+            volume_score,
+            final_score,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            ticker,
+            return_score,
+            trend_score,
+            volume_score,
+            final_score,
+            created_at
+        )
+    )
+
+    conn.commit()
+    conn.close()
