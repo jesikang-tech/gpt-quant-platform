@@ -125,6 +125,87 @@ def save_etf_score(
     conn.commit()
     conn.close()
 
+
+def save_or_update_etf_score(
+    ticker,
+    return_score,
+    trend_score,
+    volume_score,
+    final_score,
+    created_at
+):
+    """
+    ETF Score 저장 또는 업데이트
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT ticker
+        FROM etf_scores
+        WHERE ticker = ?
+        """,
+        (ticker,)
+    )
+
+    exists = cursor.fetchone()
+
+
+    if exists:
+
+        cursor.execute(
+            """
+            UPDATE etf_scores
+            SET
+                return_score = ?,
+                trend_score = ?,
+                volume_score = ?,
+                final_score = ?,
+                created_at = ?
+            WHERE ticker = ?
+            """,
+            (
+                return_score,
+                trend_score,
+                volume_score,
+                final_score,
+                created_at,
+                ticker
+            )
+        )
+
+    else:
+
+        cursor.execute(
+            """
+            INSERT INTO etf_scores
+            (
+                ticker,
+                return_score,
+                trend_score,
+                volume_score,
+                final_score,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                ticker,
+                return_score,
+                trend_score,
+                volume_score,
+                final_score,
+                created_at
+            )
+        )
+
+
+    conn.commit()
+    conn.close()
+
+
 def get_top_scores(limit=10):
     """
     ETF Score Ranking 조회
@@ -150,3 +231,28 @@ def get_top_scores(limit=10):
     conn.close()
 
     return results
+
+
+def remove_duplicate_scores():
+    """
+    ETF Score 중복 제거
+    최신 데이터만 유지
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM etf_scores
+        WHERE rowid NOT IN
+        (
+            SELECT MAX(rowid)
+            FROM etf_scores
+            GROUP BY ticker
+        )
+        """
+    )
+
+    conn.commit()
+    conn.close()
