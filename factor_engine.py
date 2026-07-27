@@ -90,3 +90,85 @@ def calculate_final_score(
         ),
         2
     )
+
+def calculate_3month_return(
+    prices
+):
+    """
+    3개월 수익률 계산
+
+    prices:
+    [10000, 10100, ..., 11500]
+    """
+
+    if len(prices) < 2:
+        return 0
+
+    start_price = prices[0]
+    end_price = prices[-1]
+
+    return calculate_return(
+        start_price,
+        end_price
+    )
+
+
+
+def calculate_uptrend_ratio(
+    prices
+):
+    """
+    상승 유지 비율 계산
+    """
+
+    if len(prices) < 2:
+        return 0
+
+
+    up_count = 0
+
+    for i in range(1, len(prices)):
+
+        if prices[i] > prices[i-1]:
+            up_count += 1
+
+
+    return round(
+        (
+            up_count /
+            (len(prices)-1)
+        ) * 100,
+        2
+    )
+
+
+
+def check_etf_condition(
+    prices
+):
+    """
+    GPT ETF Score 대상 조건
+
+    조건:
+    3개월 상승률 >= 15%
+    상승 유지율 >= 70%
+    """
+
+    return_rate = calculate_3month_return(
+        prices
+    )
+
+    uptrend_ratio = calculate_uptrend_ratio(
+        prices
+    )
+
+
+    if (
+        return_rate >= 15
+        and
+        uptrend_ratio >= 70
+    ):
+        return True
+
+
+    return False
