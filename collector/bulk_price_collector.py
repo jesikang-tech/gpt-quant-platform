@@ -1,5 +1,6 @@
 from database import get_connection
 from collector.price_collector import PriceCollector
+from repository import has_price_data
 
 
 class BulkPriceCollector:
@@ -68,6 +69,13 @@ class BulkPriceCollector:
         for index, ticker in enumerate(tickers, start=1):
 
             try:
+
+                if has_price_data(ticker):
+                    print(
+                        f"[{index}/{total}] {ticker} 이미 존재 - Skip"
+                    )
+                    success += 1
+                    continue
 
                 print(
                     f"[{index}/{total}] {ticker} 수집 중..."

@@ -287,3 +287,27 @@ def save_etf_list(df):
 
     conn.commit()
     conn.close()   
+
+
+def has_price_data(ticker):
+    """
+    해당 ETF 가격 데이터 존재 여부 확인
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM etf_prices
+        WHERE ticker = ?
+        """,
+        (ticker,)
+    )
+
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count > 0
