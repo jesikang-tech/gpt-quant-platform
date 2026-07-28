@@ -15,7 +15,7 @@ def save_etf_price(
 
     cursor.execute(
         """
-        INSERT INTO etf_prices
+        INSERT OR REPLACE INTO etf_prices
         (
             ticker,
             date,
