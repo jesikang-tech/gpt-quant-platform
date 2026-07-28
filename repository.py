@@ -256,3 +256,34 @@ def remove_duplicate_scores():
 
     conn.commit()
     conn.close()
+
+
+def save_etf_list(df):
+    """
+    ETF 목록 전체 저장
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    for _, row in df.iterrows():
+
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO etf_info
+            (
+                ticker,
+                name,
+                market
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                row["Symbol"],
+                row["Name"],
+                "ETF"
+            )
+        )
+
+    conn.commit()
+    conn.close()   

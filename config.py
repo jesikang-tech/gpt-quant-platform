@@ -32,35 +32,10 @@ VERSION = "1.0.0"
 # --------------------------------------------------
 # Data Collection
 # --------------------------------------------------
-UPDATE_INTERVAL = 60      # minutes
+UPDATE_INTERVAL = 60
 DEFAULT_MARKET = "KR"
 
 # --------------------------------------------------
 # Score Settings
 # --------------------------------------------------
-MIN_RETURN_3M = 0.15      # 15%
-
-import os
-
-
-BASE_DIR = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
-
-DB_DIR = os.path.join(
-    BASE_DIR,
-    "data"
-)
-
-
-DB_PATH = os.path.join(
-    DB_DIR,
-    "quant.db"
-)
-
-
-LOG_DIR = os.path.join(
-    BASE_DIR,
-    "logs"
-)
+MIN_RETURN_3M = 0.15

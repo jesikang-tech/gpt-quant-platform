@@ -1,4 +1,4 @@
-from database import initialize_database
+from database import init_database
 from repository import (
     save_etf_price,
     get_etf_prices,
@@ -19,7 +19,7 @@ def main():
 
     logger.info("GPT Quant Platform Start")
 
-    initialize_database()
+    init_database()
 
 
     save_etf_price(
