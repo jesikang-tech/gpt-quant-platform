@@ -1,5 +1,6 @@
 import pandas as pd
 
+from src.config import MIN_REQUIRED_ROWS
 from src.exceptions import ValidationError
 
 
