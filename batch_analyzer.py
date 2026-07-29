@@ -1,7 +1,8 @@
 from repository import (
     get_etf_prices,
     get_all_etf_tickers,
-    has_price_data
+    has_price_data,
+    get_top_scores
 )
 
 from etf_analyzer import analyze_etf
@@ -132,3 +133,25 @@ if __name__ == "__main__":
 
     for item in results:
         print(item)
+
+
+    print()
+
+    print("=" * 40)
+    print("GPT ETF Ranking TOP 10")
+    print("=" * 40)
+
+
+    ranking = get_top_scores(
+        10
+    )
+
+
+    for index, item in enumerate(
+        ranking,
+        start=1
+    ):
+
+        print(
+            f"{index}. {item[0]}  Score : {item[1]}"
+        )    
