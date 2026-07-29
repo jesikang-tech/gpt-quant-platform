@@ -1,4 +1,7 @@
-from repository import get_top_scores
+from repository import (
+    get_top_scores,
+    save_ranking_history
+)
 from score_report import print_score_report
 
 
@@ -30,6 +33,14 @@ def print_ranking_report(
 
         print(
             f"{index}. {item[0]}  Score : {item[1]}"
+        )
+
+
+        save_ranking_history(
+            item[0],
+            index,
+            item[1],
+            "2026-07-27"
         )
 
 

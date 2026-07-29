@@ -58,6 +58,17 @@ def init_database():
     )
     """)
 
+    # ETF Ranking History
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS etf_ranking_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticker TEXT NOT NULL,
+        rank INTEGER,
+        final_score REAL,
+        ranking_date TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 

@@ -477,3 +477,41 @@ def save_score_history(
 
     conn.commit()
     conn.close()
+
+
+def save_ranking_history(
+    ticker,
+    rank,
+    final_score,
+    ranking_date
+):
+    """
+    ETF Ranking History 저장
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        INSERT INTO etf_ranking_history
+        (
+            ticker,
+            rank,
+            final_score,
+            ranking_date
+        )
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            ticker,
+            rank,
+            final_score,
+            ranking_date
+        )
+    )
+
+
+    conn.commit()
+    conn.close()    
