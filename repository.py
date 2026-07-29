@@ -311,3 +311,29 @@ def has_price_data(ticker):
     conn.close()
 
     return count > 0
+
+
+def get_all_etf_tickers():
+    """
+    저장된 ETF ticker 전체 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT ticker
+        FROM etf_info
+        ORDER BY ticker
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return [
+        row[0]
+        for row in rows
+    ]

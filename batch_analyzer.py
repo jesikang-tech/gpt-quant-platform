@@ -1,6 +1,6 @@
 from repository import (
     get_etf_prices,
-    save_or_update_etf_score
+    get_all_etf_tickers
 )
 
 from etf_analyzer import analyze_etf
@@ -68,13 +68,11 @@ def run_batch_analysis(
 
 if __name__ == "__main__":
 
-    test_tickers = [
-        "069500"
-    ]
+    tickers = get_all_etf_tickers()
 
 
     results = run_batch_analysis(
-        test_tickers
+        tickers
     )
 
 
