@@ -290,6 +290,45 @@ def get_top_scores(limit=10):
     return results
 
 
+def get_etf_score_detail(
+    ticker
+):
+    """
+    ETF Score 상세 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            return_score,
+            trend_score,
+            slope_score,
+            final_score,
+            created_at
+        FROM etf_scores
+        WHERE ticker = ?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            ticker,
+        )
+    )
+
+
+    result = cursor.fetchone()
+
+
+    conn.close()
+
+
+    return result
+
 def remove_duplicate_scores():
     """
     ETF Score 중복 제거
