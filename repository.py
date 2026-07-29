@@ -88,6 +88,35 @@ def save_etf_info(
 
 
 
+def get_all_etf_info():
+    """
+    전체 ETF 정보 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            name,
+            market
+        FROM etf_info
+        ORDER BY ticker
+        """
+    )
+
+
+    result = cursor.fetchall()
+
+
+    conn.close()
+
+    return result
+
+
 def save_etf_score(
     ticker,
     return_score,

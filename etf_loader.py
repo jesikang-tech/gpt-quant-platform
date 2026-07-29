@@ -1,4 +1,7 @@
-from repository import save_etf_info
+from repository import (
+    save_etf_info,
+    get_all_etf_info
+)
 import csv
 from pathlib import Path
 
@@ -105,11 +108,51 @@ def get_csv_etf_list(
     return etf_list
 
 
+def update_etf_database(
+    etf_list
+):
+    """
+    ETF 정보 자동 갱신
+    """
+
+    before = get_all_etf_info()
+
+    before_dict = {
+        item[0]: item
+        for item in before
+    }
+
+    added = 0
+    updated = 0
+
+
+    for etf in etf_list:
+
+        ticker = etf["ticker"]
+
+        if ticker in before_dict:
+            updated += 1
+
+        else:
+            added += 1
+
+
+        save_etf_info(
+            etf["ticker"],
+            etf["name"],
+            etf["market"]
+        )
+
+
+    print(f"Added : {added}")
+    print(f"Updated : {updated}")
+
+
 if __name__ == "__main__":
 
     etf_list = get_csv_etf_list()
 
 
-    load_etf_list(
+    update_etf_database(
         etf_list
     )
