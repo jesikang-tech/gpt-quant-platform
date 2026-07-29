@@ -76,7 +76,8 @@ def calculate_trend_score(
 
 def calculate_final_score(
     return_score,
-    trend_score
+    trend_score,
+    slope_score
 ):
     """
     최종 ETF Score 계산
@@ -84,9 +85,11 @@ def calculate_final_score(
 
     return round(
         (
-            return_score * 0.5
+            return_score * 0.4
             +
-            trend_score * 0.5
+            trend_score * 0.3
+            +
+            slope_score * 0.3
         ),
         2
     )
@@ -141,6 +144,47 @@ def calculate_uptrend_ratio(
         2
     )
 
+
+def calculate_slope_score(
+    prices
+):
+    """
+    가격 기울기 기반 Score 계산
+    """
+
+    if len(prices) < 2:
+        return 0
+
+
+    start_price = prices[0]
+    end_price = prices[-1]
+
+
+    if start_price == 0:
+        return 0
+
+
+    slope = (
+        (end_price - start_price)
+        /
+        start_price
+    ) * 100
+
+
+    if slope >= 20:
+        return 100
+
+    elif slope >= 15:
+        return 90
+
+    elif slope >= 10:
+        return 70
+
+    elif slope > 0:
+        return 50
+
+    else:
+        return 0
 
 
 def check_etf_condition(

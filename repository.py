@@ -92,7 +92,7 @@ def save_etf_score(
     ticker,
     return_score,
     trend_score,
-    volume_score,
+    slope_score,
     final_score,
     created_at
 ):
@@ -106,7 +106,7 @@ def save_etf_score(
             ticker,
             return_score,
             trend_score,
-            volume_score,
+            slope_score,
             final_score,
             created_at
         )
@@ -116,7 +116,7 @@ def save_etf_score(
             ticker,
             return_score,
             trend_score,
-            volume_score,
+            slope_score,
             final_score,
             created_at
         )
@@ -130,7 +130,7 @@ def save_or_update_etf_score(
     ticker,
     return_score,
     trend_score,
-    volume_score,
+    slope_score,
     final_score,
     created_at
 ):
@@ -161,7 +161,7 @@ def save_or_update_etf_score(
             SET
                 return_score = ?,
                 trend_score = ?,
-                volume_score = ?,
+                slope_score = ?,
                 final_score = ?,
                 created_at = ?
             WHERE ticker = ?
@@ -169,7 +169,7 @@ def save_or_update_etf_score(
             (
                 return_score,
                 trend_score,
-                volume_score,
+                slope_score,
                 final_score,
                 created_at,
                 ticker
@@ -185,7 +185,7 @@ def save_or_update_etf_score(
                 ticker,
                 return_score,
                 trend_score,
-                volume_score,
+                slope_score,
                 final_score,
                 created_at
             )
@@ -195,7 +195,7 @@ def save_or_update_etf_score(
                 ticker,
                 return_score,
                 trend_score,
-                volume_score,
+                slope_score,
                 final_score,
                 created_at
             )

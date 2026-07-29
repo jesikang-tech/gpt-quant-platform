@@ -2,6 +2,7 @@ from factor_engine import (
     calculate_return,
     calculate_return_score,
     calculate_trend_score,
+    calculate_slope_score,
     calculate_final_score,
     check_etf_condition
 )
@@ -37,19 +38,25 @@ def analyze_etf(
     )
 
 
+    slope_score = calculate_slope_score(
+        prices
+    )
+
+
     final_score = calculate_final_score(
         return_score,
-        trend_score
+        trend_score,
+        slope_score
     )
 
 
     save_or_update_etf_score(
-    ticker,
-    return_score,
-    trend_score,
-    0,
-    final_score,
-   "2026-07-27"
+        ticker,
+        return_score,
+        trend_score,
+        slope_score,
+        final_score,
+        "2026-07-27"
     )
 
 

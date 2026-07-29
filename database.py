@@ -39,7 +39,7 @@ def init_database():
         ticker TEXT NOT NULL,
         return_score REAL,
         trend_score REAL,
-        volume_score REAL,
+        slope_score REAL,
         final_score REAL,
         created_at TEXT
     )
