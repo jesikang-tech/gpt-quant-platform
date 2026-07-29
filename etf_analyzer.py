@@ -7,7 +7,10 @@ from factor_engine import (
     check_etf_condition
 )
 
-from repository import save_or_update_etf_score
+from repository import (
+    save_or_update_etf_score,
+    save_score_history
+)
 
 
 def analyze_etf(
@@ -51,6 +54,16 @@ def analyze_etf(
 
 
     save_or_update_etf_score(
+        ticker,
+        return_score,
+        trend_score,
+        slope_score,
+        final_score,
+        "2026-07-27"
+    )
+
+
+    save_score_history(
         ticker,
         return_score,
         trend_score,

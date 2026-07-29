@@ -433,3 +433,47 @@ def get_all_etf_tickers():
         row[0]
         for row in rows
     ]
+
+
+def save_score_history(
+    ticker,
+    return_score,
+    trend_score,
+    slope_score,
+    final_score,
+    analysis_date
+):
+    """
+    ETF Score History 저장
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        INSERT INTO etf_score_history
+        (
+            ticker,
+            return_score,
+            trend_score,
+            slope_score,
+            final_score,
+            analysis_date
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            ticker,
+            return_score,
+            trend_score,
+            slope_score,
+            final_score,
+            analysis_date
+        )
+    )
+
+
+    conn.commit()
+    conn.close()

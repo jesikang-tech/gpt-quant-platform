@@ -45,6 +45,19 @@ def init_database():
     )
     """)
 
+    # ETF Score History
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS etf_score_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticker TEXT NOT NULL,
+        return_score REAL,
+        trend_score REAL,
+        slope_score REAL,
+        final_score REAL,
+        analysis_date TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 
