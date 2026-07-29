@@ -6,7 +6,7 @@ def load_etf_list(
     etf_list
 ):
     """
-    ETF 목록 저장
+    ETF 목록 DB 저장
 
     etf_list 형식:
 
@@ -35,10 +35,14 @@ def load_etf_list(
 
 
 
-if __name__ == "__main__":
+def get_sample_etf_list():
+    """
+    테스트용 ETF 목록
 
+    추후 실제 ETF 데이터 Loader로 교체
+    """
 
-    sample_etfs = [
+    return [
 
         {
             "ticker": "069500",
@@ -61,6 +65,12 @@ if __name__ == "__main__":
     ]
 
 
+
+if __name__ == "__main__":
+
+    etf_list = get_sample_etf_list()
+
+
     load_etf_list(
-        sample_etfs
+        etf_list
     )
