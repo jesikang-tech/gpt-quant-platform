@@ -207,10 +207,11 @@ def check_etf_condition(
     )
 
 
+   
     if (
         return_rate >= 15
         and
-        uptrend_ratio >= 70
+        uptrend_ratio >= 60
     ):
         return True
 

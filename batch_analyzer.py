@@ -12,9 +12,7 @@ def run_batch_analysis():
 
     tickers = get_all_etf_tickers()
 
-
     results = []
-
 
     total_count = len(tickers)
 
@@ -22,9 +20,7 @@ def run_batch_analysis():
     skipped_count = 0
 
 
-
     for ticker in tickers:
-
 
         prices = get_etf_prices(
             ticker
@@ -36,6 +32,7 @@ def run_batch_analysis():
             for price in prices
         ]
 
+        
 
         if len(close_prices) < 2:
 
@@ -51,6 +48,15 @@ def run_batch_analysis():
         )
 
 
+        # 069500 분석 결과 확인
+        if ticker == "069500":
+
+            print(
+                "ANALYSIS RESULT:",
+                result
+            )
+
+
         if result:
 
             results.append(
@@ -58,6 +64,7 @@ def run_batch_analysis():
             )
 
             analyzable_count += 1
+
 
         else:
 
@@ -68,6 +75,7 @@ def run_batch_analysis():
     print("=" * 40)
     print("ETF Batch Analysis")
     print("=" * 40)
+
 
     print(
         f"Total ETF : {total_count}"
@@ -90,7 +98,6 @@ def run_batch_analysis():
     print("=" * 40)
 
 
-
     for result in results:
 
         print(result)
@@ -107,7 +114,6 @@ def run_batch_analysis():
 
 
     ranking = get_top_scores()
-
 
 
     for index, item in enumerate(

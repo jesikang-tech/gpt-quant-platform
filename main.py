@@ -61,12 +61,8 @@ def main():
         "[2] Price Data Update"
     )
 
-
-    price_list = get_csv_price_data()
-
-
-    update_price_database(
-        price_list
+    logger.info(
+        "Price update skipped (production mode)"
     )
 
 
