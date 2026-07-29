@@ -1,115 +1,96 @@
 from database import init_database
-from repository import (
-    save_etf_price,
-    get_etf_prices,
-    save_etf_score,
-    get_top_scores,
-    remove_duplicate_scores
+
+from etf_loader import (
+    get_csv_etf_list,
+    update_etf_database
 )
 
-from factor_engine import calculate_return, calculate_trend_score
+from price_loader import (
+    get_csv_price_data,
+    update_price_database
+)
+
+from batch_analyzer import run_batch_analysis
+
 from core.logger import get_logger
-from etf_analyzer import analyze_etf
 
 
 logger = get_logger()
 
 
+
 def main():
 
-    logger.info("GPT Quant Platform Start")
+    logger.info(
+        "GPT Quant Platform Pipeline Start"
+    )
+
+
+    # --------------------------------
+    # Database Initialize
+    # --------------------------------
 
     init_database()
 
 
-    save_etf_price(
-        "TEST_ETF",
-        "2026-04-01",
-        10000
-    )
+    # --------------------------------
+    # Step 1
+    # ETF Information Update
+    # --------------------------------
 
-    save_etf_price(
-        "TEST_ETF",
-        "2026-07-01",
-        12000
+    logger.info(
+        "[1] ETF Information Update"
     )
 
 
-    prices = get_etf_prices(
-        "TEST_ETF"
+    etf_list = get_csv_etf_list()
+
+
+    update_etf_database(
+        etf_list
     )
 
 
-    close_prices = [
-        price[1]
-        for price in prices
-    ]
 
+    # --------------------------------
+    # Step 2
+    # ETF Price Data Update
+    # --------------------------------
 
-    result = calculate_return(
-        close_prices[0],
-        close_prices[-1]
+    logger.info(
+        "[2] Price Data Update"
     )
 
 
-    score = calculate_trend_score(
-        close_prices
+    price_list = get_csv_price_data()
+
+
+    update_price_database(
+        price_list
     )
+
+
+
+    # --------------------------------
+    # Step 3
+    # ETF Analysis
+    # --------------------------------
+
+    logger.info(
+        "[3] ETF Batch Analysis"
+    )
+
+
+    run_batch_analysis()
+
 
 
     logger.info(
-        f"Return: {result:.2f}%"
+        "GPT Quant Platform Pipeline Completed"
     )
 
-
-    logger.info(
-        f"Trend Score: {score}"
-    )
-
-
-    # ETF Score 저장
-    save_etf_score(
-        "069500",
-        90,
-        100,
-        80,
-        90,
-        "2026-07-27"
-    )
-
-
-    # 중복 제거
-    remove_duplicate_scores()
-
-
-    # Ranking 출력
-    ranking = get_top_scores()
-
-
-    logger.info(
-        f"ETF Ranking: {ranking}"
-    )
-
-
-    # ETF 분석 Pipeline 테스트
-    analysis = analyze_etf(
-        "069500",
-        [
-            10000,
-            10200,
-            10400,
-            10600,
-            10800,
-            11000,
-            11500
-        ]
-    )
-
-
-    logger.info(
-        f"ETF Analysis: {analysis}"
-    )
 
 
 if __name__ == "__main__":
+
     main()
