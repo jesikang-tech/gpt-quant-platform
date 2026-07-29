@@ -1,6 +1,7 @@
 from repository import (
     get_etf_prices,
-    get_all_etf_tickers
+    get_all_etf_tickers,
+    has_price_data
 )
 
 from etf_analyzer import analyze_etf
@@ -25,6 +26,31 @@ def get_price_list(ticker):
         )
 
     return prices
+
+
+
+def get_analyzable_tickers(
+    tickers
+):
+    """
+    가격 데이터가 존재하는
+    ETF만 필터링
+    """
+
+    result = []
+
+
+    for ticker in tickers:
+
+        if has_price_data(
+            ticker
+        ):
+            result.append(
+                ticker
+            )
+
+
+    return result
 
 
 
@@ -68,7 +94,29 @@ def run_batch_analysis(
 
 if __name__ == "__main__":
 
-    tickers = get_all_etf_tickers()
+    all_tickers = get_all_etf_tickers()
+
+    tickers = get_analyzable_tickers(
+        all_tickers
+    )
+
+
+    print("=" * 40)
+    print("ETF Batch Analysis")
+    print("=" * 40)
+
+
+    print(
+        f"Total ETF : {len(all_tickers)}"
+    )
+
+    print(
+        f"Analyzable ETF : {len(tickers)}"
+    )
+
+    print(
+        f"Skipped ETF : {len(all_tickers)-len(tickers)}"
+    )
 
 
     results = run_batch_analysis(
@@ -76,6 +124,7 @@ if __name__ == "__main__":
     )
 
 
+    print()
     print("=" * 40)
     print("Batch Analysis Result")
     print("=" * 40)
