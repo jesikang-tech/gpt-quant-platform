@@ -58,6 +58,34 @@ def get_etf_prices(ticker):
 
     return result
 
+def get_all_price_data():
+    """
+    전체 가격 데이터 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            date,
+            close_price
+        FROM etf_prices
+        ORDER BY ticker, date
+        """
+    )
+
+
+    result = cursor.fetchall()
+
+
+    conn.close()
+
+    return result
+
 def save_etf_info(
     ticker,
     name,
