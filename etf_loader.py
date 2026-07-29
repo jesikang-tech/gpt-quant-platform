@@ -1,5 +1,6 @@
 from repository import save_etf_info
-
+import csv
+from pathlib import Path
 
 
 def load_etf_list(
@@ -66,9 +67,47 @@ def get_sample_etf_list():
 
 
 
+def get_csv_etf_list(
+    filename="etf_data.csv"
+):
+    """
+    CSV 파일에서 ETF 목록 읽기
+    """
+
+    etf_list = []
+
+
+    path = Path(filename)
+
+
+    with open(
+        path,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        reader = csv.DictReader(
+            file
+        )
+
+
+        for row in reader:
+
+            etf_list.append(
+                {
+                    "ticker": row["ticker"],
+                    "name": row["name"],
+                    "market": row["market"]
+                }
+            )
+
+
+    return etf_list
+
+
 if __name__ == "__main__":
 
-    etf_list = get_sample_etf_list()
+    etf_list = get_csv_etf_list()
 
 
     load_etf_list(
