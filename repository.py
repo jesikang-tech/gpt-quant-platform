@@ -554,3 +554,39 @@ def save_ranking_history(
 
     conn.commit()
     conn.close()
+
+
+def get_ranking_snapshot(
+    ranking_date
+):
+    """
+    특정 날짜 Ranking 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            rank,
+            final_score
+        FROM etf_ranking_history
+        WHERE ranking_date = ?
+        ORDER BY rank
+        """,
+        (
+            ranking_date,
+        )
+    )
+
+
+    result = cursor.fetchall()
+
+
+    conn.close()
+
+
+    return result    

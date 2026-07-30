@@ -113,6 +113,9 @@ def run_batch_analysis():
 
 
 
+    ranking_date = datetime.now().strftime("%Y-%m-%d")
+
+
     for index, item in enumerate(
         ranking,
         1
@@ -122,7 +125,7 @@ def run_batch_analysis():
             item["ticker"],
             index,
             item["enhanced_score"],
-           datetime.now().strftime("%Y-%m-%d")
+            ranking_date
         )
 
 
