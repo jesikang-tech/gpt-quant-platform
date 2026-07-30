@@ -7,6 +7,7 @@ from repository import (
 
 from datetime import datetime
 from etf_analyzer import analyze_etf
+from ranking_analyzer import get_enhanced_ranking
 
 
 
@@ -103,12 +104,11 @@ def run_batch_analysis():
 
 
     print("=" * 40)
-    print("GPT ETF Ranking TOP 10")
+    print("GPT ETF Enhanced Ranking TOP 10")
     print("=" * 40)
 
 
-
-    ranking = get_top_scores()
+    ranking = get_enhanced_ranking()
 
 
 
@@ -118,10 +118,10 @@ def run_batch_analysis():
     ):
 
         save_ranking_history(
-            item[0],
+            item["ticker"],
             index,
-            item[1],
-            datetime.now().strftime("%Y-%m-%d")
+            item["enhanced_score"],
+           datetime.now().strftime("%Y-%m-%d")
         )
 
 
@@ -131,7 +131,10 @@ def run_batch_analysis():
     ):
 
         print(
-            f"{index}. {item[0]}  Score : {item[1]}"
+            f"{index}. {item['ticker']} "
+            f"Base : {item['base_score']} "
+            f"Trend : {item['trend_score']} "
+            f"Enhanced : {item['enhanced_score']}"
         )
 
 

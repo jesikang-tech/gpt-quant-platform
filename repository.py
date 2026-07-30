@@ -486,7 +486,7 @@ def save_ranking_history(
     ranking_date
 ):
     """
-    ETF Ranking History 저장
+    ETF Ranking History 저장 또는 업데이트
     """
 
     conn = get_connection()
@@ -495,23 +495,62 @@ def save_ranking_history(
 
     cursor.execute(
         """
-        INSERT INTO etf_ranking_history
-        (
-            ticker,
-            rank,
-            final_score,
-            ranking_date
-        )
-        VALUES (?, ?, ?, ?)
+        SELECT id
+        FROM etf_ranking_history
+        WHERE ticker = ?
+        AND ranking_date = ?
         """,
         (
             ticker,
-            rank,
-            final_score,
             ranking_date
         )
     )
 
 
+    exists = cursor.fetchone()
+
+
+    if exists:
+
+        cursor.execute(
+            """
+            UPDATE etf_ranking_history
+            SET
+                rank = ?,
+                final_score = ?
+            WHERE ticker = ?
+            AND ranking_date = ?
+            """,
+            (
+                rank,
+                final_score,
+                ticker,
+                ranking_date
+            )
+        )
+
+
+    else:
+
+        cursor.execute(
+            """
+            INSERT INTO etf_ranking_history
+            (
+                ticker,
+                rank,
+                final_score,
+                ranking_date
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                ticker,
+                rank,
+                final_score,
+                ranking_date
+            )
+        )
+
+
     conn.commit()
-    conn.close()    
+    conn.close()
