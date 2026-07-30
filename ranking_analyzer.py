@@ -1,0 +1,184 @@
+from database import get_connection
+
+
+
+def get_ranking_history(ticker):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            rank,
+            final_score,
+            ranking_date
+        FROM etf_ranking_history
+        WHERE ticker = ?
+        ORDER BY ranking_date ASC
+        """,
+        (
+            ticker,
+        )
+    )
+
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+
+    return rows
+
+
+
+def analyze_ranking_trend(ticker):
+
+    history = get_ranking_history(
+        ticker
+    )
+
+
+    if len(history) < 2:
+
+        return {
+            "ticker": ticker,
+            "message": "Not enough history"
+        }
+
+
+    previous = history[-2]
+    current = history[-1]
+
+
+    rank_change = (
+        previous[1]
+        -
+        current[1]
+    )
+
+
+    return {
+        "ticker": ticker,
+        "previous_rank": previous[1],
+        "current_rank": current[1],
+        "rank_change": rank_change,
+        "previous_score": previous[2],
+        "current_score": current[2]
+    }
+
+
+
+def calculate_ranking_trend_score(ticker):
+
+    trend = analyze_ranking_trend(
+        ticker
+    )
+
+
+    if "rank_change" not in trend:
+
+        return 0
+
+
+    return trend["rank_change"]
+
+
+
+def get_ranking_trend_all():
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT DISTINCT ticker
+        FROM etf_ranking_history
+        """
+    )
+
+
+    tickers = cursor.fetchall()
+
+
+    conn.close()
+
+
+    results = []
+
+
+    for ticker in tickers:
+
+        trend = analyze_ranking_trend(
+            ticker[0]
+        )
+
+        results.append(
+            trend
+        )
+
+
+    return results
+
+
+
+def get_enhanced_ranking():
+
+    trends = get_ranking_trend_all()
+
+
+    results = []
+
+
+    for item in trends:
+
+        trend_score = calculate_ranking_trend_score(
+            item["ticker"]
+        )
+
+
+        enhanced_score = (
+            item["current_score"]
+            +
+            trend_score
+        )
+
+
+        results.append(
+            {
+                "ticker": item["ticker"],
+                "base_score": item["current_score"],
+                "trend_score": trend_score,
+                "enhanced_score": enhanced_score
+            }
+        )
+
+
+    results.sort(
+        key=lambda x: x["enhanced_score"],
+        reverse=True
+    )
+
+
+    return results
+
+
+
+if __name__ == "__main__":
+
+    results = get_enhanced_ranking()
+
+
+    for result in results:
+
+        print(result)
+
+        print(
+            "Trend Score :",
+            calculate_ranking_trend_score(
+                result["ticker"]
+            )
+        )
