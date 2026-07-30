@@ -1,9 +1,10 @@
 from repository import (
     get_all_etf_tickers,
     get_etf_prices,
-    get_top_scores,
     save_ranking_history
 )
+
+from ranking_analyzer import get_enhanced_ranking
 
 from datetime import datetime
 from etf_analyzer import analyze_etf
@@ -134,6 +135,7 @@ def run_batch_analysis():
             f"{index}. {item['ticker']} "
             f"Base : {item['base_score']} "
             f"Trend : {item['trend_score']} "
+            f"Momentum : {item['momentum_score']} "
             f"Enhanced : {item['enhanced_score']}"
         )
 

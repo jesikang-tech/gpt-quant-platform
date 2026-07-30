@@ -87,6 +87,29 @@ def calculate_ranking_trend_score(ticker):
 
 
 
+def calculate_score_momentum(ticker):
+
+    trend = analyze_ranking_trend(
+        ticker
+    )
+
+
+    if "current_score" not in trend:
+
+        return 0
+
+
+    score_change = (
+        trend["current_score"]
+        -
+        trend["previous_score"]
+    )
+
+
+    return score_change
+
+
+
 def get_ranking_trend_all():
 
     conn = get_connection()
@@ -140,10 +163,17 @@ def get_enhanced_ranking():
         )
 
 
+        momentum_score = calculate_score_momentum(
+            item["ticker"]
+        )
+
+
         enhanced_score = (
             item["current_score"]
             +
             trend_score
+            +
+            momentum_score
         )
 
 
@@ -152,6 +182,7 @@ def get_enhanced_ranking():
                 "ticker": item["ticker"],
                 "base_score": item["current_score"],
                 "trend_score": trend_score,
+                "momentum_score": momentum_score,
                 "enhanced_score": enhanced_score
             }
         )
@@ -178,7 +209,15 @@ if __name__ == "__main__":
 
         print(
             "Trend Score :",
-            calculate_ranking_trend_score(
-                result["ticker"]
-            )
+            result["trend_score"]
+        )
+
+        print(
+            "Momentum Score :",
+            result["momentum_score"]
+        )
+
+        print(
+            "Enhanced Score :",
+            result["enhanced_score"]
         )
