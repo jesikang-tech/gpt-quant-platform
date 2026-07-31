@@ -69,3 +69,22 @@ assessment = generate_ranking_assessment(
 
 
 print(assessment)
+
+
+from ranking_analyzer import calculate_stability_score
+
+
+print("\n==============================")
+print("Ranking Stability Test")
+print("==============================")
+
+
+stability = calculate_stability_score(
+    "069500"
+)
+
+
+print(
+    "Stability Score :",
+    stability
+)

@@ -72,6 +72,11 @@ def print_ranking_report(
         )
 
         print(
+            "Stability Score :",
+            item["stability_score"]
+        )
+
+        print(
             "Enhanced Score :",
             item["enhanced_score"]
         )

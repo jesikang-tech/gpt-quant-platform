@@ -265,6 +265,67 @@ def calculate_grade_bonus(ticker):
 
 
 
+def calculate_stability_score(ticker):
+
+    history = get_ranking_history(
+        ticker
+    )
+
+
+    if len(history) < 2:
+
+        return 0
+
+
+    ranks = []
+
+    for row in history:
+        ranks.append(
+            row[1]
+        )
+
+
+    changes = []
+
+    for i in range(1, len(ranks)):
+
+        changes.append(
+            abs(
+                ranks[i]
+                -
+                ranks[i-1]
+            )
+        )
+
+
+    average_change = (
+        sum(changes)
+        /
+        len(changes)
+    )
+
+
+    if average_change == 0:
+
+        return 5
+
+
+    elif average_change <= 2:
+
+        return 3
+
+
+    elif average_change <= 5:
+
+        return 1
+
+
+    else:
+
+        return -3
+
+
+
 def generate_ranking_assessment(ticker):
 
     analytics = get_ranking_analytics(
@@ -365,6 +426,11 @@ def get_enhanced_ranking():
         )
 
 
+        stability_score = calculate_stability_score(
+            item["ticker"]
+        )
+
+
         enhanced_score = (
             item["current_score"]
             +
@@ -373,6 +439,8 @@ def get_enhanced_ranking():
             momentum_score
             +
             grade_bonus
+            +
+            stability_score
         )
 
 
@@ -384,6 +452,7 @@ def get_enhanced_ranking():
                 "momentum_score": momentum_score,
                 "grade": grade,
                 "grade_bonus": grade_bonus,
+                "stability_score": stability_score,
                 "enhanced_score": enhanced_score
             }
         )
