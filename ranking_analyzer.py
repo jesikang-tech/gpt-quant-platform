@@ -148,10 +148,126 @@ def get_ranking_trend_all():
 
 
 
+def calculate_rank_direction(ticker):
+
+    history = get_ranking_history(ticker)
+
+    if len(history) < 2:
+        return "UNKNOWN"
+
+
+    ranks = []
+
+    for row in history:
+        ranks.append(row[1])
+
+
+    if ranks[-1] < ranks[0]:
+        return "RISING"
+
+    elif ranks[-1] > ranks[0]:
+        return "FALLING"
+
+    else:
+        return "STABLE"
+
+
+
+def get_ranking_analytics(ticker):
+
+    history = get_ranking_history(ticker)
+
+    if len(history) == 0:
+        return {
+            "ticker": ticker,
+            "message": "No ranking history"
+        }
+
+
+    ranks = []
+
+    scores = []
+
+
+    for row in history:
+        ranks.append(row[1])
+        scores.append(row[2])
+
+
+    trend = analyze_ranking_trend(ticker)
+
+
+    return {
+        "ticker": ticker,
+
+        "current_rank": ranks[-1],
+        "best_rank": min(ranks),
+        "worst_rank": max(ranks),
+
+        "rank_change": trend.get(
+            "rank_change",
+            0
+        ),
+
+        "current_score": scores[-1],
+
+        "score_change":
+            scores[-1] - scores[0],
+
+        "rank_direction":
+            calculate_rank_direction(ticker)
+    }
+
+
+
+def calculate_analytics_grade(ticker):
+
+    analytics = get_ranking_analytics(ticker)
+
+    direction = analytics.get(
+        "rank_direction"
+    )
+
+    score_change = analytics.get(
+        "score_change",
+        0
+    )
+
+    if direction == "RISING" and score_change >= 0:
+        return "A"
+
+    elif direction == "STABLE" and score_change >= 0:
+        return "B"
+
+    elif direction == "FALLING":
+        return "C"
+
+    else:
+        return "D"
+
+
+
+def calculate_grade_bonus(ticker):
+
+    grade = calculate_analytics_grade(ticker)
+
+    bonus_table = {
+        "A": 5,
+        "B": 2,
+        "C": 0,
+        "D": -5
+    }
+
+    return bonus_table.get(
+        grade,
+        0
+    )
+
+
+
 def get_enhanced_ranking():
 
     trends = get_ranking_trend_all()
-
 
     results = []
 
@@ -168,12 +284,24 @@ def get_enhanced_ranking():
         )
 
 
+        grade = calculate_analytics_grade(
+            item["ticker"]
+        )
+
+
+        grade_bonus = calculate_grade_bonus(
+            item["ticker"]
+        )
+
+
         enhanced_score = (
             item["current_score"]
             +
             trend_score
             +
             momentum_score
+            +
+            grade_bonus
         )
 
 
@@ -183,6 +311,8 @@ def get_enhanced_ranking():
                 "base_score": item["current_score"],
                 "trend_score": trend_score,
                 "momentum_score": momentum_score,
+                "grade": grade,
+                "grade_bonus": grade_bonus,
                 "enhanced_score": enhanced_score
             }
         )
@@ -218,6 +348,38 @@ if __name__ == "__main__":
         )
 
         print(
+            "Grade :",
+            result["grade"]
+        )
+
+        print(
+            "Grade Bonus :",
+            result["grade_bonus"]
+        )
+
+        print(
             "Enhanced Score :",
             result["enhanced_score"]
         )
+
+
+
+def calculate_analytics_grade(ticker):
+
+    analytics = get_ranking_analytics(ticker)
+
+    direction = analytics.get(
+        "rank_direction"
+    )
+
+    score_change = analytics.get(
+        "score_change",
+        0
+    )
+
+    rank_change = analytics.get(
+        "rank_change",
+        0
+    )
+
+

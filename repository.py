@@ -590,3 +590,29 @@ def get_ranking_snapshot(
 
 
     return result    
+
+
+
+def get_ranking_history(ticker):
+    """
+    ETF의 Ranking History 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            rank,
+            final_score,
+            ranking_date
+        FROM etf_ranking_history
+        WHERE ticker = ?
+        ORDER BY ranking_date DESC
+    """, (ticker,))
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows    
