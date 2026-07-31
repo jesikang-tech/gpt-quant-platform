@@ -265,6 +265,74 @@ def calculate_grade_bonus(ticker):
 
 
 
+def generate_ranking_prediction(ticker):
+
+    analytics = get_ranking_analytics(ticker)
+
+    stability = get_stability_analytics(ticker)
+
+    direction = analytics.get(
+        "rank_direction"
+    )
+
+    stability_grade = stability.get(
+        "stability_grade"
+    )
+
+
+    if (
+        direction == "RISING"
+        and
+        stability_grade == "HIGH"
+    ):
+
+        return {
+            "ticker": ticker,
+            "prediction": "UPTREND",
+            "confidence": 90,
+            "message":
+                "Ranking trend is improving."
+        }
+
+
+    elif (
+        direction == "STABLE"
+        and
+        stability_grade == "HIGH"
+    ):
+
+        return {
+            "ticker": ticker,
+            "prediction": "MAINTAIN",
+            "confidence": 85,
+            "message":
+                "Ranking likely to remain stable."
+        }
+
+
+    elif direction == "FALLING":
+
+        return {
+            "ticker": ticker,
+            "prediction": "DOWNRISK",
+            "confidence": 80,
+            "message":
+                "Ranking deterioration risk detected."
+        }
+
+
+    else:
+
+        return {
+            "ticker": ticker,
+            "prediction": "UNCERTAIN",
+            "confidence": 50,
+            "message":
+                "Insufficient ranking signal."
+        }
+
+
+
 def calculate_stability_score(ticker):
 
     history = get_ranking_history(
@@ -479,6 +547,28 @@ def generate_ranking_assessment(ticker):
 
 
 
+def calculate_prediction_bonus(ticker):
+
+    prediction = generate_ranking_prediction(
+        ticker
+    )
+
+
+    bonus_table = {
+        "UPTREND": 5,
+        "MAINTAIN": 3,
+        "DOWNRISK": -5,
+        "UNCERTAIN": 0
+    }
+
+
+    return bonus_table.get(
+        prediction["prediction"],
+        0
+    )
+
+
+
 def get_enhanced_ranking():
 
     trends = get_ranking_trend_all()
@@ -513,6 +603,11 @@ def get_enhanced_ranking():
         )
 
 
+        prediction_bonus = calculate_prediction_bonus(
+            item["ticker"]
+        )
+
+
         enhanced_score = (
             item["current_score"]
             +
@@ -535,6 +630,7 @@ def get_enhanced_ranking():
                 "grade": grade,
                 "grade_bonus": grade_bonus,
                 "stability_score": stability_score,
+                "prediction_bonus": prediction_bonus,
                 "enhanced_score": enhanced_score
             }
         )

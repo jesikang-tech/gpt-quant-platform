@@ -8,7 +8,8 @@ from score_report import print_score_report
 from ranking_analyzer import (
     get_enhanced_ranking,
     generate_ranking_assessment,
-    get_stability_analytics
+    get_stability_analytics,
+    generate_ranking_prediction
 )
 
 
@@ -127,6 +128,76 @@ def print_ranking_report(
         print(
             "Assessment :",
             assessment["message"]
+        )
+
+        prediction = generate_ranking_prediction(
+            item["ticker"]
+        )
+
+
+        print()
+
+        print(
+            "Prediction          :",
+            prediction["prediction"]
+        )
+
+        print(
+            "Confidence           :",
+            prediction["confidence"]
+        )
+
+        print(
+            "Prediction Message  :",
+            prediction["message"]
+        )
+
+        print()
+
+        print(
+            "Prediction Bonus    :",
+            item["prediction_bonus"]
+        )
+
+        print()
+
+        print(
+            "===== Intelligence Summary ====="
+        )
+
+        print()
+
+        print(
+            "Signal              :",
+            prediction["prediction"]
+        )
+
+        print(
+            "Confidence          :",
+            str(prediction["confidence"]) + "%"
+        )
+
+
+        if prediction["prediction"] == "MAINTAIN":
+
+            view = "Stable Holding"
+
+        elif prediction["prediction"] == "UPTREND":
+
+            view = "Positive Trend"
+
+        elif prediction["prediction"] == "DOWNRISK":
+
+            view = "Risk Warning"
+
+        else:
+
+            view = "Neutral"
+
+
+        print(
+            "Investment View     :",
+            view
         )
 
         print(
