@@ -88,3 +88,19 @@ print(
     "Stability Score :",
     stability
 )
+
+
+from ranking_analyzer import get_stability_analytics
+
+
+print("\n==============================")
+print("Stability Analytics Test")
+print("==============================")
+
+
+stability = get_stability_analytics(
+    "069500"
+)
+
+
+print(stability)

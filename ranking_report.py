@@ -7,7 +7,8 @@ from score_report import print_score_report
 
 from ranking_analyzer import (
     get_enhanced_ranking,
-    generate_ranking_assessment
+    generate_ranking_assessment,
+    get_stability_analytics
 )
 
 
@@ -46,38 +47,76 @@ def print_ranking_report(
             f"{index}. {item['ticker']}"
         )
 
+        print()
+
         print(
-            "Base Score :",
+            "===== Ranking Analytics ====="
+        )
+
+
+        print()
+
+        print(
+            "Base Score          :",
             item["base_score"]
         )
 
         print(
-            "Trend Score :",
+            "Trend Score         :",
             item["trend_score"]
         )
 
         print(
-            "Momentum Score :",
+            "Momentum Score      :",
             item["momentum_score"]
         )
 
+
+        print()
+
         print(
-            "Grade :",
+            "Analytics Grade     :",
             item["grade"]
         )
 
         print(
-            "Grade Bonus :",
+            "Grade Bonus         :",
             item["grade_bonus"]
         )
 
+
+        stability = get_stability_analytics(
+            item["ticker"]
+        )
+
+
+        print()
+
         print(
-            "Stability Score :",
+            "Stability Score     :",
             item["stability_score"]
         )
 
         print(
-            "Enhanced Score :",
+            "Stability Grade     :",
+            stability["stability_grade"]
+        )
+
+        print(
+            "History Count       :",
+            stability["history_count"]
+        )
+
+        print(
+            "Average Rank Change :",
+            stability["average_rank_change"]
+        )
+
+
+        print()
+
+        print(
+            "Enhanced Score      :",
             item["enhanced_score"]
         )
 

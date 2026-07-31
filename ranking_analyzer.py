@@ -326,6 +326,83 @@ def calculate_stability_score(ticker):
 
 
 
+def get_stability_analytics(ticker):
+
+    history = get_ranking_history(
+        ticker
+    )
+
+
+    if len(history) < 2:
+
+        return {
+            "ticker": ticker,
+            "history_count": len(history),
+            "average_rank_change": 0,
+            "stability_score": 0,
+            "stability_grade": "LOW"
+        }
+
+
+    ranks = []
+
+
+    for row in history:
+        ranks.append(
+            row[1]
+        )
+
+
+    changes = []
+
+
+    for i in range(1, len(ranks)):
+
+        changes.append(
+            abs(
+                ranks[i]
+                -
+                ranks[i-1]
+            )
+        )
+
+
+    average_change = (
+        sum(changes)
+        /
+        len(changes)
+    )
+
+
+    stability_score = calculate_stability_score(
+        ticker
+    )
+
+
+    if stability_score >= 5:
+
+        grade = "HIGH"
+
+    elif stability_score >= 2:
+
+        grade = "MEDIUM"
+
+    else:
+
+        grade = "LOW"
+
+
+
+    return {
+        "ticker": ticker,
+        "history_count": len(history),
+        "average_rank_change": average_change,
+        "stability_score": stability_score,
+        "stability_grade": grade
+    }
+
+
+
 def generate_ranking_assessment(ticker):
 
     analytics = get_ranking_analytics(
@@ -333,9 +410,22 @@ def generate_ranking_assessment(ticker):
     )
 
 
-    direction = analytics.get(
-        "rank_direction"
+    stability = get_stability_analytics(
+        ticker
     )
+
+
+    grade = analytics.get(
+        "rank_direction",
+        "UNKNOWN"
+    )
+
+
+    stability_grade = stability.get(
+        "stability_grade",
+        "LOW"
+    )
+
 
     score_change = analytics.get(
         "score_change",
@@ -343,55 +433,47 @@ def generate_ranking_assessment(ticker):
     )
 
 
-    grade = calculate_analytics_grade(
-        ticker
-    )
+    if stability_grade == "HIGH":
 
-
-    if direction == "RISING":
-
-        message = (
-            "Ranking improved. "
-            "Positive momentum detected."
-        )
-
-
-    elif direction == "FALLING":
-
-        message = (
-            "Ranking declined. "
-            "Need caution."
-        )
-
-
-    else:
-
-        if score_change > 0:
+        if grade == "RISING":
 
             message = (
-                "Ranking stable with "
-                "improving score."
+                "Ranking improving with high stability."
             )
 
-        elif score_change == 0:
+        elif grade == "STABLE":
 
             message = (
-                "Ranking stable. "
-                "Score maintained."
+                "Ranking stable with high consistency."
             )
 
         else:
 
             message = (
-                "Ranking stable but "
-                "score weakening."
+                "High stability but ranking weakening."
             )
+
+
+    elif stability_grade == "MEDIUM":
+
+        message = (
+            "Ranking shows moderate stability."
+        )
+
+
+    else:
+
+        message = (
+            "Ranking volatility detected. Need caution."
+        )
 
 
     return {
         "ticker": ticker,
-        "grade": grade,
-        "direction": direction,
+        "grade": calculate_analytics_grade(ticker),
+        "direction": grade,
+        "stability_grade": stability_grade,
+        "score_change": score_change,
         "message": message
     }
 
