@@ -1,3 +1,4 @@
+import json
 from database import get_connection
 
 
@@ -757,9 +758,75 @@ def get_universe_enhanced_ranking():
 
 
 
+def get_intelligence_dashboard_data(
+    limit=10
+):
+
+    results = get_universe_enhanced_ranking()
+
+
+    dashboard = []
+
+
+    for index, item in enumerate(
+        results[:limit],
+        1
+    ):
+
+        dashboard.append(
+            {
+                "rank": index,
+                "ticker": item["ticker"],
+                "score": item["base_score"],
+                "enhanced_score": item["enhanced_score"],
+                "grade": item["grade"],
+                "stability": item["stability_score"],
+                "prediction": item["prediction"],
+                "prediction_bonus": item["prediction_bonus"]
+            }
+        )
+
+
+    return dashboard
+
+
+
+def get_intelligence_dashboard_json(
+    limit=10
+):
+
+    data = get_intelligence_dashboard_data(
+        limit
+    )
+
+
+    return json.dumps(
+        data,
+        indent=4,
+        ensure_ascii=False
+    )
+
+
+
+def get_dashboard_api_data(
+    limit=10
+):
+
+    data = get_intelligence_dashboard_data(
+        limit
+    )
+
+    return {
+        "success": True,
+        "count": len(data),
+        "data": data
+    }
+
+
+
 if __name__ == "__main__":
 
-    results = get_enhanced_ranking()
+    results = get_universe_enhanced_ranking()
 
 
     for result in results:
