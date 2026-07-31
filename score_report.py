@@ -1,5 +1,5 @@
 from repository import get_etf_score_detail
-
+from datetime import datetime
 
 
 def print_score_report(
@@ -75,8 +75,18 @@ def print_score_report(
     )
 
 
+    report_date = datetime.now().strftime(
+    "%Y-%m-%d"
+    )
+
+
     print(
-        f"Analysis Date : {created_at}"
+        f"Score Created : {created_at}"
+    )
+
+
+    print(
+        f"Report Date   : {report_date}"
     )
 
 

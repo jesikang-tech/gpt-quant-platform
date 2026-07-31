@@ -265,6 +265,77 @@ def calculate_grade_bonus(ticker):
 
 
 
+def generate_ranking_assessment(ticker):
+
+    analytics = get_ranking_analytics(
+        ticker
+    )
+
+
+    direction = analytics.get(
+        "rank_direction"
+    )
+
+    score_change = analytics.get(
+        "score_change",
+        0
+    )
+
+
+    grade = calculate_analytics_grade(
+        ticker
+    )
+
+
+    if direction == "RISING":
+
+        message = (
+            "Ranking improved. "
+            "Positive momentum detected."
+        )
+
+
+    elif direction == "FALLING":
+
+        message = (
+            "Ranking declined. "
+            "Need caution."
+        )
+
+
+    else:
+
+        if score_change > 0:
+
+            message = (
+                "Ranking stable with "
+                "improving score."
+            )
+
+        elif score_change == 0:
+
+            message = (
+                "Ranking stable. "
+                "Score maintained."
+            )
+
+        else:
+
+            message = (
+                "Ranking stable but "
+                "score weakening."
+            )
+
+
+    return {
+        "ticker": ticker,
+        "grade": grade,
+        "direction": direction,
+        "message": message
+    }
+
+
+
 def get_enhanced_ranking():
 
     trends = get_ranking_trend_all()
@@ -362,24 +433,5 @@ if __name__ == "__main__":
             result["enhanced_score"]
         )
 
-
-
-def calculate_analytics_grade(ticker):
-
-    analytics = get_ranking_analytics(ticker)
-
-    direction = analytics.get(
-        "rank_direction"
-    )
-
-    score_change = analytics.get(
-        "score_change",
-        0
-    )
-
-    rank_change = analytics.get(
-        "rank_change",
-        0
-    )
 
 

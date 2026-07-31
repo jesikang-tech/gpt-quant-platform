@@ -53,3 +53,19 @@ grade = calculate_analytics_grade("069500")
 
 
 print("Grade :", grade)
+
+
+from ranking_analyzer import generate_ranking_assessment
+
+
+print("\n==============================")
+print("Ranking Assessment Test")
+print("==============================")
+
+
+assessment = generate_ranking_assessment(
+    "069500"
+)
+
+
+print(assessment)
