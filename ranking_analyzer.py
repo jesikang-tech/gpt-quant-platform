@@ -148,6 +148,35 @@ def get_ranking_trend_all():
 
 
 
+def get_all_intelligence_universe():
+
+    conn = get_connection()
+
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT ticker
+        FROM etf_scores
+        ORDER BY final_score DESC
+        """
+    )
+
+
+    rows = cursor.fetchall()
+
+
+    conn.close()
+
+
+    return [
+        row[0]
+        for row in rows
+    ]
+
+
+
 def calculate_rank_direction(ticker):
 
     history = get_ranking_history(ticker)
@@ -643,6 +672,88 @@ def get_enhanced_ranking():
 
 
     return results
+
+
+
+def get_universe_enhanced_ranking():
+
+    tickers = get_all_intelligence_universe()
+
+
+    results = []
+
+
+    for ticker in tickers:
+
+        analytics = get_ranking_analytics(
+            ticker
+        )
+
+
+        if "current_score" not in analytics:
+            continue
+
+
+        grade = calculate_analytics_grade(
+            ticker
+        )
+
+
+        stability = get_stability_analytics(
+            ticker
+        )
+
+
+        prediction = generate_ranking_prediction(
+            ticker
+        )
+
+
+        grade_bonus = calculate_grade_bonus(
+            ticker
+        )
+
+
+        prediction_bonus = calculate_prediction_bonus(
+            ticker
+        )
+
+
+        enhanced_score = (
+            analytics["current_score"]
+            +
+            grade_bonus
+            +
+            stability["stability_score"]
+            +
+            prediction_bonus
+        )
+
+
+        if enhanced_score > 100:
+            enhanced_score = 100
+
+
+        results.append(
+            {
+                "ticker": ticker,
+                "base_score": analytics["current_score"],
+                "grade": grade,
+                "stability_score": stability["stability_score"],
+                "prediction": prediction["prediction"],
+                "prediction_bonus": prediction_bonus,
+                "enhanced_score": enhanced_score
+            }
+        )
+
+
+    results.sort(
+        key=lambda x:x["enhanced_score"],
+        reverse=True
+    )
+
+
+    return results    
 
 
 
