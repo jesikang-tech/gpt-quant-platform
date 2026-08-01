@@ -141,13 +141,31 @@ function loadDashboard(){
             card.className =
                 "card";
 
+            
+            console.log(
+                "CARD CREATED :",
+                item.ticker
+            );
+
+
             card.onclick = function(){
+
+                console.log(
+                    "CLICK ETF :",
+                    item.ticker
+                );
+
+
+                loadDetail(
+                    item.ticker
+                );
+
 
                 loadHistory(
                     item.ticker
                 );
 
-            };    
+}; 
 
 
             card.innerHTML =
@@ -259,13 +277,7 @@ function loadDashboard(){
 
             `;
 
-
-            card.onclick = function(){
-
-                loadHistory(item.ticker);
-
-            };
-
+            
 
             dashboard.appendChild(card);
 
@@ -368,4 +380,64 @@ async function loadHistory(ticker){
             }
         }
     );
+}
+
+
+
+async function loadDetail(ticker){
+
+    const response =
+    await fetch(
+        `/api/detail/${ticker}`
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "detail-content"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <h3>
+    ${result.ticker}
+    </h3>
+
+
+    <p>
+    Score :
+    <b>${result.score}</b>
+    </p>
+
+
+    <p>
+    Enhanced :
+    <b>${result.enhanced_score}</b>
+    </p>
+
+
+    <p>
+    Grade :
+    ${result.grade}
+    </p>
+
+
+    <p>
+    Signal :
+    ${getSignal(result.prediction)}
+    </p>
+
+
+    <p>
+    Stability :
+    ${result.stability}
+    </p>
+    `;
+
 }

@@ -836,6 +836,73 @@ def get_dashboard_api_data(
 
 
 
+def get_etf_detail(ticker):
+
+    raw_history = get_ranking_history(ticker)
+
+
+    history = []
+
+
+    for item in raw_history:
+
+        history.append(
+            {
+                "date": item[3],
+                "rank": item[1],
+                "score": item[2]
+            }
+        )
+
+    ranking = get_dashboard_api_data()
+
+
+    detail = None
+
+
+    for item in ranking["data"]:
+
+        if item["ticker"] == ticker:
+            detail = item
+            break
+
+
+    if detail is None:
+
+        return {
+            "success": False,
+            "message": "ETF not found"
+        }
+
+
+    return {
+
+        "success": True,
+
+        "ticker": ticker,
+
+        "score":
+            detail["score"],
+
+        "enhanced_score":
+            detail["enhanced_score"],
+
+        "grade":
+            detail["grade"],
+
+        "prediction":
+            detail["prediction"],
+
+        "stability":
+            detail["stability"],
+
+        "history":
+            history
+
+    }
+
+
+
 if __name__ == "__main__":
 
     results = get_universe_enhanced_ranking()

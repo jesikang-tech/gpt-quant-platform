@@ -2,9 +2,9 @@ from flask import Flask, jsonify, render_template
 
 from ranking_analyzer import (
     get_dashboard_api_data,
-    get_ranking_history
+    get_ranking_history,
+    get_etf_detail
 )
-
 
 app = Flask(__name__)
 
@@ -50,6 +50,21 @@ def history_api(ticker):
             "ticker": ticker,
             "history": data
         }
+    )
+
+
+
+@app.route("/api/detail/<ticker>")
+def detail_api(ticker):
+
+
+    data = get_etf_detail(
+        ticker
+    )
+
+
+    return jsonify(
+        data
     )
 
 

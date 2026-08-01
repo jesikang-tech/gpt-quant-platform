@@ -185,3 +185,8 @@ header h1 {
     text-align:center;
 
 }
+
+
+.card {
+    cursor: pointer;
+}
