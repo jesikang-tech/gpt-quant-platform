@@ -1,7 +1,8 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 
 from ranking_analyzer import (
-    get_dashboard_api_data
+    get_dashboard_api_data,
+    get_ranking_history
 )
 
 
@@ -21,13 +22,44 @@ def ranking_api():
 
 
 
+@app.route("/api/history/<ticker>")
+def history_api(ticker):
+
+
+    history = get_ranking_history(
+        ticker
+    )
+
+
+    data = []
+
+
+    for item in history:
+
+        data.append(
+            {
+                "date": item[3],
+                "rank": item[1],
+                "score": item[2]
+            }
+        )
+
+
+    return jsonify(
+        {
+            "ticker": ticker,
+            "history": data
+        }
+    )
+
+
+
 @app.route("/")
 def home():
 
-    return {
-        "message": "GPT Quant Platform API",
-        "status": "running"
-    }
+    return render_template(
+        "index.html"
+    )
 
 
 
