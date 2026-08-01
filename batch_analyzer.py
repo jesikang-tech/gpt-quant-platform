@@ -109,7 +109,12 @@ def run_batch_analysis():
     print("=" * 40)
 
 
-    ranking = get_enhanced_ranking()
+    # Batch Analysis 결과 기준 Ranking 생성
+    ranking = sorted(
+        results,
+        key=lambda x: x["score"],
+        reverse=True
+    )[:10]
 
 
 
@@ -124,7 +129,7 @@ def run_batch_analysis():
         save_ranking_history(
             item["ticker"],
             index,
-            item["enhanced_score"],
+            item["score"],
             ranking_date
         )
 
@@ -136,10 +141,8 @@ def run_batch_analysis():
 
         print(
             f"{index}. {item['ticker']} "
-            f"Base : {item['base_score']} "
-            f"Trend : {item['trend_score']} "
-            f"Momentum : {item['momentum_score']} "
-            f"Enhanced : {item['enhanced_score']}"
+            f"Return : {item['return']:.2f}% "
+            f"Score : {item['score']}"
         )
 
 

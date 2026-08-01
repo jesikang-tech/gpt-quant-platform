@@ -45,9 +45,13 @@ def analyze_ranking_trend(ticker):
     if len(history) < 2:
 
         return {
-            "ticker": ticker,
-            "message": "Not enough history"
-        }
+        "ticker": ticker,
+        "previous_rank": None,
+        "current_rank": None,
+        "rank_change": 0,
+        "previous_score": 0,
+        "current_score": 0
+    }
 
 
     previous = history[-2]
@@ -143,6 +147,14 @@ def get_ranking_trend_all():
         results.append(
             trend
         )
+
+
+    # current_score가 없는 테스트/초기 데이터 제외
+    results = [
+        item
+        for item in results
+        if item.get("current_score", 0) > 0
+    ]    
 
 
     return results
@@ -639,7 +651,7 @@ def get_enhanced_ranking():
 
 
         enhanced_score = (
-            item["current_score"]
+            item.get("current_score", 0)
             +
             trend_score
             +
@@ -654,7 +666,7 @@ def get_enhanced_ranking():
         results.append(
             {
                 "ticker": item["ticker"],
-                "base_score": item["current_score"],
+                "base_score": item.get("current_score", 0),
                 "trend_score": trend_score,
                 "momentum_score": momentum_score,
                 "grade": grade,
