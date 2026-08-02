@@ -125,3 +125,100 @@ def generate_portfolio_insight(portfolio):
             "안정형 AI Portfolio 전략입니다."
 
     }
+
+
+
+def optimize_portfolio_weight(ranking, mode="balanced"):
+    """
+    AI Portfolio Weight Optimization
+    """
+
+    if not ranking:
+        return []
+
+
+    sorted_ranking = sorted(
+        ranking,
+        key=lambda x: x.get("score", 0),
+        reverse=True
+    )
+
+
+    if mode == "conservative":
+
+        weights = [
+            35,
+            25,
+            20
+        ]
+
+        cash_weight = 20
+
+
+    elif mode == "aggressive":
+
+        weights = [
+            50,
+            30,
+            15
+        ]
+
+        cash_weight = 5
+
+
+    else:
+
+        weights = [
+            40,
+            30,
+            20
+        ]
+
+        cash_weight = 10
+
+
+
+    portfolio = []
+
+
+    for index, etf in enumerate(sorted_ranking[:3]):
+
+        portfolio.append(
+            {
+                "ticker": etf.get("ticker"),
+
+                "weight":
+                    weights[index],
+
+                "score":
+                    etf.get("score"),
+
+                "mode":
+                    mode,
+
+                "reason":
+                    "AI Optimized Weight"
+            }
+        )
+
+
+    portfolio.append(
+        {
+            "ticker": "CASH",
+
+            "weight":
+                cash_weight,
+
+            "score":
+                None,
+
+            "mode":
+                mode,
+
+            "reason":
+                "Risk Management"
+        }
+    )
+
+
+    return portfolio

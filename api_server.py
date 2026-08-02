@@ -1,4 +1,9 @@
-from flask import Flask, jsonify, render_template
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request
+)
 
 from ranking_analyzer import (
     get_dashboard_api_data,
@@ -10,7 +15,8 @@ from ranking_analyzer import (
 
 from core.portfolio_advisor import (
     generate_portfolio,
-    generate_portfolio_insight
+    generate_portfolio_insight,
+    optimize_portfolio_weight
 )
 
 app = Flask(__name__)
@@ -62,27 +68,28 @@ def portfolio_api():
 
     ranking_data = get_dashboard_api_data()
 
+    mode = request.args.get(
+        "mode",
+        "balanced"
+    )
 
-    portfolio = generate_portfolio(
-        ranking_data["data"]
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        mode
     )
 
     insight = generate_portfolio_insight(
         portfolio
     )
 
-
     return jsonify(
-    {
-        "success": True,
-
-        "strategy": "Balanced",
-
-        "portfolio": portfolio,
-
-        "insight": insight
-    }
-)
+        {
+            "success": True,
+            "strategy": mode.capitalize(),
+            "portfolio": portfolio,
+            "insight": insight
+        }
+    )
 
 
 @app.route("/api/history/<ticker>")

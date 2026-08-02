@@ -1,5 +1,7 @@
 let historyChart = null;
 
+let portfolioMode = "balanced";
+
 
 function getRecommendationIcon(signal){
 
@@ -808,11 +810,20 @@ async function loadDetail(ticker){
 }
 
 
+function changePortfolioMode(mode){
+
+    portfolioMode = mode;
+
+    loadPortfolioAdvisor();
+
+}
+
+
 async function loadPortfolioAdvisor(){
 
     const response =
     await fetch(
-        "/api/portfolio"
+        "/api/portfolio?mode=" + portfolioMode
     );
 
 
@@ -948,4 +959,17 @@ async function loadPortfolioAdvisor(){
 
 
    
+}
+
+
+
+let currentPortfolioMode = "balanced";
+
+
+function changePortfolioMode(mode){
+
+    currentPortfolioMode = mode;
+
+    loadPortfolioAdvisor();
+
 }
