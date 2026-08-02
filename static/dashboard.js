@@ -546,6 +546,26 @@ async function loadDetail(ticker){
     Stability :
     ${result.stability}
     </p>
-    `;
+    
+    <hr>
 
+    <p>
+    🤖 AI Insight
+    </p>
+
+    <p>
+    📈 Trend :
+    ${result.analysis.trend}
+    </p>
+
+    <p>
+    ⚠ Risk :
+    ${result.analysis.risk}
+    </p>
+
+    <p>
+    💡 Opinion :
+    ${result.analysis.opinion}
+    </p>
+    `;
 }

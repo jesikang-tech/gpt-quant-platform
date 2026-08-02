@@ -937,8 +937,22 @@ def get_etf_detail(ticker):
         "stability":
             detail["stability"],
 
-        "history":
-            history
+        
+        "analysis":
+
+        {
+            "trend":
+                "상승 추세 유지",
+
+            "risk":
+                "변동성 낮음",
+
+            "opinion":
+                "안정적인 Ranking 흐름으로 보유 전략 적합"
+        },   
+
+            "history":
+                history,
 
     }
 
