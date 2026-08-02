@@ -939,20 +939,154 @@ def get_etf_detail(ticker):
 
         
         "analysis":
-
-        {
-            "trend":
-                "상승 추세 유지",
-
-            "risk":
-                "변동성 낮음",
-
-            "opinion":
-                "안정적인 Ranking 흐름으로 보유 전략 적합"
-        },   
+            generate_ai_insight(ticker),
 
             "history":
                 history,
+
+    }
+
+
+
+def generate_ai_insight(ticker):
+
+
+    analytics = get_ranking_analytics(
+        ticker
+    )
+
+
+    stability = get_stability_analytics(
+        ticker
+    )
+
+
+    prediction = generate_ranking_prediction(
+        ticker
+    )
+
+
+    rank_direction = analytics.get(
+        "rank_direction",
+        "UNKNOWN"
+    )
+
+
+    score_change = analytics.get(
+        "score_change",
+        0
+    )
+
+
+    stability_grade = stability.get(
+        "stability_grade",
+        "LOW"
+    )
+
+
+    # Trend 판단
+
+    if rank_direction == "RISING":
+
+        trend = (
+            "Ranking 상승 흐름 유지"
+        )
+
+    elif rank_direction == "FALLING":
+
+        trend = (
+            "Ranking 하락 위험 감지"
+        )
+
+    else:
+
+        trend = (
+            "Ranking 안정 구간 유지"
+        )
+
+
+
+    # Risk 판단
+
+    if stability_grade == "HIGH":
+
+        risk = (
+            "Ranking 변동성이 낮아 안정적"
+        )
+
+    elif stability_grade == "MEDIUM":
+
+        risk = (
+            "일부 변동성 존재"
+        )
+
+    else:
+
+        risk = (
+            "변동성 증가 구간"
+        )
+
+
+
+    # Opinion 판단
+
+    if (
+        prediction["prediction"]
+        == "UPTREND"
+    ):
+
+        opinion = (
+            "상승 모멘텀이 강화되어 "
+            "적극적인 관심이 필요합니다."
+        )
+
+
+    elif (
+        prediction["prediction"]
+        == "MAINTAIN"
+    ):
+
+        opinion = (
+            "Score와 Ranking 안정성이 "
+            "확인되어 보유 전략이 적합합니다."
+        )
+
+
+    elif (
+        prediction["prediction"]
+        == "DOWNRISK"
+    ):
+
+        opinion = (
+            "Ranking 약화 가능성이 있어 "
+            "주의가 필요합니다."
+        )
+
+
+    else:
+
+        opinion = (
+            "추가 데이터 확인이 필요합니다."
+        )
+
+
+
+    return {
+
+        "trend":
+            trend,
+
+        "risk":
+            risk,
+
+        "opinion":
+            opinion,
+
+        "score_change":
+            score_change,
+
+        "prediction":
+            prediction["prediction"]
 
     }
 

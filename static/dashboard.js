@@ -273,7 +273,7 @@ function loadDashboard(){
 
 
             <h3>
-            🤖 AI Insight
+            🤖 GPT Quant AI Insight
             </h3>
 
 
@@ -567,5 +567,17 @@ async function loadDetail(ticker){
     💡 Opinion :
     ${result.analysis.opinion}
     </p>
+
+    <p>
+    📊 Score Momentum :
+    ${result.analysis.score_change}
+    </p>
+
+
+    <p>
+    🔮 Prediction :
+    ${result.analysis.prediction}
+    </p>
+
     `;
 }
