@@ -1,5 +1,6 @@
 import json
 from database import get_connection
+from repository import get_etf_score_detail
 
 
 
@@ -747,10 +748,26 @@ def get_universe_enhanced_ranking():
             enhanced_score = 100
 
 
+        score_detail = get_etf_score_detail(
+            ticker
+        )    
+
+
         results.append(
             {
                 "ticker": ticker,
                 "base_score": analytics["current_score"],
+                "return_score":
+                    score_detail[1] if score_detail else 0,
+
+                "trend_score":
+                    score_detail[2] if score_detail else 0,
+
+                "slope_score":
+                    score_detail[3] if score_detail else 0,
+
+                "final_score":
+                    score_detail[4] if score_detail else 0,
                 "grade": grade,
                 "stability_score": stability["stability_score"],
                 "prediction": prediction["prediction"],
@@ -790,6 +807,18 @@ def get_intelligence_dashboard_data(
                 "rank": index,
                 "ticker": item["ticker"],
                 "score": item["base_score"],
+                "return_score":
+                    item.get("return_score", 0),
+
+                "trend_score":
+                    item.get("trend_score", 0),
+
+                "slope_score":
+                    item.get("slope_score", 0),
+
+                "final_score":
+                    item.get("final_score", 0),
+
                 "enhanced_score": item["enhanced_score"],
                 "grade": item["grade"],
                 "stability": item["stability_score"],
@@ -886,6 +915,18 @@ def get_etf_detail(ticker):
 
         "enhanced_score":
             detail["enhanced_score"],
+
+        "return_score":
+            detail.get("return_score", 0),
+
+        "trend_score":
+            detail.get("trend_score", 0),
+
+        "slope_score":
+            detail.get("slope_score", 0),
+
+        "final_score":
+            detail.get("final_score", 0),
 
         "grade":
             detail["grade"],

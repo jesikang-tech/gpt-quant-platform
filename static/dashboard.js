@@ -233,6 +233,38 @@ function loadDashboard(){
 
 
             <p>
+            📈 Return Score :
+            <b>
+            ${item.return_score}
+            </b>
+            </p>
+
+
+            <p>
+            📊 Trend Score :
+            <b>
+            ${item.trend_score}
+            </b>
+            </p>
+
+
+            <p>
+            📐 Slope Score :
+            <b>
+            ${item.slope_score}
+            </b>
+            </p>
+
+
+            <p>
+            🎯 Final Score :
+            <b>
+            ${item.final_score}
+            </b>
+            </p>
+
+
+            <p>
             Stability :
             ${item.stability}
             </p>
@@ -347,6 +379,12 @@ async function loadHistory(ticker){
     );
 
 
+    const ranks =
+    result.history.map(
+        x => x.rank
+    );
+
+
     const ctx =
     document
     .getElementById(
@@ -374,9 +412,50 @@ async function loadHistory(ticker){
                         label:
                         "Score",
 
-                        data:scores
+                        data:scores,
+
+                        yAxisID:
+                        "y"
+                    },
+
+
+                    {
+                        label:
+                        "Rank",
+
+                        data:ranks,
+
+                        yAxisID:
+                        "y1"
                     }
                 ]
+            },
+
+            options:{
+                scales:{
+
+                    y:{
+                        beginAtZero:true,
+                        max:100,
+                        position:"left",
+                        title:{
+                            display:true,
+                            text:"Score"
+                        }
+                    },
+
+
+                    y1:{
+                        beginAtZero:true,
+                        reverse:true,
+                        position:"right",
+                        title:{
+                            display:true,
+                            text:"Rank"
+                        }
+                    }
+
+                }
             }
         }
     );
@@ -422,9 +501,38 @@ async function loadDetail(ticker){
     </p>
 
 
+    <h3>
+    🤖 AI Intelligence
+    </h3>
+
+
+    <p>
+    📈 Return Score :
+    <b>${result.return_score}</b>
+    </p>
+
+
+    <p>
+    📊 Trend Score :
+    <b>${result.trend_score}</b>
+    </p>
+
+
+    <p>
+    📐 Slope Score :
+    <b>${result.slope_score}</b>
+    </p>
+
+
+    <p>
+    🎯 Final Score :
+    <b>${result.final_score}</b>
+    </p>
+
+
     <p>
     Grade :
-    ${result.grade}
+    ${getGradeBadge(result.grade)}
     </p>
 
 
