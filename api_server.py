@@ -3,7 +3,8 @@ from flask import Flask, jsonify, render_template
 from ranking_analyzer import (
     get_dashboard_api_data,
     get_ranking_history,
-    get_etf_detail
+    get_etf_detail,
+    get_dashboard_intelligence_summary
 )
 
 app = Flask(__name__)
@@ -15,6 +16,17 @@ def ranking_api():
 
     data = get_dashboard_api_data()
 
+
+    return jsonify(
+        data
+    )
+
+
+
+@app.route("/api/intelligence")
+def intelligence_api():
+
+    data = get_dashboard_intelligence_summary()
 
     return jsonify(
         data

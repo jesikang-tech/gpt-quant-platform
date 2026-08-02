@@ -66,11 +66,17 @@ function getGradeBadge(grade){
 function loadDashboard(){
 
 
-    fetch("/api/ranking")
+    Promise.all([
 
-    .then(response => response.json())
+        fetch("/api/ranking")
+            .then(response => response.json()),
 
-    .then(result => {
+        fetch("/api/intelligence")
+            .then(response => response.json())
+
+    ])
+
+    .then(([result, intelligence]) => {
 
 
         const dashboard =
@@ -91,9 +97,9 @@ function loadDashboard(){
         <div class="summary-card">
 
 
-        <h3>
-        📊 Market Summary
-        </h3>
+        <div class="intelligence-title">
+        GPT ETF Intelligence
+        </div>
 
 
         <p>
@@ -120,6 +126,42 @@ function loadDashboard(){
         )}
         </b>
         </p>
+
+
+        <div class="intelligence-score">
+
+        AI Score :
+
+        <b>
+        ${intelligence.score}
+        </b>
+
+        </div>
+
+
+        <p>
+        Grade :
+        <b>
+        ${intelligence.grade}
+        </b>
+        </p>
+
+
+       <div class="intelligence-opinion">
+
+
+        🤖 GPT Analyst
+
+        <br><br>
+
+
+        ${intelligence.opinion}
+
+
+        </div>
+
+
+        </div>
 
 
         </div>

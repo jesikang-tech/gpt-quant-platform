@@ -948,6 +948,61 @@ def get_etf_detail(ticker):
 
 
 
+def get_dashboard_intelligence_summary():
+
+    ranking = get_dashboard_api_data()
+
+    if not ranking["data"]:
+        return {
+            "success": False,
+            "message": "No ETF data"
+        }
+
+
+    top = ranking["data"][0]
+
+    ticker = top["ticker"]
+
+
+    insight = generate_ai_insight(
+        ticker
+    )
+
+
+    return {
+
+        "success": True,
+
+        "ticker": ticker,
+
+        "score":
+            top["score"],
+
+        "enhanced_score":
+            top["enhanced_score"],
+
+        "grade":
+            top["grade"],
+
+        "prediction":
+            top["prediction"],
+
+        "stability":
+            top["stability"],
+
+        "trend":
+            insight["trend"],
+
+        "risk":
+            insight["risk"],
+
+        "opinion":
+            insight["opinion"]
+
+    }
+
+
+
 def generate_ai_insight(ticker):
 
 

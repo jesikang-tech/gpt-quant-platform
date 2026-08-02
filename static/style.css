@@ -190,3 +190,67 @@ header h1 {
 .card {
     cursor: pointer;
 }
+
+
+.intelligence-title {
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    margin-bottom:20px;
+
+}
+
+
+.intelligence-score {
+
+    font-size:18px;
+
+    margin:10px 0;
+
+}
+
+
+.intelligence-score b {
+
+    font-size:24px;
+
+}
+
+
+.intelligence-box {
+
+    margin-top:15px;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    background:#fafafa;
+
+}
+
+
+.intelligence-opinion {
+
+    margin-top:15px;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    background:#eef7ee;
+
+    line-height:1.6;
+
+}
+
+
+.intelligence-risk {
+
+    margin-top:10px;
+
+    font-weight:bold;
+
+}
