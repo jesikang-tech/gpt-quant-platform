@@ -254,3 +254,150 @@ header h1 {
     font-weight:bold;
 
 }
+
+
+.recommendation-box {
+
+    margin-top:20px;
+
+    padding:20px;
+
+    border-radius:12px;
+
+    background:#f8f8f8;
+
+    box-shadow:
+    0 3px 8px rgba(0,0,0,0.12);
+
+}
+
+
+.recommendation-title {
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    text-align:center;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.recommendation-signal {
+
+    font-size:32px;
+
+    font-weight:bold;
+
+    text-align:center;
+
+    margin:15px;
+
+    color:green;
+
+}
+
+
+
+
+.recommendation-reasons {
+
+    background:white;
+
+    padding:15px;
+
+    border-radius:10px;
+
+}
+
+
+
+.recommendation-reasons p {
+
+    font-weight:bold;
+
+}
+
+
+
+.recommendation-reasons li {
+
+    margin:8px 0;
+
+}
+
+
+.recommendation-signal.buy {
+
+    color:green;
+
+}
+
+
+.recommendation-signal.maintain {
+
+    color:orange;
+
+}
+
+
+.recommendation-signal.sell {
+
+    color:red;
+
+}
+
+
+.recommendation-confidence {
+
+    margin-top:15px;
+
+    padding:12px;
+
+    background:white;
+
+    border-radius:10px;
+
+    text-align:center;
+
+    font-size:18px;
+
+}
+
+
+.recommendation-confidence b {
+
+    font-size:24px;
+
+}
+
+
+.reason-title {
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    margin-bottom:15px;
+
+    text-align:center;
+
+}
+
+
+.reason-item {
+
+    margin:12px 0;
+
+    padding:12px;
+
+    background:#f5f5f5;
+
+    border-radius:8px;
+
+    line-height:1.6;
+
+}

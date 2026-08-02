@@ -4,7 +4,8 @@ from ranking_analyzer import (
     get_dashboard_api_data,
     get_ranking_history,
     get_etf_detail,
-    get_dashboard_intelligence_summary
+    get_dashboard_intelligence_summary,
+    generate_ai_recommendation
 )
 
 app = Flask(__name__)
@@ -30,6 +31,23 @@ def intelligence_api():
 
     return jsonify(
         data
+    )
+
+
+
+@app.route("/api/recommendation/<ticker>")
+def recommendation_api(ticker):
+
+    data = generate_ai_recommendation(
+        ticker
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "ticker": ticker,
+            "recommendation": data
+        }
     )
 
 

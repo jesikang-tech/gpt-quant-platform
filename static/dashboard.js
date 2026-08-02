@@ -1,5 +1,46 @@
 let historyChart = null;
 
+
+function getRecommendationIcon(signal){
+
+
+    if(signal === "BUY")
+        return "🟢";
+
+
+    if(signal === "SELL")
+        return "🔴";
+
+
+    if(signal === "MAINTAIN")
+        return "🟡";
+
+
+    return "⚪";
+
+}
+
+
+function getConfidenceIcon(confidence){
+
+
+    if(confidence === "HIGH")
+        return "🟢";
+
+
+    if(confidence === "MEDIUM")
+        return "🟡";
+
+
+    if(confidence === "LOW")
+        return "⚪";
+
+
+    return "⚪";
+
+}
+
+
 function getRankBadge(rank) {
 
 
@@ -66,17 +107,40 @@ function getGradeBadge(grade){
 function loadDashboard(){
 
 
-    Promise.all([
+    fetch("/api/ranking")
 
-        fetch("/api/ranking")
-            .then(response => response.json()),
+    .then(response => response.json())
 
-        fetch("/api/intelligence")
-            .then(response => response.json())
+    .then(result => {
 
-    ])
 
-    .then(([result, intelligence]) => {
+        const topTicker =
+            result.data[0].ticker;
+
+
+        return Promise.all([
+
+            result,
+
+
+            fetch("/api/intelligence")
+                .then(response => response.json()),
+
+
+            fetch(
+                "/api/recommendation/"
+                + topTicker
+            )
+                .then(response => response.json())
+
+        ]);
+
+
+    })
+
+
+    .then(
+    ([result, intelligence, recommendationData]) => {
 
 
         const dashboard =
@@ -85,9 +149,31 @@ function loadDashboard(){
             );
 
 
+        const topTicker =
+            result.data[0].ticker;
+        
+            
+    
+        
         const summary =
         document.getElementById(
             "summary"
+        );
+
+
+        console.log(
+            "RESULT:",
+            result
+        );
+
+        console.log(
+            "INTELLIGENCE:",
+            intelligence
+        );
+
+        console.log(
+            "RECOMMENDATION:",
+            recommendationData
         );
 
 
@@ -145,6 +231,97 @@ function loadDashboard(){
         ${intelligence.grade}
         </b>
         </p>
+
+
+        <div class="recommendation-box">
+
+        <div class="recommendation-title">
+
+        🤖 AI Recommendation
+
+        </div>
+
+
+        <div class="recommendation-signal ${
+        recommendationData.recommendation.recommendation.toLowerCase()
+        }">
+
+        ${getRecommendationIcon(
+        recommendationData.recommendation.recommendation
+        )}
+
+        ${recommendationData.recommendation.recommendation}
+
+        </div>
+
+
+        <div class="recommendation-confidence">
+
+        Confidence
+
+        <br>
+
+        <b>
+
+        ${getConfidenceIcon(
+        recommendationData.recommendation.confidence
+        )}
+
+        ${recommendationData.recommendation.confidence}
+
+        </b>
+
+        </div>
+
+
+        <div class="recommendation-reasons">
+
+        <div class="reason-title">
+
+        📊 AI Analysis Reasons
+
+        </div>
+
+
+        <div class="reason-item">
+
+        📈 Score Analysis
+
+        <br>
+
+        ✓ ${recommendationData.recommendation.reasons[0]}
+
+        </div>
+
+
+
+        <div class="reason-item">
+
+        📊 Ranking Analysis
+
+        <br>
+
+        ✓ ${recommendationData.recommendation.reasons[1]}
+
+        </div>
+
+
+
+        <div class="reason-item">
+
+        🛡 Risk Analysis
+
+        <br>
+
+        ✓ ${recommendationData.recommendation.reasons[2]}
+
+        </div>
+
+
+        </div>
+
+
+        </div>
 
 
        <div class="intelligence-opinion">

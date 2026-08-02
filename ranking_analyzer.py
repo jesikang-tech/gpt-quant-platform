@@ -1146,6 +1146,69 @@ def generate_ai_insight(ticker):
     }
 
 
+def generate_ai_recommendation(ticker):
+
+    insight = generate_ai_insight(ticker)
+
+    detail = get_etf_detail(ticker)
+
+    score = detail.get("enhanced_score", 0)
+    prediction = insight.get("prediction", "UNKNOWN")
+    risk = insight.get("risk", "")
+
+    if (
+        score >= 95
+        and prediction == "UPTREND"
+    ):
+
+        recommendation = "STRONG BUY"
+        confidence = "HIGH"
+
+    elif (
+        score >= 90
+        and prediction in ["UPTREND", "MAINTAIN"]
+    ):
+
+        recommendation = "BUY"
+        confidence = "HIGH"
+
+    elif score >= 80:
+
+        recommendation = "HOLD"
+        confidence = "MEDIUM"
+
+    elif prediction == "DOWNRISK":
+
+        recommendation = "WATCH"
+        confidence = "MEDIUM"
+
+    else:
+
+        recommendation = "AVOID"
+        confidence = "LOW"
+
+    reasons = []
+
+    if score >= 90:
+        reasons.append("Enhanced Score 우수")
+
+    if prediction == "UPTREND":
+        reasons.append("상승 모멘텀 유지")
+
+    elif prediction == "MAINTAIN":
+        reasons.append("안정적인 Ranking 유지")
+
+    if "안정" in risk:
+        reasons.append("Ranking 안정성 우수")
+
+    return {
+
+        "recommendation": recommendation,
+        "confidence": confidence,
+        "reasons": reasons
+
+    }        
+
 
 if __name__ == "__main__":
 
@@ -1180,6 +1243,8 @@ if __name__ == "__main__":
             "Enhanced Score :",
             result["enhanced_score"]
         )
+
+
 
 
 
