@@ -8,6 +8,11 @@ from ranking_analyzer import (
     generate_ai_recommendation
 )
 
+from core.portfolio_advisor import (
+    generate_portfolio,
+    generate_portfolio_insight
+)
+
 app = Flask(__name__)
 
 
@@ -50,6 +55,34 @@ def recommendation_api(ticker):
         }
     )
 
+
+
+@app.route("/api/portfolio")
+def portfolio_api():
+
+    ranking_data = get_dashboard_api_data()
+
+
+    portfolio = generate_portfolio(
+        ranking_data["data"]
+    )
+
+    insight = generate_portfolio_insight(
+        portfolio
+    )
+
+
+    return jsonify(
+    {
+        "success": True,
+
+        "strategy": "Balanced",
+
+        "portfolio": portfolio,
+
+        "insight": insight
+    }
+)
 
 
 @app.route("/api/history/<ticker>")

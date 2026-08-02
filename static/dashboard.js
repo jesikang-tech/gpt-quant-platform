@@ -562,6 +562,7 @@ function loadDashboard(){
 
 loadDashboard();
 
+loadPortfolioAdvisor();
 
 
 // 10초마다 갱신
@@ -571,6 +572,11 @@ setInterval(
     10000
 );
 
+
+setInterval(
+    loadPortfolioAdvisor,
+    10000
+);
 
 
 async function loadHistory(ticker){
@@ -799,4 +805,147 @@ async function loadDetail(ticker){
     </p>
 
     `;
+}
+
+
+async function loadPortfolioAdvisor(){
+
+    const response =
+    await fetch(
+        "/api/portfolio"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "portfolio-content"
+    );
+
+
+     let html = "";
+
+
+    html += `
+
+    <h3>
+    Strategy :
+    ${result.strategy}
+    </h3>
+
+    `;
+
+
+    result.portfolio.forEach(item => {
+
+
+        let cashClass = "";
+
+        if(item.ticker === "CASH"){
+            cashClass = "portfolio-cash";
+        }
+
+
+        html += `
+
+
+        <div class="portfolio-card ${cashClass}">
+
+
+            <div class="ticker">
+
+            ${item.ticker}
+
+            </div>
+
+
+
+            <div class="portfolio-weight">
+
+            Weight :
+            <b>
+            ${item.weight}%
+            </b>
+
+            </div>
+
+
+
+            <div class="portfolio-score">
+
+            Score :
+            <b>
+            ${item.score ?? "-"}
+            </b>
+
+            </div>
+
+
+
+            <div class="portfolio-reason">
+
+            ${item.reason}
+
+            </div>
+
+
+        </div>
+
+
+        `;
+
+
+    });
+
+
+    html += `
+
+
+    <div class="portfolio-insight">
+
+
+        <h3>
+        🧠 GPT Portfolio Insight
+        </h3>
+
+
+
+        <p>
+
+        📌 Summary
+
+        <br>
+
+        <b>
+        ${result.insight.summary}
+        </b>
+
+        </p>
+
+
+
+        <p>
+
+        🧠 AI Opinion
+
+        <br>
+
+        ${result.insight.opinion}
+
+        </p>
+
+
+    </div>
+
+
+    `;
+
+
+    panel.innerHTML = html;
+
+
+   
 }

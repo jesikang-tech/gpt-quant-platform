@@ -401,3 +401,169 @@ header h1 {
     line-height:1.6;
 
 }
+
+
+
+
+
+
+
+/* =====================================
+   Step5-3-37 AI Portfolio Advisor
+===================================== */
+
+
+#portfolio-advisor {
+
+
+    margin-bottom:30px;
+
+}
+
+
+
+#portfolio-advisor h2 {
+
+
+    text-align:center;
+
+}
+
+
+
+#portfolio-content {
+
+
+    background:white;
+
+    padding:20px;
+
+    border-radius:12px;
+
+
+    box-shadow:
+    0 4px 8px rgba(0,0,0,0.15);
+
+
+}
+
+
+
+#portfolio-content h3 {
+
+
+    text-align:center;
+
+    margin-top:0;
+
+}
+
+
+
+.portfolio-card {
+
+
+    background:#fafafa;
+
+    border-radius:10px;
+
+    padding:15px;
+
+    margin:12px 0;
+
+
+    box-shadow:
+    0 2px 5px rgba(0,0,0,0.1);
+
+
+}
+
+
+
+.portfolio-card .ticker {
+
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    text-align:center;
+
+}
+
+
+
+.portfolio-weight {
+
+
+    font-size:18px;
+
+    text-align:center;
+
+    margin:10px;
+
+}
+
+
+
+.portfolio-score {
+
+
+    text-align:center;
+
+    font-size:16px;
+
+}
+
+
+
+.portfolio-reason {
+
+
+    margin-top:10px;
+
+    padding:10px;
+
+    background:white;
+
+    border-radius:8px;
+
+    text-align:center;
+
+}
+
+
+
+.portfolio-cash {
+
+
+    background:#eeeeee;
+
+}
+
+
+
+/* Portfolio Insight */
+
+.portfolio-insight {
+
+    margin-top:20px;
+
+    padding:20px;
+
+    background:#eef7ee;
+
+    border-radius:12px;
+
+    line-height:1.6;
+
+}
+
+
+.portfolio-insight h3 {
+
+    text-align:center;
+
+    margin-top:0;
+
+}
