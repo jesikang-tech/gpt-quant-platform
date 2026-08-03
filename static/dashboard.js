@@ -968,6 +968,8 @@ let currentPortfolioMode = "balanced";
 
 function changePortfolioMode(mode){
 
+    portfolioMode = mode;
+
     currentPortfolioMode = mode;
 
     loadPortfolioAdvisor();
