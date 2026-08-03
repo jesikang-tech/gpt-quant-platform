@@ -567,3 +567,82 @@ header h1 {
     margin-top:0;
 
 }
+
+
+/* Portfolio Analytics */
+
+.analytics-card {
+
+    margin-top:20px;
+
+    padding:20px;
+
+    background:#f8f8f8;
+
+    border-radius:12px;
+
+}
+
+
+
+.analytics-bar-row {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin:12px 0;
+
+}
+
+
+
+.analytics-label {
+
+    width:120px;
+
+    font-weight:bold;
+
+}
+
+
+
+.analytics-bar {
+
+    flex:1;
+
+    height:18px;
+
+    background:#e0e0e0;
+
+    border-radius:10px;
+
+    overflow:hidden;
+
+}
+
+
+
+.analytics-fill {
+
+    height:100%;
+
+    background:#4caf50;
+
+    border-radius:10px;
+
+}
+
+
+
+.analytics-value {
+
+    width:90px;
+
+    text-align:right;
+
+    font-weight:bold;
+
+}

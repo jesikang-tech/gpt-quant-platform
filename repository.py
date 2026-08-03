@@ -689,3 +689,84 @@ def get_portfolio_history(limit=50):
     conn.close()
 
     return result   
+
+
+
+def get_portfolio_analytics():
+    """
+    Portfolio Analytics Data 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 전체 History 개수
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM portfolio_history
+        """
+    )
+
+    total_history = cursor.fetchone()[0]
+
+
+    # 최근 Portfolio Mode
+    cursor.execute(
+        """
+        SELECT mode
+        FROM portfolio_history
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    )
+
+    latest_mode_row = cursor.fetchone()
+
+    latest_mode = (
+        latest_mode_row[0]
+        if latest_mode_row
+        else None
+    )
+
+
+    # Mode별 사용 횟수
+    cursor.execute(
+        """
+        SELECT
+            mode,
+            COUNT(*)
+        FROM portfolio_history
+        GROUP BY mode
+        ORDER BY COUNT(*) DESC
+        """
+    )
+
+    mode_analysis = cursor.fetchall()
+
+
+    # ETF별 평균 비중
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            AVG(weight)
+        FROM portfolio_history
+        GROUP BY ticker
+        ORDER BY AVG(weight) DESC
+        """
+    )
+
+    weight_analysis = cursor.fetchall()
+
+
+    conn.close()
+
+
+    return {
+        "total_history": total_history,
+        "latest_mode": latest_mode,
+        "mode_analysis": mode_analysis,
+        "weight_analysis": weight_analysis
+    }

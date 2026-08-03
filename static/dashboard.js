@@ -2,6 +2,8 @@ let historyChart = null;
 
 let portfolioMode = "balanced";
 
+let portfolioAnalytics = null;
+
 
 function getRecommendationIcon(signal){
 
@@ -955,6 +957,9 @@ async function loadPortfolioAdvisor(save=false){
     panel.innerHTML = html;
 
 
+    loadPortfolioAnalytics();
+
+
    
 }
 
@@ -1062,5 +1067,179 @@ async function loadPortfolioHistory(){
 
     panel.innerHTML = html;
 
+
+}
+
+
+
+async function loadPortfolioAnalytics(){
+
+    const response =
+    await fetch(
+        "/api/portfolio/analytics"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "portfolio-analytics"
+    );
+
+
+    const analytics =
+    result.analytics;
+
+
+    let html = "";
+
+
+    html += `
+
+    <div class="analytics-card">
+
+    <h3>
+    📊 Portfolio Analytics
+    </h3>
+
+
+    <p>
+    Total Decisions :
+    <b>
+    ${analytics.total_history}
+    </b>
+    </p>
+
+
+    <p>
+    📌 Last Saved AI Strategy :
+    <br>
+    <b>
+    ${analytics.latest_mode.toUpperCase()}
+    </b>
+    </p>
+
+
+    <p>
+    🎯 Current View Strategy :
+    <br>
+    <b>
+    ${portfolioMode.toUpperCase()}
+    </b>
+    </p>
+
+
+    <h4>
+    Strategy Usage
+    </h4>
+
+    `;
+
+
+    analytics.mode_analysis.forEach(item => {
+
+        const width =
+        Math.min(
+            item[1] / analytics.total_history * 100,
+            100
+        );
+
+
+        html += `
+
+        <div class="analytics-bar-row">
+
+            <div class="analytics-label">
+                ${item[0].toUpperCase()}
+            </div>
+
+
+            <div class="analytics-bar">
+
+                <div class="analytics-fill"
+                style="width:${width}%">
+
+                </div>
+
+            </div>
+
+
+            <div class="analytics-value">
+                ${item[1]} times
+            </div>
+
+
+        </div>
+
+        `;
+
+    });
+
+
+
+    html += `
+
+    <h4>
+    Average Allocation
+    </h4>
+
+    `;
+
+
+    analytics.weight_analysis.forEach(item => {
+
+
+        html += `
+
+
+        <div class="analytics-bar-row">
+
+
+            <div class="analytics-label">
+                ${item[0]}
+            </div>
+
+
+
+            <div class="analytics-bar">
+
+
+                <div class="analytics-fill"
+                style="width:${item[1]}%">
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="analytics-value">
+
+                ${item[1].toFixed(2)}%
+
+            </div>
+
+
+        </div>
+
+
+        `;
+
+
+    });
+
+
+    html += `
+
+    </div>
+
+    `;
+
+
+    panel.innerHTML = html;
 
 }

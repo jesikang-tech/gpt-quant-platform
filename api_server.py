@@ -21,7 +21,8 @@ from core.portfolio_advisor import (
 
 from repository import (
     save_portfolio_history,
-    get_portfolio_history
+    get_portfolio_history,
+    get_portfolio_analytics
 )
 
 app = Flask(__name__)
@@ -153,6 +154,19 @@ def portfolio_history_api():
         {
             "success": True,
             "history": data
+        }
+    )
+
+
+@app.route("/api/portfolio/analytics")
+def portfolio_analytics_api():
+
+    analytics = get_portfolio_analytics()
+
+    return jsonify(
+        {
+            "success": True,
+            "analytics": analytics
         }
     )
 
