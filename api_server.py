@@ -16,6 +16,7 @@ from ranking_analyzer import (
 from core.portfolio_advisor import (
     generate_portfolio,
     generate_portfolio_insight,
+    analyze_portfolio_health,
     optimize_portfolio_weight
 )
 
@@ -117,13 +118,18 @@ def portfolio_api():
         portfolio
     )
 
+    intelligence = analyze_portfolio_health(
+        portfolio
+    )
+
 
     return jsonify(
         {
             "success": True,
             "strategy": mode.capitalize(),
             "portfolio": portfolio,
-            "insight": insight
+            "insight": insight,
+            "intelligence": intelligence
         }
     )
 

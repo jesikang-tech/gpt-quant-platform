@@ -197,6 +197,120 @@ def generate_portfolio_insight(portfolio):
 
 
 
+def analyze_portfolio_health(portfolio):
+    """
+    Portfolio Intelligence Analysis
+    """
+
+
+    if not portfolio:
+
+        return {
+            "health_score": 0,
+            "risk_level": "Unknown",
+            "confidence": "LOW",
+            "allocation": {},
+            "cash_weight": 0,
+            "rebalance": "No portfolio data"
+        }
+
+
+    etfs = [
+        item
+        for item in portfolio
+        if item["ticker"] != "CASH"
+    ]
+
+
+    cash = next(
+        (
+            item["weight"]
+            for item in portfolio
+            if item["ticker"] == "CASH"
+        ),
+        0
+    )
+
+
+    avg_score = round(
+        sum(
+            item.get("score", 0)
+            for item in etfs
+        )
+        /
+        len(etfs),
+        1
+    )
+
+
+    health_score = round(
+        avg_score * 0.8
+        +
+        (100 - cash) * 0.2,
+        1
+    )
+
+
+    if health_score >= 90:
+
+        risk_level = "Low Risk"
+
+        confidence = "HIGH"
+
+
+    elif health_score >= 80:
+
+        risk_level = "Balanced"
+
+        confidence = "MEDIUM"
+
+
+    else:
+
+        risk_level = "High Risk"
+
+        confidence = "LOW"
+
+
+
+    allocation = {}
+
+    for item in etfs:
+
+        allocation[item["ticker"]] = item["weight"]
+
+
+
+    top_etf = max(
+        etfs,
+        key=lambda x: x.get("score", 0)
+    )
+
+
+    rebalance = (
+        f"{top_etf['ticker']} 중심 전략 유지 권장. "
+        "현재 Portfolio 구성은 Score 기반으로 안정적입니다."
+    )
+
+
+    return {
+
+        "health_score": health_score,
+
+        "risk_level": risk_level,
+
+        "confidence": confidence,
+
+        "allocation": allocation,
+
+        "cash_weight": cash,
+
+        "rebalance": rebalance
+
+    }
+
+
+
 def optimize_portfolio_weight(ranking, mode="balanced"):
     """
     AI Portfolio Weight Optimization

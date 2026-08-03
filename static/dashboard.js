@@ -914,7 +914,98 @@ async function loadPortfolioAdvisor(save=false){
     html += `
 
 
-    <div class="portfolio-insight">
+    <div class="portfolio-intelligence">
+
+
+        <h3>
+        🤖 GPT Portfolio Intelligence
+        </h3>
+
+
+        <p>
+        ❤️ Health Score
+        <br>
+        <b>
+        ${result.intelligence.health_score}
+        / 100
+        </b>
+        </p>
+
+
+
+        <p>
+        🛡 Risk Level
+        <br>
+        <b>
+        ${result.intelligence.risk_level}
+        </b>
+        </p>
+
+
+
+        <p>
+        🔥 Confidence
+        <br>
+        <b>
+        ${result.intelligence.confidence}
+        </b>
+        </p>
+
+
+
+        <p>
+        💰 Cash Weight
+        <br>
+        <b>
+        ${result.intelligence.cash_weight}%
+        </b>
+        </p>
+
+
+
+        <p>
+        📊 Allocation
+        <br>
+
+        ${
+            Object.entries(
+                result.intelligence.allocation
+            )
+            .map(
+                item =>
+                item[0]
+                +
+                " : "
+                +
+                item[1]
+                +
+                "%"
+            )
+            .join("<br>")
+        }
+
+        </p>
+
+
+
+        <p>
+        🔄 AI Rebalance
+        <br>
+
+        ${result.intelligence.rebalance}
+
+        </p>
+
+
+    </div>
+
+
+    `;
+
+
+     html += `
+
+        <div class="portfolio-insight">
 
 
         <h3>
