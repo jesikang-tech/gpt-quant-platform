@@ -1146,69 +1146,6 @@ def generate_ai_insight(ticker):
     }
 
 
-def generate_ai_recommendation(ticker):
-
-    insight = generate_ai_insight(ticker)
-
-    detail = get_etf_detail(ticker)
-
-    score = detail.get("enhanced_score", 0)
-    prediction = insight.get("prediction", "UNKNOWN")
-    risk = insight.get("risk", "")
-
-    if (
-        score >= 95
-        and prediction == "UPTREND"
-    ):
-
-        recommendation = "STRONG BUY"
-        confidence = "HIGH"
-
-    elif (
-        score >= 90
-        and prediction in ["UPTREND", "MAINTAIN"]
-    ):
-
-        recommendation = "BUY"
-        confidence = "HIGH"
-
-    elif score >= 80:
-
-        recommendation = "HOLD"
-        confidence = "MEDIUM"
-
-    elif prediction == "DOWNRISK":
-
-        recommendation = "WATCH"
-        confidence = "MEDIUM"
-
-    else:
-
-        recommendation = "AVOID"
-        confidence = "LOW"
-
-    reasons = []
-
-    if score >= 90:
-        reasons.append("Enhanced Score 우수")
-
-    if prediction == "UPTREND":
-        reasons.append("상승 모멘텀 유지")
-
-    elif prediction == "MAINTAIN":
-        reasons.append("안정적인 Ranking 유지")
-
-    if "안정" in risk:
-        reasons.append("Ranking 안정성 우수")
-
-    return {
-
-        "recommendation": recommendation,
-        "confidence": confidence,
-        "reasons": reasons
-
-    }        
-
 
 if __name__ == "__main__":
 
@@ -1243,62 +1180,6 @@ if __name__ == "__main__":
             "Enhanced Score :",
             result["enhanced_score"]
         )
-
-
-
-def generate_portfolio_ai_insight(portfolio):
-    """
-    Portfolio AI Insight 생성
-    """
-
-    if not portfolio:
-        return {
-            "risk": "Unknown",
-            "diversification": "Poor",
-            "expected_return": 0,
-            "confidence": "Low",
-            "comment": "Portfolio 데이터가 없습니다."
-        }
-
-    etfs = [p for p in portfolio if p["ticker"] != "CASH"]
-
-    if len(etfs) >= 4:
-        diversification = "Excellent"
-    elif len(etfs) == 3:
-        diversification = "Good"
-    else:
-        diversification = "Low"
-
-    avg_score = sum(e["score"] for e in etfs) / len(etfs)
-
-    expected_return = round(avg_score * 0.22, 1)
-
-    if avg_score >= 90:
-        risk = "Balanced"
-        confidence = "High"
-
-    elif avg_score >= 80:
-        risk = "Moderate"
-        confidence = "Medium"
-
-    else:
-        risk = "Aggressive"
-        confidence = "Low"
-
-    comment = (
-        f"현재 포트폴리오는 {risk} 성향이며 "
-        f"분산투자 수준은 {diversification}입니다. "
-        f"예상 수익률은 약 {expected_return}% 수준으로 분석됩니다."
-    )
-
-    return {
-        "risk": risk,
-        "diversification": diversification,
-        "expected_return": expected_return,
-        "confidence": confidence,
-        "comment": comment
-    }
-
 
 
 

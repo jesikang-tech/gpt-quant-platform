@@ -85,7 +85,6 @@ def generate_portfolio_insight(portfolio):
     Generate AI Portfolio Insight
     """
 
-
     if not portfolio:
         return {
             "summary": "No portfolio available",
@@ -93,13 +92,14 @@ def generate_portfolio_insight(portfolio):
         }
 
 
-    etf_count = len(
-        [
-            item
-            for item in portfolio
-            if item["ticker"] != "CASH"
-        ]
-    )
+    etfs = [
+        item
+        for item in portfolio
+        if item["ticker"] != "CASH"
+    ]
+
+
+    etf_count = len(etfs)
 
 
     cash = next(
@@ -112,18 +112,87 @@ def generate_portfolio_insight(portfolio):
     )
 
 
+    if etfs:
+
+        avg_score = round(
+            sum(
+                item.get("score", 0)
+                for item in etfs
+            )
+            /
+            etf_count,
+            1
+        )
+
+
+        top_etf = max(
+            etfs,
+            key=lambda x: x.get("score",0)
+        )
+
+
+    else:
+
+        avg_score = 0
+        top_etf = {
+            "ticker":"N/A",
+            "score":0
+        }
+
+
+    if avg_score >= 90:
+
+        risk_level = "Low Risk / Strong Trend"
+
+    elif avg_score >= 80:
+
+        risk_level = "Balanced"
+
+    else:
+
+        risk_level = "Growth Focus"
+
+
+    if etf_count >= 4:
+
+        diversification = "Excellent"
+
+    elif etf_count >= 3:
+
+        diversification = "Good"
+
+    else:
+
+        diversification = "Limited"
+
+
     return {
 
         "summary":
-            f"High Score ETF {etf_count}개 중심의 "
-            "균형형 포트폴리오입니다.",
+            f"{risk_level} AI Portfolio "
+            f"({etf_count} ETF 구성)",
+
+
+        "analytics":
+        {
+            "average_score": avg_score,
+            "top_etf": top_etf["ticker"],
+            "top_score": top_etf["score"],
+            "cash_weight": cash,
+            "diversification": diversification
+        },
 
 
         "opinion":
-            "상위 Ranking ETF의 비중을 확대하고 "
-            f"{cash}% 현금 비중으로 Risk Buffer를 유지하는 "
-            "안정형 AI Portfolio 전략입니다."
+            f"""
+현재 Portfolio는 평균 Score {avg_score}점 수준의
+{risk_level} 전략입니다.
 
+상위 ETF {top_etf['ticker']}의 Momentum이 가장 강하며,
+현금 {cash}%를 유지하여 Risk Buffer를 확보하고 있습니다.
+
+분산 수준은 {diversification}으로 평가됩니다.
+"""
     }
 
 
