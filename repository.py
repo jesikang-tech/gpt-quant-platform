@@ -616,3 +616,76 @@ def get_ranking_history(ticker):
     conn.close()
 
     return rows    
+
+
+def save_portfolio_history(
+    mode,
+    ticker,
+    weight,
+    score,
+    reason,
+    created_at
+):
+    """
+    Portfolio Advisor 결과 History 저장
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO portfolio_history
+        (
+            mode,
+            ticker,
+            weight,
+            score,
+            reason,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            mode,
+            ticker,
+            weight,
+            score,
+            reason,
+            created_at
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def get_portfolio_history(limit=50):
+    """
+    Portfolio History 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            mode,
+            ticker,
+            weight,
+            score,
+            reason,
+            created_at
+        FROM portfolio_history
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+    result = cursor.fetchall()
+
+    conn.close()
+
+    return result   

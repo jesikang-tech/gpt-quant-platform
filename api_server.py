@@ -19,6 +19,11 @@ from core.portfolio_advisor import (
     optimize_portfolio_weight
 )
 
+from repository import (
+    save_portfolio_history,
+    get_portfolio_history
+)
+
 app = Flask(__name__)
 
 
@@ -73,14 +78,44 @@ def portfolio_api():
         "balanced"
     )
 
+
+    save_history = request.args.get(
+        "save",
+        "false"
+    )
+
+
     portfolio = optimize_portfolio_weight(
         ranking_data["data"],
         mode
     )
 
+
+    if save_history == "true":
+
+        from datetime import datetime
+
+        created_at = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+
+        for item in portfolio:
+
+            save_portfolio_history(
+                mode,
+                item["ticker"],
+                item.get("weight", 0),
+                item.get("score", 0),
+                item.get("reason", ""),
+                created_at
+            )
+
+
     insight = generate_portfolio_insight(
         portfolio
     )
+
 
     return jsonify(
         {
@@ -88,6 +123,36 @@ def portfolio_api():
             "strategy": mode.capitalize(),
             "portfolio": portfolio,
             "insight": insight
+        }
+    )
+
+
+
+
+@app.route("/api/portfolio/history")
+def portfolio_history_api():
+
+    history = get_portfolio_history()
+
+    data = []
+
+    for item in history:
+
+        data.append(
+            {
+                "mode": item[0],
+                "ticker": item[1],
+                "weight": item[2],
+                "score": item[3],
+                "reason": item[4],
+                "created_at": item[5]
+            }
+        )
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
         }
     )
 

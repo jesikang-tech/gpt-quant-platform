@@ -69,6 +69,20 @@ def init_database():
     )
     """)
 
+
+     # Portfolio History
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS portfolio_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        mode TEXT NOT NULL,
+        ticker TEXT NOT NULL,
+        weight REAL,
+        score REAL,
+        reason TEXT,
+        created_at TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 

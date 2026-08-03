@@ -566,6 +566,8 @@ loadDashboard();
 
 loadPortfolioAdvisor();
 
+loadPortfolioHistory();
+
 
 // 10초마다 갱신
 
@@ -810,20 +812,15 @@ async function loadDetail(ticker){
 }
 
 
-function changePortfolioMode(mode){
 
-    portfolioMode = mode;
-
-    loadPortfolioAdvisor();
-
-}
-
-
-async function loadPortfolioAdvisor(){
+async function loadPortfolioAdvisor(save=false){
 
     const response =
-    await fetch(
-        "/api/portfolio?mode=" + portfolioMode
+     await fetch(
+        "/api/portfolio?mode="
+        + portfolioMode
+        + "&save="
+        + save
     );
 
 
@@ -968,10 +965,102 @@ let currentPortfolioMode = "balanced";
 
 function changePortfolioMode(mode){
 
-    portfolioMode = mode;
+     portfolioMode = mode;
 
     currentPortfolioMode = mode;
 
-    loadPortfolioAdvisor();
+    loadPortfolioAdvisor(true);
+
+}
+
+
+
+async function loadPortfolioHistory(){
+
+    const response =
+    await fetch(
+        "/api/portfolio/history"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "portfolio-history"
+    );
+
+
+    let html = "";
+
+
+    html += `
+
+    <h3>
+    📌 Portfolio History
+    </h3>
+
+    `;
+
+
+    result.history.forEach(item => {
+
+
+        html += `
+
+        <div class="history-card">
+
+
+            <b>
+            ${item.mode.toUpperCase()}
+            </b>
+
+
+            <br>
+
+
+            ETF :
+            ${item.ticker}
+
+
+            <br>
+
+
+            Weight :
+            ${item.weight}%
+
+
+            <br>
+
+
+            Score :
+            ${item.score ?? "-"}
+
+
+            <br>
+
+
+            Reason :
+            ${item.reason}
+
+
+            <br>
+
+
+            ${item.created_at}
+
+
+        </div>
+
+        `;
+
+
+    });
+
+
+    panel.innerHTML = html;
+
 
 }
