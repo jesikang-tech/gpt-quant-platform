@@ -103,6 +103,16 @@ def portfolio_api():
         )
 
 
+        intelligence = analyze_portfolio_health(
+            portfolio
+        )
+
+
+        market_condition = analyze_market_condition(
+            ranking_data["data"]
+        )
+
+
         for item in portfolio:
 
             save_portfolio_history(
@@ -111,7 +121,10 @@ def portfolio_api():
                 item.get("weight", 0),
                 item.get("score", 0),
                 item.get("reason", ""),
-                created_at
+                created_at,
+                intelligence.get("health_score"),
+                intelligence.get("confidence"),
+                market_condition.get("market")
             )
 
 
@@ -172,7 +185,10 @@ def portfolio_history_api():
                 "weight": item[2],
                 "score": item[3],
                 "reason": item[4],
-                "created_at": item[5]
+                "created_at": item[5],
+                "health_score": item[6],
+                "confidence": item[7],
+                "market_condition": item[8]
             }
         )
 

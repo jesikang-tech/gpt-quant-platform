@@ -1142,6 +1142,12 @@ async function loadPortfolioHistory(){
     await response.json();
 
 
+    console.log(
+        "PORTFOLIO HISTORY:",
+        result.history
+    );
+
+
     const panel =
     document.getElementById(
         "portfolio-history"
@@ -1168,43 +1174,64 @@ async function loadPortfolioHistory(){
         <div class="history-card">
 
 
-            <b>
-            ${item.mode.toUpperCase()}
-            </b>
+        <b>
+        ${item.mode.toUpperCase()}
+        </b>
 
 
-            <br>
+        <br>
 
 
-            ETF :
-            ${item.ticker}
+        ETF :
+        ${item.ticker}
 
 
-            <br>
+        <br>
 
 
-            Weight :
-            ${item.weight}%
+        Weight :
+        ${item.weight}%
 
 
-            <br>
+        <br>
 
 
-            Score :
-            ${item.score ?? "-"}
+        Score :
+        ${item.score ?? "-"}
 
 
-            <br>
+        <br>
 
 
-            Reason :
-            ${item.reason}
+        Reason :
+        ${item.reason}
 
 
-            <br>
+        <br>
 
 
-            ${item.created_at}
+        Health Score :
+        ${item.health_score ?? "-"}
+
+
+        <br>
+
+
+        Confidence :
+        ${item.confidence ?? "-"}
+
+
+        <br>
+
+
+        Market Condition :
+        ${item.market_condition ?? "-"}
+
+
+        <br>
+
+
+        ${item.created_at}
 
 
         </div>

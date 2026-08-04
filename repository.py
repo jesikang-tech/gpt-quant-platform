@@ -624,10 +624,13 @@ def save_portfolio_history(
     weight,
     score,
     reason,
-    created_at
+    created_at,
+    health_score=None,
+    confidence=None,
+    market_condition=None
 ):
     """
-    Portfolio Advisor 결과 History 저장
+    Portfolio Advisor History 저장
     """
 
     conn = get_connection()
@@ -642,9 +645,12 @@ def save_portfolio_history(
             weight,
             score,
             reason,
-            created_at
+            created_at,
+            health_score,
+            confidence,
+            market_condition
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             mode,
@@ -652,7 +658,10 @@ def save_portfolio_history(
             weight,
             score,
             reason,
-            created_at
+            created_at,
+            health_score,
+            confidence,
+            market_condition
         )
     )
 
@@ -670,13 +679,16 @@ def get_portfolio_history(limit=50):
 
     cursor.execute(
         """
-        SELECT
+         SELECT
             mode,
             ticker,
             weight,
             score,
             reason,
-            created_at
+            created_at,
+            health_score,
+            confidence,
+            market_condition
         FROM portfolio_history
         ORDER BY id DESC
         LIMIT ?
