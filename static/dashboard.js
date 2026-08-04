@@ -570,6 +570,8 @@ loadPortfolioAdvisor();
 
 loadPortfolioHistory();
 
+loadMarketCondition();
+
 
 // 10초마다 갱신
 
@@ -1418,5 +1420,77 @@ async function loadPortfolioAnalytics(){
 
 
     panel.innerHTML = html;
+
+}
+
+
+
+async function loadMarketCondition(){
+
+    const response =
+    await fetch(
+        "/api/portfolio/market-condition"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "market-condition"
+    );
+
+
+    const market =
+    result.market_condition;
+
+
+    panel.innerHTML =
+
+    `
+    <div class="market-card">
+
+
+        <h3>
+        GPT Market Intelligence
+        </h3>
+
+
+        <p>
+        Market Condition :
+        <b>
+        ${market.market}
+        </b>
+        </p>
+
+
+        <p>
+        Average Score :
+        <b>
+        ${market.average_score}
+        </b>
+        </p>
+
+
+        <p>
+        Confidence :
+        <b>
+        ${market.confidence}
+        </b>
+        </p>
+
+
+        <p>
+        Recommended Strategy :
+        <b>
+        ${market.recommended_mode}
+        </b>
+        </p>
+
+
+    </div>
+    `;
 
 }
