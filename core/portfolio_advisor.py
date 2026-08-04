@@ -405,3 +405,74 @@ def optimize_portfolio_weight(ranking, mode="balanced"):
 
 
     return portfolio
+
+
+
+def analyze_market_condition(ranking):
+    """
+    AI Market Condition Analyzer
+    Step5-3-43
+    """
+
+    if not ranking:
+        return {
+            "market": "UNKNOWN",
+            "recommended_mode": "balanced",
+            "confidence": "LOW"
+        }
+
+
+    scores = [
+        item.get("score", 0)
+        for item in ranking
+    ]
+
+
+    avg_score = round(
+        sum(scores) / len(scores),
+        1
+    )
+
+
+    trend_count = len(
+        [
+            item
+            for item in ranking
+            if item.get("trend", 0) > 0
+        ]
+    )
+
+
+    trend_ratio = (
+        trend_count / len(ranking)
+    )
+
+
+    if avg_score >= 90 and trend_ratio >= 0.6:
+
+        return {
+            "market": "BULLISH",
+            "recommended_mode": "aggressive",
+            "confidence": "HIGH",
+            "average_score": avg_score
+        }
+
+
+    elif avg_score >= 80:
+
+        return {
+            "market": "NEUTRAL",
+            "recommended_mode": "balanced",
+            "confidence": "MEDIUM",
+            "average_score": avg_score
+        }
+
+
+    else:
+
+        return {
+            "market": "BEARISH",
+            "recommended_mode": "conservative",
+            "confidence": "HIGH",
+            "average_score": avg_score
+        }

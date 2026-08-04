@@ -17,6 +17,7 @@ from core.portfolio_advisor import (
     generate_portfolio,
     generate_portfolio_insight,
     analyze_portfolio_health,
+    analyze_market_condition,
     optimize_portfolio_weight
 )
 
@@ -133,6 +134,25 @@ def portfolio_api():
         }
     )
 
+
+
+@app.route("/api/portfolio/market-condition")
+def portfolio_market_condition_api():
+
+    ranking_data = get_dashboard_api_data()
+
+
+    condition = analyze_market_condition(
+        ranking_data["data"]
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "market_condition": condition
+        }
+    )
 
 
 

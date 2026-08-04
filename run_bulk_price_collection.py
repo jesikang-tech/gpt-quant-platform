@@ -13,7 +13,7 @@ def main():
     print("ETF Price Collection Start")
     print("=" * 50)
 
-    start_date = "2026-01-01"
+    start_date = "2025-01-01"
     end_date = datetime.today().strftime("%Y-%m-%d")
 
 
