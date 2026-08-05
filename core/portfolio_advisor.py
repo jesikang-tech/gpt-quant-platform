@@ -8,8 +8,14 @@ Step5-3-37
 
 from core.market_regime import analyze_market_regime
 
+from core.market_strategy import (
+    generate_market_strategy
+)
 
-def generate_portfolio(ranking):
+def generate_portfolio(
+    ranking,
+    market_regime=None
+):
     """
     Generate AI portfolio recommendation
 
@@ -67,14 +73,57 @@ def generate_portfolio(ranking):
 
     else:
 
-        weights = [
-            40,
-            30,
-            20
-        ]
+        if market_regime is None:
 
-        cash_weight = 10
+            market_regime = analyze_market_regime()
 
+
+        market_strategy = generate_market_strategy(
+            market_regime
+        )
+
+
+        portfolio_mode = (
+            market_strategy.get(
+                "portfolio_mode",
+                "balanced"
+            )
+        )
+
+
+        if portfolio_mode == "aggressive":
+
+            weights = [
+                50,
+                30,
+                15
+            ]
+
+            cash_weight = 5
+
+
+        elif portfolio_mode == "conservative":
+
+            weights = [
+                35,
+                25,
+                20
+            ]
+
+            cash_weight = 20
+
+
+        else:
+
+            weights = [
+                40,
+                30,
+                20
+            ]
+
+            cash_weight = 10
+
+        
 
     portfolio = []
 

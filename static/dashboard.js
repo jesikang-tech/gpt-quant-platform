@@ -574,6 +574,8 @@ loadMarketCondition();
 
 loadMarketRegime();
 
+loadMarketStrategy();
+
 
 // 10초마다 갱신
 
@@ -921,6 +923,52 @@ async function loadPortfolioAdvisor(save=false){
     });
 
 
+
+
+    let healthColor = "#e74c3c";
+
+    if(result.intelligence.health_score >= 90){
+
+        healthColor = "#27ae60";
+
+    }
+    else if(result.intelligence.health_score >= 80){
+
+        healthColor = "#f39c12";
+
+    }
+
+
+    let confidenceColor = "#f39c12";
+
+    if(result.intelligence.confidence === "HIGH"){
+
+        confidenceColor = "#27ae60";
+
+    }
+    else if(result.intelligence.confidence === "LOW"){
+
+        confidenceColor = "#e74c3c";
+
+    }
+
+
+
+    let riskColor = "#f39c12";
+
+    if(
+        result.intelligence.risk_level === "Low Risk"
+        ||
+        result.intelligence.risk_level === "Balanced"
+    ){
+        riskColor = "#27ae60";
+    }
+    else if(result.intelligence.risk_level === "High Risk"){
+        riskColor = "#e74c3c";
+    }
+
+
+
     html += `
 
 
@@ -935,10 +983,19 @@ async function loadPortfolioAdvisor(save=false){
         <p>
         ❤️ Health Score
         <br>
-        <b>
-        ${result.intelligence.health_score}
-        / 100
-        </b>
+
+        <span
+        style="
+        background:${healthColor};
+        color:white;
+        padding:4px 12px;
+        border-radius:12px;
+        font-weight:bold;
+        "
+        >
+        ${result.intelligence.health_score} / 100
+        </span>
+
         </p>
 
 
@@ -946,9 +1003,19 @@ async function loadPortfolioAdvisor(save=false){
         <p>
         🛡 Risk Level
         <br>
-        <b>
+
+        <span
+        style="
+        background:${riskColor};
+        color:white;
+        padding:4px 12px;
+        border-radius:12px;
+        font-weight:bold;
+        "
+        >
         ${result.intelligence.risk_level}
-        </b>
+        </span>
+
         </p>
 
 
@@ -956,9 +1023,19 @@ async function loadPortfolioAdvisor(save=false){
         <p>
         🔥 Confidence
         <br>
-        <b>
+
+        <span
+        style="
+        background:${confidenceColor};
+        color:white;
+        padding:4px 12px;
+        border-radius:12px;
+        font-weight:bold;
+        "
+        >
         ${result.intelligence.confidence}
-        </b>
+        </span>
+
         </p>
 
 
@@ -1148,12 +1225,14 @@ async function loadPortfolioAdvisor(save=false){
     `;
 
 
+    
+
     panel.innerHTML = html;
 
 
+
+
     loadPortfolioAnalytics();
-
-
    
 }
 
@@ -1286,8 +1365,7 @@ async function loadPortfolioHistory(){
     });
 
 
-    panel.innerHTML = html;
-
+    
 
 }
 
@@ -1554,13 +1632,38 @@ async function loadMarketRegime(){
         "market-regime-content"
     );
 
+    let regimeColor = "#f1c40f";
+
+    if(result.regime === "BULLISH"){
+
+        regimeColor = "#27ae60";
+
+    }
+    else if(result.regime === "BEARISH"){
+
+        regimeColor = "#e74c3c";
+
+    }
+
     panel.innerHTML =
 
     `
     <div class="market-regime-card">
 
         <h3>
+
+        <span
+        style="
+        background:${regimeColor};
+        color:white;
+        padding:4px 12px;
+        border-radius:12px;
+        font-weight:bold;
+        "
+        >
         ${result.regime}
+        </span>
+
         </h3>
 
         <p>
@@ -1607,6 +1710,96 @@ async function loadMarketRegime(){
         💡 Strategy :
         <b>${result.strategy}</b>
         </p>
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadMarketStrategy(){
+
+    const response =
+    await fetch(
+        "/api/market-strategy"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "market-strategy"
+    );
+
+
+
+    let strategyColor = "#3498db";
+
+    if(result.portfolio_mode === "aggressive"){
+
+        strategyColor = "#e74c3c";
+
+    }
+    else if(result.portfolio_mode === "conservative"){
+
+        strategyColor = "#27ae60";
+
+    }
+
+
+    panel.innerHTML =
+
+    `
+    <div class="market-strategy-card">
+
+
+        <h3>
+        🧠 AI Market Strategy
+        </h3>
+
+
+        <p>
+        Strategy :
+        <b>
+        ${result.strategy}
+        </b>
+        </p>
+
+
+        <p>
+        Portfolio Mode :
+        <span
+        style="
+        background:${strategyColor};
+        color:white;
+        padding:4px 10px;
+        border-radius:12px;
+        font-weight:bold;
+        "
+        >
+        ${result.portfolio_mode.toUpperCase()}
+        </span>
+        </p>
+
+
+        <p>
+        Cash Target :
+        <b>
+        ${result.cash_target}%
+        </b>
+        </p>
+
+
+        <p>
+        💡 AI Message
+        <br>
+        ${result.message}
+        </p>
+
 
     </div>
     `;

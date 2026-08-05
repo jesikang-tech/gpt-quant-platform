@@ -22,6 +22,7 @@ from core.portfolio_advisor import (
 )
 
 from core.market_regime import analyze_market_regime
+from core.market_strategy import generate_market_strategy
 
 from repository import (
     save_portfolio_history,
@@ -79,6 +80,22 @@ def market_regime_api():
 
     return jsonify(
         data
+    )
+
+
+@app.route("/api/market-strategy")
+def market_strategy_api():
+
+    market_regime = analyze_market_regime()
+
+
+    strategy = generate_market_strategy(
+        market_regime
+    )
+
+
+    return jsonify(
+        strategy
     )
 
 
