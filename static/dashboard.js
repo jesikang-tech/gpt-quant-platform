@@ -999,6 +999,40 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
+        🌎 Market Regime
+        <br>
+
+        <b>
+        ${result.insight.analytics.market_regime}
+        </b>
+
+        </p>
+
+
+        <p>
+        📈 Market Strength
+        <br>
+
+        <b>
+        ${result.insight.analytics.market_strength}
+        </b>
+
+        </p>
+
+
+        <p>
+        🎯 Market Confidence
+        <br>
+
+        <b>
+        ${result.insight.analytics.market_confidence}%
+        </b>
+
+        </p>
+
+
+
+        <p>
         🔄 AI Rebalance
         <br>
 

@@ -1,4 +1,7 @@
-from core.portfolio_advisor import generate_portfolio
+from core.portfolio_advisor import (
+    generate_portfolio,
+    analyze_portfolio_health
+)
 
 
 ranking = [
@@ -34,3 +37,14 @@ print("="*40)
 
 for item in result:
     print(item)
+
+print("\n")
+print("="*40)
+print("Portfolio Health Test")
+print("="*40)
+
+
+health = analyze_portfolio_health(result)
+
+
+print(health)    

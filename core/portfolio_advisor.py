@@ -6,6 +6,8 @@ Step5-3-37
 """
 
 
+from core.market_regime import analyze_market_regime
+
 
 def generate_portfolio(ranking):
     """
@@ -36,12 +38,42 @@ def generate_portfolio(ranking):
         reverse=True
     )
 
+    market = analyze_market_regime()
 
-    weights = [
-        40,
-        30,
-        20
-    ]
+    regime = market["regime"]
+
+
+    if regime == "BULLISH":
+
+        weights = [
+            50,
+            30,
+            15
+        ]
+
+        cash_weight = 5
+
+
+    elif regime == "BEARISH":
+
+        weights = [
+            30,
+            25,
+            20
+        ]
+
+        cash_weight = 25
+
+
+    else:
+
+        weights = [
+            40,
+            30,
+            20
+        ]
+
+        cash_weight = 10
 
 
     portfolio = []
@@ -68,7 +100,7 @@ def generate_portfolio(ranking):
     portfolio.append(
         {
             "ticker": "CASH",
-            "weight": 10,
+            "weight": cash_weight,
             "score": None,
             "reason":
                 "Risk Management"
@@ -90,6 +122,13 @@ def generate_portfolio_insight(portfolio):
             "summary": "No portfolio available",
             "opinion": ""
         }
+
+
+    market = analyze_market_regime()
+
+    regime = market["regime"]
+    strength = market["market_strength"]
+    confidence = market["confidence"]
 
 
     etfs = [
@@ -179,7 +218,11 @@ def generate_portfolio_insight(portfolio):
             "top_etf": top_etf["ticker"],
             "top_score": top_etf["score"],
             "cash_weight": cash,
-            "diversification": diversification
+            "diversification": diversification,
+
+            "market_regime": regime,
+            "market_strength": strength,
+            "market_confidence": confidence
         },
 
 
@@ -187,6 +230,10 @@ def generate_portfolio_insight(portfolio):
             f"""
 현재 Portfolio는 평균 Score {avg_score}점 수준의
 {risk_level} 전략입니다.
+
+현재 시장 국면은 {regime} 상태이며,
+시장 강도는 {strength},
+AI 판단 Confidence는 {confidence}% 입니다.
 
 상위 ETF {top_etf['ticker']}의 Momentum이 가장 강하며,
 현금 {cash}%를 유지하여 Risk Buffer를 확보하고 있습니다.
@@ -213,6 +260,13 @@ def analyze_portfolio_health(portfolio):
             "cash_weight": 0,
             "rebalance": "No portfolio data"
         }
+
+
+    market = analyze_market_regime()
+
+    regime = market["regime"]
+
+    strength = market["market_strength"]
 
 
     etfs = [
@@ -287,10 +341,34 @@ def analyze_portfolio_health(portfolio):
     )
 
 
-    rebalance = (
-        f"{top_etf['ticker']} 중심 전략 유지 권장. "
-        "현재 Portfolio 구성은 Score 기반으로 안정적입니다."
-    )
+    if regime == "BULLISH":
+
+        rebalance = (
+            f"{top_etf['ticker']} 중심 공격적 전략 유지 권장. "
+            f"현재 시장은 {regime} 상태이며 "
+            f"강도는 {strength}입니다. "
+            "우수 ETF 비중 확대 전략이 유효합니다."
+        )
+
+
+    elif regime == "BEARISH":
+
+        rebalance = (
+            f"{top_etf['ticker']} 중심 방어 전략 필요. "
+            f"현재 시장은 {regime} 상태이며 "
+            f"강도는 {strength}입니다. "
+            "현금 비중 확대와 위험 관리가 필요합니다."
+        )
+
+
+    else:
+
+        rebalance = (
+            f"{top_etf['ticker']} 중심 균형 전략 유지 권장. "
+            f"현재 시장은 {regime} 상태이며 "
+            f"강도는 {strength}입니다. "
+            "급격한 변경보다 현재 Portfolio 유지가 적합합니다."
+        )
 
 
     return {
