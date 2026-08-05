@@ -21,6 +21,8 @@ from core.portfolio_advisor import (
     optimize_portfolio_weight
 )
 
+from core.market_regime import analyze_market_regime
+
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -67,6 +69,16 @@ def recommendation_api(ticker):
             "ticker": ticker,
             "recommendation": data
         }
+    )
+
+
+@app.route("/api/market-regime")
+def market_regime_api():
+
+    data = analyze_market_regime()
+
+    return jsonify(
+        data
     )
 
 

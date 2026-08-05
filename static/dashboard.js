@@ -572,6 +572,8 @@ loadPortfolioHistory();
 
 loadMarketCondition();
 
+loadMarketRegime();
+
 
 // 10초마다 갱신
 
@@ -583,6 +585,12 @@ setInterval(
 
 setInterval(
     loadPortfolioAdvisor,
+    10000
+);
+
+
+setInterval(
+    loadMarketRegime,
     10000
 );
 
@@ -1489,6 +1497,82 @@ async function loadMarketCondition(){
         </b>
         </p>
 
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadMarketRegime(){
+
+    const response =
+    await fetch(
+        "/api/market-regime"
+    );
+
+    const result =
+    await response.json();
+
+    const panel =
+    document.getElementById(
+        "market-regime-content"
+    );
+
+    panel.innerHTML =
+
+    `
+    <div class="market-regime-card">
+
+        <h3>
+        ${result.regime}
+        </h3>
+
+        <p>
+        🎯 Confidence :
+        <b>${result.confidence}%</b>
+        </p>
+
+        <p>
+        📈 Average Score :
+        <b>${result.avg_score}</b>
+        </p>
+
+        <p>
+        🏆 Highest Score :
+        <b>${result.max_score}</b>
+        </p>
+
+        <p>
+        📉 Lowest Score :
+        <b>${result.min_score}</b>
+        </p>
+
+        <p>
+        📊 Score Spread :
+        <b>${result.score_spread}</b>
+        </p>
+
+        <p>
+        💪 Market Strength :
+        <b>${result.market_strength}</b>
+        </p>
+
+        <p>
+        📌 Breadth :
+        <b>${result.breadth}</b>
+        </p>
+
+        <p>
+        ⚠ Risk :
+        <b>${result.risk}</b>
+        </p>
+
+        <p>
+        💡 Strategy :
+        <b>${result.strategy}</b>
+        </p>
 
     </div>
     `;

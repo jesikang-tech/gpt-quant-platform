@@ -187,6 +187,62 @@ header h1 {
 }
 
 
+.market-regime-card {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 10px;
+
+    box-shadow:
+    0 4px 8px rgba(0,0,0,0.15);
+
+    text-align: center;
+
+    margin-top: 15px;
+
+}
+
+
+
+.market-regime-card h3 {
+
+    font-size: 28px;
+
+    margin-bottom: 20px;
+
+    color: #2c3e50;
+
+}
+
+
+
+.market-regime-card p {
+
+    margin: 10px 0;
+
+    font-size: 16px;
+
+}
+
+
+
+.market-regime-card b {
+
+    color: #1565c0;
+
+}
+
+
+
+#market-regime {
+
+    margin: 20px 0;
+
+}
+
+
 .card {
     cursor: pointer;
 }
