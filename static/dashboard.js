@@ -1900,6 +1900,41 @@ async function loadAIDecision(){
         </p>
 
 
+         <p>
+        🎯 Decision Score :
+        <br>
+
+        <span
+        style="
+        font-size:22px;
+        font-weight:bold;
+        "
+        >
+        ${decision.decision_score}
+        /
+        100
+        </span>
+
+        </p>
+
+
+
+        <p>
+        🏆 AI Decision Grade :
+        <br>
+
+        <span
+        style="
+        font-size:22px;
+        font-weight:bold;
+        "
+        >
+        ${decision.grade}
+        </span>
+
+        </p>
+
+
         <p>
         Reason :
         <br>
@@ -1912,6 +1947,42 @@ async function loadAIDecision(){
         <br>
         <b>
         ${decision.summary}
+        </b>
+        </p>
+
+
+        <p>
+        🌎 Market View :
+        <br>
+        <b>
+        ${decision.market_view}
+        </b>
+        </p>
+
+
+        <p>
+        📌 Recommended Mode :
+        <br>
+        <b>
+        ${decision.recommended_mode.toUpperCase()}
+        </b>
+        </p>
+
+
+        <p>
+        🛡 Risk Control :
+        <br>
+        <b>
+        ${decision.risk_control}
+        </b>
+        </p>
+
+
+        <p>
+        🔄 Next Action :
+        <br>
+        <b>
+        ${decision.next_action}
         </b>
         </p>
 

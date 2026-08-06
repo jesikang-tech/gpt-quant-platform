@@ -22,8 +22,14 @@ from core.portfolio_advisor import (
 )
 
 from core.market_regime import analyze_market_regime
+
 from core.market_strategy import generate_market_strategy
-from core.ai_decision_engine import generate_ai_decision
+
+from core.ai_decision_engine import (
+    generate_ai_decision,
+    calculate_decision_score,
+    get_decision_grade
+)
 
 from repository import (
     save_portfolio_history,
@@ -147,6 +153,21 @@ def ai_decision_api():
 
         top_etf
 
+    )
+
+
+    decision_score = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+
+    decision["decision_score"] = decision_score
+
+
+    decision["grade"] = get_decision_grade(
+        decision_score
     )
 
 
