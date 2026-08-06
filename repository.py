@@ -771,6 +771,52 @@ def save_ai_decision_history(
 
 
 
+
+# ==============================
+# Step5-3-56 AI Decision History
+# ==============================
+
+def get_ai_decision_history(limit=10):
+    """
+    AI Decision History 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            decision,
+            action,
+            decision_score,
+            grade,
+            market_view,
+            recommended_mode,
+            top_etf,
+            reason,
+            summary,
+            created_at
+        FROM ai_decision_history
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+
+    history = cursor.fetchall()
+
+
+    conn.close()
+
+
+    return history
+
+
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회

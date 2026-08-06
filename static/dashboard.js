@@ -580,6 +580,8 @@ loadMarketStrategy();
 
 loadAIDecision();
 
+loadAIDecisionHistory();
+
 
 // 10초마다 갱신
 
@@ -2054,5 +2056,110 @@ async function loadAIDecision(){
 
     </div>
     `;
+
+}
+
+
+
+async function loadAIDecisionHistory(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/history"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-history"
+    );
+
+
+    let html = "";
+
+
+    html +=
+    `
+    <div class="ai-history-card">
+
+        <h3>
+        🕒 AI Decision History
+        </h3>
+    `;
+
+
+    result.history.forEach(
+        item => {
+
+            html +=
+            `
+            <div class="ai-history-item">
+
+                <p>
+                📌 Decision :
+                <b>
+                ${item.decision}
+                </b>
+                </p>
+
+
+                <p>
+                🎯 Score :
+                <b>
+                ${item.decision_score ?? "-"}
+                </b>
+                </p>
+
+
+                <p>
+                🏆 Grade :
+                <b>
+                ${item.grade ?? "-"}
+                </b>
+                </p>
+
+
+                <p>
+                🌎 Market :
+                <b>
+                ${item.market_view}
+                </b>
+                </p>
+
+
+                <p>
+                🏅 Top ETF :
+                <b>
+                ${item.top_etf}
+                </b>
+                </p>
+
+
+                <p>
+                🕒 Date :
+                <b>
+                ${item.created_at}
+                </b>
+                </p>
+
+
+            </div>
+            `;
+
+        }
+    );
+
+
+    html +=
+    `
+    </div>
+    `;
+
+
+    panel.innerHTML = html;
 
 }

@@ -36,7 +36,8 @@ from repository import (
     save_portfolio_history,
     get_portfolio_history,
     get_portfolio_analytics,
-    save_ai_decision_history
+    save_ai_decision_history,
+    get_ai_decision_history
 )
 
 app = Flask(__name__)
@@ -354,6 +355,45 @@ def portfolio_history_api():
             "history": data
         }
     )
+
+
+
+@app.route(
+    "/api/ai-decision/history"
+)
+def ai_decision_history_api():
+
+    history = get_ai_decision_history()
+
+
+    data = []
+
+
+    for item in history:
+
+        data.append(
+            {
+                "decision": item[0],
+                "action": item[1],
+                "decision_score": item[2],
+                "grade": item[3],
+                "market_view": item[4],
+                "recommended_mode": item[5],
+                "top_etf": item[6],
+                "reason": item[7],
+                "summary": item[8],
+                "created_at": item[9]
+            }
+        )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
 
 
 @app.route("/api/portfolio/analytics")
