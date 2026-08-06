@@ -592,6 +592,8 @@ loadAIDecisionStatistics();
 
 loadAIDecisionPerformance();
 
+loadAIDecisionReliability();
+
 loadAIDecisionHistory();
 
 
@@ -2662,6 +2664,92 @@ async function loadAIDecisionPerformance(){
         <b>
         ${performance.latest_score}
         </b>
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+async function loadAIDecisionReliability(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/reliability"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const reliability =
+    result.reliability;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-reliability"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-reliability-card">
+
+
+        <h3>
+        🛡 AI Decision Reliability
+        </h3>
+
+
+        <p>
+        Reliability :
+        <b>
+        ${reliability.reliability_level}
+        </b>
+        </p>
+
+
+        <p>
+        Confidence :
+        <b>
+        ${reliability.confidence}%
+        </b>
+        </p>
+
+
+        <p>
+        Stability :
+        <b>
+        ${reliability.stability}
+        </b>
+        </p>
+
+
+        <p>
+        Average Score :
+        <b>
+        ${reliability.average_score}
+        </b>
+        </p>
+
+
+        <p>
+        Score Change :
+        <b>
+        ${reliability.score_change}
+        </b>
+        </p>
+
+
+        <p>
+        💡 AI Status :
+        <br>
+        ${reliability.message}
         </p>
 
 

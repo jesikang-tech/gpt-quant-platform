@@ -1396,6 +1396,120 @@ def get_ai_decision_performance():
 
 
 
+def get_ai_decision_reliability():
+    """
+    AI Decision Reliability Analysis
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT AVG(decision_score)
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        """
+    )
+
+    average_score = cursor.fetchone()[0]
+
+
+    cursor.execute(
+        """
+        SELECT decision_score
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 5
+        """
+    )
+
+    scores = [
+        row[0]
+        for row in cursor.fetchall()
+    ]
+
+
+    conn.close()
+
+
+    if average_score is None:
+        average_score = 0
+
+
+    average_score = round(
+        average_score,
+        1
+    )
+
+
+    if len(scores) > 1:
+        score_change = max(scores) - min(scores)
+
+    else:
+        score_change = 0
+
+
+    score_change = round(
+        score_change,
+        1
+    )
+
+
+    if (
+        average_score >= 85
+        and score_change <= 5
+    ):
+
+        reliability_level = "HIGH"
+        stability = "Excellent"
+        confidence = 95
+
+
+    elif average_score >= 70:
+
+        reliability_level = "MEDIUM"
+        stability = "Stable"
+        confidence = 80
+
+
+    else:
+
+        reliability_level = "LOW"
+        stability = "Unstable"
+        confidence = 60
+
+
+    return {
+
+        "reliability_level":
+            reliability_level,
+
+        "confidence":
+            confidence,
+
+        "stability":
+            stability,
+
+        "average_score":
+            average_score,
+
+        "score_change":
+            score_change,
+
+        "message":
+            "AI decision model is operating consistently"
+            if reliability_level == "HIGH"
+            else
+            "AI decision model requires monitoring"
+
+    }
+
+
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회
