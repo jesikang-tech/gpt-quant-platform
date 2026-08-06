@@ -578,6 +578,8 @@ loadMarketRegime();
 
 loadMarketStrategy();
 
+loadAIDecision();
+
 
 // 10초마다 갱신
 
@@ -1831,6 +1833,86 @@ async function loadMarketStrategy(){
         💡 AI Message
         <br>
         ${result.message}
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIDecision(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const decision =
+    result.decision;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-decision-card">
+
+
+        <h3>
+        🧠 GPT AI Decision
+        </h3>
+
+
+        <p>
+        Decision :
+        <b>
+        ${decision.decision}
+        </b>
+        </p>
+
+
+        <p>
+        Action :
+        <b>
+        ${decision.action}
+        </b>
+        </p>
+
+
+        <p>
+        Confidence :
+        <b>
+        ${decision.confidence}%
+        </b>
+        </p>
+
+
+        <p>
+        Reason :
+        <br>
+        ${decision.reason}
+        </p>
+
+
+        <p>
+        Summary :
+        <br>
+        <b>
+        ${decision.summary}
+        </b>
         </p>
 
 
