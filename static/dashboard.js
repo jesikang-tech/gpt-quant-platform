@@ -566,6 +566,8 @@ function loadDashboard(){
 
 loadDashboard();
 
+console.log("BEFORE PORTFOLIO HISTORY");
+
 loadPortfolioAdvisor();
 
 loadPortfolioHistory();
@@ -1364,7 +1366,7 @@ async function loadPortfolioHistory(){
 
     });
 
-
+    panel.innerHTML = html;
     
 
 }
@@ -1793,6 +1795,37 @@ async function loadMarketStrategy(){
         </b>
         </p>
 
+
+        <p>
+        Recommendation :
+        <b>
+        ${result.recommendation}
+        </b>
+        </p>
+
+
+        <p>
+        Market Strength :
+        <b>
+        ${result.market_strength}
+        </b>
+        </p>
+
+
+        <p>
+        Confidence :
+        <b>
+        ${result.confidence}%
+        </b>
+        </p>
+
+
+        <p>
+        Rebalance Action :
+        <b>
+        ${result.rebalance_action}
+        </b>
+        </p>
 
         <p>
         💡 AI Message

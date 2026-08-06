@@ -30,6 +30,12 @@ def generate_market_strategy(market_regime):
             "strategy": "No Strategy",
             "portfolio_mode": "balanced",
             "cash_target": 10,
+
+            "market_strength": "Unknown",
+            "confidence": 0,
+            "recommendation": "HOLD",
+            "rebalance_action": "No Action",
+
             "message": "Market data unavailable"
         }
 
@@ -61,6 +67,12 @@ def generate_market_strategy(market_regime):
             "strategy": "Aggressive Growth",
             "portfolio_mode": "aggressive",
             "cash_target": 5,
+
+            "market_strength": strength,
+            "confidence": confidence,
+            "recommendation": "BUY",
+            "rebalance_action": "Increase Equity",
+
             "message":
                 f"Strong momentum detected. "
                 f"Growth allocation recommended. "
@@ -76,6 +88,12 @@ def generate_market_strategy(market_regime):
             "strategy": "Defensive Strategy",
             "portfolio_mode": "conservative",
             "cash_target": 30,
+
+            "market_strength": strength,
+            "confidence": confidence,
+            "recommendation": "REDUCE",
+            "rebalance_action": "Increase Cash",
+
             "message":
                 f"Risk control recommended. "
                 f"Market weakness detected. "
@@ -87,14 +105,20 @@ def generate_market_strategy(market_regime):
     else:
 
         strategy = {
-            "market": "NEUTRAL",
+            "market": regime,
             "strategy": "Balanced Strategy",
             "portfolio_mode": "balanced",
             "cash_target": 10,
+
+            "market_strength": strength,
+            "confidence": confidence,
+            "recommendation": "HOLD",
+            "rebalance_action": "No Action",
+
             "message":
                 f"Market balance maintained. "
                 f"Strength {strength}. "
-                f"Confidence {confidence}%"
+                f"Confidence {confidence}%"                
         }
 
 
