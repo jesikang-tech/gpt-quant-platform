@@ -596,6 +596,8 @@ loadAIDecisionReliability();
 
 loadAIAdaptiveStrategy();
 
+loadAIRebalance();
+
 loadAIDecisionHistory();
 
 
@@ -2839,6 +2841,112 @@ async function loadAIAdaptiveStrategy(){
         💡 AI Recommendation :
         <br>
         ${strategy.message}
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIRebalance(){
+
+    const response =
+    await fetch(
+        "/api/portfolio/ai-rebalance"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const recommendation =
+    result.recommendation;
+
+
+    const panel =
+    document.getElementById(
+        "ai-rebalance"
+    );
+
+
+    let changesHTML = "";
+
+
+    recommendation.changes.forEach(
+        item => {
+
+            changesHTML +=
+            `
+            <p>
+            🏅 ${item.ticker}
+            :
+            <b>
+            ${item.action}
+            </b>
+            <br>
+            ${item.reason}
+            </p>
+            `;
+
+        }
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-rebalance-card">
+
+
+        <h3>
+        🔄 AI Portfolio Rebalance
+        </h3>
+
+
+        <p>
+        Rebalance Action :
+        <b>
+        ${recommendation.rebalance_action}
+        </b>
+        </p>
+
+
+        <p>
+        Confidence :
+        <b>
+        ${recommendation.confidence}
+        </b>
+        </p>
+
+
+        <p>
+        Market View :
+        <b>
+        ${recommendation.market_view}
+        </b>
+        </p>
+
+
+        <p>
+        Recommended Mode :
+        <b>
+        ${recommendation.recommended_mode}
+        </b>
+        </p>
+
+        
+
+        ${changesHTML}
+
+
+        <p>
+        💡 AI Recommendation :
+        <br>
+        ${recommendation.message}
         </p>
 
 

@@ -1647,6 +1647,162 @@ def get_ai_adaptive_strategy():
 
 
 
+def get_ai_rebalance_recommendation():
+    """
+    AI Portfolio Auto Rebalance Recommendation Engine
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 최신 Adaptive Strategy 조회
+
+    cursor.execute(
+        """
+        SELECT
+            decision_score,
+            market_view,
+            recommended_mode,
+            top_etf
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    )
+
+
+    decision = cursor.fetchone()
+
+
+    conn.close()
+
+
+    if decision:
+
+        score = decision[0]
+
+        market_view = decision[1]
+
+        mode = decision[2]
+
+        top_etf = decision[3]
+
+
+    else:
+
+        score = 0
+
+        market_view = "UNKNOWN"
+
+        mode = "balanced"
+
+        top_etf = None
+
+
+
+    changes = []
+
+
+    rebalance_action = "HOLD"
+
+
+    confidence = score
+
+
+
+    # Rebalance Logic
+
+
+    if score >= 85:
+
+
+        if market_view == "BULLISH":
+
+            rebalance_action = "ADJUST"
+
+
+            changes.append(
+                {
+                    "ticker": top_etf,
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Strong market condition and high AI confidence"
+                }
+            )
+
+
+        elif market_view == "BEARISH":
+
+            rebalance_action = "ADJUST"
+
+
+            changes.append(
+                {
+                    "ticker": "CASH",
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Risk reduction based on market weakness"
+                }
+            )
+
+
+        else:
+
+            rebalance_action = "MAINTAIN"
+
+
+            changes.append(
+                {
+                    "ticker": top_etf,
+                    "action": "KEEP_WEIGHT",
+                    "reason":
+                    "Balanced market condition"
+                }
+            )
+
+
+    else:
+
+
+        rebalance_action = "REDUCE_RISK"
+
+
+        changes.append(
+            {
+                "ticker": "CASH",
+                "action": "INCREASE_WEIGHT",
+                "reason":
+                "AI confidence below optimal level"
+            }
+        )
+
+
+
+    return {
+
+        "rebalance_action":
+            rebalance_action,
+
+        "confidence":
+            confidence,
+
+        "market_view":
+            market_view,
+
+        "recommended_mode":
+            mode,
+
+        "changes":
+            changes,
+
+        "message":
+            "AI portfolio allocation recommendation generated"
+
+    }
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회

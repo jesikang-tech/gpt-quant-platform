@@ -44,7 +44,8 @@ from repository import (
     get_ai_decision_statistics,
     get_ai_decision_performance,
     get_ai_decision_reliability,
-    get_ai_adaptive_strategy
+    get_ai_adaptive_strategy,
+    get_ai_rebalance_recommendation
 )
 
 app = Flask(__name__)
@@ -513,6 +514,22 @@ def ai_adaptive_strategy_api():
         {
             "success": True,
             "strategy": strategy
+        }
+    )
+
+
+@app.route("/api/portfolio/ai-rebalance")
+def ai_rebalance_api():
+
+    recommendation = (
+        get_ai_rebalance_recommendation()
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "recommendation": recommendation
         }
     )
 
