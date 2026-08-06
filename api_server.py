@@ -28,7 +28,8 @@ from core.market_strategy import generate_market_strategy
 from core.ai_decision_engine import (
     generate_ai_decision,
     calculate_decision_score,
-    get_decision_grade
+    get_decision_grade,
+    generate_decision_intelligence
 )
 
 from repository import (
@@ -171,11 +172,20 @@ def ai_decision_api():
     )
 
 
+    intelligence = generate_decision_intelligence(
+        decision,
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+
     return jsonify(
 
         {
             "success": True,
-            "decision": decision
+            "decision": decision,
+            "intelligence": intelligence
         }
 
     )

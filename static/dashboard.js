@@ -1951,6 +1951,71 @@ async function loadAIDecision(){
         </p>
 
 
+        <hr>
+
+
+        <h4>
+        🧠 AI Decision Intelligence
+        </h4>
+
+
+        <p>
+        🏆 Decision Quality :
+        <br>
+
+        <b>
+        ${result.intelligence.decision_quality}
+        </b>
+
+        </p>
+
+
+
+        <p>
+        🌎 Market Alignment :
+        <br>
+
+        <b>
+        ${result.intelligence.market_alignment}
+        </b>
+
+        </p>
+
+
+
+        <p>
+        ❤️ Portfolio Health :
+        <br>
+
+        <b>
+        ${result.intelligence.portfolio_health}
+        </b>
+
+        </p>
+
+
+
+        <p>
+        🏅 Top ETF :
+        <br>
+
+        <b>
+        ${result.intelligence.top_etf}
+        </b>
+
+        </p>
+
+
+
+        <p>
+        💡 AI Opinion :
+        <br>
+
+        ${result.intelligence.ai_opinion}
+
+        </p>
+
+
         <p>
         🌎 Market View :
         <br>

@@ -332,3 +332,128 @@ def get_decision_grade(score):
     else:
 
         return "C"
+
+
+def generate_decision_intelligence(
+        decision,
+        market_regime,
+        portfolio_health,
+        top_etf
+):
+    """
+    Generate AI Decision Intelligence Report
+
+    Returns:
+
+    {
+        "decision_quality": "A",
+        "market_alignment": "NEUTRAL",
+        "portfolio_health": 89.7,
+        "top_etf": "365040",
+        "ai_opinion": "..."
+    }
+
+    """
+
+
+    if not decision:
+
+        return {
+
+            "decision_quality":
+                "UNKNOWN",
+
+            "market_alignment":
+                "UNKNOWN",
+
+            "portfolio_health":
+                0,
+
+            "top_etf":
+                "-",
+
+            "ai_opinion":
+                "Unable to generate intelligence"
+
+        }
+
+
+
+    decision_score = decision.get(
+        "decision_score",
+        0
+    )
+
+
+    grade = get_decision_grade(
+        decision_score
+    )
+
+
+    market_view = market_regime.get(
+        "regime",
+        "UNKNOWN"
+    )
+
+
+    health_score = portfolio_health.get(
+        "health_score",
+        0
+    )
+
+
+    ticker = top_etf.get(
+        "ticker",
+        "-"
+    )
+
+
+
+    if grade in ["A+", "A"]:
+
+        opinion = (
+            "AI confidence is high. "
+            "Current portfolio allocation is considered appropriate."
+        )
+
+
+    elif grade == "B":
+
+        opinion = (
+            "Portfolio is acceptable, "
+            "but market conditions should be monitored."
+        )
+
+
+    else:
+
+        opinion = (
+            "Risk management is required "
+            "before increasing exposure."
+        )
+
+
+
+    return {
+
+
+        "decision_quality":
+            grade,
+
+
+        "market_alignment":
+            market_view,
+
+
+        "portfolio_health":
+            health_score,
+
+
+        "top_etf":
+            ticker,
+
+
+        "ai_opinion":
+            opinion
+
+    }    
