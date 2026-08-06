@@ -817,6 +817,424 @@ def get_ai_decision_history(limit=10):
 
 
 
+def get_ai_decision_summary():
+    """
+    AI Decision Summary Analytics
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 전체 판단 횟수
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_history
+        """
+    )
+
+    total_decisions = cursor.fetchone()[0]
+
+
+    # 평균 Decision Score
+    cursor.execute(
+        """
+        SELECT AVG(decision_score)
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        """
+    )
+
+    avg_score_row = cursor.fetchone()
+
+    avg_score = (
+        round(avg_score_row[0], 1)
+        if avg_score_row[0]
+        else 0
+    )
+
+
+    # 최근 Decision 정보
+    cursor.execute(
+        """
+        SELECT
+            decision,
+            grade,
+            market_view,
+            top_etf
+        FROM ai_decision_history
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    )
+
+
+    latest = cursor.fetchone()
+
+
+    conn.close()
+
+
+    if latest:
+
+        latest_decision = latest[0]
+        latest_grade = latest[1]
+        latest_market = latest[2]
+        latest_etf = latest[3]
+
+    else:
+
+        latest_decision = None
+        latest_grade = None
+        latest_market = None
+        latest_etf = None
+
+
+
+    return {
+
+        "total_decisions":
+            total_decisions,
+
+        "average_score":
+            avg_score,
+
+        "latest_decision":
+            latest_decision,
+
+        "latest_grade":
+            latest_grade,
+
+        "market_view":
+            latest_market,
+
+        "top_etf":
+            latest_etf
+
+    }
+
+
+
+def get_ai_decision_quality():
+    """
+    AI Decision Quality Analysis
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 최근 Decision Score 5개 조회
+    cursor.execute(
+        """
+        SELECT
+            decision_score
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 5
+        """
+    )
+
+
+    scores = [
+        row[0]
+        for row in cursor.fetchall()
+    ]
+
+
+    conn.close()
+
+
+    if not scores:
+
+        return {
+
+            "quality_level": "UNKNOWN",
+            "score_stability": "UNKNOWN",
+            "recent_trend": "UNKNOWN",
+            "evaluation": "No decision data"
+
+        }
+
+
+    # 평균 점수
+    average_score = sum(scores) / len(scores)
+
+
+    # 최근 변화 분석
+    if len(scores) >= 2:
+
+        latest_score = scores[0]
+        previous_score = scores[1]
+
+
+        if latest_score > previous_score:
+
+            trend = "Improving"
+
+        elif latest_score < previous_score:
+
+            trend = "Declining"
+
+        else:
+
+            trend = "Stable"
+
+    else:
+
+        trend = "Stable"
+
+
+
+    # 점수 안정성
+    score_range = max(scores) - min(scores)
+
+
+    if score_range <= 5:
+
+        stability = "Stable"
+
+    else:
+
+        stability = "Variable"
+
+
+
+    # Quality 평가
+
+    if average_score >= 90:
+
+        quality = "Excellent"
+
+    elif average_score >= 80:
+
+        quality = "Good"
+
+    else:
+
+        quality = "Needs Review"
+
+
+
+    return {
+
+        "quality_level":
+            quality,
+
+        "score_stability":
+            stability,
+
+        "recent_trend":
+            trend,
+
+        "evaluation":
+            f"AI decision quality is {quality.lower()} with {stability.lower()} score behavior"
+
+    }
+
+
+
+def get_ai_decision_trend():
+    """
+    AI Decision Trend Analysis
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            decision_score
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 10
+        """
+    )
+
+
+    scores = [
+        row[0]
+        for row in cursor.fetchall()
+    ]
+
+
+    conn.close()
+
+
+    if len(scores) < 2:
+
+        return {
+
+            "trend": "UNKNOWN",
+
+            "average_change": 0,
+
+            "latest_score": (
+                scores[0]
+                if scores
+                else None
+            ),
+
+            "previous_score": None
+
+        }
+
+
+    latest = scores[0]
+
+    previous = scores[1]
+
+    change = round(
+        latest - previous,
+        1
+    )
+
+
+    if change > 0:
+
+        trend = "Improving"
+
+    elif change < 0:
+
+        trend = "Declining"
+
+    else:
+
+        trend = "Stable"
+
+
+    return {
+
+        "trend":
+            trend,
+
+        "average_change":
+            change,
+
+        "latest_score":
+            latest,
+
+        "previous_score":
+            previous
+
+    }
+
+
+
+def get_ai_decision_chart_data(limit=20):
+    """
+    AI Decision Score Chart Data
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            created_at,
+            decision_score
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id ASC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    labels = []
+    scores = []
+
+    for created_at, score in rows:
+
+        labels.append(created_at)
+
+        scores.append(score)
+
+    return {
+        "labels": labels,
+        "scores": scores
+    }
+
+
+def get_ai_decision_statistics():
+    """
+    AI Decision Statistics
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            MAX(decision_score),
+            MIN(decision_score),
+            AVG(decision_score)
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        """
+    )
+
+    result = cursor.fetchone()
+
+    max_score = round(result[0], 1) if result[0] else 0
+    min_score = round(result[1], 1) if result[1] else 0
+    average_score = round(result[2], 1) if result[2] else 0
+
+    cursor.execute(
+        """
+        SELECT
+            AVG(decision_score)
+        FROM
+        (
+            SELECT decision_score
+            FROM ai_decision_history
+            WHERE decision_score IS NOT NULL
+            ORDER BY id DESC
+            LIMIT 5
+        )
+        """
+    )
+
+    recent_average = cursor.fetchone()[0]
+
+    recent_average = (
+        round(recent_average, 1)
+        if recent_average
+        else 0
+    )
+
+    conn.close()
+
+    return {
+
+        "highest_score": max_score,
+
+        "lowest_score": min_score,
+
+        "average_score": average_score,
+
+        "recent_average": recent_average,
+
+        "score_spread": round(
+            max_score - min_score,
+            1
+        )
+
+    }
+
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회

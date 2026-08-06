@@ -580,6 +580,16 @@ loadMarketStrategy();
 
 loadAIDecision();
 
+loadAIDecisionSummary();
+
+loadAIDecisionQuality();
+
+loadAIDecisionTrend();
+
+loadAIDecisionChart();
+
+loadAIDecisionStatistics();
+
 loadAIDecisionHistory();
 
 
@@ -2161,5 +2171,411 @@ async function loadAIDecisionHistory(){
 
 
     panel.innerHTML = html;
+
+}
+
+
+
+async function loadAIDecisionSummary(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/summary"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const summary =
+    result.summary;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-summary"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-summary-card">
+
+
+        <h3>
+        📊 AI Decision Analytics
+        </h3>
+
+
+        <p>
+        Total Decisions :
+        <b>
+        ${summary.total_decisions}
+        </b>
+        </p>
+
+
+        <p>
+        Average Score :
+        <b>
+        ${summary.average_score}
+        / 100
+        </b>
+        </p>
+
+
+        <p>
+        Latest Decision :
+        <b>
+        ${summary.latest_decision}
+        </b>
+        </p>
+
+
+        <p>
+        AI Grade :
+        <b>
+        ${summary.latest_grade}
+        </b>
+        </p>
+
+
+        <p>
+        🌎 Market Alignment :
+        <b>
+        ${summary.market_view}
+        </b>
+        </p>
+
+
+        <p>
+        🏅 Top ETF :
+        <b>
+        ${summary.top_etf}
+        </b>
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIDecisionQuality(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/quality"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const quality =
+    result.quality;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-quality"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-quality-card">
+
+        <h3>
+        🧠 AI Decision Quality
+        </h3>
+
+        <p>
+        Quality Level :
+        <b>
+        ${quality.quality_level}
+        </b>
+        </p>
+
+        <p>
+        Score Stability :
+        <b>
+        ${quality.score_stability}
+        </b>
+        </p>
+
+        <p>
+        Recent Trend :
+        <b>
+        ${quality.recent_trend}
+        </b>
+        </p>
+
+        <p>
+        💡 AI Evaluation :
+        <br>
+        ${quality.evaluation}
+        </p>
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIDecisionTrend(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/trend"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const trend =
+    result.trend;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-trend"
+    );
+
+
+    let trendIcon = "➡";
+
+    if(trend.trend === "Improving"){
+
+        trendIcon = "📈";
+
+    }
+    else if(trend.trend === "Declining"){
+
+        trendIcon = "📉";
+
+    }
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-trend-card">
+
+        <h3>
+        ${trendIcon} AI Decision Trend
+        </h3>
+
+        <p>
+        Trend :
+        <b>
+        ${trend.trend}
+        </b>
+        </p>
+
+        <p>
+        Latest Score :
+        <b>
+        ${trend.latest_score}
+        </b>
+        </p>
+
+        <p>
+        Previous Score :
+        <b>
+        ${trend.previous_score}
+        </b>
+        </p>
+
+        <p>
+        Score Change :
+        <b>
+        ${trend.average_change}
+        </b>
+        </p>
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIDecisionChart(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/chart"
+    );
+
+    const result =
+    await response.json();
+
+    const ctx =
+    document
+    .getElementById(
+        "aiDecisionChart"
+    );
+
+    new Chart(ctx,{
+
+        type:"line",
+
+        data:{
+
+            labels:
+            result.chart.labels,
+
+            datasets:[{
+
+                label:
+                "Decision Score",
+
+                data:
+                result.chart.scores,
+
+                borderWidth:3,
+
+                pointRadius:5,
+
+                pointHoverRadius:7,
+
+                tension:0.35,
+
+                fill:false
+
+            }]
+
+        },
+
+        options:{
+
+            responsive:true,
+
+            maintainAspectRatio:false,
+
+            plugins:{
+
+                legend:{
+                    display:true
+                },
+
+                title:{
+                    display:true,
+                    text:"AI Decision Score History"
+                }
+
+            },
+
+            scales:{
+
+                y:{
+
+                    min:0,
+
+                    max:100,
+
+                    ticks:{
+
+                        stepSize:10
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+
+
+
+async function loadAIDecisionStatistics(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/statistics"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const statistics =
+    result.statistics;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-statistics"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-statistics-card">
+
+
+        <h3>
+        📊 AI Decision Statistics
+        </h3>
+
+
+        <p>
+        Highest Score :
+        <b>
+        ${statistics.highest_score}
+        </b>
+        </p>
+
+
+        <p>
+        Lowest Score :
+        <b>
+        ${statistics.lowest_score}
+        </b>
+        </p>
+
+
+        <p>
+        Average Score :
+        <b>
+        ${statistics.average_score}
+        </b>
+        </p>
+
+
+        <p>
+        Recent Average :
+        <b>
+        ${statistics.recent_average}
+        </b>
+        </p>
+
+
+        <p>
+        Score Spread :
+        <b>
+        ${statistics.score_spread}
+        </b>
+        </p>
+
+
+    </div>
+    `;
 
 }

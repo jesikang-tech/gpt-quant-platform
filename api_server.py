@@ -37,7 +37,11 @@ from repository import (
     get_portfolio_history,
     get_portfolio_analytics,
     save_ai_decision_history,
-    get_ai_decision_history
+    get_ai_decision_history,
+    get_ai_decision_summary,
+    get_ai_decision_quality,
+    get_ai_decision_chart_data,
+    get_ai_decision_statistics
 )
 
 app = Flask(__name__)
@@ -394,6 +398,72 @@ def ai_decision_history_api():
         }
     )
 
+
+
+@app.route("/api/ai-decision/summary")
+def ai_decision_summary_api():
+
+    summary = get_ai_decision_summary()
+
+
+    return jsonify(
+        {
+            "success": True,
+            "summary": summary
+        }
+    )
+
+
+@app.route("/api/ai-decision/quality")
+def ai_decision_quality_api():
+
+    quality = get_ai_decision_quality()
+
+    return jsonify(
+        {
+            "success": True,
+            "quality": quality
+        }
+    )
+
+
+@app.route("/api/ai-decision/trend")
+def ai_decision_trend_api():
+
+    trend = get_ai_decision_trend()
+
+    return jsonify(
+        {
+            "success": True,
+            "trend": trend
+        }
+    )
+
+
+@app.route("/api/ai-decision/chart")
+def ai_decision_chart_api():
+
+    chart = get_ai_decision_chart_data()
+
+    return jsonify(
+        {
+            "success": True,
+            "chart": chart
+        }
+    )
+
+
+@app.route("/api/ai-decision/statistics")
+def ai_decision_statistics_api():
+
+    statistics = get_ai_decision_statistics()
+
+    return jsonify(
+        {
+            "success": True,
+            "statistics": statistics
+        }
+    )
 
 
 @app.route("/api/portfolio/analytics")
