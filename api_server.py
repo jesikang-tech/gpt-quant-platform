@@ -23,6 +23,7 @@ from core.portfolio_advisor import (
 
 from core.market_regime import analyze_market_regime
 from core.market_strategy import generate_market_strategy
+from core.ai_decision_engine import generate_ai_decision
 
 from repository import (
     save_portfolio_history,
@@ -96,6 +97,66 @@ def market_strategy_api():
 
     return jsonify(
         strategy
+    )
+
+
+
+@app.route("/api/ai-decision")
+def ai_decision_api():
+
+    market_regime = analyze_market_regime()
+
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+
+    ranking_data = get_dashboard_api_data()
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+
+    top_etf = {
+
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+
+    }
+
+
+    decision = generate_ai_decision(
+
+        market_regime,
+
+        market_strategy,
+
+        portfolio_health,
+
+        top_etf
+
+    )
+
+
+    return jsonify(
+
+        {
+            "success": True,
+            "decision": decision
+        }
+
     )
 
 
