@@ -598,6 +598,8 @@ loadAIAdaptiveStrategy();
 
 loadAIRebalance();
 
+loadAIOptimization();
+
 loadAIDecisionHistory();
 
 
@@ -2947,6 +2949,93 @@ async function loadAIRebalance(){
         💡 AI Recommendation :
         <br>
         ${recommendation.message}
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIOptimization(){
+
+    const response =
+    await fetch(
+        "/api/portfolio/ai-optimization"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const optimization =
+    result.optimization;
+
+
+    const panel =
+    document.getElementById(
+        "ai-optimization"
+    );
+
+
+    let allocationHTML = "";
+
+
+    optimization.optimized_allocation.forEach(
+        item => {
+
+            allocationHTML +=
+            `
+            <p>
+            🏅 ${item.ticker}
+            <br>
+            Current :
+            <b>
+            ${item.current_weight}%
+            </b>
+
+            →
+
+            Target :
+            <b>
+            ${item.target_weight}%
+            </b>
+            </p>
+            `;
+
+        }
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-optimization-card">
+
+
+        <h3>
+        🎯 AI Portfolio Optimization
+        </h3>
+
+
+        <p>
+        Status :
+        <b>
+        ${optimization.optimization_status}
+        </b>
+        </p>
+
+
+        ${allocationHTML}
+
+
+        <p>
+        💡 AI Message :
+        <br>
+        ${optimization.message}
         </p>
 
 

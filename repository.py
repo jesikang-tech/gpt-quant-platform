@@ -1803,6 +1803,104 @@ def get_ai_rebalance_recommendation():
     }
 
 
+def get_ai_portfolio_optimization():
+    """
+    AI Portfolio Self Optimization Engine
+
+    Current allocation 분석 후
+    Target allocation 제안
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 최근 Portfolio History 조회
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            weight
+        FROM portfolio_history
+        WHERE id IN
+        (
+            SELECT MAX(id)
+            FROM portfolio_history
+            GROUP BY ticker
+        )
+        ORDER BY weight DESC
+        """
+    )
+
+
+    portfolio = cursor.fetchall()
+
+
+    conn.close()
+
+
+    optimized_allocation = []
+
+
+    if portfolio:
+
+
+        total_weight = sum(
+            item[1]
+            for item in portfolio
+        )
+
+
+        for ticker, weight in portfolio:
+
+
+            current = weight
+
+
+            target = weight
+
+
+            # AI Optimization Rule
+
+            if weight >= 40:
+
+                target = weight - 5
+
+
+            elif weight <= 10:
+
+                target = weight + 5
+
+
+
+            optimized_allocation.append(
+                {
+                    "ticker": ticker,
+
+                    "current_weight":
+                        current,
+
+                    "target_weight":
+                        target
+                }
+            )
+
+
+    return {
+
+        "optimization_status":
+            "COMPLETED",
+
+        "optimized_allocation":
+            optimized_allocation,
+
+        "message":
+            "AI portfolio optimization completed"
+
+    }
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회
