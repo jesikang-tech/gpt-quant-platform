@@ -1509,6 +1509,143 @@ def get_ai_decision_reliability():
 
 
 
+def get_ai_adaptive_strategy():
+    """
+    AI Adaptive Strategy Engine
+
+    Decision Reliability,
+    Market View,
+    Portfolio Condition
+    기반 전략 조정
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 최신 AI Decision
+    cursor.execute(
+        """
+        SELECT
+            decision_score,
+            market_view,
+            recommended_mode
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    )
+
+    decision = cursor.fetchone()
+
+
+    conn.close()
+
+
+    if decision:
+
+        score = decision[0]
+
+        market_view = decision[1]
+
+        current_mode = decision[2]
+
+
+    else:
+
+        score = 0
+
+        market_view = "UNKNOWN"
+
+        current_mode = "balanced"
+
+
+
+    # 기본값
+
+    strategy_mode = current_mode.upper()
+
+    adjustment = "MAINTAIN"
+
+    risk_control = "NORMAL"
+
+
+
+    # Adaptive Logic
+
+
+    if score >= 85:
+
+        if market_view == "BULLISH":
+
+            strategy_mode = "AGGRESSIVE"
+
+            adjustment = "INCREASE_GROWTH"
+
+            risk_control = "ACTIVE"
+
+
+        elif market_view == "BEARISH":
+
+            strategy_mode = "DEFENSIVE"
+
+            adjustment = "REDUCE_RISK"
+
+            risk_control = "HIGH"
+
+
+        else:
+
+            strategy_mode = "BALANCED"
+
+            adjustment = "MAINTAIN"
+
+            risk_control = "NORMAL"
+
+
+    elif score >= 70:
+
+        strategy_mode = "BALANCED"
+
+        adjustment = "MONITOR"
+
+        risk_control = "NORMAL"
+
+
+    else:
+
+        strategy_mode = "DEFENSIVE"
+
+        adjustment = "REDUCE_RISK"
+
+        risk_control = "HIGH"
+
+
+
+    return {
+
+        "strategy_mode":
+            strategy_mode,
+
+        "adjustment":
+            adjustment,
+
+        "confidence":
+            score,
+
+        "risk_control":
+            risk_control,
+
+        "market_view":
+            market_view,
+
+        "message":
+            "Current strategy is optimized for market condition"
+
+    }
+
+
 
 def get_portfolio_analytics():
     """

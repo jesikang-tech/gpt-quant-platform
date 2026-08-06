@@ -43,7 +43,8 @@ from repository import (
     get_ai_decision_chart_data,
     get_ai_decision_statistics,
     get_ai_decision_performance,
-    get_ai_decision_reliability
+    get_ai_decision_reliability,
+    get_ai_adaptive_strategy
 )
 
 app = Flask(__name__)
@@ -496,6 +497,22 @@ def ai_decision_reliability_api():
         {
             "success": True,
             "reliability": reliability
+        }
+    )
+
+
+@app.route("/api/ai-decision/adaptive-strategy")
+def ai_adaptive_strategy_api():
+
+    strategy = (
+        get_ai_adaptive_strategy()
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "strategy": strategy
         }
     )
 

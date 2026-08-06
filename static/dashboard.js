@@ -594,6 +594,8 @@ loadAIDecisionPerformance();
 
 loadAIDecisionReliability();
 
+loadAIAdaptiveStrategy();
+
 loadAIDecisionHistory();
 
 
@@ -2750,6 +2752,93 @@ async function loadAIDecisionReliability(){
         💡 AI Status :
         <br>
         ${reliability.message}
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIAdaptiveStrategy(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/adaptive-strategy"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const strategy =
+    result.strategy;
+
+
+    const panel =
+    document.getElementById(
+        "ai-adaptive-strategy"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-adaptive-card">
+
+
+        <h3>
+        🤖 AI Adaptive Strategy
+        </h3>
+
+
+        <p>
+        Strategy Mode :
+        <b>
+        ${strategy.strategy_mode}
+        </b>
+        </p>
+
+
+        <p>
+        Adjustment :
+        <b>
+        ${strategy.adjustment}
+        </b>
+        </p>
+
+
+        <p>
+        Confidence :
+        <b>
+        ${strategy.confidence}
+        </b>
+        </p>
+
+
+        <p>
+        Risk Control :
+        <b>
+        ${strategy.risk_control}
+        </b>
+        </p>
+
+
+        <p>
+        🌎 Market View :
+        <b>
+        ${strategy.market_view}
+        </b>
+        </p>
+
+
+        <p>
+        💡 AI Recommendation :
+        <br>
+        ${strategy.message}
         </p>
 
 
