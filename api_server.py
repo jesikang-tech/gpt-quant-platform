@@ -35,7 +35,8 @@ from core.ai_decision_engine import (
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
-    get_portfolio_analytics
+    get_portfolio_analytics,
+    save_ai_decision_history
 )
 
 app = Flask(__name__)
@@ -154,6 +155,40 @@ def ai_decision_api():
 
         top_etf
 
+    )
+
+
+    decision["decision_score"] = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+
+    decision["grade"] = get_decision_grade(
+        decision["decision_score"]
+    )
+
+
+    from datetime import datetime
+
+
+    created_at = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+
+    save_ai_decision_history(
+        decision.get("decision"),
+        decision.get("action"),
+        decision.get("decision_score"),
+        decision.get("grade"),
+        decision.get("market_view"),
+        decision.get("recommended_mode"),
+        top_etf.get("ticker"),
+        decision.get("reason"),
+        decision.get("summary"),
+        created_at
     )
 
 

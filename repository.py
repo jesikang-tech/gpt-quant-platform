@@ -704,6 +704,73 @@ def get_portfolio_history(limit=50):
 
 
 
+def save_ai_decision_history(
+        decision,
+        action,
+        decision_score,
+        grade,
+        market_view,
+        recommended_mode,
+        top_etf,
+        reason,
+        summary,
+        created_at
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        INSERT INTO ai_decision_history
+        (
+            decision,
+            action,
+            decision_score,
+            grade,
+            market_view,
+            recommended_mode,
+            top_etf,
+            reason,
+            summary,
+            created_at
+        )
+
+        VALUES
+        (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?
+        )
+        """,
+        (
+            decision,
+            action,
+            decision_score,
+            grade,
+            market_view,
+            recommended_mode,
+            top_etf,
+            reason,
+            summary,
+            created_at
+        )
+    )
+
+
+    conn.commit()
+    conn.close()
+
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회

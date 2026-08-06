@@ -83,6 +83,25 @@ def init_database():
     )
     """)
 
+
+    # AI Decision History
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ai_decision_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        decision TEXT,
+        action TEXT,
+        decision_score REAL,
+        grade TEXT,
+        market_view TEXT,
+        recommended_mode TEXT,
+        top_etf TEXT,
+        reason TEXT,
+        summary TEXT,
+        created_at TEXT
+    )
+    """)
+
+
     conn.commit()
     conn.close()
 
