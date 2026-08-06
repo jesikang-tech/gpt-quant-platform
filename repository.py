@@ -1235,6 +1235,167 @@ def get_ai_decision_statistics():
 
 
 
+def get_ai_decision_performance():
+    """
+    AI Decision Performance Analysis
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    # 전체 Decision 개수
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        """
+    )
+
+    total_decisions = cursor.fetchone()[0]
+
+
+    # 평균 Score
+    cursor.execute(
+        """
+        SELECT AVG(decision_score)
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        """
+    )
+
+    average_score = cursor.fetchone()[0]
+
+
+    # 최고 / 최저 Score
+    cursor.execute(
+        """
+        SELECT
+            MAX(decision_score),
+            MIN(decision_score)
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        """
+    )
+
+    score_range = cursor.fetchone()
+
+
+    highest_score = score_range[0]
+
+    lowest_score = score_range[1]
+
+
+    # 최근 Score
+    cursor.execute(
+        """
+        SELECT decision_score
+        FROM ai_decision_history
+        WHERE decision_score IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    )
+
+    latest_score = cursor.fetchone()[0]
+
+
+    conn.close()
+
+
+    if average_score:
+
+        average_score = round(
+            average_score,
+            1
+        )
+
+    else:
+
+        average_score = 0
+
+
+
+    if highest_score:
+
+        highest_score = round(
+            highest_score,
+            1
+        )
+
+    else:
+
+        highest_score = 0
+
+
+
+    if lowest_score:
+
+        lowest_score = round(
+            lowest_score,
+            1
+        )
+
+    else:
+
+        lowest_score = 0
+
+
+
+    if latest_score:
+
+        latest_score = round(
+            latest_score,
+            1
+        )
+
+    else:
+
+        latest_score = 0
+
+
+
+    # Reliability 판단
+
+    if average_score >= 85:
+
+        reliability = "HIGH"
+
+    elif average_score >= 70:
+
+        reliability = "MEDIUM"
+
+    else:
+
+        reliability = "LOW"
+
+
+
+    return {
+
+        "total_decisions":
+            total_decisions,
+
+        "average_score":
+            average_score,
+
+        "highest_score":
+            highest_score,
+
+        "lowest_score":
+            lowest_score,
+
+        "latest_score":
+            latest_score,
+
+        "reliability":
+            reliability
+
+    }
+
+
+
 def get_portfolio_analytics():
     """
     Portfolio Analytics Data 조회

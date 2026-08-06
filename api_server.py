@@ -41,7 +41,8 @@ from repository import (
     get_ai_decision_summary,
     get_ai_decision_quality,
     get_ai_decision_chart_data,
-    get_ai_decision_statistics
+    get_ai_decision_statistics,
+    get_ai_decision_performance
 )
 
 app = Flask(__name__)
@@ -462,6 +463,22 @@ def ai_decision_statistics_api():
         {
             "success": True,
             "statistics": statistics
+        }
+    )
+
+
+@app.route("/api/ai-decision/performance")
+def ai_decision_performance_api():
+
+    performance = (
+        get_ai_decision_performance()
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "performance": performance
         }
     )
 

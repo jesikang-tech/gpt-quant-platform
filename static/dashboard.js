@@ -590,6 +590,8 @@ loadAIDecisionChart();
 
 loadAIDecisionStatistics();
 
+loadAIDecisionPerformance();
+
 loadAIDecisionHistory();
 
 
@@ -2571,6 +2573,94 @@ async function loadAIDecisionStatistics(){
         Score Spread :
         <b>
         ${statistics.score_spread}
+        </b>
+        </p>
+
+
+    </div>
+    `;
+
+}
+
+
+
+async function loadAIDecisionPerformance(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/performance"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const performance =
+    result.performance;
+
+
+    const panel =
+    document.getElementById(
+        "ai-decision-performance"
+    );
+
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-performance-card">
+
+
+        <h3>
+        🧠 AI Decision Performance
+        </h3>
+
+
+        <p>
+        Reliability :
+        <b>
+        ${performance.reliability}
+        </b>
+        </p>
+
+
+        <p>
+        Total Decisions :
+        <b>
+        ${performance.total_decisions}
+        </b>
+        </p>
+
+
+        <p>
+        Average Score :
+        <b>
+        ${performance.average_score}
+        </b>
+        </p>
+
+
+        <p>
+        Highest Score :
+        <b>
+        ${performance.highest_score}
+        </b>
+        </p>
+
+
+        <p>
+        Lowest Score :
+        <b>
+        ${performance.lowest_score}
+        </b>
+        </p>
+
+
+        <p>
+        Latest Score :
+        <b>
+        ${performance.latest_score}
         </b>
         </p>
 
