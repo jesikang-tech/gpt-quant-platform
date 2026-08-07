@@ -29,11 +29,19 @@ from core.portfolio_explainability import (
     PortfolioExplainabilityEngine
 )
 
+from core.portfolio_conversational import (
+    PortfolioConversationalAnalyst
+)
+
 from core.ai_decision_engine import (
     generate_ai_decision,
     calculate_decision_score,
     get_decision_grade,
     generate_decision_intelligence
+)
+
+from core.portfolio_conversational import (
+    PortfolioConversationalAnalyst
 )
 
 from repository import (
@@ -365,6 +373,54 @@ def portfolio_explain_api():
             "explanation": explanation
         }
     )
+
+
+
+@app.route(
+    "/api/portfolio/chat",
+    methods=["POST"]
+)
+def portfolio_chat_api():
+
+
+    data = request.json
+
+
+    question = data.get(
+        "question",
+        ""
+    )
+
+
+    ranking_data = get_dashboard_api_data()
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+
+    market_info = analyze_market_regime()
+
+
+    engine = PortfolioConversationalAnalyst()
+
+
+    result = engine.analyze(
+        question,
+        portfolio,
+        market_info
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "response": result
+        }
+    )
+
 
 
 

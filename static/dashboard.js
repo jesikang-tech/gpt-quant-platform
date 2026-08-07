@@ -3254,3 +3254,169 @@ async function loadPortfolioExplainability(){
 
 
 }
+
+
+
+
+
+
+async function askPortfolioAnalyst(){
+
+
+    const input =
+        document.getElementById(
+            "portfolio-question"
+        );
+
+
+    const resultBox =
+        document.getElementById(
+            "portfolio-analyst-result"
+        );
+
+
+
+    const question =
+        input.value.trim();
+
+
+
+    if(!question){
+
+        resultBox.innerHTML =
+            "질문을 입력해주세요.";
+
+        return;
+
+    }
+
+
+
+    resultBox.innerHTML =
+        "AI Portfolio Analyst 분석 중...";
+
+
+
+    try{
+
+
+        const response =
+            await fetch(
+                "/api/portfolio/chat",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            {
+                                question:
+                                    question
+                            }
+                        )
+                }
+            );
+
+
+
+        const result =
+            await response.json();
+
+
+
+        const data =
+            result.response;
+
+
+
+        let html = "";
+
+
+
+        html +=
+        `
+        <h3>
+        💡 AI Answer
+        </h3>
+
+        <p>
+        ${data.answer}
+        </p>
+        `;
+
+
+
+        html +=
+        `
+        <h3>
+        📊 Reason
+        </h3>
+        `;
+
+
+
+        data.reason.forEach(
+            item => {
+
+                html +=
+                `
+                <p>
+                ✓ ${item}
+                </p>
+                `;
+
+            }
+        );
+
+
+
+        html +=
+        `
+        <h3>
+        🎯 Recommendation
+        </h3>
+
+        <p>
+        ${data.recommendation}
+        </p>
+        `;
+
+
+
+        html +=
+        `
+        <h3>
+        Confidence
+        </h3>
+
+        <p>
+        ${data.confidence}
+        </p>
+        `;
+
+
+
+        resultBox.innerHTML =
+            html;
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            error
+        );
+
+
+        resultBox.innerHTML =
+            "AI Analyst 연결 오류";
+
+
+    }
+
+}
