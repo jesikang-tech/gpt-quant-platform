@@ -25,6 +25,10 @@ from core.market_regime import analyze_market_regime
 
 from core.market_strategy import generate_market_strategy
 
+from core.portfolio_explainability import (
+    PortfolioExplainabilityEngine
+)
+
 from core.ai_decision_engine import (
     generate_ai_decision,
     calculate_decision_score,
@@ -310,6 +314,55 @@ def portfolio_api():
             "portfolio": portfolio,
             "insight": insight,
             "intelligence": intelligence
+        }
+    )
+
+
+
+@app.route("/api/portfolio/explain")
+def portfolio_explain_api():
+
+    ranking_data = get_dashboard_api_data()
+
+
+    mode = request.args.get(
+        "mode",
+        "balanced"
+    )
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        mode
+    )
+
+
+    market_info = analyze_market_regime()
+
+
+    engine = PortfolioExplainabilityEngine()
+
+
+    explanation = engine.generate_explanation(
+        {
+            "allocation": {
+                item["ticker"]: item.get("weight", 0)
+                for item in portfolio
+            },
+
+            "cash_weight":
+                10
+        },
+
+        market_info
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "strategy": mode.capitalize(),
+            "explanation": explanation
         }
     )
 

@@ -600,6 +600,8 @@ loadAIRebalance();
 
 loadAIOptimization();
 
+loadPortfolioExplainability();
+
 loadAIDecisionHistory();
 
 
@@ -3154,5 +3156,101 @@ async function loadAIOptimization(){
 
     </div>
     `;
+
+}
+
+
+
+async function loadPortfolioExplainability(){
+
+
+    const response =
+    await fetch(
+        "/api/portfolio/explain"
+    );
+
+
+    const result =
+    await response.json();
+
+
+    const explanation =
+    result.explanation;
+
+
+    const panel =
+    document.getElementById(
+        "portfolio-explain-content"
+    );
+
+
+    if(!panel){
+        return;
+    }
+
+
+
+    panel.innerHTML = `
+
+
+        <h3>
+        ${explanation.summary}
+        </h3>
+
+
+        <h4>
+        📊 Factor Analysis
+        </h4>
+
+
+        ${
+            explanation.factor_analysis.map(
+                factor =>
+                `
+                <p>
+                ✓ ${factor.name}
+                :
+                ${factor.impact}
+                <br>
+                ${factor.reason}
+                </p>
+                `
+            ).join("")
+        }
+
+
+
+        <h4>
+        💼 Allocation Reason
+        </h4>
+
+
+        ${
+            explanation.allocation_reason.map(
+                item =>
+                `
+                <p>
+                ${item.ticker}
+                :
+                ${item.reason}
+                </p>
+                `
+            ).join("")
+        }
+
+
+
+        <h4>
+        🛡 Risk Analysis
+        </h4>
+
+
+        <p>
+        ${explanation.risk_analysis}
+        </p>
+
+
+    `;
+
 
 }
