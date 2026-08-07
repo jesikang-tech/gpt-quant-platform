@@ -12,6 +12,12 @@ from core.market_strategy import (
     generate_market_strategy
 )
 
+from core.optimization_scoring import (
+    OptimizationScoringEngine
+)
+
+from repository import get_etf_score
+
 def generate_portfolio(
     ranking,
     market_regime=None
@@ -447,9 +453,72 @@ def optimize_portfolio_weight(ranking, mode="balanced"):
         return []
 
 
+    engine = OptimizationScoringEngine()
+
+    optimized_ranking = []
+
+    for etf in ranking:
+
+        base_score = etf.get("score", 0)
+
+        db_score = get_etf_score(
+            etf.get("ticker")
+        )
+
+
+        if db_score:
+
+            return_score = db_score[2]
+
+            trend_score = db_score[3]
+
+            slope_score = db_score[4]
+
+
+        else:
+
+            return_score = base_score
+
+            trend_score = base_score
+
+            slope_score = base_score
+
+
+
+        optimization_score = engine.calculate_score(
+            return_score=return_score,
+            trend_score=trend_score,
+            slope_score=slope_score,
+            market_confidence=80,
+            diversification=90
+        )
+
+        new_etf = etf.copy()
+
+        new_etf["optimization_score"] = optimization_score
+
+        new_etf["return_score"] = return_score
+
+        new_etf["trend_score"] = trend_score
+
+        new_etf["slope_score"] = slope_score
+
+
+        factor_analysis = engine.analyze_factors(
+            return_score=return_score,
+            trend_score=trend_score,
+            slope_score=slope_score
+        )
+
+        new_etf["factor_analysis"] = factor_analysis
+
+
+        optimized_ranking.append(new_etf)
+
+
     sorted_ranking = sorted(
-        ranking,
-        key=lambda x: x.get("score", 0),
+        optimized_ranking,
+        key=lambda x: x.get("optimization_score", 0),
         reverse=True
     )
 
@@ -495,7 +564,8 @@ def optimize_portfolio_weight(ranking, mode="balanced"):
 
         portfolio.append(
             {
-                "ticker": etf.get("ticker"),
+                "ticker": 
+                    etf.get("ticker"),
 
                 "weight":
                     weights[index],
@@ -503,6 +573,21 @@ def optimize_portfolio_weight(ranking, mode="balanced"):
                 "score":
                     etf.get("score"),
 
+                "optimization_score":
+                    etf.get("optimization_score"),
+
+                "return_score":
+                    etf.get("return_score"),
+
+                "trend_score":
+                    etf.get("trend_score"),
+
+                "slope_score":
+                    etf.get("slope_score"), 
+
+                "factor_analysis":
+                    etf.get("factor_analysis"),
+           
                 "mode":
                     mode,
 

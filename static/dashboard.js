@@ -933,6 +933,119 @@ async function loadPortfolioAdvisor(save=false){
 
 
 
+            <div class="portfolio-optimization">
+
+            AI Optimization :
+            <b>
+            ${item.optimization_score ?? "-"}
+            </b>
+
+            </div>
+
+
+
+            <div class="portfolio-factor">
+
+            <b>
+            Factor Analysis
+            </b>
+
+            <br><br>
+
+
+            <div class="factor-item">
+
+            Return
+
+            <div class="factor-bar">
+
+            <div class="factor-fill"
+            style="width:${item.return_score ?? 0}%">
+            </div>
+
+            </div>
+
+            <b>
+            ${item.return_score ?? "-"}
+            </b>
+
+            </div>
+
+
+
+            <div class="factor-item">
+
+            Trend
+
+            <div class="factor-bar">
+
+            <div class="factor-fill"
+            style="width:${item.trend_score ?? 0}%">
+            </div>
+
+            </div>
+
+            <b>
+            ${item.trend_score ?? "-"}
+            </b>
+
+            </div>
+
+
+
+            <div class="factor-item">
+
+            Slope
+
+            <div class="factor-bar">
+
+            <div class="factor-fill"
+            style="width:${item.slope_score ?? 0}%">
+            </div>
+
+            </div>
+
+            <b>
+            ${item.slope_score ?? "-"}
+            </b>
+
+            </div>
+
+
+            <div class="factor-insight">
+
+            <b>
+            AI Factor Insight
+            </b>
+
+            <br><br>
+
+            Return :
+            <b>
+            ${item.factor_analysis?.return ?? "-"}
+            </b>
+
+            <br>
+
+            Trend :
+            <b>
+            ${item.factor_analysis?.trend ?? "-"}
+            </b>
+
+            <br>
+
+            Slope :
+            <b>
+            ${item.factor_analysis?.slope ?? "-"}
+            </b>
+
+            </div>
+
+
+            </div>
+
+
+
             <div class="portfolio-reason">
 
             ${item.reason}

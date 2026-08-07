@@ -1979,3 +1979,64 @@ def get_portfolio_analytics():
         "mode_analysis": mode_analysis,
         "weight_analysis": weight_analysis
     }
+
+
+
+def get_latest_etf_scores(limit=30):
+    """
+    최신 ETF Score 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            final_score,
+            return_score,
+            trend_score,
+            slope_score
+        FROM etf_scores
+        ORDER BY final_score DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+
+
+def get_etf_score(ticker):
+    """
+    특정 ETF Score 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            final_score,
+            return_score,
+            trend_score,
+            slope_score
+        FROM etf_scores
+        WHERE ticker=?
+        """,
+        (ticker,)
+    )
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    return row
