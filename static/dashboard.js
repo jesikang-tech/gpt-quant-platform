@@ -602,6 +602,8 @@ loadAIOptimization();
 
 loadPortfolioExplainability();
 
+loadDecisionIntelligence();
+
 loadAIDecisionHistory();
 
 
@@ -2196,6 +2198,126 @@ async function loadAIDecision(){
 
 
 
+async function loadDecisionIntelligence(){
+
+    try {
+
+        const response = await fetch(
+            "/api/portfolio/decision-intelligence"
+        );
+
+        const result = await response.json();
+
+        const panel = document.getElementById(
+            "ai-decision-intelligence"
+        );
+
+        if (!panel) {
+
+            console.error(
+                "AI Decision Intelligence panel not found"
+            );
+
+            return;
+        }
+
+        if (!result.success || !result.intelligence) {
+
+            panel.innerHTML =
+                "AI Decision Intelligence data unavailable.";
+
+            return;
+        }
+
+        const intelligence = result.intelligence;
+
+        panel.innerHTML = `
+            <div class="ai-decision-intelligence-card">
+
+                <h3>
+                    🧠 AI Decision Intelligence
+                </h3>
+
+                <p>
+                    🎯 Decision Quality :
+                    <br>
+                    <b>${intelligence.decision_quality ?? "-"}</b>
+                </p>
+
+                <p>
+                    📊 Market Alignment :
+                    <br>
+                    <b>${intelligence.market_alignment ?? "-"}</b>
+                </p>
+
+                <p>
+                    💼 Portfolio Health :
+                    <br>
+                    <b>${intelligence.portfolio_health ?? "-"}</b>
+                </p>
+
+                <p>
+                    🏆 Top ETF :
+                    <br>
+                    <b>${intelligence.top_etf ?? "-"}</b>
+                </p>
+
+                <p>
+                    🤖 AI Opinion :
+                    <br>
+                    ${intelligence.ai_opinion ?? "-"}
+                </p>
+
+                <p>
+                    📈 Market View :
+                    <br>
+                    <b>${intelligence.market_view ?? "-"}</b>
+                </p>
+
+                <p>
+                    🧭 Recommended Mode :
+                    <br>
+                    <b>${intelligence.recommended_mode ?? "-"}</b>
+                </p>
+
+                <p>
+                    🛡 Risk Control :
+                    <br>
+                    <b>${intelligence.risk_control ?? "-"}</b>
+                </p>
+
+                <p>
+                    🚀 Next Action :
+                    <br>
+                    <b>${intelligence.next_action ?? "-"}</b>
+                </p>
+
+            </div>
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "AI Decision Intelligence Error",
+            error
+        );
+
+        const panel = document.getElementById(
+            "ai-decision-intelligence"
+        );
+
+        if (panel) {
+
+            panel.innerHTML =
+                "AI Decision Intelligence loading failed.";
+
+        }
+
+    }
+
+}
 async function loadAIDecisionHistory(){
 
     const response =
