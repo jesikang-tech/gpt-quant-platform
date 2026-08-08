@@ -3163,95 +3163,266 @@ async function loadAIOptimization(){
 
 async function loadPortfolioExplainability(){
 
+    try{
 
-    const response =
-    await fetch(
-        "/api/portfolio/explain"
-    );
-
-
-    const result =
-    await response.json();
+        const response =
+        await fetch(
+            "/api/portfolio/explain"
+        );
 
 
-    const explanation =
-    result.explanation;
+        const result =
+        await response.json();
 
 
-    const panel =
-    document.getElementById(
-        "portfolio-explain-content"
-    );
+        if(!result.success){
+
+            return;
+
+        }
 
 
-    if(!panel){
-        return;
-    }
+        const explanation =
+        result.explanation;
+
+
+        const panel =
+        document.getElementById(
+            "portfolio-explain-content"
+        );
+
+
+        if(!panel){
+
+            return;
+
+        }
 
 
 
-    panel.innerHTML = `
+        /*
+         * AI Decision Summary
+         */
 
+        let decisionSummary = "";
 
-        <h3>
-        ${explanation.summary}
-        </h3>
+        if(
+            explanation.decision_summary
+        ){
 
+            decisionSummary = `
 
-        <h4>
-        📊 Factor Analysis
-        </h4>
+                <h4>
+                🤖 AI Decision Summary
+                </h4>
 
-
-        ${
-            explanation.factor_analysis.map(
-                factor =>
-                `
                 <p>
-                ✓ ${factor.name}
-                :
-                ${factor.impact}
+                ${explanation.decision_summary}
+                </p>
+
+            `;
+
+        }
+
+
+
+        /*
+         * Factor Analysis
+         */
+
+        let factorHTML = "";
+
+        if(
+            explanation.factor_analysis
+        ){
+
+            factorHTML =
+            explanation.factor_analysis
+            .map(
+                factor => `
+
+                    <p>
+
+                    📊 <strong>
+                    ${factor.name}
+                    </strong>
+
+                    :
+                    ${factor.impact}
+
+                    <br>
+
+                    ${factor.reason}
+
+                    </p>
+
+                `
+            )
+            .join("");
+
+        }
+
+
+
+        /*
+         * Allocation Reason
+         */
+
+        let allocationHTML = "";
+
+        if(
+            explanation.allocation_reason
+        ){
+
+            allocationHTML =
+            explanation.allocation_reason
+            .map(
+                item => `
+
+                    <p>
+
+                    💼 <strong>
+                    ${item.ticker}
+                    </strong>
+
+                    ${
+                        item.weight !== undefined
+                        ? `(${item.weight}%)`
+                        : ""
+                    }
+
+                    <br>
+
+                    ${item.reason}
+
+                    </p>
+
+                `
+            )
+            .join("");
+
+        }
+
+
+
+        /*
+         * Risk Analysis
+         */
+
+        let riskHTML = "";
+
+        if(
+            explanation.risk_analysis
+        ){
+
+            riskHTML = `
+
+                <h4>
+                🛡 Risk Analysis
+                </h4>
+
+                <p>
+                ${explanation.risk_analysis}
+                </p>
+
+            `;
+
+        }
+
+
+
+        /*
+         * Market Analysis
+         */
+
+        let marketHTML = "";
+
+        if(
+            explanation.market_analysis
+        ){
+
+            const market =
+            explanation.market_analysis;
+
+
+            marketHTML = `
+
+                <h4>
+                🌐 Market Analysis
+                </h4>
+
+                <p>
+
+                <strong>
+                Regime:
+                </strong>
+
+                ${market.regime}
+
                 <br>
-                ${factor.reason}
+
+                <strong>
+                Impact:
+                </strong>
+
+                ${market.impact}
+
+                <br>
+
+                ${market.reason}
+
                 </p>
-                `
-            ).join("")
+
+            `;
+
         }
 
 
 
-        <h4>
-        💼 Allocation Reason
-        </h4>
+        /*
+         * Render Explainability Card
+         */
+
+        panel.innerHTML = `
+
+            <h3>
+            ${explanation.summary}
+            </h3>
 
 
-        ${
-            explanation.allocation_reason.map(
-                item =>
-                `
-                <p>
-                ${item.ticker}
-                :
-                ${item.reason}
-                </p>
-                `
-            ).join("")
-        }
+            ${decisionSummary}
 
 
+            <h4>
+            📊 Factor Analysis
+            </h4>
 
-        <h4>
-        🛡 Risk Analysis
-        </h4>
-
-
-        <p>
-        ${explanation.risk_analysis}
-        </p>
+            ${factorHTML}
 
 
-    `;
+            <h4>
+            💼 Allocation Reason
+            </h4>
 
+            ${allocationHTML}
+
+
+            ${riskHTML}
+
+
+            ${marketHTML}
+
+        `;
+
+    }
+    catch(error){
+
+        console.error(
+            "Portfolio Explainability Error:",
+            error
+        );
+
+    }
 
 }
 

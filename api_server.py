@@ -53,6 +53,7 @@ from repository import (
     get_ai_decision_summary,
     get_ai_decision_quality,
     get_ai_decision_chart_data,
+    get_ai_decision_trend,
     get_ai_decision_statistics,
     get_ai_decision_performance,
     get_ai_decision_reliability,
