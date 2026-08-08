@@ -112,27 +112,51 @@ class PortfolioExplainabilityEngine:
                 "UNKNOWN"
             )
 
-        cash_weight = portfolio.get(
-            "cash_weight",
-            0
-        )
+        if isinstance(portfolio, list):
 
-        allocations = portfolio.get(
-            "allocation",
-            portfolio
-        )
-
-        if isinstance(
-            allocations,
-            dict
-        ):
-            invested_weight = sum(
-                weight
-                for ticker, weight
-                in allocations.items()
-                if ticker != "CASH"
+            cash_weight = sum(
+                item.get("weight", 0)
+                for item in portfolio
+                if item.get("ticker") == "CASH"
             )
+
+            invested_weight = sum(
+                item.get("weight", 0)
+                for item in portfolio
+                if item.get("ticker") != "CASH"
+            )
+
+        elif isinstance(portfolio, dict):
+
+            cash_weight = portfolio.get(
+                "cash_weight",
+                0
+            )
+
+            allocations = portfolio.get(
+                "allocation",
+                portfolio
+            )
+
+            if isinstance(
+                allocations,
+                dict
+            ):
+
+                invested_weight = sum(
+                    weight
+                    for ticker, weight
+                    in allocations.items()
+                    if ticker != "CASH"
+                )
+
+            else:
+
+                invested_weight = 0
+
         else:
+
+            cash_weight = 0
             invested_weight = 0
 
         return (
@@ -142,45 +166,44 @@ class PortfolioExplainabilityEngine:
             f"under the {regime} market regime."
         )
 
-
     def _analyze_factors(
-        self,
-        portfolio
-    ):
+            self,
+            portfolio
+        ):
 
-        factors = []
+            factors = []
 
-        factors.append({
+            factors.append({
 
-            "name":
-                "Factor Intelligence",
+                "name":
+                    "Factor Intelligence",
 
-            "impact":
-                "positive",
+                "impact":
+                    "positive",
 
-            "reason":
-                "Selected ETFs have strong "
-                "composite intelligence scores."
+                "reason":
+                    "Selected ETFs have strong "
+                    "composite intelligence scores."
 
-        })
-
-
-        factors.append({
-
-            "name":
-                "Trend Strength",
-
-            "impact":
-                "positive",
-
-            "reason":
-                "Portfolio includes ETFs with "
-                "stable upward momentum."
-
-        })
+            })
 
 
-        return factors
+            factors.append({
+
+                "name":
+                    "Trend Strength",
+
+                "impact":
+                    "positive",
+
+                "reason":
+                    "Portfolio includes ETFs with "
+                    "stable upward momentum."
+
+            })
+
+
+            return factors
 
 
     def _analyze_allocation(
@@ -190,93 +213,153 @@ class PortfolioExplainabilityEngine:
 
         result = []
 
-        allocations = portfolio.get(
-            "allocation",
-            portfolio
-        )
+        if isinstance(portfolio, list):
 
+            allocations = portfolio
 
-        if isinstance(
-            allocations,
-            dict
-        ):
+        elif isinstance(portfolio, dict):
 
-            for ticker, weight in allocations.items():
+            allocations = portfolio.get(
+                "allocation",
+                portfolio
+            )
 
-                if ticker == "CASH":
-                    continue
+            if isinstance(allocations, dict):
 
-                if weight >= 40:
+                allocations = [
+                    {
+                        "ticker": ticker,
+                        "weight": weight
+                    }
+                    for ticker, weight
+                    in allocations.items()
+                ]
 
-                    reason = (
-                        f"{weight}% allocation reflects "
-                        "a high-conviction portfolio position."
-                    )
+            else:
 
-                elif weight >= 30:
+                allocations = []
 
-                    reason = (
-                        f"{weight}% allocation reflects "
-                        "a strong portfolio position."
-                    )
+        else:
 
-                elif weight > 0:
+            allocations = []
 
-                    reason = (
-                        f"{weight}% allocation provides "
-                        "portfolio diversification."
-                    )
+        for item in allocations:
 
-                else:
+            if not isinstance(item, dict):
+                continue
 
-                    reason = (
-                        "No capital is currently allocated "
-                        "to this asset."
-                    )
+            ticker = item.get(
+                "ticker",
+                ""
+            )
 
+            weight = item.get(
+                "weight",
+                0
+            )
 
-                result.append({
+            if ticker == "CASH":
+                continue
 
-                    "ticker":
-                        ticker,
+            if weight >= 40:
 
-                    "weight":
-                        weight,
+                reason = (
+                    f"{weight}% allocation reflects "
+                    "a high-conviction portfolio position."
+                )
 
-                    "reason":
-                        reason
+            elif weight >= 30:
 
-                })
+                reason = (
+                    f"{weight}% allocation reflects "
+                    "a strong portfolio position."
+                )
 
+            elif weight > 0:
+
+                reason = (
+                    f"{weight}% allocation provides "
+                    "portfolio diversification."
+                )
+
+            else:
+
+                reason = (
+                    "No capital is currently allocated "
+                    "to this asset."
+                )
+
+            result.append({
+
+                "ticker": ticker,
+
+                "weight": weight,
+
+                "reason": reason
+
+            })
 
         return result
-
 
     def _analyze_risk(
         self,
         portfolio
     ):
 
-        cash_weight = portfolio.get(
-            "cash_weight",
-            0
-        )
+        cash_weight = 0
 
+        if isinstance(portfolio, list):
 
-        if cash_weight > 0:
-
-            return (
-                f"Risk is controlled through "
-                f"{cash_weight}% cash allocation "
-                "which provides downside protection."
+            cash_weight = sum(
+                item.get("weight", 0)
+                for item in portfolio
+                if isinstance(item, dict)
+                and item.get("ticker") == "CASH"
             )
 
+        elif isinstance(portfolio, dict):
 
-        return (
-            "Portfolio risk is managed "
-            "through diversification."
-        )
+            cash_weight = portfolio.get(
+                "cash_weight",
+                0
+            )
 
+        if cash_weight >= 20:
+
+            level = "Low"
+
+            reason = (
+                f"{cash_weight}% cash allocation "
+                "provides strong downside protection."
+            )
+
+        elif cash_weight >= 10:
+
+            level = "Balanced"
+
+            reason = (
+                f"{cash_weight}% cash allocation "
+                "provides moderate risk protection."
+            )
+
+        else:
+
+            level = "High"
+
+            reason = (
+                f"{cash_weight}% cash allocation "
+                "leaves limited defensive capacity."
+            )
+
+        return {
+
+            "risk_level": level,
+
+            "cash_weight": cash_weight,
+
+            "reason": reason
+
+        }
 
     def _analyze_market(
         self,

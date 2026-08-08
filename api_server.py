@@ -44,6 +44,10 @@ from core.portfolio_conversational import (
     PortfolioConversationalAnalyst
 )
 
+from core.portfolio_decision_intelligence import (
+    PortfolioDecisionIntelligence
+)
+
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -671,6 +675,147 @@ def portfolio_analytics_api():
         {
             "success": True,
             "analytics": analytics
+        }
+    )
+
+
+
+@app.route("/api/portfolio/decision-intelligence")
+def portfolio_decision_intelligence_api():
+
+    # -----------------------------
+    # AI Decision
+    # -----------------------------
+
+    market_regime = analyze_market_regime()
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+    top_etf = {
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+    }
+
+    ai_decision = generate_ai_decision(
+        market_regime,
+        market_strategy,
+        portfolio_health,
+        top_etf
+    )
+
+    ai_decision["decision_score"] = (
+        calculate_decision_score(
+            market_regime,
+            portfolio_health,
+            top_etf
+        )
+    )
+
+    ai_decision["grade"] = get_decision_grade(
+        ai_decision["decision_score"]
+    )
+
+
+    # -----------------------------
+    # Decision Quality
+    # -----------------------------
+
+    decision_quality = (
+        get_ai_decision_quality()
+    )
+
+
+    # -----------------------------
+    # Reliability
+    # -----------------------------
+
+    reliability = (
+        get_ai_decision_reliability()
+    )
+
+
+    # -----------------------------
+    # Adaptive Strategy
+    # -----------------------------
+
+    adaptive_strategy = (
+        get_ai_adaptive_strategy()
+    )
+
+
+    # -----------------------------
+    # Rebalance
+    # -----------------------------
+
+    rebalance = (
+        get_ai_rebalance_recommendation()
+    )
+
+
+    # -----------------------------
+    # Portfolio Optimization
+    # -----------------------------
+
+    optimization = (
+        get_ai_portfolio_optimization()
+    )
+
+
+    # -----------------------------
+    # Explainability
+    # -----------------------------
+
+    explainability_engine = (
+        PortfolioExplainabilityEngine()
+    )
+
+    explainability = (
+        explainability_engine.generate_explanation(
+            portfolio,
+            market_regime
+        )
+    )
+
+
+    # -----------------------------
+    # Final Decision Intelligence
+    # -----------------------------
+
+    engine = (
+        PortfolioDecisionIntelligence()
+    )
+
+    intelligence = engine.generate(
+        ai_decision,
+        decision_quality,
+        reliability,
+        adaptive_strategy,
+        rebalance,
+        optimization,
+        explainability
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "intelligence": intelligence
         }
     )
 
