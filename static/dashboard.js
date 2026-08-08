@@ -8,29 +8,29 @@ let portfolioAnalytics = null;
 function getRecommendationIcon(signal){
 
     if(signal === "BUY")
-        return "BUY";
+        return "🟢";
 
     if(signal === "SELL")
-        return "SELL";
+        return "🔴";
 
     if(signal === "MAINTAIN")
-        return "HOLD";
+        return "🟡";
 
-    return "N/A";
+    return "⚪";
 }
 
 function getConfidenceIcon(confidence){
 
     if(confidence === "HIGH")
-        return "HIGH";
+        return "🟢";
 
     if(confidence === "MEDIUM")
-        return "MEDIUM";
+        return "🟡";
 
     if(confidence === "LOW")
-        return "LOW";
+        return "🔴";
 
-    return "N/A";
+    return "⚪";
 }
 
 function getRankBadge(rank) {
@@ -217,10 +217,6 @@ function loadDashboard(){
         recommendationData.recommendation.recommendation.toLowerCase()
         }">
 
-        ${getRecommendationIcon(
-        recommendationData.recommendation.recommendation
-        )}
-
         ${recommendationData.recommendation.recommendation}
 
         </div>
@@ -233,10 +229,6 @@ function loadDashboard(){
         <br>
 
         <b>
-
-        ${getConfidenceIcon(
-        recommendationData.recommendation.confidence
-        )}
 
         ${recommendationData.recommendation.confidence}
 
@@ -260,7 +252,7 @@ function loadDashboard(){
 
         <br>
 
-        ??${recommendationData.recommendation.reasons[0]}
+        ${recommendationData.recommendation.reasons[0]}
 
         </div>
 
@@ -272,7 +264,7 @@ function loadDashboard(){
 
         <br>
 
-        ??${recommendationData.recommendation.reasons[1]}
+        ${recommendationData.recommendation.reasons[1]}
 
         </div>
 
@@ -284,7 +276,7 @@ function loadDashboard(){
 
         <br>
 
-        ??${recommendationData.recommendation.reasons[2]}
+        ${recommendationData.recommendation.reasons[2]}
 
         </div>
 
@@ -439,7 +431,7 @@ function loadDashboard(){
 
 
             <p>
-            ?뱪 Slope Score :
+            📐 Slope Score :
             <b>
             ${item.slope_score}
             </b>
@@ -468,7 +460,7 @@ function loadDashboard(){
 
 
             <p>
-            ?먮떒 :
+            판단 :
             <b>
             ${getSignal(item.prediction)}
             </b>
@@ -476,7 +468,7 @@ function loadDashboard(){
 
 
             <p>
-            ?덉젙??:
+            안정성:
             ${item.stability}
             </p>
 
@@ -488,7 +480,7 @@ function loadDashboard(){
 
 
             <p>
-            ?ъ옄 ?섍껄 :
+            투자 성격 :
             <b>
             Stable Holding
             </b>
@@ -529,7 +521,7 @@ function loadDashboard(){
 
 
 
-// 理쒖큹 ?ㅽ뻾
+// 최초 실행
 
 loadDashboard();
 
@@ -573,7 +565,7 @@ loadPortfolioExplainability();
 loadAIDecisionHistory();
 
 
-// 10珥덈쭏??媛깆떊
+// 10초마다 갱신
 
 setInterval(
     loadDashboard,
@@ -758,7 +750,7 @@ async function loadDetail(ticker){
 
 
     <p>
-    ?뱪 Slope Score :
+    📐 Slope Score :
     <b>${result.slope_score}</b>
     </p>
 
@@ -798,7 +790,7 @@ async function loadDetail(ticker){
     </p>
 
     <p>
-    ??Risk :
+    Risk :
     ${result.analysis.risk}
     </p>
 
@@ -814,7 +806,7 @@ async function loadDetail(ticker){
 
 
     <p>
-    ?뵰 Prediction :
+    🔮 Prediction :
     ${result.analysis.prediction}
     </p>
 
@@ -826,25 +818,25 @@ async function loadDetail(ticker){
 async function loadPortfolioAdvisor(save=false){
 
     const response =
-     await fetch(
-        "/api/portfolio?mode="
-        + portfolioMode
-        + "&save="
-        + save
-    );
+        await fetch(
+            "/api/portfolio?mode="
+            + portfolioMode
+            + "&save="
+            + save
+        );
 
 
     const result =
-    await response.json();
+        await response.json();
 
 
     const panel =
-    document.getElementById(
-        "portfolio-content"
-    );
+        document.getElementById(
+            "portfolio-content"
+        );
 
 
-     let html = "";
+    let html = "";
 
 
     html += `
@@ -862,13 +854,16 @@ async function loadPortfolioAdvisor(save=false){
 
         let cashClass = "";
 
+
         if(item.ticker === "CASH"){
-            cashClass = "portfolio-cash";
+
+            cashClass =
+                "portfolio-cash";
+
         }
 
 
         html += `
-
 
         <div class="portfolio-card ${cashClass}">
 
@@ -878,7 +873,6 @@ async function loadPortfolioAdvisor(save=false){
             ${item.ticker}
 
             </div>
-
 
 
             <div class="portfolio-weight">
@@ -891,7 +885,6 @@ async function loadPortfolioAdvisor(save=false){
             </div>
 
 
-
             <div class="portfolio-score">
 
             Score :
@@ -900,7 +893,6 @@ async function loadPortfolioAdvisor(save=false){
             </b>
 
             </div>
-
 
 
             <div class="portfolio-optimization">
@@ -913,135 +905,145 @@ async function loadPortfolioAdvisor(save=false){
             </div>
 
 
+            ${
+                item.ticker !== "CASH"
+                    ? `
 
-            <div class="portfolio-factor">
+                    <div class="portfolio-factor">
 
-            <b>
-            Factor Analysis
-            </b>
+                        <b>
+                        Factor Analysis
+                        </b>
 
-            <br><br>
-
-
-            <div class="factor-item">
-
-            Return
-
-            <div class="factor-bar">
-
-            <div class="factor-fill"
-            style="width:${item.return_score ?? 0}%">
-            </div>
-
-            </div>
-
-            <b>
-            ${item.return_score ?? "-"}
-            </b>
-
-            </div>
+                        <br><br>
 
 
+                        <div class="factor-item">
 
-            <div class="factor-item">
+                        Return
 
-            Trend
+                        <div class="factor-bar">
 
-            <div class="factor-bar">
+                            <div
+                                class="factor-fill"
+                                style="width:${item.return_score ?? 0}%"
+                            >
+                            </div>
 
-            <div class="factor-fill"
-            style="width:${item.trend_score ?? 0}%">
-            </div>
+                        </div>
 
-            </div>
+                        <b>
+                        ${item.return_score ?? "-"}
+                        </b>
 
-            <b>
-            ${item.trend_score ?? "-"}
-            </b>
-
-            </div>
-
-
-
-            <div class="factor-item">
-
-            Slope
-
-            <div class="factor-bar">
-
-            <div class="factor-fill"
-            style="width:${item.slope_score ?? 0}%">
-            </div>
-
-            </div>
-
-            <b>
-            ${item.slope_score ?? "-"}
-            </b>
-
-            </div>
+                        </div>
 
 
-            <div class="factor-insight">
+                        <div class="factor-item">
 
-            <b>
-            AI Factor Insight
-            </b>
+                        Trend
 
-            <br><br>
+                        <div class="factor-bar">
 
-            Return :
-            <b>
-            ${item.factor_analysis?.return ?? "-"}
-            </b>
+                            <div
+                                class="factor-fill"
+                                style="width:${item.trend_score ?? 0}%"
+                            >
+                            </div>
 
-            <br>
+                        </div>
 
-            Trend :
-            <b>
-            ${item.factor_analysis?.trend ?? "-"}
-            </b>
+                        <b>
+                        ${item.trend_score ?? "-"}
+                        </b>
 
-            <br>
-
-            Slope :
-            <b>
-            ${item.factor_analysis?.slope ?? "-"}
-            </b>
-
-            </div>
+                        </div>
 
 
-            </div>
+                        <div class="factor-item">
+
+                        Slope
+
+                        <div class="factor-bar">
+
+                            <div
+                                class="factor-fill"
+                                style="width:${item.slope_score ?? 0}%"
+                            >
+                            </div>
+
+                        </div>
+
+                        <b>
+                        ${item.slope_score ?? "-"}
+                        </b>
+
+                        </div>
+
+
+                        <div class="factor-insight">
+
+                        <b>
+                        AI Factor Insight
+                        </b>
+
+                        <br><br>
+
+                        Return :
+                        <b>
+                        ${item.factor_analysis?.return ?? "-"}
+                        </b>
+
+                        <br>
+
+                        Trend :
+                        <b>
+                        ${item.factor_analysis?.trend ?? "-"}
+                        </b>
+
+                        <br>
+
+                        Slope :
+                        <b>
+                        ${item.factor_analysis?.slope ?? "-"}
+                        </b>
+
+                        </div>
+
+                    </div>
 
 
 
-            <div class="portfolio-reason">
 
-            ${item.reason}
 
-            </div>
+
+                    </div>
+
+                    `
+                    : ""
+            }
 
 
         </div>
 
-
         `;
-
 
     });
 
 
-
-
     let healthColor = "#e74c3c";
 
-    if(result.intelligence.health_score >= 90){
+
+    if(
+        result.intelligence.health_score >= 90
+    ){
 
         healthColor = "#27ae60";
 
     }
-    else if(result.intelligence.health_score >= 80){
+    else if(
+        result.intelligence.health_score >= 80
+    ){
 
         healthColor = "#f39c12";
 
@@ -1050,299 +1052,278 @@ async function loadPortfolioAdvisor(save=false){
 
     let confidenceColor = "#f39c12";
 
-    if(result.intelligence.confidence === "HIGH"){
+
+    if(
+        result.intelligence.confidence === "HIGH"
+    ){
 
         confidenceColor = "#27ae60";
 
     }
-    else if(result.intelligence.confidence === "LOW"){
+    else if(
+        result.intelligence.confidence === "LOW"
+    ){
 
         confidenceColor = "#e74c3c";
 
     }
 
 
-
     let riskColor = "#f39c12";
+
 
     if(
         result.intelligence.risk_level === "Low Risk"
         ||
         result.intelligence.risk_level === "Balanced"
     ){
-        riskColor = "#27ae60";
-    }
-    else if(result.intelligence.risk_level === "High Risk"){
-        riskColor = "#e74c3c";
-    }
 
+        riskColor = "#27ae60";
+
+    }
+    else if(
+        result.intelligence.risk_level === "High Risk"
+    ){
+
+        riskColor = "#e74c3c";
+
+    }
 
 
     html += `
 
+        <div class="portfolio-intelligence">
 
-    <div class="portfolio-intelligence">
-
-
-        <h3>
-        GPT Portfolio Intelligence
-        </h3>
+            <h3>
+            GPT Portfolio Intelligence
+            </h3>
 
 
-        <p>
-        ?ㅿ툘 Health Score
-        <br>
+            <p>
 
-        <span
-        style="
-        background:${healthColor};
-        color:white;
-        padding:4px 12px;
-        border-radius:12px;
-        font-weight:bold;
-        "
-        >
-        ${result.intelligence.health_score} / 100
-        </span>
+            ❤️ Health Score :
 
-        </p>
+            <span
+                style="
+                background:${healthColor};
+                color:white;
+                padding:4px 12px;
+                border-radius:12px;
+                font-weight:bold;
+                "
+            >
+            ${result.intelligence.health_score} / 100
+            </span>
 
-
-
-        <p>
-        Risk Level
-        <br>
-
-        <span
-        style="
-        background:${riskColor};
-        color:white;
-        padding:4px 12px;
-        border-radius:12px;
-        font-weight:bold;
-        "
-        >
-        ${result.intelligence.risk_level}
-        </span>
-
-        </p>
+            </p>
 
 
+            <p>
 
-        <p>
-        Confidence
-        <br>
+            🛡 Risk Level :
 
-        <span
-        style="
-        background:${confidenceColor};
-        color:white;
-        padding:4px 12px;
-        border-radius:12px;
-        font-weight:bold;
-        "
-        >
-        ${result.intelligence.confidence}
-        </span>
+            <span
+                style="
+                background:${riskColor};
+                color:white;
+                padding:4px 12px;
+                border-radius:12px;
+                font-weight:bold;
+                "
+            >
+            ${result.intelligence.risk_level}
+            </span>
 
-        </p>
-
+            </p>
 
 
-        <p>
-        ?뮥 Cash Weight
-        <br>
-        <b>
-        ${result.intelligence.cash_weight}%
-        </b>
-        </p>
+            <p>
+
+            🎯 Confidence :
+
+            <span
+                style="
+                background:${confidenceColor};
+                color:white;
+                padding:4px 12px;
+                border-radius:12px;
+                font-weight:bold;
+                "
+            >
+            ${result.intelligence.confidence}
+            </span>
+
+            </p>
 
 
+            <p>
 
-        <p>
-        Allocation
-        <br>
+            💰 Cash Weight :
 
-        ${
-            Object.entries(
-                result.intelligence.allocation
-            )
-            .map(
-                item =>
-                item[0]
-                +
-                " : "
-                +
-                item[1]
-                +
-                "%"
-            )
-            .join("<br>")
-        }
+            ${result.intelligence.cash_weight}%
 
-        </p>
+            </p>
 
 
+            <p>
 
-        <p>
-        Market Regime
-        <br>
+            Allocation :
 
-        <b>
-        ${result.insight.analytics.market_regime}
-        </b>
+            ${
+                Object.entries(
+                    result.intelligence.allocation
+                )
+                .map(
+                    item =>
+                        item[0]
+                        + " : "
+                        + item[1]
+                        + "%"
+                )
+                .join(" / ")
+            }
 
-        </p>
-
-
-        <p>
-        Market Strength
-        <br>
-
-        <b>
-        ${result.insight.analytics.market_strength}
-        </b>
-
-        </p>
+            </p>
 
 
-        <p>
-        Market Confidence
-        <br>
+            <p>
 
-        <b>
-        ${result.insight.analytics.market_confidence}%
-        </b>
+            Market Regime :
 
-        </p>
+            ${result.insight.analytics.market_regime}
+
+            </p>
 
 
+            <p>
 
-        <p>
-        AI Rebalance
-        <br>
+            Market Strength :
 
-        ${result.intelligence.rebalance}
+            ${result.insight.analytics.market_strength}
 
-        </p>
+            </p>
 
 
-    </div>
+            <p>
 
+            Market Confidence :
+
+            ${result.insight.analytics.market_confidence}%
+
+            </p>
+
+
+            <p>
+
+            AI Rebalance :
+
+            ${result.intelligence.rebalance}
+
+            </p>
+
+        </div>
 
     `;
 
 
-     html += `
+    html += `
 
         <div class="portfolio-insight">
 
-
-        <h3>
-        GPT Portfolio Insight
-        </h3>
-
+            <h3>
+            GPT Portfolio Insight
+            </h3>
 
 
-        <p>
+            <p>
 
-        Summary
+            <b>
+            Summary
+            </b>
 
-        <br>
+            <br>
 
-        <b>
-        ${result.insight.summary}
-        </b>
+            ${result.insight.summary}
 
-        </p>
-
-
-
-        <p>
-
-        AI Opinion
-
-        <br>
-
-        ${result.insight.opinion}
-
-        </p>
+            </p>
 
 
-         <p>
+            <p>
 
-        Average Score
+            <b>
+            AI Opinion
+            </b>
 
-        <br>
+            <br>
 
-        <b>
-        ${result.insight.analytics.average_score}
-        </b>
+            ${result.insight.opinion}
 
-        </p>
-
-
-
-        <p>
-
-        Top ETF
-
-        <br>
-
-        <b>
-        ${result.insight.analytics.top_etf}
-        </b>
-
-        (
-        ${result.insight.analytics.top_score}
-        )
-
-        </p>
+            </p>
 
 
+            <p>
 
-        <p>
+            <b>
+            Average Score
+            </b>
 
-        Diversification
+            <br>
 
-        <br>
+            ${result.insight.analytics.average_score}
 
-        <b>
-        ${result.insight.analytics.diversification}
-        </b>
-
-        </p>
-
+            </p>
 
 
-        <p>
+            <p>
 
-        ?뮥 Cash Weight
+            <b>
+            Top ETF
+            </b>
 
-        <br>
+            <br>
 
-        <b>
-        ${result.insight.analytics.cash_weight}%
-        </b>
+            ${result.insight.analytics.top_etf}
 
-        </p>
+            (
+            ${result.insight.analytics.top_score}
+            )
+
+            </p>
 
 
-    </div>
+            <p>
 
+            <b>
+            Diversification
+            </b>
+
+            <br>
+
+            ${result.insight.analytics.diversification}
+
+            </p>
+
+
+            <p>
+
+            💰 Cash Weight
+
+            <br>
+
+            ${result.insight.analytics.cash_weight}%
+
+            </p>
+
+        </div>
 
     `;
 
-
-    
 
     panel.innerHTML = html;
 
 
-
-
     loadPortfolioAnalytics();
-   
+
 }
 
 
@@ -1791,7 +1772,7 @@ async function loadMarketRegime(){
         </p>
 
         <p>
-        ?뱣 Lowest Score :
+        Lowest Score :
         <b>${result.min_score}</b>
         </p>
 
@@ -1801,7 +1782,7 @@ async function loadMarketRegime(){
         </p>
 
         <p>
-        ?뮞 Market Strength :
+        Market Strength :
         <b>${result.market_strength}</b>
         </p>
 
@@ -1811,7 +1792,7 @@ async function loadMarketRegime(){
         </p>
 
         <p>
-        ??Risk :
+        Risk :
         <b>${result.risk}</b>
         </p>
 
@@ -2296,7 +2277,7 @@ async function loadAIDecisionHistory(){
     <div class="ai-history-card">
 
         <h3>
-        ?븩 AI Decision History
+        📜 AI Decision History
         </h3>
     `;
 
@@ -2349,7 +2330,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                ?븩 Date :
+                📅 Date :
                 <b>
                 ${item.created_at}
                 </b>
@@ -2555,12 +2536,12 @@ async function loadAIDecisionTrend(){
 
     if(trend.trend === "Improving"){
 
-        trendIcon = "?뱢";
+        trendIcon = "📈";
 
     }
     else if(trend.trend === "Declining"){
 
-        trendIcon = "?뱣";
+        trendIcon = "📉";
 
     }
 
@@ -3186,7 +3167,6 @@ async function loadAIOptimization(){
             ${item.current_weight}%
             </b>
 
-            ??
 
             Target :
             <b>
@@ -3396,7 +3376,22 @@ async function loadPortfolioExplainability(){
                 </h4>
 
                 <p>
-                ${explanation.risk_analysis}
+                <strong>
+                Risk Level:
+                </strong>
+                ${explanation.risk_analysis.risk_level}
+
+                <br>
+
+                <strong>
+                Cash Weight:
+                </strong>
+                ${explanation.risk_analysis.cash_weight}%
+
+                <br>
+
+                ${explanation.risk_analysis.reason}
+
                 </p>
 
             `;
@@ -3529,7 +3524,7 @@ async function askPortfolioAnalyst(){
     if(!question){
 
         resultBox.innerHTML =
-            "吏덈Ц???낅젰?댁＜?몄슂.";
+            "질문을 입력해주세요.";
 
         return;
 
@@ -3538,7 +3533,7 @@ async function askPortfolioAnalyst(){
 
 
     resultBox.innerHTML =
-        "AI Portfolio Analyst 遺꾩꽍 以?..";
+        "AI Portfolio Analyst 분석 중...";
 
 
 
@@ -3610,7 +3605,7 @@ async function askPortfolioAnalyst(){
                 html +=
                 `
                 <p>
-                ??${item}
+                • ${item}
                 </p>
                 `;
 
@@ -3659,7 +3654,7 @@ async function askPortfolioAnalyst(){
 
 
         resultBox.innerHTML =
-            "AI Analyst ?곌껐 ?ㅻ쪟";
+            "AI Analyst 결과 오류";
 
 
     }
@@ -3673,8 +3668,4 @@ async function askPortfolioAnalyst(){
 document.addEventListener("DOMContentLoaded", function () {
     loadDecisionIntelligence();
 });
-
-
-
-
 
