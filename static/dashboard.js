@@ -1,4 +1,4 @@
-let historyChart = null;
+﻿let historyChart = null;
 
 let portfolioMode = "balanced";
 
@@ -7,106 +7,73 @@ let portfolioAnalytics = null;
 
 function getRecommendationIcon(signal){
 
-
     if(signal === "BUY")
-        return "🟢";
-
+        return "BUY";
 
     if(signal === "SELL")
-        return "🔴";
-
+        return "SELL";
 
     if(signal === "MAINTAIN")
-        return "🟡";
+        return "HOLD";
 
-
-    return "⚪";
-
+    return "N/A";
 }
-
 
 function getConfidenceIcon(confidence){
 
-
     if(confidence === "HIGH")
-        return "🟢";
-
+        return "HIGH";
 
     if(confidence === "MEDIUM")
-        return "🟡";
-
+        return "MEDIUM";
 
     if(confidence === "LOW")
-        return "⚪";
+        return "LOW";
 
-
-    return "⚪";
-
+    return "N/A";
 }
-
 
 function getRankBadge(rank) {
 
-
     if(rank === 1)
-        return "🥇 TOP 1";
-
+        return "TOP 1";
 
     if(rank === 2)
-        return "🥈 TOP 2";
-
+        return "TOP 2";
 
     if(rank === 3)
-        return "🥉 TOP 3";
-
+        return "TOP 3";
 
     return "#" + rank;
-
 }
-
-
 
 function getSignal(signal) {
 
-
     if(signal === "MAINTAIN")
-        return "🟢 유지";
-
+        return "유지";
 
     if(signal === "BUY")
-        return "🚀 매수";
-
+        return "매수";
 
     if(signal === "SELL")
-        return "🔴 매도";
-
+        return "매도";
 
     return signal;
-
 }
-
-
 
 function getGradeBadge(grade){
 
-
     if(grade === "A")
-        return "🟢 A";
-
+        return "A";
 
     if(grade === "B")
-        return "🟡 B";
-
+        return "B";
 
     if(grade === "C")
-        return "🟠 C";
+        return "C";
 
-
-    return "🔴 " + grade;
-
+    return grade;
 }
-
-
 
 function loadDashboard(){
 
@@ -241,7 +208,7 @@ function loadDashboard(){
 
         <div class="recommendation-title">
 
-        🤖 AI Recommendation
+        AI Recommendation
 
         </div>
 
@@ -282,30 +249,18 @@ function loadDashboard(){
 
         <div class="reason-title">
 
-        📊 AI Analysis Reasons
+        AI Analysis Reasons
 
         </div>
 
 
         <div class="reason-item">
 
-        📈 Score Analysis
+        Score Analysis
 
         <br>
 
-        ✓ ${recommendationData.recommendation.reasons[0]}
-
-        </div>
-
-
-
-        <div class="reason-item">
-
-        📊 Ranking Analysis
-
-        <br>
-
-        ✓ ${recommendationData.recommendation.reasons[1]}
+        ??${recommendationData.recommendation.reasons[0]}
 
         </div>
 
@@ -313,11 +268,23 @@ function loadDashboard(){
 
         <div class="reason-item">
 
-        🛡 Risk Analysis
+        Ranking Analysis
 
         <br>
 
-        ✓ ${recommendationData.recommendation.reasons[2]}
+        ??${recommendationData.recommendation.reasons[1]}
+
+        </div>
+
+
+
+        <div class="reason-item">
+
+        Risk Analysis
+
+        <br>
+
+        ??${recommendationData.recommendation.reasons[2]}
 
         </div>
 
@@ -331,7 +298,7 @@ function loadDashboard(){
        <div class="intelligence-opinion">
 
 
-        🤖 GPT Analyst
+        GPT Analyst
 
         <br><br>
 
@@ -456,7 +423,7 @@ function loadDashboard(){
 
 
             <p>
-            📈 Return Score :
+            Return Score :
             <b>
             ${item.return_score}
             </b>
@@ -464,7 +431,7 @@ function loadDashboard(){
 
 
             <p>
-            📊 Trend Score :
+            Trend Score :
             <b>
             ${item.trend_score}
             </b>
@@ -472,7 +439,7 @@ function loadDashboard(){
 
 
             <p>
-            📐 Slope Score :
+            ?뱪 Slope Score :
             <b>
             ${item.slope_score}
             </b>
@@ -480,7 +447,7 @@ function loadDashboard(){
 
 
             <p>
-            🎯 Final Score :
+            Final Score :
             <b>
             ${item.final_score}
             </b>
@@ -496,12 +463,12 @@ function loadDashboard(){
 
 
             <h3>
-            🤖 GPT Quant AI Insight
+            GPT Quant AI Insight
             </h3>
 
 
             <p>
-            판단 :
+            ?먮떒 :
             <b>
             ${getSignal(item.prediction)}
             </b>
@@ -509,7 +476,7 @@ function loadDashboard(){
 
 
             <p>
-            안정성 :
+            ?덉젙??:
             ${item.stability}
             </p>
 
@@ -521,7 +488,7 @@ function loadDashboard(){
 
 
             <p>
-            투자 의견 :
+            ?ъ옄 ?섍껄 :
             <b>
             Stable Holding
             </b>
@@ -562,7 +529,7 @@ function loadDashboard(){
 
 
 
-// 최초 실행
+// 理쒖큹 ?ㅽ뻾
 
 loadDashboard();
 
@@ -602,12 +569,11 @@ loadAIOptimization();
 
 loadPortfolioExplainability();
 
-loadDecisionIntelligence();
 
 loadAIDecisionHistory();
 
 
-// 10초마다 갱신
+// 10珥덈쭏??媛깆떊
 
 setInterval(
     loadDashboard,
@@ -775,30 +741,30 @@ async function loadDetail(ticker){
 
 
     <h3>
-    🤖 AI Intelligence
+    AI Intelligence
     </h3>
 
 
     <p>
-    📈 Return Score :
+    Return Score :
     <b>${result.return_score}</b>
     </p>
 
 
     <p>
-    📊 Trend Score :
+    Trend Score :
     <b>${result.trend_score}</b>
     </p>
 
 
     <p>
-    📐 Slope Score :
+    ?뱪 Slope Score :
     <b>${result.slope_score}</b>
     </p>
 
 
     <p>
-    🎯 Final Score :
+    Final Score :
     <b>${result.final_score}</b>
     </p>
 
@@ -823,32 +789,32 @@ async function loadDetail(ticker){
     <hr>
 
     <p>
-    🤖 AI Insight
+    AI Insight
     </p>
 
     <p>
-    📈 Trend :
+    Trend :
     ${result.analysis.trend}
     </p>
 
     <p>
-    ⚠ Risk :
+    ??Risk :
     ${result.analysis.risk}
     </p>
 
     <p>
-    💡 Opinion :
+    Opinion :
     ${result.analysis.opinion}
     </p>
 
     <p>
-    📊 Score Momentum :
+    Score Momentum :
     ${result.analysis.score_change}
     </p>
 
 
     <p>
-    🔮 Prediction :
+    ?뵰 Prediction :
     ${result.analysis.prediction}
     </p>
 
@@ -1119,12 +1085,12 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <h3>
-        🤖 GPT Portfolio Intelligence
+        GPT Portfolio Intelligence
         </h3>
 
 
         <p>
-        ❤️ Health Score
+        ?ㅿ툘 Health Score
         <br>
 
         <span
@@ -1144,7 +1110,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        🛡 Risk Level
+        Risk Level
         <br>
 
         <span
@@ -1164,7 +1130,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        🔥 Confidence
+        Confidence
         <br>
 
         <span
@@ -1184,7 +1150,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        💰 Cash Weight
+        ?뮥 Cash Weight
         <br>
         <b>
         ${result.intelligence.cash_weight}%
@@ -1194,7 +1160,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        📊 Allocation
+        Allocation
         <br>
 
         ${
@@ -1219,7 +1185,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        🌎 Market Regime
+        Market Regime
         <br>
 
         <b>
@@ -1230,7 +1196,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        📈 Market Strength
+        Market Strength
         <br>
 
         <b>
@@ -1241,7 +1207,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        🎯 Market Confidence
+        Market Confidence
         <br>
 
         <b>
@@ -1253,7 +1219,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <p>
-        🔄 AI Rebalance
+        AI Rebalance
         <br>
 
         ${result.intelligence.rebalance}
@@ -1273,14 +1239,14 @@ async function loadPortfolioAdvisor(save=false){
 
 
         <h3>
-        🧠 GPT Portfolio Insight
+        GPT Portfolio Insight
         </h3>
 
 
 
         <p>
 
-        📌 Summary
+        Summary
 
         <br>
 
@@ -1294,7 +1260,7 @@ async function loadPortfolioAdvisor(save=false){
 
         <p>
 
-        🧠 AI Opinion
+        AI Opinion
 
         <br>
 
@@ -1305,7 +1271,7 @@ async function loadPortfolioAdvisor(save=false){
 
          <p>
 
-        📊 Average Score
+        Average Score
 
         <br>
 
@@ -1319,7 +1285,7 @@ async function loadPortfolioAdvisor(save=false){
 
         <p>
 
-        🏆 Top ETF
+        Top ETF
 
         <br>
 
@@ -1337,7 +1303,7 @@ async function loadPortfolioAdvisor(save=false){
 
         <p>
 
-        🛡 Diversification
+        Diversification
 
         <br>
 
@@ -1351,7 +1317,7 @@ async function loadPortfolioAdvisor(save=false){
 
         <p>
 
-        💰 Cash Weight
+        ?뮥 Cash Weight
 
         <br>
 
@@ -1426,7 +1392,7 @@ async function loadPortfolioHistory(){
     html += `
 
     <h3>
-    📌 Portfolio History
+    Portfolio History
     </h3>
 
     `;
@@ -1544,7 +1510,7 @@ async function loadPortfolioAnalytics(){
     <div class="analytics-card">
 
     <h3>
-    📊 Portfolio Analytics
+    Portfolio Analytics
     </h3>
 
 
@@ -1557,7 +1523,7 @@ async function loadPortfolioAnalytics(){
 
 
     <p>
-    📌 Last Saved AI Strategy :
+    Last Saved AI Strategy :
     <br>
     <b>
     ${analytics.latest_mode.toUpperCase()}
@@ -1566,7 +1532,7 @@ async function loadPortfolioAnalytics(){
 
 
     <p>
-    🎯 Current View Strategy :
+    Current View Strategy :
     <br>
     <b>
     ${portfolioMode.toUpperCase()}
@@ -1810,47 +1776,47 @@ async function loadMarketRegime(){
         </h3>
 
         <p>
-        🎯 Confidence :
+        Confidence :
         <b>${result.confidence}%</b>
         </p>
 
         <p>
-        📈 Average Score :
+        Average Score :
         <b>${result.avg_score}</b>
         </p>
 
         <p>
-        🏆 Highest Score :
+        Highest Score :
         <b>${result.max_score}</b>
         </p>
 
         <p>
-        📉 Lowest Score :
+        ?뱣 Lowest Score :
         <b>${result.min_score}</b>
         </p>
 
         <p>
-        📊 Score Spread :
+        Score Spread :
         <b>${result.score_spread}</b>
         </p>
 
         <p>
-        💪 Market Strength :
+        ?뮞 Market Strength :
         <b>${result.market_strength}</b>
         </p>
 
         <p>
-        📌 Breadth :
+        Breadth :
         <b>${result.breadth}</b>
         </p>
 
         <p>
-        ⚠ Risk :
+        ??Risk :
         <b>${result.risk}</b>
         </p>
 
         <p>
-        💡 Strategy :
+        Strategy :
         <b>${result.strategy}</b>
         </p>
 
@@ -1901,7 +1867,7 @@ async function loadMarketStrategy(){
 
 
         <h3>
-        🧠 AI Market Strategy
+        AI Market Strategy
         </h3>
 
 
@@ -1969,7 +1935,7 @@ async function loadMarketStrategy(){
         </p>
 
         <p>
-        💡 AI Message
+        AI Message
         <br>
         ${result.message}
         </p>
@@ -2000,7 +1966,7 @@ async function loadAIDecision(){
 
     const panel =
     document.getElementById(
-        "ai-decision"
+        "ai-decision-content"
     );
 
 
@@ -2011,7 +1977,7 @@ async function loadAIDecision(){
 
 
         <h3>
-        🧠 GPT AI Decision
+        GPT AI Decision
         </h3>
 
 
@@ -2040,7 +2006,7 @@ async function loadAIDecision(){
 
 
          <p>
-        🎯 Decision Score :
+        Decision Score :
         <br>
 
         <span
@@ -2059,7 +2025,7 @@ async function loadAIDecision(){
 
 
         <p>
-        🏆 AI Decision Grade :
+        AI Decision Grade :
         <br>
 
         <span
@@ -2090,107 +2056,6 @@ async function loadAIDecision(){
         </p>
 
 
-        <hr>
-
-
-        <h4>
-        🧠 AI Decision Intelligence
-        </h4>
-
-
-        <p>
-        🏆 Decision Quality :
-        <br>
-
-        <b>
-        ${result.intelligence.decision_quality}
-        </b>
-
-        </p>
-
-
-
-        <p>
-        🌎 Market Alignment :
-        <br>
-
-        <b>
-        ${result.intelligence.market_alignment}
-        </b>
-
-        </p>
-
-
-
-        <p>
-        ❤️ Portfolio Health :
-        <br>
-
-        <b>
-        ${result.intelligence.portfolio_health}
-        </b>
-
-        </p>
-
-
-
-        <p>
-        🏅 Top ETF :
-        <br>
-
-        <b>
-        ${result.intelligence.top_etf}
-        </b>
-
-        </p>
-
-
-
-        <p>
-        💡 AI Opinion :
-        <br>
-
-        ${result.intelligence.ai_opinion}
-
-        </p>
-
-
-        <p>
-        🌎 Market View :
-        <br>
-        <b>
-        ${decision.market_view}
-        </b>
-        </p>
-
-
-        <p>
-        📌 Recommended Mode :
-        <br>
-        <b>
-        ${decision.recommended_mode.toUpperCase()}
-        </b>
-        </p>
-
-
-        <p>
-        🛡 Risk Control :
-        <br>
-        <b>
-        ${decision.risk_control}
-        </b>
-        </p>
-
-
-        <p>
-        🔄 Next Action :
-        <br>
-        <b>
-        ${decision.next_action}
-        </b>
-        </p>
-
-
     </div>
     `;
 
@@ -2198,7 +2063,7 @@ async function loadAIDecision(){
 
 
 
-async function loadDecisionIntelligence(){
+async function loadDecisionIntelligence() {
 
     try {
 
@@ -2230,69 +2095,156 @@ async function loadDecisionIntelligence(){
         }
 
         const intelligence = result.intelligence;
+        const intelligenceScore =
+            result.intelligence_score || {};
+
+        const score =
+            intelligenceScore.intelligence_score ?? 0;
+
+        const grade =
+            intelligenceScore.grade ?? "-";
+
+        const level =
+            intelligenceScore.intelligence_level ?? "-";
+
+        const components =
+            intelligenceScore.components || {};
 
         panel.innerHTML = `
+
             <div class="ai-decision-intelligence-card">
 
                 <h3>
-                    🧠 AI Decision Intelligence
+                    AI Decision Intelligence
                 </h3>
 
+                <div class="ai-intelligence-score">
+
+                    <div>
+                        <span>Intelligence Score</span>
+                        <strong>${score}/100</strong>
+                    </div>
+
+                    <div>
+                        <span>Grade</span>
+                        <strong>${grade}</strong>
+                    </div>
+
+                    <div>
+                        <span>Level</span>
+                        <strong>${level}</strong>
+                    </div>
+
+                </div>
+
+                <div class="ai-intelligence-components">
+
+                    <p>
+                        Decision Score
+                        <br>
+                        <b>${components.decision_score ?? 0}</b>
+                    </p>
+
+                    <p>
+                        Decision Quality
+                        <br>
+                        <b>${components.decision_quality ?? 0}</b>
+                    </p>
+
+                    <p>
+                        Reliability
+                        <br>
+                        <b>${components.reliability ?? 0}</b>
+                    </p>
+
+                    <p>
+                        Adaptive Strategy
+                        <br>
+                        <b>${components.adaptive_strategy ?? 0}</b>
+                    </p>
+
+                    <p>
+                        Rebalance
+                        <br>
+                        <b>${components.rebalance ?? 0}</b>
+                    </p>
+
+                    <p>
+                        Optimization
+                        <br>
+                        <b>${components.optimization ?? 0}</b>
+                    </p>
+
+                </div>
+
                 <p>
-                    🎯 Decision Quality :
+                    Decision:
                     <br>
-                    <b>${intelligence.decision_quality ?? "-"}</b>
+                    <b>${intelligence.decision ?? "-"}</b>
                 </p>
 
                 <p>
-                    📊 Market Alignment :
+                    Confidence:
                     <br>
-                    <b>${intelligence.market_alignment ?? "-"}</b>
+                    <b>${intelligence.confidence ?? "-"}%</b>
                 </p>
 
                 <p>
-                    💼 Portfolio Health :
+                    Quality:
                     <br>
-                    <b>${intelligence.portfolio_health ?? "-"}</b>
+                    <b>${intelligence.quality ?? "-"}</b>
                 </p>
 
                 <p>
-                    🏆 Top ETF :
+                    Quality Trend:
                     <br>
-                    <b>${intelligence.top_etf ?? "-"}</b>
+                    <b>${intelligence.quality_trend ?? "-"}</b>
                 </p>
 
                 <p>
-                    🤖 AI Opinion :
+                    Reliability:
                     <br>
-                    ${intelligence.ai_opinion ?? "-"}
+                    <b>${intelligence.reliability ?? "-"}</b>
                 </p>
 
                 <p>
-                    📈 Market View :
+                    Market View:
                     <br>
                     <b>${intelligence.market_view ?? "-"}</b>
                 </p>
 
                 <p>
-                    🧭 Recommended Mode :
+                    Strategy Mode:
                     <br>
-                    <b>${intelligence.recommended_mode ?? "-"}</b>
+                    <b>${intelligence.strategy_mode ?? "-"}</b>
                 </p>
 
                 <p>
-                    🛡 Risk Control :
+                    Rebalance Action:
                     <br>
-                    <b>${intelligence.risk_control ?? "-"}</b>
+                    <b>${intelligence.rebalance_action ?? "-"}</b>
                 </p>
 
                 <p>
-                    🚀 Next Action :
+                    Optimization:
                     <br>
-                    <b>${intelligence.next_action ?? "-"}</b>
+                    <b>${intelligence.optimization_status ?? "-"}</b>
+                </p>
+
+                <p>
+                    Final Action:
+                    <br>
+                    <b>${intelligence.final_action ?? "-"}</b>
+                </p>
+
+                <p>
+                    AI Summary:
+                    <br>
+                    ${intelligence.summary ?? "-"}
                 </p>
 
             </div>
+
         `;
 
     }
@@ -2344,7 +2296,7 @@ async function loadAIDecisionHistory(){
     <div class="ai-history-card">
 
         <h3>
-        🕒 AI Decision History
+        ?븩 AI Decision History
         </h3>
     `;
 
@@ -2357,7 +2309,7 @@ async function loadAIDecisionHistory(){
             <div class="ai-history-item">
 
                 <p>
-                📌 Decision :
+                Decision :
                 <b>
                 ${item.decision}
                 </b>
@@ -2365,7 +2317,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                🎯 Score :
+                Score :
                 <b>
                 ${item.decision_score ?? "-"}
                 </b>
@@ -2373,7 +2325,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                🏆 Grade :
+                Grade :
                 <b>
                 ${item.grade ?? "-"}
                 </b>
@@ -2381,7 +2333,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                🌎 Market :
+                Market :
                 <b>
                 ${item.market_view}
                 </b>
@@ -2389,7 +2341,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                🏅 Top ETF :
+                Top ETF :
                 <b>
                 ${item.top_etf}
                 </b>
@@ -2397,7 +2349,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                🕒 Date :
+                ?븩 Date :
                 <b>
                 ${item.created_at}
                 </b>
@@ -2452,7 +2404,7 @@ async function loadAIDecisionSummary(){
 
 
         <h3>
-        📊 AI Decision Analytics
+        AI Decision Analytics
         </h3>
 
 
@@ -2490,7 +2442,7 @@ async function loadAIDecisionSummary(){
 
 
         <p>
-        🌎 Market Alignment :
+        Market Alignment :
         <b>
         ${summary.market_view}
         </b>
@@ -2498,7 +2450,7 @@ async function loadAIDecisionSummary(){
 
 
         <p>
-        🏅 Top ETF :
+        Top ETF :
         <b>
         ${summary.top_etf}
         </b>
@@ -2540,7 +2492,7 @@ async function loadAIDecisionQuality(){
     <div class="ai-quality-card">
 
         <h3>
-        🧠 AI Decision Quality
+        AI Decision Quality
         </h3>
 
         <p>
@@ -2565,7 +2517,7 @@ async function loadAIDecisionQuality(){
         </p>
 
         <p>
-        💡 AI Evaluation :
+        AI Evaluation :
         <br>
         ${quality.evaluation}
         </p>
@@ -2599,16 +2551,16 @@ async function loadAIDecisionTrend(){
     );
 
 
-    let trendIcon = "➡";
+    let trendIcon = "⚪";
 
     if(trend.trend === "Improving"){
 
-        trendIcon = "📈";
+        trendIcon = "?뱢";
 
     }
     else if(trend.trend === "Declining"){
 
-        trendIcon = "📉";
+        trendIcon = "?뱣";
 
     }
 
@@ -2778,7 +2730,7 @@ async function loadAIDecisionStatistics(){
 
 
         <h3>
-        📊 AI Decision Statistics
+        AI Decision Statistics
         </h3>
 
 
@@ -2858,7 +2810,7 @@ async function loadAIDecisionPerformance(){
 
 
         <h3>
-        🧠 AI Decision Performance
+        AI Decision Performance
         </h3>
 
 
@@ -2945,7 +2897,7 @@ async function loadAIDecisionReliability(){
 
 
         <h3>
-        🛡 AI Decision Reliability
+        AI Decision Reliability
         </h3>
 
 
@@ -2990,7 +2942,7 @@ async function loadAIDecisionReliability(){
 
 
         <p>
-        💡 AI Status :
+        AI Status :
         <br>
         ${reliability.message}
         </p>
@@ -3032,7 +2984,7 @@ async function loadAIAdaptiveStrategy(){
 
 
         <h3>
-        🤖 AI Adaptive Strategy
+        AI Adaptive Strategy
         </h3>
 
 
@@ -3069,7 +3021,7 @@ async function loadAIAdaptiveStrategy(){
 
 
         <p>
-        🌎 Market View :
+        Market View :
         <b>
         ${strategy.market_view}
         </b>
@@ -3077,7 +3029,7 @@ async function loadAIAdaptiveStrategy(){
 
 
         <p>
-        💡 AI Recommendation :
+        AI Recommendation :
         <br>
         ${strategy.message}
         </p>
@@ -3121,7 +3073,7 @@ async function loadAIRebalance(){
             changesHTML +=
             `
             <p>
-            🏅 ${item.ticker}
+            ${item.ticker}
             :
             <b>
             ${item.action}
@@ -3142,7 +3094,7 @@ async function loadAIRebalance(){
 
 
         <h3>
-        🔄 AI Portfolio Rebalance
+        AI Portfolio Rebalance
         </h3>
 
 
@@ -3183,7 +3135,7 @@ async function loadAIRebalance(){
 
 
         <p>
-        💡 AI Recommendation :
+        AI Recommendation :
         <br>
         ${recommendation.message}
         </p>
@@ -3227,14 +3179,14 @@ async function loadAIOptimization(){
             allocationHTML +=
             `
             <p>
-            🏅 ${item.ticker}
+            ${item.ticker}
             <br>
             Current :
             <b>
             ${item.current_weight}%
             </b>
 
-            →
+            ??
 
             Target :
             <b>
@@ -3254,7 +3206,7 @@ async function loadAIOptimization(){
 
 
         <h3>
-        🎯 AI Portfolio Optimization
+        AI Portfolio Optimization
         </h3>
 
 
@@ -3270,7 +3222,7 @@ async function loadAIOptimization(){
 
 
         <p>
-        💡 AI Message :
+        AI Message :
         <br>
         ${optimization.message}
         </p>
@@ -3335,7 +3287,7 @@ async function loadPortfolioExplainability(){
             decisionSummary = `
 
                 <h4>
-                🤖 AI Decision Summary
+                AI Decision Summary
                 </h4>
 
                 <p>
@@ -3365,7 +3317,7 @@ async function loadPortfolioExplainability(){
 
                     <p>
 
-                    📊 <strong>
+                    <strong>
                     ${factor.name}
                     </strong>
 
@@ -3403,7 +3355,7 @@ async function loadPortfolioExplainability(){
 
                     <p>
 
-                    💼 <strong>
+                    <strong>
                     ${item.ticker}
                     </strong>
 
@@ -3440,7 +3392,7 @@ async function loadPortfolioExplainability(){
             riskHTML = `
 
                 <h4>
-                🛡 Risk Analysis
+                Risk Analysis
                 </h4>
 
                 <p>
@@ -3470,7 +3422,7 @@ async function loadPortfolioExplainability(){
             marketHTML = `
 
                 <h4>
-                🌐 Market Analysis
+                Market Analysis
                 </h4>
 
                 <p>
@@ -3516,14 +3468,14 @@ async function loadPortfolioExplainability(){
 
 
             <h4>
-            📊 Factor Analysis
+            Factor Analysis
             </h4>
 
             ${factorHTML}
 
 
             <h4>
-            💼 Allocation Reason
+            Allocation Reason
             </h4>
 
             ${allocationHTML}
@@ -3577,7 +3529,7 @@ async function askPortfolioAnalyst(){
     if(!question){
 
         resultBox.innerHTML =
-            "질문을 입력해주세요.";
+            "吏덈Ц???낅젰?댁＜?몄슂.";
 
         return;
 
@@ -3586,7 +3538,7 @@ async function askPortfolioAnalyst(){
 
 
     resultBox.innerHTML =
-        "AI Portfolio Analyst 분석 중...";
+        "AI Portfolio Analyst 遺꾩꽍 以?..";
 
 
 
@@ -3633,7 +3585,7 @@ async function askPortfolioAnalyst(){
         html +=
         `
         <h3>
-        💡 AI Answer
+        AI Answer
         </h3>
 
         <p>
@@ -3646,7 +3598,7 @@ async function askPortfolioAnalyst(){
         html +=
         `
         <h3>
-        📊 Reason
+        Reason
         </h3>
         `;
 
@@ -3658,7 +3610,7 @@ async function askPortfolioAnalyst(){
                 html +=
                 `
                 <p>
-                ✓ ${item}
+                ??${item}
                 </p>
                 `;
 
@@ -3670,7 +3622,7 @@ async function askPortfolioAnalyst(){
         html +=
         `
         <h3>
-        🎯 Recommendation
+        Recommendation
         </h3>
 
         <p>
@@ -3707,9 +3659,22 @@ async function askPortfolioAnalyst(){
 
 
         resultBox.innerHTML =
-            "AI Analyst 연결 오류";
+            "AI Analyst ?곌껐 ?ㅻ쪟";
 
 
     }
 
 }
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    loadDecisionIntelligence();
+});
+
+
+
+
+
