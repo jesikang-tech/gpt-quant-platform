@@ -1298,8 +1298,9 @@ def get_ai_decision_performance():
         """
     )
 
-    latest_score = cursor.fetchone()[0]
+    latest_row = cursor.fetchone()
 
+    latest_score = latest_row[0] if latest_row else 0
 
     conn.close()
 
@@ -1788,6 +1789,9 @@ def get_ai_rebalance_recommendation():
         "confidence":
             confidence,
 
+         "rebalance_score":
+            confidence,
+
         "market_view":
             market_view,
 
@@ -1887,10 +1891,30 @@ def get_ai_portfolio_optimization():
             )
 
 
+    optimization_score = 0
+
+    if optimized_allocation:
+
+        optimization_score = 100
+
+        changed = any(
+            item["current_weight"]
+            != item["target_weight"]
+            for item in optimized_allocation
+        )
+
+        if not changed:
+            optimization_score = 80
+
+
+
     return {
 
         "optimization_status":
             "COMPLETED",
+
+        "optimization_score":
+            optimization_score,    
 
         "optimized_allocation":
             optimized_allocation,

@@ -793,6 +793,73 @@ def portfolio_decision_intelligence_api():
     )
 
 
+
+     # -----------------------------
+    # Decision Intelligence Score
+    # -----------------------------
+
+    decision_score = ai_decision.get(
+        "decision_score",
+        0
+    )
+
+    intelligence_score = {
+        "intelligence_score": decision_score,
+        "grade": ai_decision.get(
+            "grade",
+            "-"
+        ),
+        "intelligence_level": (
+            "Excellent"
+            if decision_score >= 90
+            else "Strong"
+            if decision_score >= 80
+            else "Moderate"
+            if decision_score >= 70
+            else "Weak"
+        ),
+        "components": {
+            "decision_score": decision_score,
+            "decision_quality": (
+                decision_quality.get(
+                    "quality_score",
+                    decision_score
+                )
+            ),
+            "reliability": (
+                reliability.get(
+                    "reliability_score",
+                    reliability.get(
+                        "confidence",
+                        0
+                    )
+                )
+            ),
+            "adaptive_strategy": (
+                adaptive_strategy.get(
+                    "strategy_score",
+                    adaptive_strategy.get(
+                        "confidence",
+                        0
+                    )
+                )
+            ),
+            "rebalance": (
+                rebalance.get(
+                    "rebalance_score",
+                    0
+                )
+            ),
+            "optimization": (
+                optimization.get(
+                    "optimization_score",
+                    0
+                )
+            )
+        }
+    }
+
+
     # -----------------------------
     # Final Decision Intelligence
     # -----------------------------
@@ -815,7 +882,8 @@ def portfolio_decision_intelligence_api():
     return jsonify(
         {
             "success": True,
-            "intelligence": intelligence
+            "intelligence": intelligence,
+            "intelligence_score": intelligence_score
         }
     )
 
