@@ -1,317 +1,611 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
+
 <html>
+
+
 
 <head>
 
+
+
 <title>
+
 GPT Quant ETF Dashboard
+
 </title>
+
+
 
 <link rel="stylesheet" href="/static/style.css">
 
+
+
 </head>
+
+
+
 
 
 <body>
 
 
+
+
+
 <header>
 
+
+
 <h1>
+
 GPT Quant ETF Dashboard
+
 </h1>
 
 
+
+
+
 <p>
+
 AI Powered ETF Ranking System
+
 </p>
+
+
+
 
 
 </header>
 
 
 
+
+
+
+
 <div id="summary">
 
+
+
 </div>
+
+
+
 
 
 <div id="market-regime">
 
+
+
 <h2>
+
 🧭 AI Market Regime
+
 </h2>
+
+
 
 <div id="market-regime-content">
 
+
+
 Market Regime Loading...
 
-</div>
+
 
 </div>
+
+
+
+</div>
+
+
+
 
 
 <div id="portfolio-advisor">
 
+
+
 <h2>
+
 ⚙ GPT AI Portfolio Optimization
+
 </h2>
+
+
+
+
 
 
 
 <div id="portfolio-mode-selector">
 
 
+
+
+
 <button onclick="changePortfolioMode('conservative')">
+
 Conservative
+
 </button>
+
+
+
 
 
 <button onclick="changePortfolioMode('balanced')">
+
 Balanced
+
 </button>
+
+
+
 
 
 <button onclick="changePortfolioMode('aggressive')">
+
 Aggressive
+
 </button>
 
 
+
+
+
 </div>
+
+
+
+
 
 
 
 <div id="portfolio-content">
 
+
+
 포트폴리오 분석 중...
 
+
+
 </div>
+
+
+
 
 
 <div id="portfolio-analytics">
 
+
+
 </div>
+
+
+
 
 
 <div id="market-condition">
 
+
+
 Market Intelligence Loading...
 
+
+
 </div>
+
+
+
 
 
 <div id="market-strategy">
 
+
+
 AI Market Strategy Loading...
 
-</div>
 
 
 </div>
+
+
+
+
+
+</div>
+
+
+
+
 
 
 
 <div id="ai-decision">
 
-<div id="ai-decision-content"><div id="ai-decision">
+
+
+<div id="ai-decision-content">
+
     
+
 </div>
+
+
 
 <div id="ai-decision-intelligence-score">
+
     AI Decision Intelligence Score Loading...
+
 </div>
+
+
 
 <div id="ai-decision-intelligence">
+
     AI Decision Intelligence Loading...
+
 </div>
+
 <div id="ai-decision-summary">
+
     AI Decision Summary Loading...
+
 </div>
+
+
 
 <div id="ai-decision-analytics">
+
     AI Decision Analytics Loading...
+
 </div>
+
+
 
 <div id="ai-decision-quality">
+
     AI Decision Quality Loading...
+
 </div>
+
+
 
 <div id="ai-decision-trend">
+
     AI Decision Trend Loading...
+
 </div>
+
+
 
 <div>
+
     <h3>📈 AI Decision Score Trend</h3>
+
     <div id="ai-decision-chart" style="height:320px;">
+
         <canvas id="aiDecisionChart"></canvas>
+
     </div>
+
 </div>
+
+
 
 <div id="ai-decision-statistics">
+
     AI Decision Statistics Loading...
+
 </div>
+
+
 
 <div id="ai-decision-performance">
+
     AI Decision Performance Loading...
+
 </div>
+
+
 
 <div id="ai-decision-reliability">
+
     AI Decision Reliability Loading...
+
 </div>
+
+
 
 <div id="ai-adaptive-strategy">
+
     AI Adaptive Strategy Loading...
-</div>
-AI Portfolio Rebalance Loading...
 
 </div>
+
+
+
+<div id="ai-rebalance">
+
+    AI Portfolio Rebalance Loading...
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
 
 
 
 <div id="ai-optimization">
 
+
+
 AI Portfolio Optimization Loading...
 
+
+
 </div>
+
+
+
+
 
 
 
 <div id="portfolio-explain">
 
 
+
+
+
 <h2>
+
 🧠 AI Portfolio Explanation
+
 </h2>
+
+
+
 
 
 <div id="portfolio-explain-content">
 
 
+
+
+
 AI Portfolio Explanation Loading...
 
 
+
+
+
 </div>
 
 
+
+
+
 </div>
+
+
+
 
 
 <div id="portfolio-analyst">
 
 
+
+
+
 <h2>
+
 🤖 AI Portfolio Analyst
+
 </h2>
+
+
+
 
 
 <div class="ai-chat-input">
 
 
+
+
+
 <input
+
     type="text"
+
     id="portfolio-question"
+
     placeholder="포트폴리오에 대한 질문을 하세요"
+
 >
+
+
+
 
 
 <button
+
     onclick="askPortfolioAnalyst()"
+
 >
+
 🔍 분석 요청
+
 </button>
 
 
+
+
+
 </div>
+
+
+
+
 
 
 
 <div id="portfolio-analyst-result">
 
 
+
+
+
 AI Portfolio Analyst Loading...
 
 
-</div>
 
-
-</div>
 
 
 </div>
+
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
 
 
 <div id="ai-decision-history">
 
+
+
 AI Decision History Loading...
 
+
+
 </div>
+
+
+
+
 
 
 
 <div id="portfolio-history">
 
-Portfolio History Loading...
 
-</div>
-
-
-<div id="portfolio-history">
 
 Portfolio History Loading...
 
-</div>
 
 
 </div>
+
+
+
+
+
+
+
+
+
+</div>
+
+
+
 
 
 <div id="dashboard">
 
+
+
 </div>
+
+
+
 
 
 <div id="detail-panel">
 
 
+
+
+
 <h2>
+
 🔎 ETF Detail
+
 </h2>
+
+
+
 
 
 <div id="detail-content">
 
+
+
 카드를 클릭하면 ETF 상세 정보가 표시됩니다.
 
-</div>
 
 
 </div>
+
+
+
+
+
+</div>
+
+
+
 
 
 <h2>
+
 📈 Ranking History
+
 </h2>
+
+
+
 
 
 <canvas id="historyChart"></canvas>
 
 
+
+
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 
 <script src="/static/dashboard.js"></script>
 
 
+
+
+
 </body>
 
+
+
 </html>
-
-
-
-
-
-
-
-
-
-
-
