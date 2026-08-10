@@ -47,6 +47,10 @@ from core.portfolio_conversational import (
 from core.portfolio_decision_intelligence import (
     PortfolioDecisionIntelligence
 )
+from core.portfolio_intelligence_score import (
+    PortfolioIntelligenceScore
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -758,73 +762,30 @@ def portfolio_decision_intelligence_api():
 
 
 
-     # -----------------------------
-    # Decision Intelligence Score
+    # -----------------------------
+    # Portfolio Intelligence Score
     # -----------------------------
 
-    decision_score = ai_decision.get(
-        "decision_score",
-        0
+    intelligence_engine = (
+        PortfolioIntelligenceScore()
     )
 
-    intelligence_score = {
-        "intelligence_score": decision_score,
-        "grade": ai_decision.get(
-            "grade",
-            "-"
-        ),
-        "intelligence_level": (
-            "Excellent"
-            if decision_score >= 90
-            else "Strong"
-            if decision_score >= 80
-            else "Moderate"
-            if decision_score >= 70
-            else "Weak"
-        ),
-        "components": {
-            "decision_score": decision_score,
-            "decision_quality": (
-                decision_quality.get(
-                    "quality_score",
-                    decision_score
-                )
+    intelligence_score = (
+        intelligence_engine.calculate(
+            ai_decision.get(
+                "decision_score",
+                0
             ),
-            "reliability": (
-                reliability.get(
-                    "reliability_score",
-                    reliability.get(
-                        "confidence",
-                        0
-                    )
-                )
-            ),
-            "adaptive_strategy": (
-                adaptive_strategy.get(
-                    "strategy_score",
-                    adaptive_strategy.get(
-                        "confidence",
-                        0
-                    )
-                )
-            ),
-            "rebalance": (
-                rebalance.get(
-                    "rebalance_score",
-                    0
-                )
-            ),
-            "optimization": (
-                optimization.get(
-                    "optimization_score",
-                    0
-                )
-            )
-        }
-    }
+            decision_quality,
+            reliability,
+            adaptive_strategy,
+            rebalance,
+            optimization
+        )
+    )
 
 
-    # -----------------------------
+
     # Final Decision Intelligence
     # -----------------------------
 
