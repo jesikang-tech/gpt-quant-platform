@@ -40,6 +40,10 @@ from core.ai_decision_engine import (
     generate_decision_intelligence
 )
 
+from core.ai_decision_explainability import (
+    AIDecisionExplainability
+)
+
 from core.portfolio_conversational import (
     PortfolioConversationalAnalyst
 )
@@ -218,6 +222,69 @@ def ai_decision_api():
             "intelligence": intelligence
         }
 
+    )
+
+
+
+@app.route("/api/ai-decision/explain")
+def ai_decision_explain_api():
+
+    market_regime = analyze_market_regime()
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+    top_etf = {
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+    }
+
+    decision = generate_ai_decision(
+        market_regime,
+        market_strategy,
+        portfolio_health,
+        top_etf
+    )
+
+    decision["decision_score"] = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+    decision["grade"] = get_decision_grade(
+        decision["decision_score"]
+    )
+
+    explainability = AIDecisionExplainability()
+
+    explanation = explainability.generate_explanation(
+        decision,
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "explanation": explanation
+        }
     )
 
 
