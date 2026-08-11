@@ -1,4 +1,4 @@
-from flask import (
+﻿from flask import (
     Flask,
     jsonify,
     render_template,
@@ -912,6 +912,25 @@ def portfolio_decision_intelligence_api():
 
 
     # -----------------------------
+    # Final Decision Intelligence
+    # -----------------------------
+
+    engine = (
+        PortfolioDecisionIntelligence()
+    )
+
+    intelligence = engine.generate(
+        ai_decision,
+        decision_quality,
+        reliability,
+        adaptive_strategy,
+        rebalance,
+        optimization,
+        explainability
+    )
+
+
+    # -----------------------------
     # Portfolio Intelligence Score
     # -----------------------------
 
@@ -928,28 +947,13 @@ def portfolio_decision_intelligence_api():
             decision_quality,
             reliability,
             adaptive_strategy,
+            intelligence.get(
+                "decision_consistency_score",
+                0
+            ),
             rebalance,
             optimization
         )
-    )
-
-
-
-    # Final Decision Intelligence
-    # -----------------------------
-
-    engine = (
-        PortfolioDecisionIntelligence()
-    )
-
-    intelligence = engine.generate(
-        ai_decision,
-        decision_quality,
-        reliability,
-        adaptive_strategy,
-        rebalance,
-        optimization,
-        explainability
     )
 
 

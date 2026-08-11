@@ -15,6 +15,7 @@ class PortfolioIntelligenceScore:
         decision_quality,
         reliability,
         adaptive_strategy,
+        decision_consistency_score,
         rebalance,
         optimization
     ):
@@ -22,12 +23,13 @@ class PortfolioIntelligenceScore:
         Calculate final AI Portfolio Intelligence Score.
 
         Components:
-            Decision Score     : 40%
-            Decision Quality   : 15%
-            Reliability        : 15%
-            Adaptive Strategy  : 10%
-            Rebalance          : 10%
-            Optimization      : 10%
+            Decision Score        : 30%
+            Decision Quality      : 15%
+            Reliability           : 15%
+            Adaptive Strategy     : 10%
+            Decision Consistency  : 10%
+            Rebalance             : 10%
+            Optimization          : 10%
         """
 
         decision_score = self._normalize(
@@ -44,6 +46,10 @@ class PortfolioIntelligenceScore:
 
         strategy_score = self._get_strategy_score(
             adaptive_strategy
+        )
+
+        consistency_score = self._normalize(
+            decision_consistency_score
         )
 
         rebalance_score = self._normalize(
@@ -64,10 +70,11 @@ class PortfolioIntelligenceScore:
         )
 
         intelligence_score = (
-            decision_score * 0.40
+            decision_score * 0.30
             + quality_score * 0.15
             + reliability_score * 0.15
             + strategy_score * 0.10
+            + consistency_score * 0.10
             + rebalance_score * 0.10
             + optimization_score * 0.10
         )
@@ -107,6 +114,9 @@ class PortfolioIntelligenceScore:
 
                 "adaptive_strategy":
                     strategy_score,
+
+                "decision_consistency":
+                    consistency_score,
 
                 "rebalance":
                     rebalance_score,
