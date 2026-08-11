@@ -48,6 +48,10 @@ from core.ai_decision_trend import (
     AIDecisionTrend
 )
 
+from core.ai_decision_adaptive_strategy import (
+    AIDecisionAdaptiveStrategy
+)
+
 from core.portfolio_conversational import (
     PortfolioConversationalAnalyst
 )
@@ -628,6 +632,44 @@ def ai_decision_trend_api():
     )
 
 
+
+@app.route("/api/ai-decision/adaptive-strategy")
+def ai_decision_adaptive_strategy_api():
+
+    history = get_ai_decision_history(
+        limit=10
+    )
+
+    trend_engine = AIDecisionTrend()
+
+    trend = trend_engine.analyze(
+        [
+            {
+                "decision_score": item[2],
+                "grade": item[3],
+                "decision": item[0],
+                "created_at": item[9]
+            }
+            for item in history
+        ]
+    )
+
+    strategy_engine = (
+        AIDecisionAdaptiveStrategy()
+    )
+
+    strategy = strategy_engine.analyze(
+        trend
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "strategy": strategy
+        }
+    )
+
+
 @app.route("/api/ai-decision/chart")
 def ai_decision_chart_api():
 
@@ -686,20 +728,6 @@ def ai_decision_reliability_api():
     )
 
 
-@app.route("/api/ai-decision/adaptive-strategy")
-def ai_adaptive_strategy_api():
-
-    strategy = (
-        get_ai_adaptive_strategy()
-    )
-
-
-    return jsonify(
-        {
-            "success": True,
-            "strategy": strategy
-        }
-    )
 
 
 @app.route("/api/portfolio/ai-rebalance")

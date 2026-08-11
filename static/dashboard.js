@@ -3015,27 +3015,23 @@ async function loadAIAdaptiveStrategy(){
     `
     <div class="ai-adaptive-card">
 
-
         <h3>
-        AI Adaptive Strategy
+        🧠 AI Adaptive Strategy
         </h3>
 
-
         <p>
-        Strategy Mode :
+        Strategy :
         <b>
-        ${strategy.strategy_mode}
+        ${strategy.strategy}
         </b>
         </p>
 
-
         <p>
-        Adjustment :
+        Recommended Action :
         <b>
-        ${strategy.adjustment}
+        ${strategy.action}
         </b>
         </p>
-
 
         <p>
         Confidence :
@@ -3044,29 +3040,53 @@ async function loadAIAdaptiveStrategy(){
         </b>
         </p>
 
-
         <p>
-        Risk Control :
+        Decision Score :
         <b>
-        ${strategy.risk_control}
+        ${strategy.score}
         </b>
         </p>
 
-
         <p>
-        Market View :
+        Direction :
         <b>
-        ${strategy.market_view}
+        ${strategy.direction}
         </b>
         </p>
 
+        <p>
+        Stability :
+        <b>
+        ${strategy.stability}
+        </b>
+        </p>
 
         <p>
-        AI Recommendation :
+        Momentum :
+        <b>
+        ${strategy.momentum}
+        </b>
+        </p>
+
+        <p>
+        Grade Stability :
+        <b>
+        ${strategy.grade_stability}
+        </b>
+        </p>
+
+        <p>
+        Decision Consistency :
+        <b>
+        ${strategy.consistency}
+        </b>
+        </p>
+
+        <p>
+        Summary :
         <br>
-        ${strategy.message}
+        ${strategy.summary}
         </p>
-
 
     </div>
     `;
