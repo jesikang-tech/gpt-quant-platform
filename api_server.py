@@ -44,6 +44,10 @@ from core.ai_decision_explainability import (
     AIDecisionExplainability
 )
 
+from core.ai_decision_trend import (
+    AIDecisionTrend
+)
+
 from core.portfolio_conversational import (
     PortfolioConversationalAnalyst
 )
@@ -584,7 +588,37 @@ def ai_decision_quality_api():
 @app.route("/api/ai-decision/trend")
 def ai_decision_trend_api():
 
-    trend = get_ai_decision_trend()
+    history = get_ai_decision_history(
+        limit=10
+    )
+
+    trend_engine = AIDecisionTrend()
+
+    trend = trend_engine.analyze(
+        [
+            {
+                "decision_score": item[2],
+                "grade": item[3],
+                "decision": item[0],
+                "created_at": item[9]
+            }
+            for item in history
+        ]
+    )
+
+    # Backward compatibility
+    trend["trend"] = {
+        "UP": "Improving",
+        "DOWN": "Declining",
+        "STABLE": "Stable"
+    }.get(
+        trend.get("direction"),
+        "UNKNOWN"
+    )
+
+    trend["average_change"] = (
+        trend.get("score_change", 0)
+    )
 
     return jsonify(
         {

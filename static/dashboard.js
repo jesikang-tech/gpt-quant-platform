@@ -2534,12 +2534,17 @@ async function loadAIDecisionTrend(){
 
     let trendIcon = "⚪";
 
-    if(trend.trend === "Improving"){
+
+    if(
+        trend.direction === "UP"
+    ){
 
         trendIcon = "📈";
 
     }
-    else if(trend.trend === "Declining"){
+    else if(
+        trend.direction === "DOWN"
+    ){
 
         trendIcon = "📉";
 
@@ -2579,13 +2584,60 @@ async function loadAIDecisionTrend(){
         <p>
         Score Change :
         <b>
-        ${trend.average_change}
+        ${trend.score_change}
         </b>
+        </p>
+
+        <p>
+        Direction :
+        <b>
+        ${trend.direction}
+        </b>
+        </p>
+
+        <p>
+        Stability :
+        <b>
+        ${trend.stability}
+        </b>
+        </p>
+
+        <p>
+        Momentum :
+        <b>
+        ${trend.momentum}
+        </b>
+        </p>
+
+        <p>
+        Grade Stability :
+        <b>
+        ${trend.grade_stability}
+        </b>
+        </p>
+
+        <p>
+        Decision Consistency :
+        <b>
+        ${trend.consistency}
+        </b>
+        </p>
+
+        <p>
+        Current Decision :
+        <b>
+        ${trend.decision}
+        </b>
+        </p>
+
+        <p>
+        Summary :
+        <br>
+        ${trend.summary}
         </p>
 
     </div>
     `;
-
 }
 
 
