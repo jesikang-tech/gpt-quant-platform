@@ -35,25 +35,37 @@ class AIDecisionExplainability:
             top_etf.get("score", 0)
         )
 
+        market_contribution_raw = (
+            market_confidence * 0.40
+        )
+
+        portfolio_contribution_raw = (
+            health_score * 0.40
+        )
+
+        etf_contribution_raw = (
+            etf_score * 0.20
+        )
+
+        decision_score = round(
+            market_contribution_raw
+            + portfolio_contribution_raw
+            + etf_contribution_raw,
+            1
+        )
+
         market_contribution = round(
-            market_confidence * 0.40,
+            market_contribution_raw,
             1
         )
 
         portfolio_contribution = round(
-            health_score * 0.40,
+            portfolio_contribution_raw,
             1
         )
 
         etf_contribution = round(
-            etf_score * 0.20,
-            1
-        )
-
-        decision_score = round(
-            market_contribution
-            + portfolio_contribution
-            + etf_contribution,
+            etf_contribution_raw,
             1
         )
 
