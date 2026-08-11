@@ -851,12 +851,32 @@ def portfolio_decision_intelligence_api():
     # Adaptive Strategy
     # -----------------------------
 
-    adaptive_strategy = (
-        get_ai_adaptive_strategy()
+    adaptive_history = get_ai_decision_history(
+        limit=10
     )
 
+    adaptive_trend_engine = AIDecisionTrend()
 
-    # -----------------------------
+    adaptive_trend = adaptive_trend_engine.analyze(
+        [
+            {
+                "decision_score": item[2],
+                "grade": item[3],
+                "decision": item[0],
+                "created_at": item[9]
+            }
+            for item in adaptive_history
+        ]
+    )
+
+    adaptive_strategy_engine = (
+        AIDecisionAdaptiveStrategy()
+    )
+
+    adaptive_strategy = adaptive_strategy_engine.analyze(
+        adaptive_trend
+    )
+# -----------------------------
     # Rebalance
     # -----------------------------
 

@@ -3,9 +3,8 @@ GPT Quant Platform
 
 AI Portfolio Decision Intelligence
 
-Step5-3-69
+Step5-3-74
 """
-
 
 class PortfolioDecisionIntelligence:
 
@@ -52,9 +51,61 @@ class PortfolioDecisionIntelligence:
             "UNKNOWN"
         )
 
+        # ---------------------------------
+        # Adaptive Strategy
+        # ---------------------------------
+
         strategy_mode = adaptive_strategy.get(
-            "strategy_mode",
-            "balanced"
+            "strategy",
+            adaptive_strategy.get(
+                "strategy_mode",
+                "BALANCED"
+            )
+        )
+
+        adaptive_action = adaptive_strategy.get(
+            "action",
+            "MONITOR_CLOSELY"
+        )
+
+        adaptive_confidence = adaptive_strategy.get(
+            "confidence",
+            0
+        )
+
+        adaptive_score = adaptive_strategy.get(
+            "score",
+            0
+        )
+
+        adaptive_direction = adaptive_strategy.get(
+            "direction",
+            "UNKNOWN"
+        )
+
+        adaptive_stability = adaptive_strategy.get(
+            "stability",
+            "UNKNOWN"
+        )
+
+        adaptive_momentum = adaptive_strategy.get(
+            "momentum",
+            "UNKNOWN"
+        )
+
+        adaptive_grade_stability = adaptive_strategy.get(
+            "grade_stability",
+            "UNKNOWN"
+        )
+
+        adaptive_consistency = adaptive_strategy.get(
+            "consistency",
+            "UNKNOWN"
+        )
+
+        adaptive_summary = adaptive_strategy.get(
+            "summary",
+            ""
         )
 
         rebalance_action = rebalance.get(
@@ -105,15 +156,29 @@ class PortfolioDecisionIntelligence:
             "market_view": market_view,
             "confidence": confidence,
             "reliability": reliability_level,
+
             "strategy_mode": strategy_mode,
+
+            "adaptive_action": adaptive_action,
+            "adaptive_confidence": adaptive_confidence,
+            "adaptive_score": adaptive_score,
+            "adaptive_direction": adaptive_direction,
+            "adaptive_stability": adaptive_stability,
+            "adaptive_momentum": adaptive_momentum,
+            "adaptive_grade_stability": adaptive_grade_stability,
+            "adaptive_consistency": adaptive_consistency,
+            "adaptive_summary": adaptive_summary,
+
             "rebalance_action": rebalance_action,
             "optimization_status": optimization_status,
             "final_action": final_action,
             "summary": summary,
+
             "quality": decision_quality.get(
                 "quality_level",
                 "UNKNOWN"
             ),
+
             "quality_trend": decision_quality.get(
                 "recent_trend",
                 "UNKNOWN"
