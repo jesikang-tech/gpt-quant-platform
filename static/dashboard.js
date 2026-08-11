@@ -2225,6 +2225,24 @@ async function loadDecisionIntelligence() {
                 </p>
 
                 <p>
+                    Decision Consistency:
+                    <br>
+                    <b>${intelligence.decision_consistency ?? "-"}</b>
+                </p>
+
+                <p>
+                    Consistency Score:
+                    <br>
+                    <b>${intelligence.decision_consistency_score ?? 0}</b>
+                </p>
+
+                <p>
+                    Consistency Summary:
+                    <br>
+                    ${intelligence.decision_consistency_summary ?? "-"}
+                </p>
+
+                <p>
                     Adaptive Action:
                     <br>
                     <b>${intelligence.adaptive_action ?? "-"}</b>

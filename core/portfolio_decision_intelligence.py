@@ -292,11 +292,63 @@ class PortfolioDecisionIntelligence:
                 "before making allocation changes"
             )
 
+        # ---------------------------------
+        # Decision Consistency
+        # Step5-3-78
+        # ---------------------------------
+
+        if adaptive_override:
+
+            decision_consistency = "OVERRIDDEN"
+
+            decision_consistency_score = 60
+
+            decision_consistency_summary = (
+                "Adaptive strategy overrode the original "
+                "AI decision due to elevated risk conditions."
+            )
+
+        elif decision_alignment == "ALIGNED":
+
+            decision_consistency = "CONSISTENT"
+
+            decision_consistency_score = 100
+
+            decision_consistency_summary = (
+                "AI decision and adaptive strategy are "
+                "fully aligned."
+            )
+
+        elif decision_alignment == "CONFLICT":
+
+            decision_consistency = "CONFLICT"
+
+            decision_consistency_score = 40
+
+            decision_consistency_summary = (
+                "AI decision and adaptive strategy show "
+                "conflicting signals."
+            )
+
+        else:
+
+            decision_consistency = "UNKNOWN"
+
+            decision_consistency_score = 0
+
+            decision_consistency_summary = (
+                "Decision consistency could not be determined."
+            )
+
         return {
             "decision": decision,
             "market_view": market_view,
             "confidence": confidence,
             "reliability": reliability_level,
+
+            "decision_consistency": decision_consistency,
+            "decision_consistency_score": decision_consistency_score,
+            "decision_consistency_summary": decision_consistency_summary,
 
             "strategy_mode": strategy_mode,
 
