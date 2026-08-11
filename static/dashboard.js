@@ -3498,6 +3498,266 @@ async function loadPortfolioExplainability(){
 
 
 
+async function loadAIDecisionExplainability(){
+
+    try{
+
+        const response =
+        await fetch(
+            "/api/ai-decision/explain"
+        );
+
+
+        const result =
+        await response.json();
+
+
+        if(!result.success){
+
+            return;
+
+        }
+
+
+        const explanation =
+        result.explanation;
+
+
+        const panel =
+        document.getElementById(
+            "ai-decision-explainability-content"
+        );
+
+
+        if(!panel){
+
+            return;
+
+        }
+
+
+        const market =
+        explanation.explanation?.market || {};
+
+
+        const portfolio =
+        explanation.explanation?.portfolio || {};
+
+
+        const topETF =
+        explanation.explanation?.top_etf || {};
+
+
+        const risk =
+        explanation.explanation?.risk || {};
+
+
+        const confidence =
+        explanation.explanation?.confidence || {};
+
+
+        panel.innerHTML = `
+
+            <h3>
+            ${explanation.decision || "UNKNOWN"}
+            </h3>
+
+
+            <p>
+
+            <strong>
+            Decision Score:
+            </strong>
+
+            ${explanation.decision_score ?? 0} / 100
+
+            <br>
+
+            <strong>
+            Grade:
+            </strong>
+
+            ${explanation.decision_grade || "-"}
+
+            </p>
+
+
+            <h4>
+            Market Contribution
+            </h4>
+
+            <p>
+
+            <strong>
+            Confidence:
+            </strong>
+
+            ${market.confidence ?? 0}%
+
+            <br>
+
+            <strong>
+            Contribution:
+            </strong>
+
+            ${market.contribution ?? 0} points
+
+            <br>
+
+            ${market.reason || ""}
+
+            </p>
+
+
+            <h4>
+            Portfolio Contribution
+            </h4>
+
+            <p>
+
+            <strong>
+            Health:
+            </strong>
+
+            ${portfolio.health_score ?? 0} / 100
+
+            <br>
+
+            <strong>
+            Risk:
+            </strong>
+
+            ${portfolio.risk_level || "-"}
+
+            <br>
+
+            <strong>
+            Contribution:
+            </strong>
+
+            ${portfolio.contribution ?? 0} points
+
+            <br>
+
+            ${portfolio.reason || ""}
+
+            </p>
+
+
+            <h4>
+            Top ETF Contribution
+            </h4>
+
+            <p>
+
+            <strong>
+            ETF:
+            </strong>
+
+            ${topETF.ticker || "-"}
+
+            <br>
+
+            <strong>
+            Score:
+            </strong>
+
+            ${topETF.score ?? 0} / 100
+
+            <br>
+
+            <strong>
+            Contribution:
+            </strong>
+
+            ${topETF.contribution ?? 0} points
+
+            <br>
+
+            ${topETF.reason || ""}
+
+            </p>
+
+
+            <h4>
+            Risk Assessment
+            </h4>
+
+            <p>
+
+            <strong>
+            Risk Level:
+            </strong>
+
+            ${risk.risk_level || "-"}
+
+            <br>
+
+            <strong>
+            Market Regime:
+            </strong>
+
+            ${risk.market_regime || "-"}
+
+            <br>
+
+            ${risk.assessment || ""}
+
+            </p>
+
+
+            <h4>
+            Decision Confidence
+            </h4>
+
+            <p>
+
+            <strong>
+            Confidence:
+            </strong>
+
+            ${confidence.confidence ?? 0}%
+
+            <br>
+
+            <strong>
+            Level:
+            </strong>
+
+            ${confidence.level || "-"}
+
+            <br>
+
+            ${confidence.reason || ""}
+
+            </p>
+
+
+            <h4>
+            Recommended Action
+            </h4>
+
+            <p>
+
+            ${explanation.recommended_action || "-"}
+
+            </p>
+
+        `;
+
+    }
+    catch(error){
+
+        console.error(
+            "AI Decision Explainability Error:",
+            error
+        );
+
+    }
+
+}
+
+
 
 
 async function askPortfolioAnalyst(){
@@ -3667,5 +3927,6 @@ async function askPortfolioAnalyst(){
 
 document.addEventListener("DOMContentLoaded", function () {
     loadDecisionIntelligence();
+    loadAIDecisionExplainability();
 });
 
