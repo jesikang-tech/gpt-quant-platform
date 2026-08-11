@@ -2201,6 +2201,30 @@ async function loadDecisionIntelligence() {
                 </p>
 
                 <p>
+                    Decision Alignment:
+                    <br>
+                    <b>${intelligence.decision_alignment ?? "-"}</b>
+                </p>
+
+                <p>
+                    Adaptive Override:
+                    <br>
+                    <b>${intelligence.adaptive_override ? "YES" : "NO"}</b>
+                </p>
+
+                <p>
+                    Override Reason:
+                    <br>
+                    ${intelligence.adaptive_override_reason ?? "-"}
+                </p>
+
+                <p>
+                    Final Strategy:
+                    <br>
+                    <b>${intelligence.final_strategy ?? "-"}</b>
+                </p>
+
+                <p>
                     Adaptive Action:
                     <br>
                     <b>${intelligence.adaptive_action ?? "-"}</b>
