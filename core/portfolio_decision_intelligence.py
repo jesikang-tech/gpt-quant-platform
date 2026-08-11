@@ -123,28 +123,169 @@ class PortfolioDecisionIntelligence:
             ""
         )
 
-        if decision == "ACCUMULATE":
+        # ---------------------------------
+        # Adaptive Strategy Decision Integration
+        # Step5-3-76
+        # ---------------------------------
 
-            final_action = (
-                "Increase growth exposure "
-                "while maintaining risk controls"
+        if decision == "DEFENSIVE":
+
+            decision_alignment = (
+                "ALIGNED"
+                if strategy_mode in (
+                    "DEFENSIVE",
+                    "CAUTIOUS"
+                )
+                else "CONFLICT"
             )
 
-        elif decision == "DEFENSIVE":
+        elif decision == "ACCUMULATE":
+
+            decision_alignment = (
+                "ALIGNED"
+                if strategy_mode in (
+                    "GROWTH",
+                    "BALANCED"
+                )
+                else "CONFLICT"
+            )
+
+        elif decision == "MAINTAIN":
+
+            decision_alignment = (
+                "ALIGNED"
+                if strategy_mode in (
+                    "MAINTAIN",
+                    "BALANCED",
+                    "MONITOR"
+                )
+                else "CONFLICT"
+            )
+
+        else:
+
+            decision_alignment = "UNKNOWN"
+
+
+        # Strong defensive adaptive signals
+        # take priority over aggressive AI decisions.
+
+        if strategy_mode == "DEFENSIVE":
+
+            final_strategy = "DEFENSIVE"
+
+            adaptive_override = (
+                decision != "DEFENSIVE"
+            )
+
+            adaptive_override_reason = (
+                "Adaptive strategy detected defensive "
+                "conditions and prioritized risk reduction."
+                if adaptive_override
+                else ""
+            )
 
             final_action = (
                 "Reduce equity exposure "
                 "and strengthen defensive allocation"
             )
 
-        elif decision == "MAINTAIN":
 
-            final_action = (
-                "Maintain balanced allocation "
-                "and monitor market conditions"
+        elif strategy_mode == "CAUTIOUS":
+
+            final_strategy = "CAUTIOUS"
+
+            adaptive_override = (
+                decision != "DEFENSIVE"
             )
 
+            adaptive_override_reason = (
+                "Adaptive strategy detected elevated "
+                "risk and recommended limiting exposure."
+                if adaptive_override
+                else ""
+            )
+
+            final_action = (
+                "Limit portfolio exposure "
+                "and monitor risk conditions closely"
+            )
+
+
+        elif decision == "ACCUMULATE":
+
+            final_strategy = strategy_mode
+
+            adaptive_override = False
+
+            adaptive_override_reason = ""
+
+            if strategy_mode == "GROWTH":
+
+                final_action = (
+                    "Increase growth exposure "
+                    "while maintaining risk controls"
+                )
+
+            else:
+
+                final_action = (
+                    "Increase portfolio exposure "
+                    "with balanced risk controls"
+                )
+
+
+        elif decision == "DEFENSIVE":
+
+            final_strategy = "DEFENSIVE"
+
+            adaptive_override = False
+
+            adaptive_override_reason = ""
+
+            final_action = (
+                "Reduce equity exposure "
+                "and strengthen defensive allocation"
+            )
+
+
+        elif decision == "MAINTAIN":
+
+            final_strategy = strategy_mode
+
+            adaptive_override = False
+
+            adaptive_override_reason = ""
+
+            if strategy_mode == "GROWTH":
+
+                final_action = (
+                    "Gradually increase growth exposure "
+                    "while monitoring market conditions"
+                )
+
+            elif strategy_mode == "MONITOR":
+
+                final_action = (
+                    "Maintain current allocation "
+                    "and monitor decision conditions closely"
+                )
+
+            else:
+
+                final_action = (
+                    "Maintain balanced allocation "
+                    "and monitor market conditions"
+                )
+
+
         else:
+
+            final_strategy = strategy_mode
+
+            adaptive_override = False
+
+            adaptive_override_reason = ""
 
             final_action = (
                 "Monitor market conditions "
@@ -168,6 +309,11 @@ class PortfolioDecisionIntelligence:
             "adaptive_grade_stability": adaptive_grade_stability,
             "adaptive_consistency": adaptive_consistency,
             "adaptive_summary": adaptive_summary,
+
+            "adaptive_override": adaptive_override,
+            "adaptive_override_reason": adaptive_override_reason,
+            "decision_alignment": decision_alignment,
+            "final_strategy": final_strategy,
 
             "rebalance_action": rebalance_action,
             "optimization_status": optimization_status,
