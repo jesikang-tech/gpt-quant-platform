@@ -2201,6 +2201,60 @@ async function loadDecisionIntelligence() {
                 </p>
 
                 <p>
+                    Adaptive Action:
+                    <br>
+                    <b>${intelligence.adaptive_action ?? "-"}</b>
+                </p>
+
+                <p>
+                    Adaptive Confidence:
+                    <br>
+                    <b>${intelligence.adaptive_confidence ?? 0}%</b>
+                </p>
+
+                <p>
+                    Adaptive Score:
+                    <br>
+                    <b>${intelligence.adaptive_score ?? 0}</b>
+                </p>
+
+                <p>
+                    Direction:
+                    <br>
+                    <b>${intelligence.adaptive_direction ?? "-"}</b>
+                </p>
+
+                <p>
+                    Momentum:
+                    <br>
+                    <b>${intelligence.adaptive_momentum ?? "-"}</b>
+                </p>
+
+                <p>
+                    Stability:
+                    <br>
+                    <b>${intelligence.adaptive_stability ?? "-"}</b>
+                </p>
+
+                <p>
+                    Grade Stability:
+                    <br>
+                    <b>${intelligence.adaptive_grade_stability ?? "-"}</b>
+                </p>
+
+                <p>
+                    Consistency:
+                    <br>
+                    <b>${intelligence.adaptive_consistency ?? "-"}</b>
+                </p>
+
+                <p>
+                    Adaptive Summary:
+                    <br>
+                    ${intelligence.adaptive_summary ?? "-"}
+                </p>
+
+                <p>
                     Rebalance Action:
                     <br>
                     <b>${intelligence.rebalance_action ?? "-"}</b>
