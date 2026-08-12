@@ -67,6 +67,10 @@ from core.decision_confidence_intelligence import (
     DecisionConfidenceIntelligence
 )
 
+from core.decision_confidence_explainability import (
+    DecisionConfidenceExplainability
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -984,13 +988,29 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+    # -----------------------------
+    # Decision Confidence Explainability
+    # Step5-3-81
+    # -----------------------------
+
+    confidence_explainability_engine = (
+        DecisionConfidenceExplainability()
+    )
+
+    decision_confidence_explainability = (
+        confidence_explainability_engine.explain(
+            decision_confidence
+        )
+    )
+
 
     return jsonify(
         {
             "success": True,
             "intelligence": intelligence,
             "intelligence_score": intelligence_score,
-            "decision_confidence": decision_confidence
+            "decision_confidence": decision_confidence,
+            "decision_confidence_explainability": decision_confidence_explainability
         }
     )
 

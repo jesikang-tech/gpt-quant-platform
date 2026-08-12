@@ -2082,6 +2082,21 @@ async function loadDecisionIntelligence() {
         const decisionConfidence =
             result.decision_confidence || {};
 
+        const decisionConfidenceExplainability =
+            result.decision_confidence_explainability || {};
+
+        const positiveSignals =
+            decisionConfidenceExplainability.positive_signals || [];
+
+        const supportingSignals =
+            decisionConfidenceExplainability.supporting_signals || [];
+
+        const riskSignals =
+            decisionConfidenceExplainability.risk_signals || [];
+
+        const confidenceExplanation =
+            decisionConfidenceExplainability.explanation || "-";
+
         const confidenceScore =
             decisionConfidence.confidence_score ?? 0;
 
@@ -2170,6 +2185,65 @@ async function loadDecisionIntelligence() {
                     Confidence Summary:
                     <br>
                     ${confidenceSummary}
+                </p>
+
+            </div>
+
+            <div class="ai-decision-confidence-explainability">
+
+                <h4>
+                    Confidence Explainability
+                </h4>
+
+                <p>
+                    Positive Signals:
+                    <br>
+                    ${
+                        positiveSignals.length
+                            ? positiveSignals
+                                .map(
+                                    signal =>
+                                        `<b>${signal.name}: ${signal.score}</b>`
+                                )
+                                .join("<br>")
+                            : "-"
+                    }
+                </p>
+
+                <p>
+                    Supporting Signals:
+                    <br>
+                    ${
+                        supportingSignals.length
+                            ? supportingSignals
+                                .map(
+                                    signal =>
+                                        `<b>${signal.name}: ${signal.score}</b>`
+                                )
+                                .join("<br>")
+                            : "-"
+                    }
+                </p>
+
+                <p>
+                    Risk Signals:
+                    <br>
+                    ${
+                        riskSignals.length
+                            ? riskSignals
+                                .map(
+                                    signal =>
+                                        `<b>${signal.name}: ${signal.score}</b>`
+                                )
+                                .join("<br>")
+                            : "None"
+                    }
+                </p>
+
+                <p>
+                    Explanation:
+                    <br>
+                    ${confidenceExplanation}
                 </p>
 
             </div>
