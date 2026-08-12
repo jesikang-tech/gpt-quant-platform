@@ -2094,6 +2094,39 @@ async function loadDecisionIntelligence() {
         const aiDecisionValidation =
             result.ai_decision_validation || {};
 
+        const aiDecisionValidationExplainability =
+            result.ai_decision_validation_explainability || {};
+
+        const validationExplainabilityStatus =
+            aiDecisionValidationExplainability.validation_status || "-";
+
+        const validationExplainabilityScore =
+            aiDecisionValidationExplainability.validation_score ?? 0;
+
+        const validationExplainabilityDecision =
+            aiDecisionValidationExplainability.decision || "-";
+
+        const validationExplainabilityStrategy =
+            aiDecisionValidationExplainability.strategy_mode || "-";
+
+        const validationExplainabilityExplanation =
+            aiDecisionValidationExplainability.explanation || "-";
+
+        const validationExplainabilityRisk =
+            aiDecisionValidationExplainability.risk_explanation || "-";
+
+        const validationExplainabilityConclusion =
+            aiDecisionValidationExplainability.conclusion || "-";
+
+        const validationExplainabilityPositiveSignals =
+            aiDecisionValidationExplainability.positive_signals || [];
+
+        const validationExplainabilityRiskSignals =
+            aiDecisionValidationExplainability.risk_signals || [];
+
+        const validationExplainabilityAttentionSignals =
+            aiDecisionValidationExplainability.attention_signals || [];
+
         const validation =
             aiDecisionValidation.validation || "-";
 
@@ -2543,6 +2576,104 @@ async function loadDecisionIntelligence() {
             </p>
 
         </div>
+
+
+
+        <div class="ai-decision-validation-explainability">
+
+            <h4>
+                AI Decision Validation Explainability
+            </h4>
+
+            <p>
+                Validation Status:
+                <br>
+                <b>${validationExplainabilityStatus}</b>
+            </p>
+
+            <p>
+                Validation Score:
+                <br>
+                <b>${validationExplainabilityScore}/100</b>
+            </p>
+
+            <p>
+                Decision:
+                <br>
+                <b>${validationExplainabilityDecision}</b>
+            </p>
+
+            <p>
+                Strategy:
+                <br>
+                <b>${validationExplainabilityStrategy}</b>
+            </p>
+
+            <p>
+                Explanation:
+                <br>
+                ${validationExplainabilityExplanation}
+            </p>
+
+            <p>
+                Positive Signals:
+                <br>
+                ${
+                    validationExplainabilityPositiveSignals.length
+                        ? validationExplainabilityPositiveSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal.name}: ${signal.value}</b>`
+                            )
+                            .join("<br>")
+                        : "None"
+                }
+            </p>
+
+            <p>
+                Risk Signals:
+                <br>
+                ${
+                    validationExplainabilityRiskSignals.length
+                        ? validationExplainabilityRiskSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal}</b>`
+                            )
+                            .join("<br>")
+                        : "None"
+                }
+            </p>
+
+            <p>
+                Attention Signals:
+                <br>
+                ${
+                    validationExplainabilityAttentionSignals.length
+                        ? validationExplainabilityAttentionSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal.name}: ${signal.score}</b>`
+                            )
+                            .join("<br>")
+                        : "None"
+                }
+            </p>
+
+            <p>
+                Risk Explanation:
+                <br>
+                ${validationExplainabilityRisk}
+            </p>
+
+            <p>
+                Conclusion:
+                <br>
+                ${validationExplainabilityConclusion}
+            </p>
+
+        </div>
+
 
 
 

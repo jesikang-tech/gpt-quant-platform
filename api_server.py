@@ -83,6 +83,10 @@ from core.ai_decision_validation import (
     AIDecisionValidation
 )
 
+from core.ai_decision_validation_explainability import (
+    AIDecisionValidationExplainability
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -1066,6 +1070,24 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+    # -----------------------------
+    # AI Decision Validation Explainability
+    # Step5-3-85
+    # -----------------------------
+
+    validation_explainability_engine = (
+        AIDecisionValidationExplainability()
+    )
+
+    ai_decision_validation_explainability = (
+        validation_explainability_engine.explain(
+            ai_decision_validation,
+            decision_confidence,
+            decision_confidence_assessment,
+            decision_confidence_recommendation
+        )
+    )
+
     return jsonify(
         {
             "success": True,
@@ -1075,7 +1097,9 @@ def portfolio_decision_intelligence_api():
             "decision_confidence_explainability": decision_confidence_explainability,
             "decision_confidence_assessment": decision_confidence_assessment,
             "decision_confidence_recommendation": decision_confidence_recommendation,
-            "ai_decision_validation": ai_decision_validation
+            "ai_decision_validation": ai_decision_validation,
+            "ai_decision_validation_explainability":
+                ai_decision_validation_explainability
         }
     )
 
