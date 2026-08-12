@@ -2079,6 +2079,24 @@ async function loadDecisionIntelligence() {
         const intelligenceScore =
             result.intelligence_score || {};
 
+        const decisionConfidence =
+            result.decision_confidence || {};
+
+        const confidenceScore =
+            decisionConfidence.confidence_score ?? 0;
+
+        const confidenceLevel =
+            decisionConfidence.confidence_level ?? "-";
+
+        const confidenceGrade =
+            decisionConfidence.confidence_grade ?? "-";
+
+        const confidenceStatus =
+            decisionConfidence.confidence_status ?? "-";
+
+        const confidenceSummary =
+            decisionConfidence.confidence_summary ?? "-";
+
         const score =
             intelligenceScore.intelligence_score ?? 0;
 
@@ -2118,7 +2136,45 @@ async function loadDecisionIntelligence() {
 
                 </div>
 
-                <div class="ai-intelligence-components">
+                <div class="ai-decision-confidence">
+
+                <h4>
+                    Decision Confidence Intelligence
+                </h4>
+
+                <div class="ai-intelligence-score">
+
+                    <div>
+                        <span>Confidence Score</span>
+                        <strong>${confidenceScore}/100</strong>
+                    </div>
+
+                    <div>
+                        <span>Grade</span>
+                        <strong>${confidenceGrade}</strong>
+                    </div>
+
+                    <div>
+                        <span>Level</span>
+                        <strong>${confidenceLevel}</strong>
+                    </div>
+
+                    <div>
+                        <span>Status</span>
+                        <strong>${confidenceStatus}</strong>
+                    </div>
+
+                </div>
+
+                <p>
+                    Confidence Summary:
+                    <br>
+                    ${confidenceSummary}
+                </p>
+
+            </div>
+
+            <div class="ai-intelligence-components">
 
                     <p>
                         Decision Score
