@@ -91,6 +91,10 @@ from core.ai_decision_validation_action import (
     AIDecisionValidationAction
 )
 
+from core.ai_final_decision_integration import (
+    AIFinalDecisionIntegration
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -1110,6 +1114,28 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+    # -----------------------------
+    # AI Final Decision Integration
+    # Step5-3-87
+    # -----------------------------
+
+    final_decision_engine = (
+        AIFinalDecisionIntegration()
+    )
+
+    final_decision = (
+        final_decision_engine.integrate(
+            intelligence,
+            intelligence_score,
+            decision_confidence,
+            decision_confidence_assessment,
+            decision_confidence_recommendation,
+            ai_decision_validation,
+            ai_decision_validation_explainability,
+            ai_decision_validation_action
+        )
+    )
+
     return jsonify(
         {
             "success": True,
@@ -1123,7 +1149,9 @@ def portfolio_decision_intelligence_api():
             "ai_decision_validation_explainability":
                 ai_decision_validation_explainability,
             "ai_decision_validation_action":
-                ai_decision_validation_action
+                ai_decision_validation_action,
+            "final_decision":
+                final_decision
         }
     )
 
