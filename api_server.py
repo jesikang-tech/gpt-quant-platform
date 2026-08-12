@@ -63,6 +63,10 @@ from core.portfolio_intelligence_score import (
     PortfolioIntelligenceScore
 )
 
+from core.decision_confidence_intelligence import (
+    DecisionConfidenceIntelligence
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -957,11 +961,36 @@ def portfolio_decision_intelligence_api():
     )
 
 
+    # -----------------------------
+    # Decision Confidence Intelligence
+    # Step5-3-80
+    # -----------------------------
+
+    confidence_engine = (
+        DecisionConfidenceIntelligence()
+    )
+
+    decision_confidence = (
+        confidence_engine.calculate(
+            decision_quality,
+            reliability,
+            adaptive_strategy,
+            intelligence.get(
+                "decision_consistency_score",
+                0
+            ),
+            rebalance,
+            optimization
+        )
+    )
+
+
     return jsonify(
         {
             "success": True,
             "intelligence": intelligence,
-            "intelligence_score": intelligence_score
+            "intelligence_score": intelligence_score,
+            "decision_confidence": decision_confidence
         }
     )
 
