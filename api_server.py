@@ -75,6 +75,10 @@ from core.decision_confidence_assessment import (
     DecisionConfidenceAssessment
 )
 
+from core.decision_confidence_recommendation import (
+    DecisionConfidenceRecommendation
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -1024,6 +1028,22 @@ def portfolio_decision_intelligence_api():
     )
 
 
+    # -----------------------------
+    # Decision Confidence Recommendation
+    # Step5-3-83
+    # -----------------------------
+
+    confidence_recommendation_engine = (
+        DecisionConfidenceRecommendation()
+    )
+
+    decision_confidence_recommendation = (
+        confidence_recommendation_engine.recommend(
+            decision_confidence_assessment,
+            intelligence
+        )
+    )
+
     return jsonify(
         {
             "success": True,
@@ -1031,7 +1051,8 @@ def portfolio_decision_intelligence_api():
             "intelligence_score": intelligence_score,
             "decision_confidence": decision_confidence,
             "decision_confidence_explainability": decision_confidence_explainability,
-            "decision_confidence_assessment": decision_confidence_assessment
+            "decision_confidence_assessment": decision_confidence_assessment,
+            "decision_confidence_recommendation": decision_confidence_recommendation
         }
     )
 

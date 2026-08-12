@@ -2088,6 +2088,27 @@ async function loadDecisionIntelligence() {
         const decisionConfidenceAssessment =
             result.decision_confidence_assessment || {};
 
+        const decisionConfidenceRecommendation =
+            result.decision_confidence_recommendation || {};
+
+        const recommendation =
+            decisionConfidenceRecommendation.recommendation || "-";
+
+        const recommendationAction =
+            decisionConfidenceRecommendation.action || "-";
+
+        const recommendationMonitoring =
+            decisionConfidenceRecommendation.monitoring || "-";
+
+        const recommendationScore =
+            decisionConfidenceRecommendation.recommendation_score ?? 0;
+
+        const recommendationAssessment =
+            decisionConfidenceRecommendation.assessment || "-";
+
+        const recommendationSummary =
+            decisionConfidenceRecommendation.summary || "-";
+
         const assessment =
             decisionConfidenceAssessment.assessment || "-";
 
@@ -2340,213 +2361,259 @@ async function loadDecisionIntelligence() {
 
         </div>
 
-            <div class="ai-intelligence-components">
 
-                    <p>
-                        Decision Score
-                        <br>
-                        <b>${components.decision_score ?? 0}</b>
-                    </p>
+        <div class="ai-decision-confidence-recommendation">
 
-                    <p>
-                        Decision Quality
-                        <br>
-                        <b>${components.decision_quality ?? 0}</b>
-                    </p>
+            <h4>
+                Decision Confidence Recommendation
+            </h4>
 
-                    <p>
-                        Reliability
-                        <br>
-                        <b>${components.reliability ?? 0}</b>
-                    </p>
+            <p>
+                Recommendation:
+                <br>
+                <b>${recommendation}</b>
+            </p>
 
-                    <p>
-                        Adaptive Strategy
-                        <br>
-                        <b>${components.adaptive_strategy ?? 0}</b>
-                    </p>
+            <p>
+                Action:
+                <br>
+                <b>${recommendationAction}</b>
+            </p>
 
-                    <p>
-                        Rebalance
-                        <br>
-                        <b>${components.rebalance ?? 0}</b>
-                    </p>
+            <p>
+                Monitoring:
+                <br>
+                <b>${recommendationMonitoring}</b>
+            </p>
 
-                    <p>
-                        Optimization
-                        <br>
-                        <b>${components.optimization ?? 0}</b>
-                    </p>
+            <p>
+                Recommendation Score:
+                <br>
+                <b>${recommendationScore}/100</b>
+            </p>
 
-                </div>
+            <p>
+                Assessment:
+                <br>
+                <b>${recommendationAssessment}</b>
+            </p>
 
-                <p>
-                    Decision:
-                    <br>
-                    <b>${intelligence.decision ?? "-"}</b>
-                </p>
+            <p>
+                Recommendation Summary:
+                <br>
+                ${recommendationSummary}
+            </p>
 
-                <p>
-                    Confidence:
-                    <br>
-                    <b>${intelligence.confidence ?? "-"}%</b>
-                </p>
+        </div>
 
-                <p>
-                    Quality:
-                    <br>
-                    <b>${intelligence.quality ?? "-"}</b>
-                </p>
 
-                <p>
-                    Quality Trend:
-                    <br>
-                    <b>${intelligence.quality_trend ?? "-"}</b>
-                </p>
+        <div class="ai-intelligence-components">
 
-                <p>
-                    Reliability:
-                    <br>
-                    <b>${intelligence.reliability ?? "-"}</b>
-                </p>
+            <p>
+                Decision Score
+                <br>
+                <b>${components.decision_score ?? 0}</b>
+            </p>
 
-                <p>
-                    Market View:
-                    <br>
-                    <b>${intelligence.market_view ?? "-"}</b>
-                </p>
+            <p>
+                Decision Quality
+                <br>
+                <b>${components.decision_quality ?? 0}</b>
+            </p>
 
-                <p>
-                    Strategy Mode:
-                    <br>
-                    <b>${intelligence.strategy_mode ?? "-"}</b>
-                </p>
+            <p>
+                Reliability
+                <br>
+                <b>${components.reliability ?? 0}</b>
+            </p>
 
-                <p>
-                    Decision Alignment:
-                    <br>
-                    <b>${intelligence.decision_alignment ?? "-"}</b>
-                </p>
+            <p>
+                Adaptive Strategy
+                <br>
+                <b>${components.adaptive_strategy ?? 0}</b>
+            </p>
 
-                <p>
-                    Adaptive Override:
-                    <br>
-                    <b>${intelligence.adaptive_override ? "YES" : "NO"}</b>
-                </p>
+            <p>
+                Rebalance
+                <br>
+                <b>${components.rebalance ?? 0}</b>
+            </p>
 
-                <p>
-                    Override Reason:
-                    <br>
-                    ${intelligence.adaptive_override_reason ?? "-"}
-                </p>
+            <p>
+                Optimization
+                <br>
+                <b>${components.optimization ?? 0}</b>
+            </p>
 
-                <p>
-                    Final Strategy:
-                    <br>
-                    <b>${intelligence.final_strategy ?? "-"}</b>
-                </p>
+        </div>
 
-                <p>
-                    Decision Consistency:
-                    <br>
-                    <b>${intelligence.decision_consistency ?? "-"}</b>
-                </p>
+        <p>
+            Decision:
+            <br>
+            <b>${intelligence.decision ?? "-"}</b>
+        </p>
 
-                <p>
-                    Consistency Score:
-                    <br>
-                    <b>${intelligence.decision_consistency_score ?? 0}</b>
-                </p>
+        <p>
+            Confidence:
+            <br>
+            <b>${intelligence.confidence ?? "-"}%</b>
+        </p>
 
-                <p>
-                    Consistency Summary:
-                    <br>
-                    ${intelligence.decision_consistency_summary ?? "-"}
-                </p>
+        <p>
+            Quality:
+            <br>
+            <b>${intelligence.quality ?? "-"}</b>
+        </p>
 
-                <p>
-                    Adaptive Action:
-                    <br>
-                    <b>${intelligence.adaptive_action ?? "-"}</b>
-                </p>
+        <p>
+            Quality Trend:
+            <br>
+            <b>${intelligence.quality_trend ?? "-"}</b>
+        </p>
 
-                <p>
-                    Adaptive Confidence:
-                    <br>
-                    <b>${intelligence.adaptive_confidence ?? 0}%</b>
-                </p>
+        <p>
+            Reliability:
+            <br>
+            <b>${intelligence.reliability ?? "-"}</b>
+        </p>
 
-                <p>
-                    Adaptive Score:
-                    <br>
-                    <b>${intelligence.adaptive_score ?? 0}</b>
-                </p>
+        <p>
+            Market View:
+            <br>
+            <b>${intelligence.market_view ?? "-"}</b>
+        </p>
 
-                <p>
-                    Direction:
-                    <br>
-                    <b>${intelligence.adaptive_direction ?? "-"}</b>
-                </p>
+        <p>
+            Strategy Mode:
+            <br>
+            <b>${intelligence.strategy_mode ?? "-"}</b>
+        </p>
 
-                <p>
-                    Momentum:
-                    <br>
-                    <b>${intelligence.adaptive_momentum ?? "-"}</b>
-                </p>
+        <p>
+            Decision Alignment:
+            <br>
+            <b>${intelligence.decision_alignment ?? "-"}</b>
+        </p>
 
-                <p>
-                    Stability:
-                    <br>
-                    <b>${intelligence.adaptive_stability ?? "-"}</b>
-                </p>
+        <p>
+            Adaptive Override:
+            <br>
+            <b>${intelligence.adaptive_override ? "YES" : "NO"}</b>
+        </p>
 
-                <p>
-                    Grade Stability:
-                    <br>
-                    <b>${intelligence.adaptive_grade_stability ?? "-"}</b>
-                </p>
+        <p>
+            Override Reason:
+            <br>
+            ${intelligence.adaptive_override_reason ?? "-"}
+        </p>
 
-                <p>
-                    Consistency:
-                    <br>
-                    <b>${intelligence.adaptive_consistency ?? "-"}</b>
-                </p>
+        <p>
+            Final Strategy:
+            <br>
+            <b>${intelligence.final_strategy ?? "-"}</b>
+        </p>
 
-                <p>
-                    Adaptive Summary:
-                    <br>
-                    ${intelligence.adaptive_summary ?? "-"}
-                </p>
+        <p>
+            Decision Consistency:
+            <br>
+            <b>${intelligence.decision_consistency ?? "-"}</b>
+        </p>
 
-                <p>
-                    Rebalance Action:
-                    <br>
-                    <b>${intelligence.rebalance_action ?? "-"}</b>
-                </p>
+        <p>
+            Consistency Score:
+            <br>
+            <b>${intelligence.decision_consistency_score ?? 0}</b>
+        </p>
 
-                <p>
-                    Optimization:
-                    <br>
-                    <b>${intelligence.optimization_status ?? "-"}</b>
-                </p>
+        <p>
+            Consistency Summary:
+            <br>
+            ${intelligence.decision_consistency_summary ?? "-"}
+        </p>
 
-                <p>
-                    Final Action:
-                    <br>
-                    <b>${intelligence.final_action ?? "-"}</b>
-                </p>
+        <p>
+            Adaptive Action:
+            <br>
+            <b>${intelligence.adaptive_action ?? "-"}</b>
+        </p>
 
-                <p>
-                    AI Summary:
-                    <br>
-                    ${intelligence.summary ?? "-"}
-                </p>
+        <p>
+            Adaptive Confidence:
+            <br>
+            <b>${intelligence.adaptive_confidence ?? 0}%</b>
+        </p>
 
-            </div>
+        <p>
+            Adaptive Score:
+            <br>
+            <b>${intelligence.adaptive_score ?? 0}</b>
+        </p>
 
-        `;
+        <p>
+            Direction:
+            <br>
+            <b>${intelligence.adaptive_direction ?? "-"}</b>
+        </p>
 
-    }
+        <p>
+            Momentum:
+            <br>
+            <b>${intelligence.adaptive_momentum ?? "-"}</b>
+        </p>
+
+        <p>
+            Stability:
+            <br>
+            <b>${intelligence.adaptive_stability ?? "-"}</b>
+        </p>
+
+        <p>
+            Grade Stability:
+            <br>
+            <b>${intelligence.adaptive_grade_stability ?? "-"}</b>
+        </p>
+
+        <p>
+            Consistency:
+            <br>
+            <b>${intelligence.adaptive_consistency ?? "-"}</b>
+        </p>
+
+        <p>
+            Adaptive Summary:
+            <br>
+            ${intelligence.adaptive_summary ?? "-"}
+        </p>
+
+        <p>
+            Rebalance Action:
+            <br>
+            <b>${intelligence.rebalance_action ?? "-"}</b>
+        </p>
+
+        <p>
+            Optimization:
+            <br>
+            <b>${intelligence.optimization_status ?? "-"}</b>
+        </p>
+
+        <p>
+            Final Action:
+            <br>
+            <b>${intelligence.final_action ?? "-"}</b>
+        </p>
+
+        <p>
+            AI Summary:
+            <br>
+            ${intelligence.summary ?? "-"}
+        </p>
+
+    </div>
+
+    `;
+
+}
 
     catch (error) {
 
