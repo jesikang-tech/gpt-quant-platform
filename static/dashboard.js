@@ -2091,6 +2091,45 @@ async function loadDecisionIntelligence() {
         const decisionConfidenceRecommendation =
             result.decision_confidence_recommendation || {};
 
+        const aiDecisionValidation =
+            result.ai_decision_validation || {};
+
+        const validation =
+            aiDecisionValidation.validation || "-";
+
+        const validationScore =
+            aiDecisionValidation.validation_score ?? 0;
+
+        const validationDecision =
+            aiDecisionValidation.decision || "-";
+
+        const validationStrategy =
+            aiDecisionValidation.strategy_mode || "-";
+
+        const validationAlignment =
+            aiDecisionValidation.decision_alignment || "-";
+
+        const validationConsistency =
+            aiDecisionValidation.decision_consistency || "-";
+
+        const validationConfidence =
+            aiDecisionValidation.confidence_score ?? 0;
+
+        const validationReliability =
+            aiDecisionValidation.reliability || "-";
+
+        const validationOptimization =
+            aiDecisionValidation.optimization_status || "-";
+
+        const validationSummary =
+            aiDecisionValidation.summary || "-";
+
+        const validationSignals =
+            aiDecisionValidation.validation_signals || [];
+
+        const validationRiskSignals =
+            aiDecisionValidation.risk_signals || [];
+
         const recommendation =
             decisionConfidenceRecommendation.recommendation || "-";
 
@@ -2405,6 +2444,106 @@ async function loadDecisionIntelligence() {
             </p>
 
         </div>
+
+
+        <div class="ai-decision-validation">
+
+            <h4>
+                AI Decision Validation
+            </h4>
+
+            <p>
+                Validation:
+                <br>
+                <b>${validation}</b>
+            </p>
+
+            <p>
+                Validation Score:
+                <br>
+                <b>${validationScore}/100</b>
+            </p>
+
+            <p>
+                Decision:
+                <br>
+                <b>${validationDecision}</b>
+            </p>
+
+            <p>
+                Strategy:
+                <br>
+                <b>${validationStrategy}</b>
+            </p>
+
+            <p>
+                Decision Alignment:
+                <br>
+                <b>${validationAlignment}</b>
+            </p>
+
+            <p>
+                Decision Consistency:
+                <br>
+                <b>${validationConsistency}</b>
+            </p>
+
+            <p>
+                Confidence:
+                <br>
+                <b>${validationConfidence}/100</b>
+            </p>
+
+            <p>
+                Reliability:
+                <br>
+                <b>${validationReliability}</b>
+            </p>
+
+            <p>
+                Optimization:
+                <br>
+                <b>${validationOptimization}</b>
+            </p>
+
+            <p>
+                Validation Signals:
+                <br>
+                ${
+                    validationSignals.length
+                        ? validationSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal.name}: ${signal.status}</b>`
+                            )
+                            .join("<br>")
+                        : "None"
+                }
+            </p>
+
+            <p>
+                Risk Signals:
+                <br>
+                ${
+                    validationRiskSignals.length
+                        ? validationRiskSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal}</b>`
+                            )
+                            .join("<br>")
+                        : "None"
+                }
+            </p>
+
+            <p>
+                Validation Summary:
+                <br>
+                ${validationSummary}
+            </p>
+
+        </div>
+
 
 
         <div class="ai-intelligence-components">
