@@ -2085,6 +2085,27 @@ async function loadDecisionIntelligence() {
         const decisionConfidenceExplainability =
             result.decision_confidence_explainability || {};
 
+        const decisionConfidenceAssessment =
+            result.decision_confidence_assessment || {};
+
+        const assessment =
+            decisionConfidenceAssessment.assessment || "-";
+
+        const assessmentScore =
+            decisionConfidenceAssessment.confidence_score ?? 0;
+
+        const strongestSignals =
+            decisionConfidenceAssessment.strongest_signals || [];
+
+        const assessmentSupportingSignals =
+            decisionConfidenceAssessment.supporting_signals || [];
+
+        const attentionSignals =
+            decisionConfidenceAssessment.attention_signals || [];
+
+        const assessmentSummary =
+            decisionConfidenceAssessment.assessment_summary || "-";
+
         const positiveSignals =
             decisionConfidenceExplainability.positive_signals || [];
 
@@ -2247,6 +2268,77 @@ async function loadDecisionIntelligence() {
                 </p>
 
             </div>
+
+            <div class="ai-decision-confidence-assessment">
+
+            <h4>
+                Confidence Assessment
+            </h4>
+
+            <p>
+                Assessment:
+                <br>
+                <b>${assessment}</b>
+            </p>
+
+            <p>
+                Confidence Score:
+                <br>
+                <b>${assessmentScore}/100</b>
+            </p>
+
+            <p>
+                Strongest Signals:
+                <br>
+                ${
+                    strongestSignals.length
+                        ? strongestSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal.name}: ${signal.score}</b>`
+                            )
+                            .join("<br>")
+                        : "-"
+                }
+            </p>
+
+            <p>
+                Supporting Signals:
+                <br>
+                ${
+                    assessmentSupportingSignals.length
+                        ? assessmentSupportingSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal.name}: ${signal.score}</b>`
+                            )
+                            .join("<br>")
+                        : "-"
+                }
+            </p>
+
+            <p>
+                Attention Signals:
+                <br>
+                ${
+                    attentionSignals.length
+                        ? attentionSignals
+                            .map(
+                                signal =>
+                                    `<b>${signal.name}: ${signal.score}</b>`
+                            )
+                            .join("<br>")
+                        : "None"
+                }
+            </p>
+
+            <p>
+                Assessment Summary:
+                <br>
+                ${assessmentSummary}
+            </p>
+
+        </div>
 
             <div class="ai-intelligence-components">
 
