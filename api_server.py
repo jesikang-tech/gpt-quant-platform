@@ -1,4 +1,4 @@
-﻿from flask import (
+from flask import (
     Flask,
     jsonify,
     render_template,
@@ -122,6 +122,11 @@ from core.ai_final_decision_reassessment import (
 from core.ai_final_decision_lifecycle_intelligence import (
     AIFinalDecisionLifecycleIntelligence
 )
+
+from core.ai_final_decision_lifecycle_governance_control import (
+    AIFinalDecisionLifecycleGovernanceControl
+)
+
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -1293,6 +1298,31 @@ def portfolio_decision_intelligence_api():
     )
 
 
+    # -----------------------------
+    # AI Final Decision Lifecycle Governance & Control
+    # Step5-3-95
+    # -----------------------------
+
+    final_decision_lifecycle_governance_control_engine = (
+        AIFinalDecisionLifecycleGovernanceControl()
+    )
+
+    final_decision_lifecycle_governance_control = (
+        final_decision_lifecycle_governance_control_engine.govern(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_monitoring,
+            final_decision_execution_feedback,
+            final_decision_execution_reassessment,
+            final_decision_lifecycle,
+            decision_confidence,
+            ai_decision_validation
+        )
+    )
+
+
 
     return jsonify(
 
@@ -1324,7 +1354,9 @@ def portfolio_decision_intelligence_api():
             "final_decision_execution_reassessment":
                 final_decision_execution_reassessment,
             "final_decision_lifecycle":
-                final_decision_lifecycle
+                final_decision_lifecycle,
+            "final_decision_lifecycle_governance_control":
+                final_decision_lifecycle_governance_control
         }
     )
 
