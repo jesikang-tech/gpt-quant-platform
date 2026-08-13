@@ -142,6 +142,10 @@ from core.ai_final_decision_orchestration import (
 from core.ai_final_execution_decision import (
     AIFinalExecutionDecision
 )
+
+from core.ai_final_decision_certification import (
+    AIFinalDecisionCertification
+)
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -1418,6 +1422,29 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+
+    # -----------------------------
+    # AI Final Decision Certification
+    # Step5-3-100
+    # -----------------------------
+
+    final_decision_certification_engine = (
+        AIFinalDecisionCertification()
+    )
+
+    final_decision_certification = (
+        final_decision_certification_engine.analyze(
+            final_decision,
+            ai_decision_validation,
+            final_decision_governance,
+            final_decision_lifecycle,
+            final_decision_operational_intelligence,
+            final_decision_integrated_intelligence,
+            final_decision_orchestration,
+            final_execution_decision
+        )
+    )
+
     return jsonify(
 
         {
@@ -1458,7 +1485,9 @@ def portfolio_decision_intelligence_api():
             "final_decision_orchestration":
                 final_decision_orchestration,
             "final_execution_decision":
-                final_execution_decision
+                final_execution_decision,
+            "final_decision_certification":
+                final_decision_certification
         }
     )
 
