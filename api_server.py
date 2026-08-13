@@ -118,6 +118,10 @@ from core.ai_final_decision_execution_feedback import (
 from core.ai_final_decision_reassessment import (
     AIFinalDecisionReassessment
 )
+
+from core.ai_final_decision_lifecycle_intelligence import (
+    AIFinalDecisionLifecycleIntelligence
+)
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -144,10 +148,6 @@ app = Flask(__name__)
 def ranking_api():
 
     data = get_dashboard_api_data()
-
-
-
-
     return jsonify(
         data
     )
@@ -1271,6 +1271,28 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+    # -----------------------------
+    # AI Final Decision Lifecycle Intelligence
+    # Step5-3-94
+    # -----------------------------
+
+    final_decision_lifecycle_engine = (
+        AIFinalDecisionLifecycleIntelligence()
+    )
+
+    final_decision_lifecycle = (
+        final_decision_lifecycle_engine.analyze(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_monitoring,
+            final_decision_execution_feedback,
+            final_decision_execution_reassessment
+        )
+    )
+
+
 
     return jsonify(
 
@@ -1300,7 +1322,9 @@ def portfolio_decision_intelligence_api():
             "final_decision_execution_feedback":
                 final_decision_execution_feedback,
             "final_decision_execution_reassessment":
-                final_decision_execution_reassessment
+                final_decision_execution_reassessment,
+            "final_decision_lifecycle":
+                final_decision_lifecycle
         }
     )
 
