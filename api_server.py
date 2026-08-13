@@ -103,7 +103,9 @@ from core.ai_final_decision_execution_control import (
     AIFinalDecisionExecutionControl
 )
 
-
+from core.ai_final_decision_execution_assurance import (
+    AIFinalDecisionExecutionAssurance
+)
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -1179,6 +1181,24 @@ def portfolio_decision_intelligence_api():
             final_decision_governance
         )
     )
+
+    # -----------------------------
+    # AI Final Decision Execution Assurance
+    # Step5-3-90
+    # -----------------------------
+
+    final_decision_execution_assurance_engine = (
+        AIFinalDecisionExecutionAssurance()
+    )
+
+    final_decision_execution_assurance = (
+        final_decision_execution_assurance_engine.assure(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control
+        )
+    )
+
     return jsonify(
 
         {
@@ -1199,7 +1219,9 @@ def portfolio_decision_intelligence_api():
             "final_decision_governance":
                 final_decision_governance,
             "final_decision_execution_control":
-                final_decision_execution_control
+                final_decision_execution_control,
+            "final_decision_execution_assurance":
+                final_decision_execution_assurance
         }
     )
 
