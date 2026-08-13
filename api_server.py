@@ -95,6 +95,10 @@ from core.ai_final_decision_integration import (
     AIFinalDecisionIntegration
 )
 
+from core.ai_final_decision_governance import (
+    AIFinalDecisionGovernance
+)
+
 
 from repository import (
     save_portfolio_history,
@@ -1136,6 +1140,26 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+    # -----------------------------
+    # AI Final Decision Governance
+    # Step5-3-88
+    # -----------------------------
+
+    final_decision_governance_engine = (
+        AIFinalDecisionGovernance()
+    )
+
+    final_decision_governance = (
+        final_decision_governance_engine.govern(
+            final_decision,
+            intelligence,
+            intelligence_score,
+            decision_confidence,
+            ai_decision_validation,
+            ai_decision_validation_action
+        )
+    )
+
     return jsonify(
         {
             "success": True,
@@ -1151,7 +1175,9 @@ def portfolio_decision_intelligence_api():
             "ai_decision_validation_action":
                 ai_decision_validation_action,
             "final_decision":
-                final_decision
+                final_decision,
+            "final_decision_governance":
+                final_decision_governance
         }
     )
 
