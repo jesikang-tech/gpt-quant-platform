@@ -138,6 +138,10 @@ from core.ai_final_decision_integrated_intelligence import (
 from core.ai_final_decision_orchestration import (
     AIFinalDecisionOrchestration
 )
+
+from core.ai_final_execution_decision import (
+    AIFinalExecutionDecision
+)
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -1394,6 +1398,26 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+
+    # -----------------------------
+    # AI Final Execution Decision
+    # Step5-3-99
+    # -----------------------------
+
+    final_execution_decision_engine = (
+        AIFinalExecutionDecision()
+    )
+
+    final_execution_decision = (
+        final_execution_decision_engine.analyze(
+            final_decision,
+            final_decision_orchestration,
+            final_decision_integrated_intelligence,
+            final_decision_lifecycle_governance_control,
+            final_decision_operational_intelligence
+        )
+    )
+
     return jsonify(
 
         {
@@ -1432,7 +1456,9 @@ def portfolio_decision_intelligence_api():
             "final_decision_integrated_intelligence":
                 final_decision_integrated_intelligence,
             "final_decision_orchestration":
-                final_decision_orchestration
+                final_decision_orchestration,
+            "final_execution_decision":
+                final_execution_decision
         }
     )
 
