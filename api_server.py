@@ -1,4 +1,4 @@
-from flask import (
+﻿from flask import (
     Flask,
     jsonify,
     render_template,
@@ -125,6 +125,10 @@ from core.ai_final_decision_lifecycle_intelligence import (
 
 from core.ai_final_decision_lifecycle_governance_control import (
     AIFinalDecisionLifecycleGovernanceControl
+)
+
+from core.ai_final_decision_operational_intelligence import (
+    AIFinalDecisionOperationalIntelligence
 )
 
 from repository import (
@@ -1323,6 +1327,23 @@ def portfolio_decision_intelligence_api():
     )
 
 
+    # -----------------------------
+    # AI Final Decision Operational Intelligence
+    # Step5-3-96
+    # -----------------------------
+
+    final_decision_operational_intelligence_engine = (
+        AIFinalDecisionOperationalIntelligence()
+    )
+
+    final_decision_operational_intelligence = (
+        final_decision_operational_intelligence_engine.analyze(
+            final_decision,
+            final_decision_lifecycle_governance_control
+        )
+    )
+
+
 
     return jsonify(
 
@@ -1356,7 +1377,9 @@ def portfolio_decision_intelligence_api():
             "final_decision_lifecycle":
                 final_decision_lifecycle,
             "final_decision_lifecycle_governance_control":
-                final_decision_lifecycle_governance_control
+                final_decision_lifecycle_governance_control,
+            "final_decision_operational_intelligence":
+                final_decision_operational_intelligence
         }
     )
 
