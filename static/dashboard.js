@@ -1,4 +1,4 @@
-﻿let historyChart = null;
+let historyChart = null;
 
 let portfolioMode = "balanced";
 
@@ -2774,7 +2774,7 @@ async function loadDecisionIntelligence() {
         <p>
             Override Reason:
             <br>
-            ${intelligence.adaptive_override_reason ?? "-"}
+            ${intelligence.adaptive_override_reason || "No adaptive override applied."}
         </p>
 
         <p>
@@ -4656,4 +4656,3 @@ document.addEventListener("DOMContentLoaded", function () {
     loadDecisionIntelligence();
     loadAIDecisionExplainability();
 });
-
