@@ -150,6 +150,10 @@ from core.ai_final_decision_certification import (
 from core.ai_final_decision_master_control import (
     AIFinalDecisionMasterControl
 )
+
+from core.ai_decision_outcome_intelligence import (
+    AIDecisionOutcomeIntelligence
+)
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -1474,6 +1478,32 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+
+    # -----------------------------
+    # AI Decision Outcome Intelligence
+    # Phase 6
+    # Step6-1
+    # -----------------------------
+
+    decision_outcome_engine = (
+        AIDecisionOutcomeIntelligence()
+    )
+
+    decision_outcome_intelligence = (
+        decision_outcome_engine.analyze(
+            final_decision,
+            final_decision_master_control,
+            final_decision_certification,
+            final_execution_decision,
+            final_decision_execution_feedback,
+            final_decision_execution_monitoring,
+            final_decision_execution_reassessment,
+            intelligence,
+            intelligence_score,
+            decision_confidence
+        )
+    )
+
     return jsonify(
 
         {
@@ -1517,6 +1547,8 @@ def portfolio_decision_intelligence_api():
                 final_execution_decision,
             "final_decision_certification":
                 final_decision_certification,
+            "ai_decision_outcome_intelligence":
+                decision_outcome_intelligence,
             "final_decision_master_control":
                 final_decision_master_control
         }
