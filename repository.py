@@ -2064,3 +2064,164 @@ def get_etf_score(ticker):
     conn.close()
 
     return row
+
+
+# ==============================
+# Step6-3 AI Decision Outcome History
+# ==============================
+
+def save_ai_decision_outcome_history(
+    decision,
+    action,
+    strategy,
+    confidence_score,
+    intelligence_score,
+    validation_score,
+    governance_score,
+    execution_score,
+    lifecycle_score,
+    operational_score,
+    orchestration_score,
+    integrated_score,
+    market_view,
+    risk_level,
+    outcome_status,
+    snapshot_status,
+    snapshot_purpose,
+    outcome_score,
+    outcome_grade,
+    decision_effectiveness,
+    strategy_effectiveness,
+    market_response,
+    portfolio_response,
+    learning_status,
+    reassessment_required,
+    reassessment_status,
+    created_at
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO ai_decision_outcome_history
+        (
+            decision,
+            action,
+            strategy,
+            confidence_score,
+            intelligence_score,
+            validation_score,
+            governance_score,
+            execution_score,
+            lifecycle_score,
+            operational_score,
+            orchestration_score,
+            integrated_score,
+            market_view,
+            risk_level,
+            outcome_status,
+            snapshot_status,
+            snapshot_purpose,
+            outcome_score,
+            outcome_grade,
+            decision_effectiveness,
+            strategy_effectiveness,
+            market_response,
+            portfolio_response,
+            learning_status,
+            reassessment_required,
+            reassessment_status,
+            created_at
+        )
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+        """,
+        (
+            decision,
+            action,
+            strategy,
+            confidence_score,
+            intelligence_score,
+            validation_score,
+            governance_score,
+            execution_score,
+            lifecycle_score,
+            operational_score,
+            orchestration_score,
+            integrated_score,
+            market_view,
+            risk_level,
+            outcome_status,
+            snapshot_status,
+            snapshot_purpose,
+            outcome_score,
+            outcome_grade,
+            decision_effectiveness,
+            strategy_effectiveness,
+            market_response,
+            portfolio_response,
+            learning_status,
+            reassessment_required,
+            reassessment_status,
+            created_at
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def get_ai_decision_outcome_history(limit=10):
+    """
+    AI Decision Outcome History 조회
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            decision,
+            action,
+            strategy,
+            confidence_score,
+            intelligence_score,
+            validation_score,
+            governance_score,
+            execution_score,
+            lifecycle_score,
+            operational_score,
+            orchestration_score,
+            integrated_score,
+            market_view,
+            risk_level,
+            outcome_status,
+            snapshot_status,
+            snapshot_purpose,
+            outcome_score,
+            outcome_grade,
+            decision_effectiveness,
+            strategy_effectiveness,
+            market_response,
+            portfolio_response,
+            learning_status,
+            reassessment_required,
+            reassessment_status,
+            created_at
+        FROM ai_decision_outcome_history
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows

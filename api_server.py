@@ -1,4 +1,6 @@
-﻿from flask import (
+from datetime import datetime
+
+from flask import (
     Flask,
     jsonify,
     render_template,
@@ -154,6 +156,10 @@ from core.ai_final_decision_master_control import (
 from core.ai_decision_outcome_intelligence import (
     AIDecisionOutcomeIntelligence
 )
+
+from core.ai_decision_outcome_collector import (
+    AIDecisionOutcomeDataCollector
+)
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -169,7 +175,9 @@ from repository import (
     get_ai_decision_reliability,
     get_ai_adaptive_strategy,
     get_ai_rebalance_recommendation,
-    get_ai_portfolio_optimization
+    get_ai_portfolio_optimization,
+    save_ai_decision_outcome_history,
+    get_ai_decision_outcome_history
 )
 
 app = Flask(__name__)
@@ -1504,6 +1512,127 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+
+    # -----------------------------
+    # AI Decision Outcome Data Collector
+    # Phase 6
+    # Step6-2
+    # -----------------------------
+
+    decision_outcome_collector_engine = (
+        AIDecisionOutcomeDataCollector()
+    )
+
+    decision_outcome_snapshot = (
+        decision_outcome_collector_engine.collect(
+            final_decision,
+            final_decision_master_control,
+            final_decision_certification,
+            final_execution_decision,
+            final_decision_execution_feedback,
+            final_decision_execution_monitoring,
+            final_decision_execution_reassessment,
+            final_decision_governance,
+            final_decision_lifecycle,
+            final_decision_operational_intelligence,
+            final_decision_orchestration,
+            final_decision_integrated_intelligence,
+            intelligence,
+            intelligence_score,
+            decision_confidence
+        )
+    )
+
+
+    # -----------------------------
+    # AI Decision Outcome History
+    # Phase 6
+    # Step6-3
+    # -----------------------------
+
+    save_ai_decision_outcome_history(
+        decision=decision_outcome_snapshot.get(
+            "decision",
+            "UNKNOWN"
+        ),
+        action=decision_outcome_snapshot.get(
+            "action",
+            "REVIEW"
+        ),
+        strategy=decision_outcome_snapshot.get(
+            "strategy",
+            "UNKNOWN"
+        ),
+        confidence_score=decision_outcome_snapshot.get(
+            "confidence_score"
+        ),
+        intelligence_score=decision_outcome_snapshot.get(
+            "intelligence_score"
+        ),
+        validation_score=decision_outcome_snapshot.get(
+            "validation_score"
+        ),
+        governance_score=decision_outcome_snapshot.get(
+            "governance_score"
+        ),
+        execution_score=decision_outcome_snapshot.get(
+            "execution_score"
+        ),
+        lifecycle_score=decision_outcome_snapshot.get(
+            "lifecycle_score"
+        ),
+        operational_score=decision_outcome_snapshot.get(
+            "operational_score"
+        ),
+        orchestration_score=decision_outcome_snapshot.get(
+            "orchestration_score"
+        ),
+        integrated_score=decision_outcome_snapshot.get(
+            "integrated_score"
+        ),
+        market_view=decision_outcome_snapshot.get(
+            "market_view",
+            "UNKNOWN"
+        ),
+        risk_level=decision_outcome_snapshot.get(
+            "risk_level",
+            "UNKNOWN"
+        ),
+        outcome_status=decision_outcome_snapshot.get(
+            "outcome_status",
+            "PENDING"
+        ),
+        snapshot_status=decision_outcome_snapshot.get(
+            "snapshot_status",
+            "COLLECTED"
+        ),
+        snapshot_purpose=decision_outcome_snapshot.get(
+            "snapshot_purpose",
+            "FUTURE_OUTCOME_EVALUATION"
+        ),
+        outcome_score=0.0,
+        outcome_grade="N/A",
+        decision_effectiveness="PENDING",
+        strategy_effectiveness="PENDING",
+        market_response="PENDING",
+        portfolio_response="PENDING",
+        learning_status="WAITING_FOR_OUTCOME",
+        reassessment_required=int(
+            bool(
+                decision_outcome_snapshot.get(
+                    "reassessment_required",
+                    False
+                )
+            )
+        ),
+        reassessment_status=decision_outcome_snapshot.get(
+            "reassessment_status",
+            "NOT_REQUIRED"
+        ),
+        created_at=datetime.now().astimezone().isoformat()
+    )
+
+
     return jsonify(
 
         {
@@ -1549,6 +1678,8 @@ def portfolio_decision_intelligence_api():
                 final_decision_certification,
             "ai_decision_outcome_intelligence":
                 decision_outcome_intelligence,
+            "ai_decision_outcome_snapshot":
+                    decision_outcome_snapshot,
             "final_decision_master_control":
                 final_decision_master_control
         }
