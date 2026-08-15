@@ -1624,7 +1624,7 @@ def portfolio_decision_intelligence_api():
             "risk_level",
             "UNKNOWN"
         ),
-        outcome_status=decision_outcome_snapshot.get(
+        outcome_status=decision_outcome_evaluation.get(
             "outcome_status",
             "PENDING"
         ),
@@ -1636,13 +1636,34 @@ def portfolio_decision_intelligence_api():
             "snapshot_purpose",
             "FUTURE_OUTCOME_EVALUATION"
         ),
-        outcome_score=0.0,
-        outcome_grade="N/A",
-        decision_effectiveness="PENDING",
-        strategy_effectiveness="PENDING",
-        market_response="PENDING",
-        portfolio_response="PENDING",
-        learning_status="WAITING_FOR_OUTCOME",
+        outcome_score=decision_outcome_evaluation.get(
+            "outcome_score",
+            0.0
+        ),
+        outcome_grade=decision_outcome_evaluation.get(
+            "outcome_grade",
+            "N/A"
+        ),
+        decision_effectiveness=decision_outcome_evaluation.get(
+            "decision_effectiveness",
+            "PENDING"
+        ),
+        strategy_effectiveness=decision_outcome_evaluation.get(
+            "strategy_effectiveness",
+            "PENDING"
+        ),
+        market_response=decision_outcome_evaluation.get(
+            "market_response",
+            "PENDING"
+        ),
+        portfolio_response=decision_outcome_evaluation.get(
+            "portfolio_response",
+            "PENDING"
+        ),
+        learning_status=decision_outcome_evaluation.get(
+            "learning_status",
+            "WAITING_FOR_OUTCOME"
+        ),
         reassessment_required=int(
             bool(
                 decision_outcome_snapshot.get(
