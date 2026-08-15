@@ -1,4 +1,4 @@
-﻿"""
+"""
 GPT Quant Platform
 
 AI Decision Outcome Intelligence Engine
@@ -24,7 +24,8 @@ class AIDecisionOutcomeIntelligence:
         final_decision_execution_reassessment=None,
         intelligence=None,
         intelligence_score=None,
-        decision_confidence=None
+        decision_confidence=None,
+        outcome_evaluation=None
     ):
         """
         Analyze the outcome state of the final AI portfolio decision.
@@ -55,6 +56,7 @@ class AIDecisionOutcomeIntelligence:
         intelligence = intelligence or {}
         intelligence_score = intelligence_score or {}
         decision_confidence = decision_confidence or {}
+        outcome_evaluation = outcome_evaluation or {}
 
         decision = self._first(
             final_decision.get("decision"),
@@ -143,13 +145,56 @@ class AIDecisionOutcomeIntelligence:
             )
         )
 
-        outcome_status = "PENDING"
-        outcome_score = 0.0
-        outcome_grade = "N/A"
-        decision_effectiveness = "PENDING"
-        strategy_effectiveness = "PENDING"
-        market_response = "PENDING"
-        portfolio_response = "PENDING"
+        outcome_status = self._first(
+            outcome_evaluation.get(
+                "outcome_status"
+            ),
+            "PENDING"
+        )
+
+        outcome_score = self._score(
+            outcome_evaluation.get(
+                "outcome_score"
+            )
+        )
+
+        if outcome_score is None:
+            outcome_score = 0.0
+
+        outcome_grade = self._first(
+            outcome_evaluation.get(
+                "outcome_grade"
+            ),
+            "N/A"
+        )
+
+        decision_effectiveness = self._first(
+            outcome_evaluation.get(
+                "decision_effectiveness"
+            ),
+            "PENDING"
+        )
+
+        strategy_effectiveness = self._first(
+            outcome_evaluation.get(
+                "strategy_effectiveness"
+            ),
+            "PENDING"
+        )
+
+        market_response = self._first(
+            outcome_evaluation.get(
+                "market_response"
+            ),
+            "PENDING"
+        )
+
+        portfolio_response = self._first(
+            outcome_evaluation.get(
+                "portfolio_response"
+            ),
+            "PENDING"
+        )
 
         if (
             master_control_status == "MASTER_BLOCKED"
