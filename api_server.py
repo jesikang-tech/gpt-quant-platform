@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 
 from flask import (
     Flask,
@@ -160,6 +160,11 @@ from core.ai_decision_outcome_intelligence import (
 from core.ai_decision_outcome_collector import (
     AIDecisionOutcomeDataCollector
 )
+
+from core.ai_decision_outcome_evaluation import (
+    AIDecisionOutcomeEvaluation
+)
+
 from repository import (
     save_portfolio_history,
     get_portfolio_history,
@@ -1633,6 +1638,24 @@ def portfolio_decision_intelligence_api():
     )
 
 
+    # -----------------------------
+    # AI Decision Outcome Evaluation
+    # Phase 6
+    # Step6-4
+    # -----------------------------
+
+    decision_outcome_evaluation_engine = (
+        AIDecisionOutcomeEvaluation()
+    )
+
+    decision_outcome_evaluation = (
+        decision_outcome_evaluation_engine.evaluate(
+            outcome_snapshot=decision_outcome_snapshot,
+            actual_outcome={}
+        )
+    )
+
+
     return jsonify(
 
         {
@@ -1679,7 +1702,9 @@ def portfolio_decision_intelligence_api():
             "ai_decision_outcome_intelligence":
                 decision_outcome_intelligence,
             "ai_decision_outcome_snapshot":
-                    decision_outcome_snapshot,
+                decision_outcome_snapshot,
+            "ai_decision_outcome_evaluation":
+                decision_outcome_evaluation,
             "final_decision_master_control":
                 final_decision_master_control
         }
