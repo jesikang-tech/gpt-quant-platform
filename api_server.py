@@ -664,6 +664,57 @@ def ai_decision_history_api():
 
 
 
+@app.route("/api/ai-decision/outcome-history")
+def ai_decision_outcome_history_api():
+
+    history = get_ai_decision_outcome_history()
+
+    data = []
+
+    for item in history:
+
+        data.append(
+            {
+                "id": item[0],
+                "decision": item[1],
+                "action": item[2],
+                "strategy": item[3],
+                "confidence_score": item[4],
+                "intelligence_score": item[5],
+                "validation_score": item[6],
+                "governance_score": item[7],
+                "execution_score": item[8],
+                "lifecycle_score": item[9],
+                "operational_score": item[10],
+                "orchestration_score": item[11],
+                "integrated_score": item[12],
+                "market_view": item[13],
+                "risk_level": item[14],
+                "outcome_status": item[15],
+                "snapshot_status": item[16],
+                "snapshot_purpose": item[17],
+                "outcome_score": item[18],
+                "outcome_grade": item[19],
+                "decision_effectiveness": item[20],
+                "strategy_effectiveness": item[21],
+                "market_response": item[22],
+                "portfolio_response": item[23],
+                "learning_status": item[24],
+                "feedback_state": item[25],
+                "adaptive_learning_required": bool(item[26]),
+                "reassessment_required": bool(item[27]),
+                "reassessment_status": item[28],
+                "created_at": item[29]
+            }
+        )
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
 @app.route("/api/ai-decision/summary")
 def ai_decision_summary_api():
 

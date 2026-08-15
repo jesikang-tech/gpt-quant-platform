@@ -2288,6 +2288,8 @@ def get_ai_decision_outcome_history(limit=10):
             market_response,
             portfolio_response,
             learning_status,
+            feedback_state,
+            adaptive_learning_required,
             reassessment_required,
             reassessment_status,
             created_at
