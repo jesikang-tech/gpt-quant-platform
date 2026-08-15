@@ -182,7 +182,8 @@ from repository import (
     get_ai_rebalance_recommendation,
     get_ai_portfolio_optimization,
     save_ai_decision_outcome_history,
-    get_ai_decision_outcome_history
+    get_ai_decision_outcome_history,
+    update_ai_decision_outcome_history
 )
 
 app = Flask(__name__)
@@ -1576,7 +1577,7 @@ def portfolio_decision_intelligence_api():
     # Step6-3
     # -----------------------------
 
-    save_ai_decision_outcome_history(
+    history_id = save_ai_decision_outcome_history(
         decision=decision_outcome_snapshot.get(
             "decision",
             "UNKNOWN"
@@ -1679,6 +1680,60 @@ def portfolio_decision_intelligence_api():
         created_at=datetime.now().astimezone().isoformat()
     )
 
+
+    # -----------------------------
+    # AI Decision Outcome History Update
+    # Phase 6
+    # Step6-4
+    # -----------------------------
+
+    update_ai_decision_outcome_history(
+        history_id=history_id,
+        outcome_status=decision_outcome_evaluation.get(
+            "outcome_status",
+            "PENDING"
+        ),
+        outcome_score=decision_outcome_evaluation.get(
+            "outcome_score",
+            0.0
+        ),
+        outcome_grade=decision_outcome_evaluation.get(
+            "outcome_grade",
+            "N/A"
+        ),
+        decision_effectiveness=decision_outcome_evaluation.get(
+            "decision_effectiveness",
+            "PENDING"
+        ),
+        strategy_effectiveness=decision_outcome_evaluation.get(
+            "strategy_effectiveness",
+            "PENDING"
+        ),
+        market_response=decision_outcome_evaluation.get(
+            "market_response",
+            "PENDING"
+        ),
+        portfolio_response=decision_outcome_evaluation.get(
+            "portfolio_response",
+            "PENDING"
+        ),
+        learning_status=decision_outcome_evaluation.get(
+            "learning_status",
+            "WAITING_FOR_OUTCOME"
+        ),
+        reassessment_required=int(
+            bool(
+                decision_outcome_snapshot.get(
+                    "reassessment_required",
+                    False
+                )
+            )
+        ),
+        reassessment_status=decision_outcome_snapshot.get(
+            "reassessment_status",
+            "NOT_REQUIRED"
+        )
+    )
 
 
     return jsonify(

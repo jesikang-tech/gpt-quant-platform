@@ -2171,7 +2171,73 @@ def save_ai_decision_outcome_history(
     )
 
     conn.commit()
+
+    history_id = cursor.lastrowid
+
     conn.close()
+
+    return history_id
+
+
+def update_ai_decision_outcome_history(
+    history_id,
+    outcome_status,
+    outcome_score,
+    outcome_grade,
+    decision_effectiveness,
+    strategy_effectiveness,
+    market_response,
+    portfolio_response,
+    learning_status,
+    reassessment_required,
+    reassessment_status
+):
+    """
+    Update AI Decision Outcome History evaluation result.
+    Step6-4
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE ai_decision_outcome_history
+        SET
+            outcome_status = ?,
+            outcome_score = ?,
+            outcome_grade = ?,
+            decision_effectiveness = ?,
+            strategy_effectiveness = ?,
+            market_response = ?,
+            portfolio_response = ?,
+            learning_status = ?,
+            reassessment_required = ?,
+            reassessment_status = ?
+        WHERE id = ?
+        """,
+        (
+            outcome_status,
+            outcome_score,
+            outcome_grade,
+            decision_effectiveness,
+            strategy_effectiveness,
+            market_response,
+            portfolio_response,
+            learning_status,
+            reassessment_required,
+            reassessment_status,
+            history_id
+        )
+    )
+
+    conn.commit()
+
+    updated_count = cursor.rowcount
+
+    conn.close()
+
+    return updated_count
 
 
 def get_ai_decision_outcome_history(limit=10):
