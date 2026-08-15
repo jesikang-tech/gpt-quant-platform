@@ -1492,31 +1492,6 @@ def portfolio_decision_intelligence_api():
     )
 
 
-    # -----------------------------
-    # AI Decision Outcome Intelligence
-    # Phase 6
-    # Step6-1
-    # -----------------------------
-
-    decision_outcome_engine = (
-        AIDecisionOutcomeIntelligence()
-    )
-
-    decision_outcome_intelligence = (
-        decision_outcome_engine.analyze(
-            final_decision,
-            final_decision_master_control,
-            final_decision_certification,
-            final_execution_decision,
-            final_decision_execution_feedback,
-            final_decision_execution_monitoring,
-            final_decision_execution_reassessment,
-            intelligence,
-            intelligence_score,
-            decision_confidence
-        )
-    )
-
 
     # -----------------------------
     # AI Decision Outcome Data Collector
@@ -1547,6 +1522,52 @@ def portfolio_decision_intelligence_api():
             decision_confidence
         )
     )
+
+    # -----------------------------
+    # AI Decision Outcome Evaluation
+    # Phase 6
+    # Step6-4
+    # -----------------------------
+
+    decision_outcome_evaluation_engine = (
+        AIDecisionOutcomeEvaluation()
+    )
+
+    decision_outcome_evaluation = (
+        decision_outcome_evaluation_engine.evaluate(
+            outcome_snapshot=decision_outcome_snapshot,
+            actual_outcome={}
+        )
+    )
+
+
+    # -----------------------------
+    # AI Decision Outcome Intelligence
+    # Phase 6
+    # Step6-1
+    # Step6-5 Integration
+    # -----------------------------
+
+    decision_outcome_engine = (
+        AIDecisionOutcomeIntelligence()
+    )
+
+    decision_outcome_intelligence = (
+        decision_outcome_engine.analyze(
+            final_decision,
+            final_decision_master_control,
+            final_decision_certification,
+            final_execution_decision,
+            final_decision_execution_feedback,
+            final_decision_execution_monitoring,
+            final_decision_execution_reassessment,
+            intelligence,
+            intelligence_score,
+            decision_confidence,
+            decision_outcome_evaluation
+        )
+    )
+
 
 
     # -----------------------------
@@ -1637,23 +1658,6 @@ def portfolio_decision_intelligence_api():
         created_at=datetime.now().astimezone().isoformat()
     )
 
-
-    # -----------------------------
-    # AI Decision Outcome Evaluation
-    # Phase 6
-    # Step6-4
-    # -----------------------------
-
-    decision_outcome_evaluation_engine = (
-        AIDecisionOutcomeEvaluation()
-    )
-
-    decision_outcome_evaluation = (
-        decision_outcome_evaluation_engine.evaluate(
-            outcome_snapshot=decision_outcome_snapshot,
-            actual_outcome={}
-        )
-    )
 
 
     return jsonify(
