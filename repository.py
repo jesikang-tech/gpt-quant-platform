@@ -1,4 +1,4 @@
-from database import get_connection
+﻿from database import get_connection
 
 
 def save_etf_price(
@@ -7,7 +7,7 @@ def save_etf_price(
     close_price
 ):
     """
-    ETF 가격 데이터 저장
+    ETF 媛寃??곗씠?????
     """
 
     conn = get_connection()
@@ -36,7 +36,7 @@ def save_etf_price(
 
 def get_etf_prices(ticker):
     """
-    특정 ETF 가격 조회
+    ?뱀젙 ETF 媛寃?議고쉶
     """
 
     conn = get_connection()
@@ -60,7 +60,7 @@ def get_etf_prices(ticker):
 
 def get_all_price_data():
     """
-    전체 가격 데이터 조회
+    ?꾩껜 媛寃??곗씠??議고쉶
     """
 
     conn = get_connection()
@@ -118,7 +118,7 @@ def save_etf_info(
 
 def get_all_etf_info():
     """
-    전체 ETF 정보 조회
+    ?꾩껜 ETF ?뺣낫 議고쉶
     """
 
     conn = get_connection()
@@ -192,7 +192,7 @@ def save_or_update_etf_score(
     created_at
 ):
     """
-    ETF Score 저장 또는 업데이트
+    ETF Score ????먮뒗 ?낅뜲?댄듃
     """
 
     conn = get_connection()
@@ -265,7 +265,7 @@ def save_or_update_etf_score(
 
 def get_top_scores(limit=10):
     """
-    ETF Score Ranking 조회
+    ETF Score Ranking 議고쉶
     """
 
     conn = get_connection()
@@ -294,7 +294,7 @@ def get_etf_score_detail(
     ticker
 ):
     """
-    ETF Score 상세 조회
+    ETF Score ?곸꽭 議고쉶
     """
 
     conn = get_connection()
@@ -331,8 +331,8 @@ def get_etf_score_detail(
 
 def remove_duplicate_scores():
     """
-    ETF Score 중복 제거
-    최신 데이터만 유지
+    ETF Score 以묐났 ?쒓굅
+    理쒖떊 ?곗씠?곕쭔 ?좎?
     """
 
     conn = get_connection()
@@ -356,7 +356,7 @@ def remove_duplicate_scores():
 
 def save_etf_list(df):
     """
-    ETF 목록 전체 저장
+    ETF 紐⑸줉 ?꾩껜 ???
     """
 
     conn = get_connection()
@@ -387,7 +387,7 @@ def save_etf_list(df):
 
 def has_price_data(ticker):
     """
-    해당 ETF 가격 데이터 존재 여부 확인
+    ?대떦 ETF 媛寃??곗씠??議댁옱 ?щ? ?뺤씤
     """
 
     conn = get_connection()
@@ -411,7 +411,7 @@ def has_price_data(ticker):
 
 def get_all_etf_tickers():
     """
-    저장된 ETF ticker 전체 조회
+    ??λ맂 ETF ticker ?꾩껜 議고쉶
     """
 
     conn = get_connection()
@@ -444,7 +444,7 @@ def save_score_history(
     analysis_date
 ):
     """
-    ETF Score History 저장
+    ETF Score History ???
     """
 
     conn = get_connection()
@@ -486,7 +486,7 @@ def save_ranking_history(
     ranking_date
 ):
     """
-    ETF Ranking History 저장 또는 업데이트
+    ETF Ranking History ????먮뒗 ?낅뜲?댄듃
     """
 
     conn = get_connection()
@@ -560,7 +560,7 @@ def get_ranking_snapshot(
     ranking_date
 ):
     """
-    특정 날짜 Ranking 조회
+    ?뱀젙 ?좎쭨 Ranking 議고쉶
     """
 
     conn = get_connection()
@@ -595,7 +595,7 @@ def get_ranking_snapshot(
 
 def get_ranking_history(ticker):
     """
-    ETF의 Ranking History 조회
+    ETF??Ranking History 議고쉶
     """
 
     conn = get_connection()
@@ -630,7 +630,7 @@ def save_portfolio_history(
     market_condition=None
 ):
     """
-    Portfolio Advisor History 저장
+    Portfolio Advisor History ???
     """
 
     conn = get_connection()
@@ -671,7 +671,7 @@ def save_portfolio_history(
 
 def get_portfolio_history(limit=50):
     """
-    Portfolio History 조회
+    Portfolio History 議고쉶
     """
 
     conn = get_connection()
@@ -778,7 +778,7 @@ def save_ai_decision_history(
 
 def get_ai_decision_history(limit=10):
     """
-    AI Decision History 조회
+    AI Decision History 議고쉶
     """
 
     conn = get_connection()
@@ -826,7 +826,7 @@ def get_ai_decision_summary():
     cursor = conn.cursor()
 
 
-    # 전체 판단 횟수
+    # ?꾩껜 ?먮떒 ?잛닔
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -837,7 +837,7 @@ def get_ai_decision_summary():
     total_decisions = cursor.fetchone()[0]
 
 
-    # 평균 Decision Score
+    # ?됯퇏 Decision Score
     cursor.execute(
         """
         SELECT AVG(decision_score)
@@ -855,7 +855,7 @@ def get_ai_decision_summary():
     )
 
 
-    # 최근 Decision 정보
+    # 理쒓렐 Decision ?뺣낫
     cursor.execute(
         """
         SELECT
@@ -925,7 +925,7 @@ def get_ai_decision_quality():
     cursor = conn.cursor()
 
 
-    # 최근 Decision Score 5개 조회
+    # 理쒓렐 Decision Score 5媛?議고쉶
     cursor.execute(
         """
         SELECT
@@ -959,11 +959,11 @@ def get_ai_decision_quality():
         }
 
 
-    # 평균 점수
+    # ?됯퇏 ?먯닔
     average_score = sum(scores) / len(scores)
 
 
-    # 최근 변화 분석
+    # 理쒓렐 蹂??遺꾩꽍
     if len(scores) >= 2:
 
         latest_score = scores[0]
@@ -988,7 +988,7 @@ def get_ai_decision_quality():
 
 
 
-    # 점수 안정성
+    # ?먯닔 ?덉젙??
     score_range = max(scores) - min(scores)
 
 
@@ -1002,7 +1002,7 @@ def get_ai_decision_quality():
 
 
 
-    # Quality 평가
+    # Quality ?됯?
 
     if average_score >= 90:
 
@@ -1244,7 +1244,7 @@ def get_ai_decision_performance():
     cursor = conn.cursor()
 
 
-    # 전체 Decision 개수
+    # ?꾩껜 Decision 媛쒖닔
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -1256,7 +1256,7 @@ def get_ai_decision_performance():
     total_decisions = cursor.fetchone()[0]
 
 
-    # 평균 Score
+    # ?됯퇏 Score
     cursor.execute(
         """
         SELECT AVG(decision_score)
@@ -1268,7 +1268,7 @@ def get_ai_decision_performance():
     average_score = cursor.fetchone()[0]
 
 
-    # 최고 / 최저 Score
+    # 理쒓퀬 / 理쒖? Score
     cursor.execute(
         """
         SELECT
@@ -1287,7 +1287,7 @@ def get_ai_decision_performance():
     lowest_score = score_range[1]
 
 
-    # 최근 Score
+    # 理쒓렐 Score
     cursor.execute(
         """
         SELECT decision_score
@@ -1357,7 +1357,7 @@ def get_ai_decision_performance():
 
 
 
-    # Reliability 판단
+    # Reliability ?먮떒
 
     if average_score >= 85:
 
@@ -1517,14 +1517,14 @@ def get_ai_adaptive_strategy():
     Decision Reliability,
     Market View,
     Portfolio Condition
-    기반 전략 조정
+    湲곕컲 ?꾨왂 議곗젙
     """
 
     conn = get_connection()
     cursor = conn.cursor()
 
 
-    # 최신 AI Decision
+    # 理쒖떊 AI Decision
     cursor.execute(
         """
         SELECT
@@ -1563,7 +1563,7 @@ def get_ai_adaptive_strategy():
 
 
 
-    # 기본값
+    # 湲곕낯媛?
 
     strategy_mode = current_mode.upper()
 
@@ -1657,7 +1657,7 @@ def get_ai_rebalance_recommendation():
     cursor = conn.cursor()
 
 
-    # 최신 Adaptive Strategy 조회
+    # 理쒖떊 Adaptive Strategy 議고쉶
 
     cursor.execute(
         """
@@ -1811,15 +1811,15 @@ def get_ai_portfolio_optimization():
     """
     AI Portfolio Self Optimization Engine
 
-    Current allocation 분석 후
-    Target allocation 제안
+    Current allocation 遺꾩꽍 ??
+    Target allocation ?쒖븞
     """
 
     conn = get_connection()
     cursor = conn.cursor()
 
 
-    # 최근 Portfolio History 조회
+    # 理쒓렐 Portfolio History 議고쉶
 
     cursor.execute(
         """
@@ -1927,14 +1927,14 @@ def get_ai_portfolio_optimization():
 
 def get_portfolio_analytics():
     """
-    Portfolio Analytics Data 조회
+    Portfolio Analytics Data 議고쉶
     """
 
     conn = get_connection()
     cursor = conn.cursor()
 
 
-    # 전체 History 개수
+    # ?꾩껜 History 媛쒖닔
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -1945,7 +1945,7 @@ def get_portfolio_analytics():
     total_history = cursor.fetchone()[0]
 
 
-    # 최근 Portfolio Mode
+    # 理쒓렐 Portfolio Mode
     cursor.execute(
         """
         SELECT mode
@@ -1964,7 +1964,7 @@ def get_portfolio_analytics():
     )
 
 
-    # Mode별 사용 횟수
+    # Mode蹂??ъ슜 ?잛닔
     cursor.execute(
         """
         SELECT
@@ -1979,7 +1979,7 @@ def get_portfolio_analytics():
     mode_analysis = cursor.fetchall()
 
 
-    # ETF별 평균 비중
+    # ETF蹂??됯퇏 鍮꾩쨷
     cursor.execute(
         """
         SELECT
@@ -2008,7 +2008,7 @@ def get_portfolio_analytics():
 
 def get_latest_etf_scores(limit=30):
     """
-    최신 ETF Score 조회
+    理쒖떊 ETF Score 議고쉶
     """
 
     conn = get_connection()
@@ -2039,7 +2039,7 @@ def get_latest_etf_scores(limit=30):
 
 def get_etf_score(ticker):
     """
-    특정 ETF Score 조회
+    ?뱀젙 ETF Score 議고쉶
     """
 
     conn = get_connection()
@@ -2095,6 +2095,8 @@ def save_ai_decision_outcome_history(
     market_response,
     portfolio_response,
     learning_status,
+    feedback_state,
+    adaptive_learning_required,
     reassessment_required,
     reassessment_status,
     created_at
@@ -2130,13 +2132,15 @@ def save_ai_decision_outcome_history(
             market_response,
             portfolio_response,
             learning_status,
+            feedback_state,
+            adaptive_learning_required,
             reassessment_required,
             reassessment_status,
             created_at
         )
         VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
         """,
         (
@@ -2164,6 +2168,8 @@ def save_ai_decision_outcome_history(
             market_response,
             portfolio_response,
             learning_status,
+            feedback_state,
+            adaptive_learning_required,
             reassessment_required,
             reassessment_status,
             created_at
@@ -2189,6 +2195,8 @@ def update_ai_decision_outcome_history(
     market_response,
     portfolio_response,
     learning_status,
+    feedback_state,
+    adaptive_learning_required,
     reassessment_required,
     reassessment_status
 ):
@@ -2212,6 +2220,8 @@ def update_ai_decision_outcome_history(
             market_response = ?,
             portfolio_response = ?,
             learning_status = ?,
+            feedback_state = ?,
+            adaptive_learning_required = ?,
             reassessment_required = ?,
             reassessment_status = ?
         WHERE id = ?
@@ -2225,6 +2235,8 @@ def update_ai_decision_outcome_history(
             market_response,
             portfolio_response,
             learning_status,
+            feedback_state,
+            adaptive_learning_required,
             reassessment_required,
             reassessment_status,
             history_id
@@ -2242,7 +2254,7 @@ def update_ai_decision_outcome_history(
 
 def get_ai_decision_outcome_history(limit=10):
     """
-    AI Decision Outcome History 조회
+    AI Decision Outcome History 議고쉶
     """
 
     conn = get_connection()

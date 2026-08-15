@@ -1665,6 +1665,18 @@ def portfolio_decision_intelligence_api():
             "learning_status",
             "WAITING_FOR_OUTCOME"
         ),
+        feedback_state=decision_outcome_evaluation.get(
+            "feedback_state",
+            "COLLECTING"
+        ),
+        adaptive_learning_required=int(
+            bool(
+                decision_outcome_evaluation.get(
+                    "adaptive_learning_required",
+                    False
+                )
+            )
+        ),
         reassessment_required=int(
             bool(
                 decision_outcome_snapshot.get(
@@ -1720,6 +1732,18 @@ def portfolio_decision_intelligence_api():
         learning_status=decision_outcome_evaluation.get(
             "learning_status",
             "WAITING_FOR_OUTCOME"
+        ),
+        feedback_state=decision_outcome_evaluation.get(
+            "feedback_state",
+            "COLLECTING"
+        ),
+        adaptive_learning_required=int(
+            bool(
+                decision_outcome_evaluation.get(
+                    "adaptive_learning_required",
+                    False
+                )
+            )
         ),
         reassessment_required=int(
             bool(
