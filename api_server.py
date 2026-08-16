@@ -1712,17 +1712,17 @@ def portfolio_decision_intelligence_api():
             "portfolio_response",
             "PENDING"
         ),
-        learning_status=decision_outcome_evaluation.get(
+        learning_status=decision_outcome_intelligence.get(
             "learning_status",
             "WAITING_FOR_OUTCOME"
         ),
-        feedback_state=decision_outcome_evaluation.get(
+        feedback_state=decision_outcome_intelligence.get(
             "feedback_state",
             "COLLECTING"
         ),
         adaptive_learning_required=int(
             bool(
-                decision_outcome_evaluation.get(
+                decision_outcome_intelligence.get(
                     "adaptive_learning_required",
                     False
                 )
@@ -1780,17 +1780,17 @@ def portfolio_decision_intelligence_api():
             "portfolio_response",
             "PENDING"
         ),
-        learning_status=decision_outcome_evaluation.get(
+        learning_status=decision_outcome_intelligence.get(
             "learning_status",
             "WAITING_FOR_OUTCOME"
         ),
-        feedback_state=decision_outcome_evaluation.get(
+        feedback_state=decision_outcome_intelligence.get(
             "feedback_state",
             "COLLECTING"
         ),
         adaptive_learning_required=int(
             bool(
-                decision_outcome_evaluation.get(
+                decision_outcome_intelligence.get(
                     "adaptive_learning_required",
                     False
                 )

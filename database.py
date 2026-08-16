@@ -102,6 +102,42 @@ def init_database():
     """)
 
 
+    # AI Decision Outcome History
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ai_decision_outcome_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        decision TEXT,
+        action TEXT,
+        strategy TEXT,
+        confidence_score REAL,
+        intelligence_score REAL,
+        validation_score REAL,
+        governance_score REAL,
+        execution_score REAL,
+        lifecycle_score REAL,
+        operational_score REAL,
+        orchestration_score REAL,
+        integrated_score REAL,
+        market_view TEXT,
+        risk_level TEXT,
+        outcome_status TEXT,
+        snapshot_status TEXT,
+        snapshot_purpose TEXT,
+        outcome_score REAL,
+        outcome_grade TEXT,
+        decision_effectiveness TEXT,
+        strategy_effectiveness TEXT,
+        market_response TEXT,
+        portfolio_response TEXT,
+        learning_status TEXT,
+        feedback_state TEXT,
+        adaptive_learning_required INTEGER,
+        reassessment_required INTEGER,
+        reassessment_status TEXT,
+        created_at TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 
