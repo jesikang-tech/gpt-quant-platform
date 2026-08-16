@@ -2460,6 +2460,44 @@ def get_ai_decision_portfolio_snapshot(
 
     return rows
 
+def update_ai_decision_portfolio_evaluation(
+    history_id,
+    portfolio_return,
+    portfolio_evaluation_date
+):
+    """
+    Save evaluated portfolio performance
+    into AI Decision Outcome History.
+
+    Step6-10-D
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE ai_decision_outcome_history
+        SET
+            portfolio_return = ?,
+            portfolio_evaluation_date = ?
+        WHERE id = ?
+        """,
+        (
+            portfolio_return,
+            portfolio_evaluation_date,
+            history_id
+        )
+    )
+
+    conn.commit()
+
+    updated_count = cursor.rowcount
+
+    conn.close()
+
+    return updated_count
+
 # ==============================
 # AI Decision Portfolio Outcome Evaluation
 # Phase 6
@@ -2518,6 +2556,7 @@ def evaluate_ai_decision_portfolio_snapshot(
     weighted_return = 0.0
     evaluated_weight = 0.0
     pending_positions = 0
+    last_evaluation_date = evaluation_date
 
     for row in snapshot_rows:
 
@@ -2612,6 +2651,8 @@ def evaluate_ai_decision_portfolio_snapshot(
 
         actual_date = price_row[0]
         evaluation_price = float(price_row[1])
+        if last_evaluation_date is None:
+            last_evaluation_date = actual_date
 
         return_pct = (
             (evaluation_price - float(reference_price))
@@ -2648,6 +2689,12 @@ def evaluate_ai_decision_portfolio_snapshot(
             "pending_positions": pending_positions,
             "positions": positions
         }
+
+    update_ai_decision_portfolio_evaluation(
+        history_id=history_id,
+        portfolio_return=round(weighted_return, 4),
+        portfolio_evaluation_date=last_evaluation_date
+    )
 
     return {
         "evaluation_status": "EVALUATED",

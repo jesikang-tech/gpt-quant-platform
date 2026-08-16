@@ -134,7 +134,9 @@ def init_database():
         adaptive_learning_required INTEGER,
         reassessment_required INTEGER,
         reassessment_status TEXT,
-        created_at TEXT
+        created_at TEXT,
+        portfolio_return REAL,
+        portfolio_evaluation_date TEXT
     )
     """)
 
