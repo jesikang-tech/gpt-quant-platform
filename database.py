@@ -148,7 +148,8 @@ def init_database():
         ticker TEXT NOT NULL,
         weight REAL,
         reference_price REAL,
-        created_at TEXT
+        created_at TEXT,
+        reference_price_date TEXT
     )
     """)
 

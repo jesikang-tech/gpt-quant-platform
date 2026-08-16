@@ -2321,7 +2321,7 @@ def save_ai_decision_portfolio_snapshot(
     """
     Save the portfolio snapshot associated with an AI decision outcome.
 
-    Step6-9-B
+    Step6-10-A
     """
 
     conn = get_connection()
@@ -2345,10 +2345,18 @@ def save_ai_decision_portfolio_snapshot(
             "reference_price"
         )
 
+        reference_price_date = item.get(
+            "reference_price_date"
+        )
+
+        price_row = None
+
         if reference_price is None:
             price_row = cursor.execute(
                 """
-                SELECT close_price
+                SELECT
+                    date,
+                    close_price
                 FROM etf_prices
                 WHERE ticker = ?
                 ORDER BY date DESC
@@ -2360,7 +2368,28 @@ def save_ai_decision_portfolio_snapshot(
             ).fetchone()
 
             if price_row:
-                reference_price = price_row[0]
+                reference_price_date = price_row[0]
+                reference_price = price_row[1]
+
+        elif reference_price_date is None:
+            price_row = cursor.execute(
+                """
+                SELECT
+                    date
+                FROM etf_prices
+                WHERE ticker = ?
+                  AND close_price = ?
+                ORDER BY date DESC
+                LIMIT 1
+                """,
+                (
+                    ticker,
+                    reference_price
+                )
+            ).fetchone()
+
+            if price_row:
+                reference_price_date = price_row[0]
 
         cursor.execute(
             """
@@ -2370,16 +2399,18 @@ def save_ai_decision_portfolio_snapshot(
                 ticker,
                 weight,
                 reference_price,
-                created_at
+                created_at,
+                reference_price_date
             )
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 history_id,
                 ticker,
                 weight,
                 reference_price,
-                created_at
+                created_at,
+                reference_price_date
             )
         )
 
