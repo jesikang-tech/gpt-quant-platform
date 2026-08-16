@@ -731,18 +731,107 @@ def ai_decision_portfolio_snapshot_evaluate_api(
         "evaluation_date"
     )
 
-    result = evaluate_ai_decision_portfolio_snapshot(
-        history_id=history_id,
-        evaluation_date=evaluation_date
+    portfolio_evaluation = (
+        evaluate_ai_decision_portfolio_snapshot(
+            history_id=history_id,
+            evaluation_date=evaluation_date
+        )
     )
+
+    # --------------------------------
+    # AI Decision Outcome Re-Evaluation
+    # Phase 6
+    # Step6-10-E
+    # --------------------------------
+
+    outcome_evaluation = None
+
+    if (
+        portfolio_evaluation.get(
+            "evaluation_status"
+        ) == "EVALUATED"
+        and
+        portfolio_evaluation.get(
+            "portfolio_return"
+        ) is not None
+    ):
+
+        decision_outcome_evaluation_engine = (
+            AIDecisionOutcomeEvaluation()
+        )
+
+        outcome_evaluation = (
+            decision_outcome_evaluation_engine.evaluate(
+                outcome_snapshot={
+                    "snapshot_status": "EVALUATED",
+                    "snapshot_purpose":
+                        "FUTURE_OUTCOME_EVALUATION"
+                },
+                actual_outcome={
+                    "portfolio_return":
+                        portfolio_evaluation.get(
+                            "portfolio_return"
+                        ),
+                    "market_response":
+                        "EVALUATED",
+                    "portfolio_response":
+                        "EVALUATED"
+                }
+            )
+        )
+
+        update_ai_decision_outcome_history(
+            history_id=history_id,
+            outcome_status=outcome_evaluation.get(
+                "outcome_status",
+                "EVALUATED"
+            ),
+            outcome_score=outcome_evaluation.get(
+                "outcome_score",
+                0.0
+            ),
+            outcome_grade=outcome_evaluation.get(
+                "outcome_grade",
+                "N/A"
+            ),
+            decision_effectiveness=outcome_evaluation.get(
+                "decision_effectiveness",
+                "PENDING"
+            ),
+            strategy_effectiveness=outcome_evaluation.get(
+                "strategy_effectiveness",
+                "PENDING"
+            ),
+            market_response=outcome_evaluation.get(
+                "market_response",
+                "EVALUATED"
+            ),
+            portfolio_response=outcome_evaluation.get(
+                "portfolio_response",
+                "EVALUATED"
+            ),
+            learning_status=outcome_evaluation.get(
+                "learning_status",
+                "LEARNING_AVAILABLE"
+            ),
+            feedback_state="EVALUATED",
+            adaptive_learning_required=int(
+                outcome_evaluation.get(
+                    "learning_signal",
+                    "NONE"
+                ) != "NONE"
+            ),
+            reassessment_required=0,
+            reassessment_status="NOT_REQUIRED"
+        )
 
     return jsonify(
         {
             "success": True,
-            "evaluation": result
+            "evaluation": portfolio_evaluation,
+            "outcome_evaluation": outcome_evaluation
         }
     )
-
 @app.route("/api/ai-decision/summary")
 def ai_decision_summary_api():
 

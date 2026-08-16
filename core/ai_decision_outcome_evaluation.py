@@ -158,13 +158,55 @@ class AIDecisionOutcomeEvaluation:
         """
         Calculate the normalized outcome score.
 
-        Supported input:
+        Primary input:
+        - portfolio_return
+
+        Portfolio return normalization:
+        - 0% return = 50 score
+        - +10% return = 100 score
+        - -10% return = 0 score
+
+        The normalized score is bounded to 0~100.
+
+        Backward-compatible inputs:
         - outcome_score
         - performance_score
         - return_score
 
-        The first available value is used.
+        portfolio_return is treated as the primary
+        real portfolio performance signal.
         """
+
+        portfolio_return = actual_outcome.get(
+            "portfolio_return"
+        )
+
+        if portfolio_return is not None:
+            try:
+                portfolio_return = float(
+                    portfolio_return
+                )
+            except (TypeError, ValueError):
+                portfolio_return = None
+
+        if portfolio_return is not None:
+            value = (
+                50.0
+                + (
+                    portfolio_return * 5.0
+                )
+            )
+
+            return round(
+                max(
+                    0.0,
+                    min(
+                        100.0,
+                        value
+                    )
+                ),
+                1
+            )
 
         value = (
             actual_outcome.get("outcome_score")
@@ -188,7 +230,6 @@ class AIDecisionOutcomeEvaluation:
             ),
             1
         )
-
 
     @staticmethod
     def _grade(score):
