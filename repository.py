@@ -2305,3 +2305,125 @@ def get_ai_decision_outcome_history(limit=10):
     conn.close()
 
     return rows
+
+
+# ==============================
+# AI Decision Portfolio Snapshot
+# Phase 6
+# Step6-9-B
+# ==============================
+
+def save_ai_decision_portfolio_snapshot(
+    history_id,
+    portfolio,
+    created_at
+):
+    """
+    Save the portfolio snapshot associated with an AI decision outcome.
+
+    Step6-9-B
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    saved_count = 0
+
+    for item in portfolio:
+
+        ticker = item.get("ticker")
+
+        if not ticker:
+            continue
+
+        weight = item.get(
+            "weight",
+            0
+        )
+
+        reference_price = item.get(
+            "reference_price"
+        )
+
+        if reference_price is None:
+            price_row = cursor.execute(
+                """
+                SELECT close_price
+                FROM etf_prices
+                WHERE ticker = ?
+                ORDER BY date DESC
+                LIMIT 1
+                """,
+                (
+                    ticker,
+                )
+            ).fetchone()
+
+            if price_row:
+                reference_price = price_row[0]
+
+        cursor.execute(
+            """
+            INSERT INTO ai_decision_portfolio_snapshot
+            (
+                history_id,
+                ticker,
+                weight,
+                reference_price,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                history_id,
+                ticker,
+                weight,
+                reference_price,
+                created_at
+            )
+        )
+
+        saved_count += 1
+
+    conn.commit()
+    conn.close()
+
+    return saved_count
+
+
+def get_ai_decision_portfolio_snapshot(
+    history_id
+):
+    """
+    Retrieve the portfolio snapshot associated
+    with an AI decision outcome.
+
+    Step6-9-B
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            history_id,
+            ticker,
+            weight,
+            reference_price,
+            created_at
+        FROM ai_decision_portfolio_snapshot
+        WHERE history_id = ?
+        ORDER BY id ASC
+        """,
+        (
+            history_id,
+        )
+    )
+
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    return rows

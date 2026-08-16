@@ -138,6 +138,20 @@ def init_database():
     )
     """)
 
+    # AI Decision Portfolio Snapshot
+    # Phase 6
+    # Step6-9-A
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ai_decision_portfolio_snapshot (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        history_id INTEGER NOT NULL,
+        ticker TEXT NOT NULL,
+        weight REAL,
+        reference_price REAL,
+        created_at TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 

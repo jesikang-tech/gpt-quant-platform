@@ -183,7 +183,9 @@ from repository import (
     get_ai_portfolio_optimization,
     save_ai_decision_outcome_history,
     get_ai_decision_outcome_history,
-    update_ai_decision_outcome_history
+    update_ai_decision_outcome_history,
+    save_ai_decision_portfolio_snapshot,
+    get_ai_decision_portfolio_snapshot
 )
 
 app = Flask(__name__)
@@ -1745,6 +1747,21 @@ def portfolio_decision_intelligence_api():
 
 
     # -----------------------------
+    # AI Decision Portfolio Snapshot
+    # Phase 6
+    # Step6-4-1-C
+    # -----------------------------
+
+    portfolio_snapshot_created_at = (
+        datetime.now().astimezone().isoformat()
+    )
+
+    save_ai_decision_portfolio_snapshot(
+        history_id=history_id,
+        portfolio=portfolio,
+        created_at=portfolio_snapshot_created_at
+    )
+
     # AI Decision Outcome History Update
     # Phase 6
     # Step6-4
