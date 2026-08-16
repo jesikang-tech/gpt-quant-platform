@@ -2292,7 +2292,9 @@ def get_ai_decision_outcome_history(limit=10):
             adaptive_learning_required,
             reassessment_required,
             reassessment_status,
-            created_at
+            created_at,
+            portfolio_return,
+            portfolio_evaluation_date
         FROM ai_decision_outcome_history
         ORDER BY id DESC
         LIMIT ?
