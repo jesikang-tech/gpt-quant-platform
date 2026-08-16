@@ -2460,6 +2460,40 @@ def get_ai_decision_portfolio_snapshot(
 
     return rows
 
+def mark_ai_decision_portfolio_outcome_evaluated(
+    history_id
+):
+    """
+    Mark AI Decision Outcome History
+    as EVALUATED after portfolio outcome evaluation.
+
+    Step6-10-E
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE ai_decision_outcome_history
+        SET
+            outcome_status = ?
+        WHERE id = ?
+        """,
+        (
+            "EVALUATED",
+            history_id
+        )
+    )
+
+    conn.commit()
+
+    updated_count = cursor.rowcount
+
+    conn.close()
+
+    return updated_count
+
 def update_ai_decision_portfolio_evaluation(
     history_id,
     portfolio_return,
@@ -2694,6 +2728,9 @@ def evaluate_ai_decision_portfolio_snapshot(
         history_id=history_id,
         portfolio_return=round(weighted_return, 4),
         portfolio_evaluation_date=last_evaluation_date
+    )
+    mark_ai_decision_portfolio_outcome_evaluated(
+        history_id=history_id
     )
 
     return {
