@@ -185,7 +185,8 @@ from repository import (
     get_ai_decision_outcome_history,
     update_ai_decision_outcome_history,
     save_ai_decision_portfolio_snapshot,
-    get_ai_decision_portfolio_snapshot
+    get_ai_decision_portfolio_snapshot,
+    evaluate_ai_decision_portfolio_snapshot
 )
 
 app = Flask(__name__)
@@ -714,6 +715,29 @@ def ai_decision_outcome_history_api():
         {
             "success": True,
             "history": data
+        }
+    )
+
+@app.route(
+    "/api/ai-decision/portfolio-snapshot/<int:history_id>/evaluate"
+)
+def ai_decision_portfolio_snapshot_evaluate_api(
+    history_id
+):
+
+    evaluation_date = request.args.get(
+        "evaluation_date"
+    )
+
+    result = evaluate_ai_decision_portfolio_snapshot(
+        history_id=history_id,
+        evaluation_date=evaluation_date
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "evaluation": result
         }
     )
 

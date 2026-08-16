@@ -2459,3 +2459,203 @@ def get_ai_decision_portfolio_snapshot(
     conn.close()
 
     return rows
+
+# ==============================
+# AI Decision Portfolio Outcome Evaluation
+# Phase 6
+# Step6-10-C
+# ==============================
+
+def evaluate_ai_decision_portfolio_snapshot(
+    history_id,
+    evaluation_date=None
+):
+    """
+    Evaluate a stored AI decision portfolio snapshot
+    against a later ETF price.
+
+    Step6-10-C
+
+    No future performance is invented.
+    If no price exists after the snapshot reference date,
+    the evaluation remains in a waiting state.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            ticker,
+            weight,
+            reference_price,
+            reference_price_date
+        FROM ai_decision_portfolio_snapshot
+        WHERE history_id = ?
+        ORDER BY id ASC
+        """,
+        (
+            history_id,
+        )
+    )
+
+    snapshot_rows = cursor.fetchall()
+
+    if not snapshot_rows:
+        conn.close()
+
+        return {
+            "evaluation_status": "WAITING_FOR_SNAPSHOT",
+            "outcome_status": "PENDING",
+            "history_id": history_id,
+            "evaluation_date": evaluation_date,
+            "portfolio_return": None,
+            "positions": []
+        }
+
+    positions = []
+    weighted_return = 0.0
+    evaluated_weight = 0.0
+    pending_positions = 0
+
+    for row in snapshot_rows:
+
+        ticker = row[0]
+        weight = float(row[1] or 0.0)
+        reference_price = row[2]
+        reference_price_date = row[3]
+
+        if ticker == "CASH":
+            positions.append({
+                "ticker": ticker,
+                "weight": weight,
+                "reference_price": reference_price,
+                "reference_price_date": reference_price_date,
+                "evaluation_price": None,
+                "evaluation_date": evaluation_date,
+                "return_pct": 0.0,
+                "status": "EVALUATED"
+            })
+
+            evaluated_weight += weight
+            continue
+
+        if reference_price is None or reference_price_date is None:
+            pending_positions += 1
+
+            positions.append({
+                "ticker": ticker,
+                "weight": weight,
+                "reference_price": reference_price,
+                "reference_price_date": reference_price_date,
+                "evaluation_price": None,
+                "evaluation_date": evaluation_date,
+                "return_pct": None,
+                "status": "WAITING_FOR_REFERENCE_PRICE"
+            })
+
+            continue
+
+        if evaluation_date is None:
+            price_row = cursor.execute(
+                """
+                SELECT
+                    date,
+                    close_price
+                FROM etf_prices
+                WHERE ticker = ?
+                  AND date > ?
+                ORDER BY date ASC
+                LIMIT 1
+                """,
+                (
+                    ticker,
+                    reference_price_date
+                )
+            ).fetchone()
+        else:
+            price_row = cursor.execute(
+                """
+                SELECT
+                    date,
+                    close_price
+                FROM etf_prices
+                WHERE ticker = ?
+                  AND date > ?
+                  AND date <= ?
+                ORDER BY date DESC
+                LIMIT 1
+                """,
+                (
+                    ticker,
+                    reference_price_date,
+                    evaluation_date
+                )
+            ).fetchone()
+
+        if not price_row:
+            pending_positions += 1
+
+            positions.append({
+                "ticker": ticker,
+                "weight": weight,
+                "reference_price": reference_price,
+                "reference_price_date": reference_price_date,
+                "evaluation_price": None,
+                "evaluation_date": evaluation_date,
+                "return_pct": None,
+                "status": "WAITING_FOR_OUTCOME"
+            })
+
+            continue
+
+        actual_date = price_row[0]
+        evaluation_price = float(price_row[1])
+
+        return_pct = (
+            (evaluation_price - float(reference_price))
+            / float(reference_price)
+        ) * 100.0
+
+        weighted_return += (
+            return_pct * (weight / 100.0)
+        )
+
+        evaluated_weight += weight
+
+        positions.append({
+            "ticker": ticker,
+            "weight": weight,
+            "reference_price": float(reference_price),
+            "reference_price_date": reference_price_date,
+            "evaluation_price": evaluation_price,
+            "evaluation_date": actual_date,
+            "return_pct": round(return_pct, 4),
+            "status": "EVALUATED"
+        })
+
+    conn.close()
+
+    if pending_positions > 0:
+        return {
+            "evaluation_status": "WAITING_FOR_OUTCOME",
+            "outcome_status": "PENDING",
+            "history_id": history_id,
+            "evaluation_date": evaluation_date,
+            "portfolio_return": None,
+            "evaluated_weight": round(evaluated_weight, 4),
+            "pending_positions": pending_positions,
+            "positions": positions
+        }
+
+    return {
+        "evaluation_status": "EVALUATED",
+        "outcome_status": "EVALUATED",
+        "history_id": history_id,
+        "evaluation_date": evaluation_date,
+        "portfolio_return": round(weighted_return, 4),
+        "evaluated_weight": round(evaluated_weight, 4),
+        "pending_positions": 0,
+        "positions": positions
+    }
