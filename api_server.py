@@ -707,7 +707,9 @@ def ai_decision_outcome_history_api():
                 "adaptive_learning_required": bool(item[26]),
                 "reassessment_required": bool(item[27]),
                 "reassessment_status": item[28],
-                "created_at": item[29]
+                "created_at": item[29],
+                "portfolio_return": item[30],
+                "portfolio_evaluation_date": item[31]
             }
         )
 
