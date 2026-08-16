@@ -2429,7 +2429,7 @@ def get_ai_decision_portfolio_snapshot(
     Retrieve the portfolio snapshot associated
     with an AI decision outcome.
 
-    Step6-9-B
+    Step6-10-B
     """
 
     conn = get_connection()
@@ -2443,7 +2443,8 @@ def get_ai_decision_portfolio_snapshot(
             ticker,
             weight,
             reference_price,
-            created_at
+            created_at,
+            reference_price_date
         FROM ai_decision_portfolio_snapshot
         WHERE history_id = ?
         ORDER BY id ASC
