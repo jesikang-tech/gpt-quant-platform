@@ -555,6 +555,8 @@ loadAIDecisionReliability();
 
 loadAIAdaptiveStrategy();
 
+loadAIDecisionOutcomeLearning();
+
 loadAIRebalance();
 
 loadAIOptimization();
@@ -3467,6 +3469,102 @@ async function loadAIDecisionStatistics(){
 
 }
 
+
+
+async function loadAIDecisionOutcomeLearning(){
+
+    const response =
+    await fetch(
+        "/api/ai-decision/outcome-learning-summary"
+    );
+
+    const result =
+    await response.json();
+
+    const summary =
+    result.summary;
+
+    const panel =
+    document.getElementById(
+        "ai-decision-outcome-learning"
+    );
+
+    panel.innerHTML =
+
+    `
+    <div class="ai-outcome-learning-card">
+
+        <h3>
+        AI Decision Outcome Learning
+        </h3>
+
+        <p>
+        Total Outcomes :
+        <b>
+        ${summary.total_outcomes}
+        </b>
+        </p>
+
+        <p>
+        Evaluated Outcomes :
+        <b>
+        ${summary.evaluated_outcomes}
+        </b>
+        </p>
+
+        <p>
+        Pending Outcomes :
+        <b>
+        ${summary.pending_outcomes}
+        </b>
+        </p>
+
+        <p>
+        Average Outcome Score :
+        <b>
+        ${summary.average_outcome_score ?? "-"}
+        </b>
+        </p>
+
+        <p>
+        Average Portfolio Return :
+        <b>
+        ${summary.average_portfolio_return ?? "-"}
+        </b>
+        </p>
+
+        <p>
+        Positive Outcomes :
+        <b>
+        ${summary.positive_outcomes}
+        </b>
+        </p>
+
+        <p>
+        Negative Outcomes :
+        <b>
+        ${summary.negative_outcomes}
+        </b>
+        </p>
+
+        <p>
+        Adaptive Learning Required :
+        <b>
+        ${summary.adaptive_learning_required}
+        </b>
+        </p>
+
+        <p>
+        Reassessment Required :
+        <b>
+        ${summary.reassessment_required}
+        </b>
+        </p>
+
+    </div>
+    `;
+
+}
 
 
 async function loadAIDecisionPerformance(){

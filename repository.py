@@ -2313,6 +2313,182 @@ def get_ai_decision_outcome_history_by_id(history_id):
     return row
 
 
+
+def get_ai_decision_outcome_learning_summary():
+    """
+    Aggregate AI Decision Outcome Learning status.
+
+    Step6-10-F-11-D
+
+    Pending outcomes are excluded from outcome-score
+    and portfolio-return averages.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        """
+    )
+    total_outcomes = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'EVALUATED'
+        """
+    )
+    evaluated_outcomes = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'PENDING'
+        """
+    )
+    pending_outcomes = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT AVG(outcome_score)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'EVALUATED'
+          AND outcome_score IS NOT NULL
+        """
+    )
+    average_outcome_score = cursor.fetchone()[0]
+
+    if average_outcome_score is not None:
+        average_outcome_score = round(
+            average_outcome_score,
+            2
+        )
+
+    cursor.execute(
+        """
+        SELECT AVG(portfolio_return)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'EVALUATED'
+          AND portfolio_return IS NOT NULL
+        """
+    )
+    average_portfolio_return = cursor.fetchone()[0]
+
+    if average_portfolio_return is not None:
+        average_portfolio_return = round(
+            average_portfolio_return,
+            4
+        )
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'EVALUATED'
+          AND portfolio_return IS NOT NULL
+          AND portfolio_return > 0
+        """
+    )
+    positive_outcomes = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'EVALUATED'
+          AND portfolio_return IS NOT NULL
+          AND portfolio_return < 0
+        """
+    )
+    negative_outcomes = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE adaptive_learning_required = 1
+        """
+    )
+    adaptive_learning_required = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE reassessment_required = 1
+        """
+    )
+    reassessment_required = cursor.fetchone()[0] or 0
+
+    cursor.execute(
+        """
+        SELECT learning_status, COUNT(*)
+        FROM ai_decision_outcome_history
+        GROUP BY learning_status
+        ORDER BY COUNT(*) DESC
+        """
+    )
+
+    learning_status_distribution = {
+        row[0] if row[0] is not None else "UNKNOWN": row[1]
+        for row in cursor.fetchall()
+    }
+
+    cursor.execute(
+        """
+        SELECT feedback_state, COUNT(*)
+        FROM ai_decision_outcome_history
+        GROUP BY feedback_state
+        ORDER BY COUNT(*) DESC
+        """
+    )
+
+    feedback_state_distribution = {
+        row[0] if row[0] is not None else "UNKNOWN": row[1]
+        for row in cursor.fetchall()
+    }
+
+    cursor.execute(
+        """
+        SELECT outcome_grade, COUNT(*)
+        FROM ai_decision_outcome_history
+        WHERE outcome_status = 'EVALUATED'
+        GROUP BY outcome_grade
+        ORDER BY COUNT(*) DESC
+        """
+    )
+
+    outcome_grade_distribution = {
+        row[0] if row[0] is not None else "UNKNOWN": row[1]
+        for row in cursor.fetchall()
+    }
+
+    conn.close()
+
+    return {
+        "total_outcomes": total_outcomes,
+        "evaluated_outcomes": evaluated_outcomes,
+        "pending_outcomes": pending_outcomes,
+        "average_outcome_score": average_outcome_score,
+        "average_portfolio_return": average_portfolio_return,
+        "positive_outcomes": positive_outcomes,
+        "negative_outcomes": negative_outcomes,
+        "adaptive_learning_required": adaptive_learning_required,
+        "reassessment_required": reassessment_required,
+        "learning_status_distribution":
+            learning_status_distribution,
+        "feedback_state_distribution":
+            feedback_state_distribution,
+        "outcome_grade_distribution":
+            outcome_grade_distribution
+    }
+
+
 def get_ai_decision_outcome_history(limit=10):
     """
     AI Decision Outcome History 議고쉶

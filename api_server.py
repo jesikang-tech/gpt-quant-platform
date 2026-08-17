@@ -183,6 +183,7 @@ from repository import (
     get_ai_portfolio_optimization,
     save_ai_decision_outcome_history,
     get_ai_decision_outcome_history,
+    get_ai_decision_outcome_learning_summary,
     get_ai_decision_outcome_history_by_id,
     update_ai_decision_outcome_history,
     save_ai_decision_portfolio_snapshot,
@@ -720,6 +721,21 @@ def ai_decision_outcome_history_api():
             "history": data
         }
     )
+
+@app.route("/api/ai-decision/outcome-learning-summary")
+def ai_decision_outcome_learning_summary_api():
+
+    summary = (
+        get_ai_decision_outcome_learning_summary()
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "summary": summary
+        }
+    )
+
 
 @app.route(
     "/api/ai-decision/portfolio-snapshot/<int:history_id>/evaluate"
