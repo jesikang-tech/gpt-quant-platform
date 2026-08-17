@@ -10,14 +10,46 @@ momentum, grade stability, and consistency.
 
 class AIDecisionAdaptiveStrategy:
 
-    def analyze(self, trend):
+    def analyze(
+        self,
+        trend,
+        outcome_intelligence=None
+    ):
 
         if not trend:
-            return self._empty_result()
+            trend = {}
+
+        if outcome_intelligence is None:
+            outcome_intelligence = {}
 
         direction = trend.get(
             "direction",
             "STABLE"
+        )
+
+        # --------------------------------
+        # Step6-10-F-12
+        # Outcome Intelligence → Adaptive Strategy
+        # --------------------------------
+        outcome_learning_signal = (
+            outcome_intelligence.get(
+                "outcome_learning_signal",
+                "NONE"
+            )
+        )
+
+        outcome_learning_signal_strength = (
+            outcome_intelligence.get(
+                "outcome_learning_signal_strength",
+                0.0
+            )
+        )
+
+        adaptive_learning_required = bool(
+            outcome_intelligence.get(
+                "adaptive_learning_required",
+                False
+            )
         )
 
         stability = trend.get(
@@ -53,6 +85,16 @@ class AIDecisionAdaptiveStrategy:
             consistency
         )
 
+        # --------------------------------
+        # Outcome learning override
+        # --------------------------------
+        strategy = self._apply_outcome_learning(
+            strategy,
+            outcome_learning_signal,
+            outcome_learning_signal_strength,
+            adaptive_learning_required
+        )
+
         confidence = self._calculate_confidence(
             stability,
             grade_stability,
@@ -81,8 +123,48 @@ class AIDecisionAdaptiveStrategy:
             "momentum": momentum,
             "grade_stability": grade_stability,
             "consistency": consistency,
+            "outcome_learning_signal":
+                outcome_learning_signal,
+            "outcome_learning_signal_strength":
+                outcome_learning_signal_strength,
+            "adaptive_learning_required":
+                adaptive_learning_required,
             "summary": summary
         }
+
+
+    def _apply_outcome_learning(
+        self,
+        strategy,
+        learning_signal,
+        learning_signal_strength,
+        adaptive_learning_required
+    ):
+        """
+        Step6-10-F-12
+
+        Connect evaluated outcome intelligence to
+        the existing adaptive strategy engine.
+
+        Negative learning signals can force a
+        defensive posture when adaptive learning
+        is explicitly required.
+        """
+
+        if not adaptive_learning_required:
+            return strategy
+
+        if learning_signal == "NEGATIVE":
+            return "DEFENSIVE"
+
+        if (
+            learning_signal == "POSITIVE"
+            and learning_signal_strength >= 0.7
+            and strategy == "BALANCED"
+        ):
+            return "GROWTH"
+
+        return strategy
 
 
     def _determine_strategy(
