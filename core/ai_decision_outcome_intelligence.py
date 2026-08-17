@@ -249,6 +249,7 @@ class AIDecisionOutcomeIntelligence:
                 "DEGRADED",
                 "WARNING"
             }
+            or outcome_learning_signal == "NEGATIVE"
         )
 
         summary = (
