@@ -230,6 +230,20 @@ class AIDecisionOutcomeIntelligence:
             learning_status = "REASSESSMENT_REQUIRED"
             feedback_state = "REASSESSMENT_REQUIRED"
 
+        elif outcome_status == "EVALUATED":
+            if outcome_learning_signal == "NEGATIVE":
+                learning_status = "ADAPTIVE_LEARNING_REQUIRED"
+                feedback_state = "ADAPTIVE_LEARNING"
+            elif outcome_learning_signal in {
+                "POSITIVE",
+                "STABLE"
+            }:
+                learning_status = "LEARNING_AVAILABLE"
+                feedback_state = "LEARNING_AVAILABLE"
+            else:
+                learning_status = "LEARNING_AVAILABLE"
+                feedback_state = "LEARNING_AVAILABLE"
+
         elif (
             execution_status == "EXECUTION_READY"
             and master_control_status == "MASTER_READY"
