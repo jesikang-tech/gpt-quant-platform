@@ -161,6 +161,29 @@ class AIDecisionOutcomeIntelligence:
         if outcome_score is None:
             outcome_score = 0.0
 
+        outcome_learning_status = self._first(
+            outcome_evaluation.get(
+                "learning_status"
+            ),
+            "WAITING_FOR_OUTCOME"
+        )
+
+        outcome_learning_signal = self._first(
+            outcome_evaluation.get(
+                "learning_signal"
+            ),
+            "NONE"
+        )
+
+        outcome_learning_signal_strength = self._score(
+            outcome_evaluation.get(
+                "learning_signal_strength"
+            )
+        )
+
+        if outcome_learning_signal_strength is None:
+            outcome_learning_signal_strength = 0.0
+
         outcome_grade = self._first(
             outcome_evaluation.get(
                 "outcome_grade"
@@ -253,6 +276,9 @@ class AIDecisionOutcomeIntelligence:
             "outcome_status": outcome_status,
             "outcome_score": outcome_score,
             "outcome_grade": outcome_grade,
+            "outcome_learning_status": outcome_learning_status,
+            "outcome_learning_signal": outcome_learning_signal,
+            "outcome_learning_signal_strength": outcome_learning_signal_strength,
             "decision_effectiveness": decision_effectiveness,
             "strategy_effectiveness": strategy_effectiveness,
             "market_response": market_response,
