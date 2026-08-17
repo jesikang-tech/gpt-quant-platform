@@ -743,9 +743,11 @@ def ai_decision_portfolio_snapshot_evaluate_api(
     # AI Decision Outcome Re-Evaluation
     # Phase 6
     # Step6-10-E
+    # Step6-10-F-5 Integration
     # --------------------------------
 
     outcome_evaluation = None
+    outcome_intelligence = None
 
     if (
         portfolio_evaluation.get(
@@ -761,13 +763,28 @@ def ai_decision_portfolio_snapshot_evaluate_api(
             AIDecisionOutcomeEvaluation()
         )
 
+        history_row = get_ai_decision_outcome_history_by_id(
+            history_id
+        )
+
+        decision_snapshot = {
+            "snapshot_status": "EVALUATED",
+            "snapshot_purpose":
+                "FUTURE_OUTCOME_EVALUATION"
+        }
+
+        if history_row is not None:
+            decision_snapshot.update(
+                {
+                    "decision": history_row[1],
+                    "action": history_row[2],
+                    "strategy": history_row[3]
+                }
+            )
+
         outcome_evaluation = (
             decision_outcome_evaluation_engine.evaluate(
-                outcome_snapshot={
-                    "snapshot_status": "EVALUATED",
-                    "snapshot_purpose":
-                        "FUTURE_OUTCOME_EVALUATION"
-                },
+                outcome_snapshot=decision_snapshot,
                 actual_outcome={
                     "portfolio_return":
                         portfolio_evaluation.get(
@@ -780,6 +797,79 @@ def ai_decision_portfolio_snapshot_evaluate_api(
                 }
             )
         )
+
+        learning_signal = outcome_evaluation.get(
+            "learning_signal",
+            "NONE"
+        )
+
+        learning_signal_strength = outcome_evaluation.get(
+            "learning_signal_strength",
+            0.0
+        )
+
+        adaptive_learning_required = (
+            learning_signal == "NEGATIVE"
+        )
+
+        reassessment_required = (
+            learning_signal == "NEGATIVE"
+        )
+
+        if reassessment_required:
+            reassessment_status = (
+                "REASSESSMENT_REQUIRED"
+            )
+        else:
+            reassessment_status = (
+                "NOT_REQUIRED"
+            )
+
+        # --------------------------------
+        # AI Decision Outcome Intelligence
+        # Phase 6
+        # Step6-10-F-5
+        # --------------------------------
+
+        outcome_intelligence_engine = (
+            AIDecisionOutcomeIntelligence()
+        )
+
+        outcome_intelligence = (
+            outcome_intelligence_engine.analyze(
+                final_decision={
+                    "decision":
+                        decision_snapshot.get(
+                            "decision",
+                            "UNKNOWN"
+                        ),
+                    "action":
+                        decision_snapshot.get(
+                            "action",
+                            "REVIEW"
+                        ),
+                    "strategy":
+                        decision_snapshot.get(
+                            "strategy",
+                            "UNKNOWN"
+                        )
+                },
+                final_decision_execution_reassessment={
+                    "reassessment_required":
+                        reassessment_required,
+                    "reassessment_status":
+                        reassessment_status
+                },
+                intelligence={},
+                intelligence_score={},
+                decision_confidence={},
+                outcome_evaluation=outcome_evaluation
+            )
+        )
+
+        # --------------------------------
+        # AI Decision Outcome History Update
+        # --------------------------------
 
         update_ai_decision_outcome_history(
             history_id=history_id,
@@ -811,28 +901,51 @@ def ai_decision_portfolio_snapshot_evaluate_api(
                 "portfolio_response",
                 "EVALUATED"
             ),
-            learning_status=outcome_evaluation.get(
+            learning_status=outcome_intelligence.get(
                 "learning_status",
-                "LEARNING_AVAILABLE"
-            ),
-            feedback_state="EVALUATED",
-            adaptive_learning_required=int(
                 outcome_evaluation.get(
-                    "learning_signal",
-                    "NONE"
-                ) != "NONE"
+                    "learning_status",
+                    "LEARNING_AVAILABLE"
+                )
             ),
-            reassessment_required=0,
-            reassessment_status="NOT_REQUIRED"
+            feedback_state=outcome_intelligence.get(
+                "feedback_state",
+                "EVALUATED"
+            ),
+            adaptive_learning_required=int(
+                adaptive_learning_required
+            ),
+            reassessment_required=int(
+                reassessment_required
+            ),
+            reassessment_status=reassessment_status
         )
+
+        outcome_evaluation[
+            "learning_signal_strength"
+        ] = learning_signal_strength
+
+        outcome_evaluation[
+            "adaptive_learning_required"
+        ] = adaptive_learning_required
+
+        outcome_evaluation[
+            "reassessment_required"
+        ] = reassessment_required
+
+        outcome_evaluation[
+            "reassessment_status"
+        ] = reassessment_status
 
     return jsonify(
         {
             "success": True,
             "evaluation": portfolio_evaluation,
-            "outcome_evaluation": outcome_evaluation
+            "outcome_evaluation": outcome_evaluation,
+            "outcome_intelligence": outcome_intelligence
         }
     )
+
 @app.route(
     "/api/ai-decision/outcome-history/<int:history_id>"
 )
