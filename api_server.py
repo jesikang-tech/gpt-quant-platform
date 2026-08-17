@@ -861,8 +861,22 @@ def ai_decision_portfolio_snapshot_evaluate_api(
                         reassessment_status
                 },
                 intelligence={},
-                intelligence_score={},
-                decision_confidence={},
+                intelligence_score={
+                    "intelligence_score":
+                        (
+                            history_row[5]
+                            if history_row is not None
+                            else None
+                        )
+                },
+                decision_confidence={
+                    "confidence_score":
+                        (
+                            history_row[4]
+                            if history_row is not None
+                            else None
+                        )
+                },
                 outcome_evaluation=outcome_evaluation
             )
         )
