@@ -2252,6 +2252,67 @@ def update_ai_decision_outcome_history(
     return updated_count
 
 
+def get_ai_decision_outcome_history_by_id(history_id):
+    """
+    Retrieve one AI Decision Outcome History record by ID.
+
+    Step6-10-F-4
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            decision,
+            action,
+            strategy,
+            confidence_score,
+            intelligence_score,
+            validation_score,
+            governance_score,
+            execution_score,
+            lifecycle_score,
+            operational_score,
+            orchestration_score,
+            integrated_score,
+            market_view,
+            risk_level,
+            outcome_status,
+            snapshot_status,
+            snapshot_purpose,
+            outcome_score,
+            outcome_grade,
+            decision_effectiveness,
+            strategy_effectiveness,
+            market_response,
+            portfolio_response,
+            learning_status,
+            feedback_state,
+            adaptive_learning_required,
+            reassessment_required,
+            reassessment_status,
+            created_at,
+            portfolio_return,
+            portfolio_evaluation_date
+        FROM ai_decision_outcome_history
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (
+            history_id,
+        )
+    )
+
+    row = cursor.fetchone()
+
+    conn.close()
+
+    return row
+
+
 def get_ai_decision_outcome_history(limit=10):
     """
     AI Decision Outcome History 議고쉶

@@ -183,6 +183,7 @@ from repository import (
     get_ai_portfolio_optimization,
     save_ai_decision_outcome_history,
     get_ai_decision_outcome_history,
+    get_ai_decision_outcome_history_by_id,
     update_ai_decision_outcome_history,
     save_ai_decision_portfolio_snapshot,
     get_ai_decision_portfolio_snapshot,
@@ -832,6 +833,68 @@ def ai_decision_portfolio_snapshot_evaluate_api(
             "outcome_evaluation": outcome_evaluation
         }
     )
+@app.route(
+    "/api/ai-decision/outcome-history/<int:history_id>"
+)
+def ai_decision_outcome_history_by_id_api(
+    history_id
+):
+
+    row = get_ai_decision_outcome_history_by_id(
+        history_id
+    )
+
+    if row is None:
+        return jsonify(
+            {
+                "success": False,
+                "history_id": history_id,
+                "error": "AI decision outcome history not found"
+            }
+        ), 404
+
+    data = {
+        "id": row[0],
+        "decision": row[1],
+        "action": row[2],
+        "strategy": row[3],
+        "confidence_score": row[4],
+        "intelligence_score": row[5],
+        "validation_score": row[6],
+        "governance_score": row[7],
+        "execution_score": row[8],
+        "lifecycle_score": row[9],
+        "operational_score": row[10],
+        "orchestration_score": row[11],
+        "integrated_score": row[12],
+        "market_view": row[13],
+        "risk_level": row[14],
+        "outcome_status": row[15],
+        "snapshot_status": row[16],
+        "snapshot_purpose": row[17],
+        "outcome_score": row[18],
+        "outcome_grade": row[19],
+        "decision_effectiveness": row[20],
+        "strategy_effectiveness": row[21],
+        "market_response": row[22],
+        "portfolio_response": row[23],
+        "learning_status": row[24],
+        "feedback_state": row[25],
+        "adaptive_learning_required": bool(row[26]),
+        "reassessment_required": bool(row[27]),
+        "reassessment_status": row[28],
+        "created_at": row[29],
+        "portfolio_return": row[30],
+        "portfolio_evaluation_date": row[31]
+    }
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
 @app.route("/api/ai-decision/summary")
 def ai_decision_summary_api():
 
