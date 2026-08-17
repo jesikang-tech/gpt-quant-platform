@@ -136,9 +136,42 @@ def init_database():
         reassessment_status TEXT,
         created_at TEXT,
         portfolio_return REAL,
-        portfolio_evaluation_date TEXT
+        portfolio_evaluation_date TEXT,
+        execution_status TEXT,
+        execution_authorization TEXT,
+        certification_status TEXT,
+        monitoring_status TEXT,
+        feedback_status TEXT
     )
     """)
+
+    # AI Decision Outcome History Context Migration
+    # Phase 6
+    # Step6-10-F-12-12
+
+    cursor.execute("PRAGMA table_info(ai_decision_outcome_history)")
+
+    outcome_history_columns = {
+        row[1]
+        for row in cursor.fetchall()
+    }
+
+    outcome_history_context_columns = {
+        "execution_status": "TEXT",
+        "execution_authorization": "TEXT",
+        "certification_status": "TEXT",
+        "monitoring_status": "TEXT",
+        "feedback_status": "TEXT"
+    }
+
+    for column_name, column_type in outcome_history_context_columns.items():
+        if column_name not in outcome_history_columns:
+            cursor.execute(
+                f"""
+                ALTER TABLE ai_decision_outcome_history
+                ADD COLUMN {column_name} {column_type}
+                """
+            )
 
     # AI Decision Portfolio Snapshot
     # Phase 6

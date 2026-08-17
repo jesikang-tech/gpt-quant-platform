@@ -711,7 +711,12 @@ def ai_decision_outcome_history_api():
                 "reassessment_status": item[28],
                 "created_at": item[29],
                 "portfolio_return": item[30],
-                "portfolio_evaluation_date": item[31]
+                "portfolio_evaluation_date": item[31],
+                "execution_status": item[32],
+                "execution_authorization": item[33],
+                "certification_status": item[34],
+                "monitoring_status": item[35],
+                "feedback_status": item[36]
             }
         )
 
@@ -1028,7 +1033,12 @@ def ai_decision_outcome_history_by_id_api(
         "reassessment_status": row[28],
         "created_at": row[29],
         "portfolio_return": row[30],
-        "portfolio_evaluation_date": row[31]
+        "portfolio_evaluation_date": row[31],
+        "execution_status": row[32],
+        "execution_authorization": row[33],
+        "certification_status": row[34],
+        "monitoring_status": row[35],
+        "feedback_status": row[36]
     }
 
     return jsonify(
@@ -2063,7 +2073,27 @@ def portfolio_decision_intelligence_api():
             "reassessment_status",
             "NOT_REQUIRED"
         ),
-        created_at=datetime.now().astimezone().isoformat()
+        created_at=datetime.now().astimezone().isoformat(),
+        execution_status=decision_outcome_snapshot.get(
+            "execution_status",
+            "UNKNOWN"
+        ),
+        execution_authorization=decision_outcome_snapshot.get(
+            "execution_authorization",
+            "UNKNOWN"
+        ),
+        certification_status=decision_outcome_snapshot.get(
+            "certification_status",
+            "UNKNOWN"
+        ),
+        monitoring_status=decision_outcome_snapshot.get(
+            "monitoring_status",
+            "UNKNOWN"
+        ),
+        feedback_status=decision_outcome_snapshot.get(
+            "feedback_status",
+            "UNKNOWN"
+        )
     )
 
 

@@ -2099,7 +2099,12 @@ def save_ai_decision_outcome_history(
     adaptive_learning_required,
     reassessment_required,
     reassessment_status,
-    created_at
+    created_at,
+    execution_status,
+    execution_authorization,
+    certification_status,
+    monitoring_status,
+    feedback_status
 ):
     conn = get_connection()
     cursor = conn.cursor()
@@ -2136,11 +2141,17 @@ def save_ai_decision_outcome_history(
             adaptive_learning_required,
             reassessment_required,
             reassessment_status,
-            created_at
+            created_at,
+            execution_status,
+            execution_authorization,
+            certification_status,
+            monitoring_status,
+            feedback_status
         )
         VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?
         )
         """,
         (
@@ -2172,7 +2183,12 @@ def save_ai_decision_outcome_history(
             adaptive_learning_required,
             reassessment_required,
             reassessment_status,
-            created_at
+            created_at,
+            execution_status,
+            execution_authorization,
+            certification_status,
+            monitoring_status,
+            feedback_status
         )
     )
 
@@ -2183,7 +2199,6 @@ def save_ai_decision_outcome_history(
     conn.close()
 
     return history_id
-
 
 def update_ai_decision_outcome_history(
     history_id,
@@ -2296,7 +2311,12 @@ def get_ai_decision_outcome_history_by_id(history_id):
             reassessment_status,
             created_at,
             portfolio_return,
-            portfolio_evaluation_date
+            portfolio_evaluation_date,
+            execution_status,
+            execution_authorization,
+            certification_status,
+            monitoring_status,
+            feedback_status
         FROM ai_decision_outcome_history
         WHERE id = ?
         LIMIT 1
@@ -2531,7 +2551,12 @@ def get_ai_decision_outcome_history(limit=10):
             reassessment_status,
             created_at,
             portfolio_return,
-            portfolio_evaluation_date
+            portfolio_evaluation_date,
+            execution_status,
+            execution_authorization,
+            certification_status,
+            monitoring_status,
+            feedback_status
         FROM ai_decision_outcome_history
         ORDER BY id DESC
         LIMIT ?
