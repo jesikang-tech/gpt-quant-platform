@@ -1140,20 +1140,65 @@ def ai_decision_adaptive_strategy_api():
         ]
     )
 
-    strategy_engine = (
-        AIDecisionAdaptiveStrategy()
+    # --------------------------------
+    # Step6-10-F-12
+    # Bridge Outcome Intelligence
+    # into Adaptive Strategy API
+    # --------------------------------
+
+    outcome_intelligence = {}
+
+    outcome_history = get_ai_decision_outcome_history(
+        limit=50
     )
 
+    for outcome_row in outcome_history:
+
+        if outcome_row[15] != "EVALUATED":
+            continue
+
+        outcome_score = outcome_row[18]
+
+        if outcome_score is None:
+            outcome_score = 0.0
+
+        outcome_intelligence = {
+            "outcome_status": outcome_row[15],
+            "outcome_score": outcome_score,
+            "outcome_grade": outcome_row[19],
+            "outcome_learning_status": outcome_row[24],
+            "feedback_state": outcome_row[25],
+            "adaptive_learning_required": bool(outcome_row[26]),
+            "reassessment_required": bool(outcome_row[27]),
+            "reassessment_status": outcome_row[28],
+            "outcome_learning_signal": (
+                "NEGATIVE"
+                if bool(outcome_row[26]) and outcome_score < 50
+                else "POSITIVE"
+                if not bool(outcome_row[26]) and outcome_score >= 70
+                else "NONE"
+            ),
+            "outcome_learning_signal_strength": abs(outcome_score),
+            "source_history_id": outcome_row[0]
+        }
+
+        break
+
+    strategy_engine = AIDecisionAdaptiveStrategy()
+
     strategy = strategy_engine.analyze(
-        trend
+        trend,
+        outcome_intelligence
     )
 
     return jsonify(
         {
             "success": True,
-            "strategy": strategy
+            "strategy": strategy,
+            "outcome_intelligence": outcome_intelligence
         }
     )
+
 
 
 @app.route("/api/ai-decision/chart")
