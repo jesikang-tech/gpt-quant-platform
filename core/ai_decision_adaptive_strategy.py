@@ -29,7 +29,7 @@ class AIDecisionAdaptiveStrategy:
 
         # --------------------------------
         # Step6-10-F-12
-        # Outcome Intelligence → Adaptive Strategy
+        # Outcome Intelligence -> Adaptive Strategy
         # --------------------------------
         outcome_learning_signal = (
             outcome_intelligence.get(
@@ -151,11 +151,11 @@ class AIDecisionAdaptiveStrategy:
         is explicitly required.
         """
 
-        if not adaptive_learning_required:
-            return strategy
-
         if learning_signal == "NEGATIVE":
-            return "DEFENSIVE"
+            if adaptive_learning_required:
+                return "DEFENSIVE"
+
+            return strategy
 
         if (
             learning_signal == "POSITIVE"
