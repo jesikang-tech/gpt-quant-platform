@@ -219,30 +219,40 @@ class AIDecisionOutcomeIntelligence:
             "PENDING"
         )
 
-        if (
-            master_control_status == "MASTER_BLOCKED"
-            or execution_authorization == "UNAUTHORIZED"
-        ):
-            learning_status = "BLOCKED"
-            feedback_state = "BLOCKED"
+        # Actual outcome evaluation takes precedence over
+        # pre-outcome execution/control state.
+        #
+        # Once an actual outcome is available, learning must be
+        # derived from the observed outcome rather than blocked
+        # by the original execution authorization state.
 
-        elif reassessment_required:
-            learning_status = "REASSESSMENT_REQUIRED"
-            feedback_state = "REASSESSMENT_REQUIRED"
+        if outcome_status == "EVALUATED":
 
-        elif outcome_status == "EVALUATED":
             if outcome_learning_signal == "NEGATIVE":
                 learning_status = "ADAPTIVE_LEARNING_REQUIRED"
                 feedback_state = "ADAPTIVE_LEARNING"
+
             elif outcome_learning_signal in {
                 "POSITIVE",
                 "STABLE"
             }:
                 learning_status = "LEARNING_AVAILABLE"
                 feedback_state = "LEARNING_AVAILABLE"
+
             else:
                 learning_status = "LEARNING_AVAILABLE"
                 feedback_state = "LEARNING_AVAILABLE"
+
+        elif reassessment_required:
+            learning_status = "REASSESSMENT_REQUIRED"
+            feedback_state = "REASSESSMENT_REQUIRED"
+
+        elif (
+            master_control_status == "MASTER_BLOCKED"
+            or execution_authorization == "UNAUTHORIZED"
+        ):
+            learning_status = "BLOCKED"
+            feedback_state = "BLOCKED"
 
         elif (
             execution_status == "EXECUTION_READY"
@@ -266,24 +276,45 @@ class AIDecisionOutcomeIntelligence:
             or outcome_learning_signal == "NEGATIVE"
         )
 
-        summary = (
-            f"Final AI decision {decision} has outcome status "
-            f"{outcome_status}. Actual performance outcome data "
-            f"is not yet available, so decision effectiveness and "
-            f"strategy effectiveness remain pending. Learning "
-            f"status is {learning_status}."
-        )
+        if outcome_status == "EVALUATED":
+            summary = (
+                f"Final AI decision {decision} has outcome status "
+                f"{outcome_status}. Actual performance outcome data "
+                f"is available, and the observed outcome has been "
+                f"converted into a decision-performance learning "
+                f"signal. Learning status is {learning_status}."
+            )
 
-        reason = (
-            f"Decision {decision} is currently tracked as "
-            f"{outcome_status}. Execution status is "
-            f"{execution_status}, master control status is "
-            f"{master_control_status}, certification status is "
-            f"{certification_status}, and feedback status is "
-            f"{feedback_status}. The system will evaluate actual "
-            f"portfolio and market outcomes when outcome data "
-            f"becomes available."
-        )
+            reason = (
+                f"Decision {decision} is currently tracked as "
+                f"{outcome_status}. Actual portfolio and market "
+                f"outcome data is available and has been incorporated "
+                f"into the learning assessment. Execution status is "
+                f"{execution_status}, master control status is "
+                f"{master_control_status}, certification status is "
+                f"{certification_status}, and feedback status is "
+                f"{feedback_status}."
+            )
+
+        else:
+            summary = (
+                f"Final AI decision {decision} has outcome status "
+                f"{outcome_status}. Actual performance outcome data "
+                f"is not yet available, so decision effectiveness and "
+                f"strategy effectiveness remain pending. Learning "
+                f"status is {learning_status}."
+            )
+
+            reason = (
+                f"Decision {decision} is currently tracked as "
+                f"{outcome_status}. Execution status is "
+                f"{execution_status}, master control status is "
+                f"{master_control_status}, certification status is "
+                f"{certification_status}, and feedback status is "
+                f"{feedback_status}. The system will evaluate actual "
+                f"portfolio and market outcomes when outcome data "
+                f"becomes available."
+            )
 
         return {
             "decision": decision,
