@@ -173,6 +173,31 @@ def init_database():
                 """
             )
 
+    # AI Decision Outcome Portfolio Evaluation Migration
+    # Phase 6
+    # Step6-10-G-6
+
+    cursor.execute("PRAGMA table_info(ai_decision_outcome_history)")
+
+    outcome_history_columns = {
+        row[1]
+        for row in cursor.fetchall()
+    }
+
+    outcome_evaluation_columns = {
+        "portfolio_return": "REAL",
+        "portfolio_evaluation_date": "TEXT"
+    }
+
+    for column_name, column_type in outcome_evaluation_columns.items():
+        if column_name not in outcome_history_columns:
+            cursor.execute(
+                f"""
+                ALTER TABLE ai_decision_outcome_history
+                ADD COLUMN {column_name} {column_type}
+                """
+            )
+
     # AI Decision Portfolio Snapshot
     # Phase 6
     # Step6-9-A
