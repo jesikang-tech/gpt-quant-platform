@@ -2070,6 +2070,76 @@ def get_etf_score(ticker):
 # Step6-3 AI Decision Outcome History
 # ==============================
 
+def validate_portfolio_snapshot_input(
+    portfolio
+):
+    """
+    Validate Portfolio Snapshot input before persistence.
+
+    Production Hardening:
+    - portfolio must be a non-empty list
+    - weights must be numeric and non-negative
+    - total weight must equal 100
+    - tickers must be unique
+    - non-CASH positions require reference price/date
+    - CASH does not require reference price/date
+    """
+
+    if not isinstance(portfolio, list):
+        raise ValueError("PORTFOLIO_NOT_LIST")
+
+    if not portfolio:
+        raise ValueError("EMPTY_PORTFOLIO")
+
+    tickers = set()
+    total_weight = 0.0
+
+    for item in portfolio:
+        if not isinstance(item, dict):
+            raise ValueError("INVALID_POSITION")
+
+        ticker = item.get("ticker")
+
+        if not ticker:
+            raise ValueError("MISSING_TICKER")
+
+        if ticker in tickers:
+            raise ValueError("DUPLICATE_TICKER")
+
+        tickers.add(ticker)
+
+        weight = item.get("weight")
+
+        if weight is None:
+            raise ValueError("MISSING_WEIGHT")
+
+        try:
+            weight = float(weight)
+        except (TypeError, ValueError):
+            raise ValueError("INVALID_WEIGHT")
+
+        if weight < 0:
+            raise ValueError("NEGATIVE_WEIGHT")
+
+        total_weight += weight
+
+        if ticker != "CASH":
+            if (
+                item.get("reference_price") is None
+                or item.get("reference_price_date") is None
+            ):
+                raise ValueError(
+                    "MISSING_REFERENCE_PRICE"
+                )
+
+    if abs(total_weight - 100.0) > 0.0001:
+        raise ValueError(
+            "INVALID_TOTAL_WEIGHT"
+        )
+
+    return True
+
+
 def save_ai_decision_outcome_with_portfolio_transaction(
     history_kwargs,
     portfolio,
@@ -2084,6 +2154,10 @@ def save_ai_decision_outcome_with_portfolio_transaction(
     committed as one transaction. Any failure rolls back
     the full creation transaction.
     """
+
+    validate_portfolio_snapshot_input(
+        portfolio
+    )
 
     conn = get_connection()
     cursor = conn.cursor()
