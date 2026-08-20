@@ -2070,6 +2070,170 @@ def get_etf_score(ticker):
 # Step6-3 AI Decision Outcome History
 # ==============================
 
+def save_ai_decision_outcome_with_portfolio_transaction(
+    history_kwargs,
+    portfolio,
+    created_at
+):
+    """
+    Atomically persist AI Decision Outcome History and
+    Portfolio Snapshot.
+
+    Production Hardening:
+    History INSERT and Portfolio Snapshot INSERT are
+    committed as one transaction. Any failure rolls back
+    the full creation transaction.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        history_columns = [
+            "decision",
+            "action",
+            "strategy",
+            "confidence_score",
+            "intelligence_score",
+            "validation_score",
+            "governance_score",
+            "execution_score",
+            "lifecycle_score",
+            "operational_score",
+            "orchestration_score",
+            "integrated_score",
+            "market_view",
+            "risk_level",
+            "outcome_status",
+            "snapshot_status",
+            "snapshot_purpose",
+            "outcome_score",
+            "outcome_grade",
+            "decision_effectiveness",
+            "strategy_effectiveness",
+            "market_response",
+            "portfolio_response",
+            "learning_status",
+            "feedback_state",
+            "adaptive_learning_required",
+            "reassessment_required",
+            "reassessment_status",
+            "created_at",
+            "execution_status",
+            "execution_authorization",
+            "certification_status",
+            "monitoring_status",
+            "feedback_status",
+        ]
+
+        history_values = [
+            history_kwargs.get(column)
+            for column in history_columns
+        ]
+
+        columns_sql = ", ".join(history_columns)
+        placeholders = ", ".join(
+            "?" for _ in history_columns
+        )
+
+        cursor.execute(
+            f"""
+            INSERT INTO ai_decision_outcome_history
+            ({columns_sql})
+            VALUES ({placeholders})
+            """,
+            tuple(history_values),
+        )
+
+        history_id = cursor.lastrowid
+        saved_count = 0
+
+        for item in portfolio:
+            ticker = item.get("ticker")
+
+            if not ticker:
+                continue
+
+            weight = item.get("weight", 0)
+            reference_price = item.get("reference_price")
+            reference_price_date = item.get(
+                "reference_price_date"
+            )
+
+            if reference_price is None:
+                price_row = cursor.execute(
+                    """
+                    SELECT date, close_price
+                    FROM etf_prices
+                    WHERE ticker = ?
+                    ORDER BY date DESC
+                    LIMIT 1
+                    """,
+                    (ticker,),
+                ).fetchone()
+
+                if price_row:
+                    reference_price_date = price_row[0]
+                    reference_price = price_row[1]
+
+            elif reference_price_date is None:
+                price_row = cursor.execute(
+                    """
+                    SELECT date
+                    FROM etf_prices
+                    WHERE ticker = ?
+                      AND close_price = ?
+                    ORDER BY date DESC
+                    LIMIT 1
+                    """,
+                    (
+                        ticker,
+                        reference_price,
+                    ),
+                ).fetchone()
+
+                if price_row:
+                    reference_price_date = price_row[0]
+
+            cursor.execute(
+                """
+                INSERT INTO ai_decision_portfolio_snapshot
+                (
+                    history_id,
+                    ticker,
+                    weight,
+                    reference_price,
+                    created_at,
+                    reference_price_date
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    history_id,
+                    ticker,
+                    weight,
+                    reference_price,
+                    created_at,
+                    reference_price_date,
+                ),
+            )
+
+            saved_count += 1
+
+        conn.commit()
+
+        return {
+            "history_id": history_id,
+            "snapshot_count": saved_count,
+        }
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
 def save_ai_decision_outcome_history(
     decision,
     action,
@@ -3007,3 +3171,4 @@ def evaluate_ai_decision_portfolio_snapshot(
         "pending_positions": 0,
         "positions": positions
     }
+

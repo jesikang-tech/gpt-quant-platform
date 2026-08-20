@@ -182,6 +182,7 @@ from repository import (
     get_ai_rebalance_recommendation,
     get_ai_portfolio_optimization,
     save_ai_decision_outcome_history,
+    save_ai_decision_outcome_with_portfolio_transaction,
     get_ai_decision_outcome_history,
     get_ai_decision_outcome_learning_summary,
     get_ai_decision_outcome_history_by_id,
@@ -2067,99 +2068,105 @@ def portfolio_decision_intelligence_api():
     # Step6-3
     # -----------------------------
 
-    history_id = save_ai_decision_outcome_history(
-        decision=decision_outcome_snapshot.get(
+    # -----------------------------
+    # AI Decision Outcome + Portfolio Snapshot
+    # Production Hardening
+    # Atomic persistence
+    # -----------------------------
+
+    outcome_history_kwargs = {
+        "decision": decision_outcome_snapshot.get(
             "decision",
             "UNKNOWN"
         ),
-        action=decision_outcome_snapshot.get(
+        "action": decision_outcome_snapshot.get(
             "action",
             "REVIEW"
         ),
-        strategy=decision_outcome_snapshot.get(
+        "strategy": decision_outcome_snapshot.get(
             "strategy",
             "UNKNOWN"
         ),
-        confidence_score=decision_outcome_snapshot.get(
+        "confidence_score": decision_outcome_snapshot.get(
             "confidence_score"
         ),
-        intelligence_score=decision_outcome_snapshot.get(
+        "intelligence_score": decision_outcome_snapshot.get(
             "intelligence_score"
         ),
-        validation_score=decision_outcome_snapshot.get(
+        "validation_score": decision_outcome_snapshot.get(
             "validation_score"
         ),
-        governance_score=decision_outcome_snapshot.get(
+        "governance_score": decision_outcome_snapshot.get(
             "governance_score"
         ),
-        execution_score=decision_outcome_snapshot.get(
+        "execution_score": decision_outcome_snapshot.get(
             "execution_score"
         ),
-        lifecycle_score=decision_outcome_snapshot.get(
+        "lifecycle_score": decision_outcome_snapshot.get(
             "lifecycle_score"
         ),
-        operational_score=decision_outcome_snapshot.get(
+        "operational_score": decision_outcome_snapshot.get(
             "operational_score"
         ),
-        orchestration_score=decision_outcome_snapshot.get(
+        "orchestration_score": decision_outcome_snapshot.get(
             "orchestration_score"
         ),
-        integrated_score=decision_outcome_snapshot.get(
+        "integrated_score": decision_outcome_snapshot.get(
             "integrated_score"
         ),
-        market_view=decision_outcome_snapshot.get(
+        "market_view": decision_outcome_snapshot.get(
             "market_view",
             "UNKNOWN"
         ),
-        risk_level=decision_outcome_snapshot.get(
+        "risk_level": decision_outcome_snapshot.get(
             "risk_level",
             "UNKNOWN"
         ),
-        outcome_status=decision_outcome_evaluation.get(
+        "outcome_status": decision_outcome_evaluation.get(
             "outcome_status",
             "PENDING"
         ),
-        snapshot_status=decision_outcome_snapshot.get(
+        "snapshot_status": decision_outcome_snapshot.get(
             "snapshot_status",
             "COLLECTED"
         ),
-        snapshot_purpose=decision_outcome_snapshot.get(
+        "snapshot_purpose": decision_outcome_snapshot.get(
             "snapshot_purpose",
             "FUTURE_OUTCOME_EVALUATION"
         ),
-        outcome_score=decision_outcome_evaluation.get(
+        "outcome_score": decision_outcome_evaluation.get(
             "outcome_score",
             0.0
         ),
-        outcome_grade=decision_outcome_evaluation.get(
+        "outcome_grade": decision_outcome_evaluation.get(
             "outcome_grade",
             "N/A"
         ),
-        decision_effectiveness=decision_outcome_evaluation.get(
+        "decision_effectiveness": decision_outcome_evaluation.get(
             "decision_effectiveness",
             "PENDING"
         ),
-        strategy_effectiveness=decision_outcome_evaluation.get(
+        "strategy_effectiveness": decision_outcome_evaluation.get(
             "strategy_effectiveness",
             "PENDING"
         ),
-        market_response=decision_outcome_evaluation.get(
+        "market_response": decision_outcome_evaluation.get(
             "market_response",
             "PENDING"
         ),
-        portfolio_response=decision_outcome_evaluation.get(
+        "portfolio_response": decision_outcome_evaluation.get(
             "portfolio_response",
             "PENDING"
         ),
-        learning_status=decision_outcome_intelligence.get(
+        "learning_status": decision_outcome_intelligence.get(
             "learning_status",
             "WAITING_FOR_OUTCOME"
         ),
-        feedback_state=decision_outcome_intelligence.get(
+        "feedback_state": decision_outcome_intelligence.get(
             "feedback_state",
             "COLLECTING"
         ),
-        adaptive_learning_required=int(
+        "adaptive_learning_required": int(
             bool(
                 decision_outcome_intelligence.get(
                     "adaptive_learning_required",
@@ -2167,7 +2174,7 @@ def portfolio_decision_intelligence_api():
                 )
             )
         ),
-        reassessment_required=int(
+        "reassessment_required": int(
             bool(
                 decision_outcome_snapshot.get(
                     "reassessment_required",
@@ -2175,49 +2182,47 @@ def portfolio_decision_intelligence_api():
                 )
             )
         ),
-        reassessment_status=decision_outcome_snapshot.get(
+        "reassessment_status": decision_outcome_snapshot.get(
             "reassessment_status",
             "NOT_REQUIRED"
         ),
-        created_at=datetime.now().astimezone().isoformat(),
-        execution_status=decision_outcome_snapshot.get(
+        "created_at": datetime.now().astimezone().isoformat(),
+        "execution_status": decision_outcome_snapshot.get(
             "execution_status",
             "UNKNOWN"
         ),
-        execution_authorization=decision_outcome_snapshot.get(
+        "execution_authorization": decision_outcome_snapshot.get(
             "execution_authorization",
             "UNKNOWN"
         ),
-        certification_status=decision_outcome_snapshot.get(
+        "certification_status": decision_outcome_snapshot.get(
             "certification_status",
             "UNKNOWN"
         ),
-        monitoring_status=decision_outcome_snapshot.get(
+        "monitoring_status": decision_outcome_snapshot.get(
             "monitoring_status",
             "UNKNOWN"
         ),
-        feedback_status=decision_outcome_snapshot.get(
+        "feedback_status": decision_outcome_snapshot.get(
             "feedback_status",
             "UNKNOWN"
-        )
-    )
-
-
-    # -----------------------------
-    # AI Decision Portfolio Snapshot
-    # Phase 6
-    # Step6-4-1-C
-    # -----------------------------
+        ),
+    }
 
     portfolio_snapshot_created_at = (
         datetime.now().astimezone().isoformat()
     )
 
-    save_ai_decision_portfolio_snapshot(
-        history_id=history_id,
-        portfolio=portfolio,
-        created_at=portfolio_snapshot_created_at
+    persistence_result = (
+        save_ai_decision_outcome_with_portfolio_transaction(
+            history_kwargs=outcome_history_kwargs,
+            portfolio=portfolio,
+            created_at=portfolio_snapshot_created_at,
+        )
     )
+
+    history_id = persistence_result["history_id"]
+
 
     # AI Decision Outcome History Update
     # Phase 6
