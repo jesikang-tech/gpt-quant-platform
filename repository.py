@@ -3011,6 +3011,56 @@ def get_ai_decision_history_snapshot_retention():
     return result
 
 
+def get_ai_decision_history_snapshot_cleanup_candidates():
+    """
+    Read-only cleanup candidate classification for AI Decision
+    Outcome History and Portfolio Snapshot lifecycle.
+
+    Production Hardening:
+    This function never deletes or updates data.
+    REVIEW_REQUIRED is a review candidate only.
+    """
+
+    retention_rows = (
+        get_ai_decision_history_snapshot_retention()
+    )
+
+    result = []
+
+    for row in retention_rows:
+        retention = row["retention"]
+
+        if retention == "REVIEW_REQUIRED":
+            cleanup_candidate = True
+            auto_delete = False
+            action = "REVIEW_ONLY"
+
+        elif retention in (
+            "PROTECTED",
+            "RETAIN_LONG_TERM",
+            "RETAIN",
+        ):
+            cleanup_candidate = False
+            auto_delete = False
+            action = "NO_AUTO_DELETE"
+
+        else:
+            cleanup_candidate = False
+            auto_delete = False
+            action = "NO_ACTION"
+
+        result.append(
+            {
+                **row,
+                "cleanup_candidate": cleanup_candidate,
+                "auto_delete": auto_delete,
+                "cleanup_action": action,
+            }
+        )
+
+    return result
+
+
 def save_ai_decision_portfolio_snapshot(
     history_id,
     portfolio,
