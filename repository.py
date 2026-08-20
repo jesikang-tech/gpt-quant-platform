@@ -2815,6 +2815,78 @@ def get_ai_decision_outcome_history(limit=10):
 # Step6-9-B
 # ==============================
 
+def get_ai_decision_history_snapshot_lifecycle():
+    """
+    Read-only classification of AI Decision Outcome History
+    and Portfolio Snapshot lifecycle state.
+
+    Production Hardening:
+    No database mutation is performed.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            h.id,
+            h.outcome_status,
+            COUNT(s.id) AS snapshot_count
+        FROM ai_decision_outcome_history h
+        LEFT JOIN ai_decision_portfolio_snapshot s
+            ON s.history_id = h.id
+        GROUP BY
+            h.id,
+            h.outcome_status
+        ORDER BY h.id
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    result = []
+
+    for row in rows:
+        history_id = row[0]
+        outcome_status = row[1]
+        snapshot_count = int(row[2] or 0)
+
+        if outcome_status == "PENDING":
+            if snapshot_count > 0:
+                classification = (
+                    "ACTIVE_OUTCOME_TRACKING"
+                )
+            else:
+                classification = (
+                    "LEGACY_ORPHAN_CANDIDATE"
+                )
+
+        elif outcome_status == "EVALUATED":
+            if snapshot_count > 0:
+                classification = "COMPLETED"
+            else:
+                classification = (
+                    "LEGACY_EVALUATED_CANDIDATE"
+                )
+
+        else:
+            classification = "UNKNOWN"
+
+        result.append(
+            {
+                "history_id": history_id,
+                "outcome_status": outcome_status,
+                "snapshot_count": snapshot_count,
+                "classification": classification,
+            }
+        )
+
+    conn.close()
+
+    return result
+
+
 def save_ai_decision_portfolio_snapshot(
     history_id,
     portfolio,
