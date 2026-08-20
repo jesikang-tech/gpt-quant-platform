@@ -1,4 +1,5 @@
-﻿from database import get_connection
+﻿from datetime import datetime
+from database import get_connection
 
 
 def save_etf_price(
@@ -2887,6 +2888,129 @@ def get_ai_decision_history_snapshot_lifecycle():
     return result
 
 
+def get_ai_decision_history_snapshot_retention():
+    """
+    Read-only retention classification for AI Decision
+    Outcome History and Portfolio Snapshot lifecycle.
+
+    Production Hardening:
+    No database mutation is performed.
+    """
+
+    REVIEW_DAYS = 7
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            h.id,
+            h.created_at,
+            h.outcome_status,
+            COUNT(s.id) AS snapshot_count
+        FROM ai_decision_outcome_history h
+        LEFT JOIN ai_decision_portfolio_snapshot s
+            ON s.history_id = h.id
+        GROUP BY
+            h.id,
+            h.created_at,
+            h.outcome_status
+        ORDER BY h.created_at ASC
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    now = datetime.now().astimezone()
+    result = []
+
+    for row in rows:
+        history_id = row[0]
+        created_at = row[1]
+        outcome_status = row[2]
+        snapshot_count = int(row[3] or 0)
+
+        if outcome_status == "PENDING":
+            if snapshot_count > 0:
+                lifecycle = (
+                    "ACTIVE_OUTCOME_TRACKING"
+                )
+            else:
+                lifecycle = (
+                    "LEGACY_ORPHAN_CANDIDATE"
+                )
+
+        elif outcome_status == "EVALUATED":
+            if snapshot_count > 0:
+                lifecycle = "COMPLETED"
+            else:
+                lifecycle = (
+                    "LEGACY_EVALUATED_CANDIDATE"
+                )
+
+        else:
+            lifecycle = "UNKNOWN"
+
+        try:
+            created = datetime.fromisoformat(
+                created_at
+            )
+
+            if created.tzinfo is None:
+                created = created.replace(
+                    tzinfo=now.tzinfo
+                )
+
+            age_days = (
+                now - created
+            ).total_seconds() / 86400.0
+
+        except Exception:
+            age_days = None
+
+        if lifecycle == "ACTIVE_OUTCOME_TRACKING":
+            retention = "PROTECTED"
+
+        elif lifecycle == "COMPLETED":
+            retention = "RETAIN_LONG_TERM"
+
+        elif lifecycle in (
+            "LEGACY_EVALUATED_CANDIDATE",
+            "LEGACY_ORPHAN_CANDIDATE",
+        ):
+            if (
+                age_days is not None
+                and age_days < REVIEW_DAYS
+            ):
+                retention = "RETAIN"
+            else:
+                retention = "REVIEW_REQUIRED"
+
+        else:
+            retention = "UNKNOWN"
+
+        result.append(
+            {
+                "history_id": history_id,
+                "created_at": created_at,
+                "age_days": (
+                    round(age_days, 3)
+                    if age_days is not None
+                    else None
+                ),
+                "outcome_status": outcome_status,
+                "snapshot_count": snapshot_count,
+                "lifecycle": lifecycle,
+                "retention": retention,
+            }
+        )
+
+    conn.close()
+
+    return result
+
+
 def save_ai_decision_portfolio_snapshot(
     history_id,
     portfolio,
@@ -3331,4 +3455,3 @@ def evaluate_ai_decision_portfolio_snapshot(
         "pending_positions": 0,
         "positions": positions
     }
-
