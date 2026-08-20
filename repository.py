@@ -2829,6 +2829,20 @@ def save_ai_decision_portfolio_snapshot(
     conn = get_connection()
     cursor = conn.cursor()
 
+    cursor.execute(
+        """
+        SELECT 1
+        FROM ai_decision_outcome_history
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (history_id,)
+    )
+
+    if cursor.fetchone() is None:
+        conn.close()
+        raise ValueError("HISTORY_NOT_FOUND")
+
     saved_count = 0
 
     for item in portfolio:
