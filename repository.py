@@ -1,4 +1,5 @@
-﻿from database import get_connection
+﻿from datetime import datetime
+from database import get_connection
 
 
 def save_etf_price(
@@ -2070,6 +2071,244 @@ def get_etf_score(ticker):
 # Step6-3 AI Decision Outcome History
 # ==============================
 
+def validate_portfolio_snapshot_input(
+    portfolio
+):
+    """
+    Validate Portfolio Snapshot input before persistence.
+
+    Production Hardening:
+    - portfolio must be a non-empty list
+    - weights must be numeric and non-negative
+    - total weight must equal 100
+    - tickers must be unique
+    - non-CASH positions require reference price/date
+    - CASH does not require reference price/date
+    """
+
+    if not isinstance(portfolio, list):
+        raise ValueError("PORTFOLIO_NOT_LIST")
+
+    if not portfolio:
+        raise ValueError("EMPTY_PORTFOLIO")
+
+    tickers = set()
+    total_weight = 0.0
+
+    for item in portfolio:
+        if not isinstance(item, dict):
+            raise ValueError("INVALID_POSITION")
+
+        ticker = item.get("ticker")
+
+        if not ticker:
+            raise ValueError("MISSING_TICKER")
+
+        if ticker in tickers:
+            raise ValueError("DUPLICATE_TICKER")
+
+        tickers.add(ticker)
+
+        weight = item.get("weight")
+
+        if weight is None:
+            raise ValueError("MISSING_WEIGHT")
+
+        try:
+            weight = float(weight)
+        except (TypeError, ValueError):
+            raise ValueError("INVALID_WEIGHT")
+
+        if weight < 0:
+            raise ValueError("NEGATIVE_WEIGHT")
+
+        total_weight += weight
+
+        if ticker != "CASH":
+            if (
+                item.get("reference_price") is None
+                or item.get("reference_price_date") is None
+            ):
+                raise ValueError(
+                    "MISSING_REFERENCE_PRICE"
+                )
+
+    if abs(total_weight - 100.0) > 0.0001:
+        raise ValueError(
+            "INVALID_TOTAL_WEIGHT"
+        )
+
+    return True
+
+
+def save_ai_decision_outcome_with_portfolio_transaction(
+    history_kwargs,
+    portfolio,
+    created_at
+):
+    """
+    Atomically persist AI Decision Outcome History and
+    Portfolio Snapshot.
+
+    Production Hardening:
+    History INSERT and Portfolio Snapshot INSERT are
+    committed as one transaction. Any failure rolls back
+    the full creation transaction.
+    """
+
+    validate_portfolio_snapshot_input(
+        portfolio
+    )
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        history_columns = [
+            "decision",
+            "action",
+            "strategy",
+            "confidence_score",
+            "intelligence_score",
+            "validation_score",
+            "governance_score",
+            "execution_score",
+            "lifecycle_score",
+            "operational_score",
+            "orchestration_score",
+            "integrated_score",
+            "market_view",
+            "risk_level",
+            "outcome_status",
+            "snapshot_status",
+            "snapshot_purpose",
+            "outcome_score",
+            "outcome_grade",
+            "decision_effectiveness",
+            "strategy_effectiveness",
+            "market_response",
+            "portfolio_response",
+            "learning_status",
+            "feedback_state",
+            "adaptive_learning_required",
+            "reassessment_required",
+            "reassessment_status",
+            "created_at",
+            "execution_status",
+            "execution_authorization",
+            "certification_status",
+            "monitoring_status",
+            "feedback_status",
+        ]
+
+        history_values = [
+            history_kwargs.get(column)
+            for column in history_columns
+        ]
+
+        columns_sql = ", ".join(history_columns)
+        placeholders = ", ".join(
+            "?" for _ in history_columns
+        )
+
+        cursor.execute(
+            f"""
+            INSERT INTO ai_decision_outcome_history
+            ({columns_sql})
+            VALUES ({placeholders})
+            """,
+            tuple(history_values),
+        )
+
+        history_id = cursor.lastrowid
+        saved_count = 0
+
+        for item in portfolio:
+            ticker = item.get("ticker")
+
+            if not ticker:
+                continue
+
+            weight = item.get("weight", 0)
+            reference_price = item.get("reference_price")
+            reference_price_date = item.get(
+                "reference_price_date"
+            )
+
+            if reference_price is None:
+                price_row = cursor.execute(
+                    """
+                    SELECT date, close_price
+                    FROM etf_prices
+                    WHERE ticker = ?
+                    ORDER BY date DESC
+                    LIMIT 1
+                    """,
+                    (ticker,),
+                ).fetchone()
+
+                if price_row:
+                    reference_price_date = price_row[0]
+                    reference_price = price_row[1]
+
+            elif reference_price_date is None:
+                price_row = cursor.execute(
+                    """
+                    SELECT date
+                    FROM etf_prices
+                    WHERE ticker = ?
+                      AND close_price = ?
+                    ORDER BY date DESC
+                    LIMIT 1
+                    """,
+                    (
+                        ticker,
+                        reference_price,
+                    ),
+                ).fetchone()
+
+                if price_row:
+                    reference_price_date = price_row[0]
+
+            cursor.execute(
+                """
+                INSERT INTO ai_decision_portfolio_snapshot
+                (
+                    history_id,
+                    ticker,
+                    weight,
+                    reference_price,
+                    created_at,
+                    reference_price_date
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    history_id,
+                    ticker,
+                    weight,
+                    reference_price,
+                    created_at,
+                    reference_price_date,
+                ),
+            )
+
+            saved_count += 1
+
+        conn.commit()
+
+        return {
+            "history_id": history_id,
+            "snapshot_count": saved_count,
+        }
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
 def save_ai_decision_outcome_history(
     decision,
     action,
@@ -2577,6 +2816,251 @@ def get_ai_decision_outcome_history(limit=10):
 # Step6-9-B
 # ==============================
 
+def get_ai_decision_history_snapshot_lifecycle():
+    """
+    Read-only classification of AI Decision Outcome History
+    and Portfolio Snapshot lifecycle state.
+
+    Production Hardening:
+    No database mutation is performed.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            h.id,
+            h.outcome_status,
+            COUNT(s.id) AS snapshot_count
+        FROM ai_decision_outcome_history h
+        LEFT JOIN ai_decision_portfolio_snapshot s
+            ON s.history_id = h.id
+        GROUP BY
+            h.id,
+            h.outcome_status
+        ORDER BY h.id
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    result = []
+
+    for row in rows:
+        history_id = row[0]
+        outcome_status = row[1]
+        snapshot_count = int(row[2] or 0)
+
+        if outcome_status == "PENDING":
+            if snapshot_count > 0:
+                classification = (
+                    "ACTIVE_OUTCOME_TRACKING"
+                )
+            else:
+                classification = (
+                    "LEGACY_ORPHAN_CANDIDATE"
+                )
+
+        elif outcome_status == "EVALUATED":
+            if snapshot_count > 0:
+                classification = "COMPLETED"
+            else:
+                classification = (
+                    "LEGACY_EVALUATED_CANDIDATE"
+                )
+
+        else:
+            classification = "UNKNOWN"
+
+        result.append(
+            {
+                "history_id": history_id,
+                "outcome_status": outcome_status,
+                "snapshot_count": snapshot_count,
+                "classification": classification,
+            }
+        )
+
+    conn.close()
+
+    return result
+
+
+def get_ai_decision_history_snapshot_retention():
+    """
+    Read-only retention classification for AI Decision
+    Outcome History and Portfolio Snapshot lifecycle.
+
+    Production Hardening:
+    No database mutation is performed.
+    """
+
+    REVIEW_DAYS = 7
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT
+            h.id,
+            h.created_at,
+            h.outcome_status,
+            COUNT(s.id) AS snapshot_count
+        FROM ai_decision_outcome_history h
+        LEFT JOIN ai_decision_portfolio_snapshot s
+            ON s.history_id = h.id
+        GROUP BY
+            h.id,
+            h.created_at,
+            h.outcome_status
+        ORDER BY h.created_at ASC
+        """
+    )
+
+    rows = cursor.fetchall()
+
+    now = datetime.now().astimezone()
+    result = []
+
+    for row in rows:
+        history_id = row[0]
+        created_at = row[1]
+        outcome_status = row[2]
+        snapshot_count = int(row[3] or 0)
+
+        if outcome_status == "PENDING":
+            if snapshot_count > 0:
+                lifecycle = (
+                    "ACTIVE_OUTCOME_TRACKING"
+                )
+            else:
+                lifecycle = (
+                    "LEGACY_ORPHAN_CANDIDATE"
+                )
+
+        elif outcome_status == "EVALUATED":
+            if snapshot_count > 0:
+                lifecycle = "COMPLETED"
+            else:
+                lifecycle = (
+                    "LEGACY_EVALUATED_CANDIDATE"
+                )
+
+        else:
+            lifecycle = "UNKNOWN"
+
+        try:
+            created = datetime.fromisoformat(
+                created_at
+            )
+
+            if created.tzinfo is None:
+                created = created.replace(
+                    tzinfo=now.tzinfo
+                )
+
+            age_days = (
+                now - created
+            ).total_seconds() / 86400.0
+
+        except Exception:
+            age_days = None
+
+        if lifecycle == "ACTIVE_OUTCOME_TRACKING":
+            retention = "PROTECTED"
+
+        elif lifecycle == "COMPLETED":
+            retention = "RETAIN_LONG_TERM"
+
+        elif lifecycle in (
+            "LEGACY_EVALUATED_CANDIDATE",
+            "LEGACY_ORPHAN_CANDIDATE",
+        ):
+            if (
+                age_days is not None
+                and age_days < REVIEW_DAYS
+            ):
+                retention = "RETAIN"
+            else:
+                retention = "REVIEW_REQUIRED"
+
+        else:
+            retention = "UNKNOWN"
+
+        result.append(
+            {
+                "history_id": history_id,
+                "created_at": created_at,
+                "age_days": (
+                    round(age_days, 3)
+                    if age_days is not None
+                    else None
+                ),
+                "outcome_status": outcome_status,
+                "snapshot_count": snapshot_count,
+                "lifecycle": lifecycle,
+                "retention": retention,
+            }
+        )
+
+    conn.close()
+
+    return result
+
+
+def get_ai_decision_history_snapshot_cleanup_candidates():
+    """
+    Read-only cleanup candidate classification for AI Decision
+    Outcome History and Portfolio Snapshot lifecycle.
+
+    Production Hardening:
+    This function never deletes or updates data.
+    REVIEW_REQUIRED is a review candidate only.
+    """
+
+    retention_rows = (
+        get_ai_decision_history_snapshot_retention()
+    )
+
+    result = []
+
+    for row in retention_rows:
+        retention = row["retention"]
+
+        if retention == "REVIEW_REQUIRED":
+            cleanup_candidate = True
+            auto_delete = False
+            action = "REVIEW_ONLY"
+
+        elif retention in (
+            "PROTECTED",
+            "RETAIN_LONG_TERM",
+            "RETAIN",
+        ):
+            cleanup_candidate = False
+            auto_delete = False
+            action = "NO_AUTO_DELETE"
+
+        else:
+            cleanup_candidate = False
+            auto_delete = False
+            action = "NO_ACTION"
+
+        result.append(
+            {
+                **row,
+                "cleanup_candidate": cleanup_candidate,
+                "auto_delete": auto_delete,
+                "cleanup_action": action,
+            }
+        )
+
+    return result
+
+
 def save_ai_decision_portfolio_snapshot(
     history_id,
     portfolio,
@@ -2590,6 +3074,20 @@ def save_ai_decision_portfolio_snapshot(
 
     conn = get_connection()
     cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT 1
+        FROM ai_decision_outcome_history
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (history_id,)
+    )
+
+    if cursor.fetchone() is None:
+        conn.close()
+        raise ValueError("HISTORY_NOT_FOUND")
 
     saved_count = 0
 
