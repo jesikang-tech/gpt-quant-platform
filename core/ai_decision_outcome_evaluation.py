@@ -114,13 +114,16 @@ class AIDecisionOutcomeEvaluation:
             "EVALUATED"
         )
 
-        learning_signal = self._learning_signal(
-            outcome_score
+        learning_signal = (
+            self.canonical_learning_signal(
+                outcome_score
+            )
         )
 
-        learning_signal_strength = round(
-            abs(outcome_score - 50.0) * 2.0,
-            1
+        learning_signal_strength = (
+            self.canonical_learning_signal_strength(
+                outcome_score
+            )
         )
 
         return {
@@ -262,7 +265,14 @@ class AIDecisionOutcomeEvaluation:
 
 
     @staticmethod
-    def _learning_signal(score):
+    def canonical_learning_signal(score):
+        """
+        Canonical outcome learning signal policy.
+
+        POSITIVE: score >= 80
+        STABLE:   60 <= score < 80
+        NEGATIVE: score < 60
+        """
 
         if score >= 80.0:
             return "POSITIVE"
@@ -271,6 +281,31 @@ class AIDecisionOutcomeEvaluation:
             return "STABLE"
 
         return "NEGATIVE"
+
+
+    @staticmethod
+    def canonical_learning_signal_strength(score):
+        """
+        Canonical outcome learning signal strength.
+
+        Strength is normalized around the neutral score of 50.
+        """
+
+        return round(
+            abs(score - 50.0) * 2.0,
+            1
+        )
+
+
+    @staticmethod
+    def _learning_signal(score):
+        """
+        Backward-compatible internal alias.
+        """
+
+        return AIDecisionOutcomeEvaluation.canonical_learning_signal(
+            score
+        )
 
 
     @staticmethod
