@@ -6,6 +6,7 @@
 EXPECTED = {
     1: (False, False, "NO_AUTO_DELETE"),
     2: (False, False, "NO_AUTO_DELETE"),
+    3: (False, False, "NO_AUTO_DELETE"),
     4: (False, False, "NO_AUTO_DELETE"),
     5: (False, False, "NO_AUTO_DELETE"),
     6: (False, False, "NO_AUTO_DELETE"),
@@ -15,7 +16,7 @@ EXPECTED = {
     10: (False, False, "NO_AUTO_DELETE"),
     11: (False, False, "NO_AUTO_DELETE"),
     12: (False, False, "NO_AUTO_DELETE"),
-    13: (False, False, "NO_AUTO_DELETE"),
+    16: (False, False, "NO_AUTO_DELETE"),
 }
 
 
