@@ -2071,6 +2071,104 @@ def get_etf_score(ticker):
 # Step6-3 AI Decision Outcome History
 # ==============================
 
+def enrich_portfolio_reference_prices(
+    portfolio
+):
+    """
+    Enrich portfolio positions with missing reference
+    price/date values from the latest available ETF price.
+
+    Contract:
+    - Preserve ticker and weight.
+    - Preserve existing reference price/date.
+    - CASH does not require reference price/date.
+    - Resolve only missing values from etf_prices.
+    - Do not write to the database.
+    """
+
+    if not isinstance(portfolio, list):
+        raise ValueError("PORTFOLIO_NOT_LIST")
+
+    enriched_portfolio = []
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        for item in portfolio:
+
+            if not isinstance(item, dict):
+                raise ValueError("INVALID_POSITION")
+
+            enriched_item = item.copy()
+
+            ticker = enriched_item.get("ticker")
+
+            if not ticker:
+                raise ValueError("MISSING_TICKER")
+
+            if ticker == "CASH":
+                enriched_portfolio.append(
+                    enriched_item
+                )
+                continue
+
+            reference_price = (
+                enriched_item.get("reference_price")
+            )
+
+            reference_price_date = (
+                enriched_item.get("reference_price_date")
+            )
+
+            if (
+                reference_price is None
+                or reference_price_date is None
+            ):
+
+                price_row = cursor.execute(
+                    """
+                    SELECT date, close_price
+                    FROM etf_prices
+                    WHERE ticker = ?
+                    ORDER BY date DESC
+                    LIMIT 1
+                    """,
+                    (ticker,),
+                ).fetchone()
+
+                if price_row:
+
+                    if reference_price is None:
+                        reference_price = (
+                            price_row[1]
+                        )
+
+                    if reference_price_date is None:
+                        reference_price_date = (
+                            price_row[0]
+                        )
+
+            if reference_price is not None:
+                enriched_item[
+                    "reference_price"
+                ] = reference_price
+
+            if reference_price_date is not None:
+                enriched_item[
+                    "reference_price_date"
+                ] = reference_price_date
+
+            enriched_portfolio.append(
+                enriched_item
+            )
+
+        return enriched_portfolio
+
+    finally:
+        conn.close()
+
+
 def validate_portfolio_snapshot_input(
     portfolio
 ):
@@ -2155,6 +2253,10 @@ def save_ai_decision_outcome_with_portfolio_transaction(
     committed as one transaction. Any failure rolls back
     the full creation transaction.
     """
+
+    portfolio = enrich_portfolio_reference_prices(
+        portfolio
+    )
 
     validate_portfolio_snapshot_input(
         portfolio
