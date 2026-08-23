@@ -360,6 +360,7 @@
             execution_control.get("control_status"),
             execution_assurance.get("assurance_status"),
             execution_feedback.get("feedback_status"),
+            reassessment.get("reassessment_status"),
             lifecycle.get("lifecycle_status"),
             lifecycle_governance_control.get(
                 "operational_status"
