@@ -386,7 +386,8 @@
                 "WARNING",
                 "ATTENTION",
                 "DEGRADED",
-                "REASSESS_REQUIRED"
+                "REASSESS_REQUIRED",
+                "REASSESSMENT_REQUIRED"
             )
             for status in statuses
         ):
