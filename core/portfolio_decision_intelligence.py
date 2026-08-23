@@ -108,6 +108,18 @@ class PortfolioDecisionIntelligence:
             ""
         )
 
+        outcome_learning_signal = adaptive_strategy.get(
+            "outcome_learning_signal"
+        )
+
+        outcome_learning_signal_strength = adaptive_strategy.get(
+            "outcome_learning_signal_strength"
+        )
+
+        adaptive_learning_required = adaptive_strategy.get(
+            "adaptive_learning_required"
+        )
+
         rebalance_action = rebalance.get(
             "rebalance_action",
             "HOLD"
@@ -361,6 +373,10 @@ class PortfolioDecisionIntelligence:
             "adaptive_grade_stability": adaptive_grade_stability,
             "adaptive_consistency": adaptive_consistency,
             "adaptive_summary": adaptive_summary,
+
+            "outcome_learning_signal": outcome_learning_signal,
+            "outcome_learning_signal_strength": outcome_learning_signal_strength,
+            "adaptive_learning_required": adaptive_learning_required,
 
             "adaptive_override": adaptive_override,
             "adaptive_override_reason": adaptive_override_reason,

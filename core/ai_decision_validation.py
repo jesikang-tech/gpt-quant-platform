@@ -83,6 +83,22 @@ class AIDecisionValidation:
             )
         )
 
+
+        outcome_learning_signal = intelligence.get(
+            "outcome_learning_signal"
+        )
+
+        outcome_learning_signal_strength = intelligence.get(
+            "outcome_learning_signal_strength"
+        )
+
+        adaptive_learning_required = bool(
+            intelligence.get(
+                "adaptive_learning_required",
+                False
+            )
+        )
+
         attention_signals = (
             assessment.get(
                 "attention_signals",
@@ -378,7 +394,35 @@ class AIDecisionValidation:
             if signal["status"] == "REVIEW"
         )
 
-        if failed >= 3:
+        # ---------------------------------
+        # Outcome Learning Adaptive Override
+        # Step7-9-1
+        #
+        # NEGATIVE learning
+        # + adaptive learning required
+        # + adaptive override
+        #       -> REVIEW_REQUIRED
+        #
+        # This preserves the FAIL signals as
+        # governance evidence while preventing
+        # a learning-driven defensive override
+        # from being classified as INVALID.
+        #
+        # All other validation semantics remain
+        # unchanged.
+        # ---------------------------------
+
+        learning_override_review = (
+            outcome_learning_signal == "NEGATIVE"
+            and adaptive_learning_required
+            and adaptive_override
+        )
+
+        if learning_override_review:
+
+            validation = "REVIEW_REQUIRED"
+
+        elif failed >= 3:
 
             validation = "INVALID"
 
@@ -415,6 +459,19 @@ class AIDecisionValidation:
             "reliability": reliability,
             "optimization_status": optimization_status,
             "adaptive_override": adaptive_override,
+
+            "outcome_learning_signal":
+                outcome_learning_signal,
+
+            "outcome_learning_signal_strength":
+                outcome_learning_signal_strength,
+
+            "adaptive_learning_required":
+                adaptive_learning_required,
+
+            "learning_override_review":
+                learning_override_review,
+
             "recommendation": recommendation_status,
             "validation_signals": validation_signals,
             "risk_signals": risk_signals,
