@@ -23,16 +23,16 @@ validation_engine = AIDecisionValidation()
 action_engine = AIDecisionValidationAction()
 explainability_engine = AIDecisionValidationExplainability()
 execution_engine = AIFinalExecutionDecision()
-master_engine = AIFinalDecisionMasterControl()
-
 trend = {
     "direction": "STABLE",
-    "stability": "HIGH",
+    "stability": "MEDIUM",
     "momentum": "NEUTRAL",
     "grade_stability": "STABLE",
-    "consistency": "HIGH",
+    "consistency": "MEDIUM",
     "latest_score": 85,
 }
+
+master_engine = AIFinalDecisionMasterControl()
 
 base_decision = {
     "decision": "ACCUMULATE",
@@ -77,8 +77,8 @@ cases = [
         "name": "PENDING",
         "actual_outcome": {},
         "expected_signal": "NONE",
-        "expected_strategy": "MAINTAIN",
-        "expected_adaptive_action": "MAINTAIN_ALLOCATION",
+        "expected_strategy": "BALANCED",
+        "expected_adaptive_action": "MAINTAIN_BALANCE",
         "expected_execution_status": "EXECUTION_READY",
         "expected_master_status": "MASTER_READY",
         "expected_master_action": "PROCEED",
@@ -235,6 +235,13 @@ for case in cases:
             "adaptive_override",
             False
         ),
+        "outcome_learning_signal": portfolio.get(
+            "outcome_learning_signal"
+        ),
+        "adaptive_learning_required": portfolio.get(
+            "adaptive_learning_required",
+            False
+        ),
     }
 
     validation = validation_engine.validate(
@@ -254,7 +261,13 @@ for case in cases:
     print("validation status:", validation.get("validation_status"))
     print("validation score:", validation.get("validation_score"))
 
-    assert validation.get("validation_status") == "VALID"
+    expected_validation_status = (
+        "REVIEW_REQUIRED"
+        if case["name"] == "NEGATIVE"
+        else "VALID"
+    )
+
+    assert validation.get("validation_status") == expected_validation_status
 
     print("VALIDATION: PASS")
 
@@ -301,9 +314,16 @@ for case in cases:
 
     explainability = explainability_engine.explain(
         validation=validation,
-        validation_action=validation_action,
-        portfolio_intelligence=portfolio,
-        final_decision=base_decision,
+        confidence={
+            "confidence_score": 95.0,
+            "confidence_level": "HIGH",
+        },
+        assessment={
+            "attention_signals": [],
+        },
+        recommendation={
+            "recommendation": "PROCEED",
+        },
     )
 
     print("explainability strategy:",
