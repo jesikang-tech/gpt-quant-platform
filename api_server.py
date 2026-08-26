@@ -1465,6 +1465,7 @@ def portfolio_decision_intelligence_api():
 
         effective_adaptive_required = (
             outcome_learning_required
+            or bool(outcome_row[27])
             or outcome_learning_signal == "NEGATIVE"
         )
 
