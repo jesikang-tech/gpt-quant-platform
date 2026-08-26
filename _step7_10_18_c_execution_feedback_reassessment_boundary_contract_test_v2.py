@@ -39,71 +39,44 @@ def build_common():
 
 
 def determine(data):
-    reassessment_required = (
-        AIFinalDecisionReassessment._determine_reassessment(
-            data["feedback_status"],
-            data["feedback_risk"],
-            data["feedback_action"],
-            data["monitoring_status"],
-            data["monitoring_risk"],
-            data["monitoring_score"],
-            data["assurance_status"],
-            data["assurance_risk"],
-            data["assurance_score"],
-            data["control_status"],
-            data["control_risk"],
-            data["governance_status"],
-            data["governance_score"],
-            data["validation_status"],
-            data["validation_score"],
-        )
-    )
+    engine = AIFinalDecisionReassessment()
 
-    reassessment_status = (
-        AIFinalDecisionReassessment._determine_status(
-            reassessment_required,
-            data["feedback_status"],
-            data["feedback_risk"],
-        )
-    )
-
-    reassessment_action = (
-        AIFinalDecisionReassessment._determine_action(
-            reassessment_required,
-            data["feedback_action"],
-            data["feedback_status"],
-            data["feedback_risk"],
-        )
-    )
-
-    reassessment_risk = (
-        AIFinalDecisionReassessment._determine_risk(
-            reassessment_required,
-            data["feedback_risk"],
-            data["monitoring_risk"],
-            data["assurance_risk"],
-            data["control_risk"],
-        )
-    )
-
-    reassessment_score = (
-        AIFinalDecisionReassessment._calculate_score(
-            data["feedback_score"],
-            data["monitoring_score"],
-            data["assurance_score"],
-            data["governance_score"],
-            data["validation_score"],
-            reassessment_required,
-            reassessment_risk,
-        )
+    result = engine.reassess(
+        final_decision={},
+        governance={
+            "governance_status": data["governance_status"],
+            "governance_score": data["governance_score"],
+        },
+        execution_control={
+            "control_status": data["control_status"],
+            "control_risk": data["control_risk"],
+        },
+        execution_assurance={
+            "assurance_status": data["assurance_status"],
+            "assurance_risk": data["assurance_risk"],
+            "assurance_score": data["assurance_score"],
+            "validation_status": data["validation_status"],
+            "validation_score": data["validation_score"],
+        },
+        execution_feedback={
+            "feedback_status": data["feedback_status"],
+            "feedback_risk": data["feedback_risk"],
+            "feedback_action": data["feedback_action"],
+            "feedback_score": data["feedback_score"],
+        },
+        execution_monitoring={
+            "monitoring_status": data["monitoring_status"],
+            "monitoring_risk": data["monitoring_risk"],
+            "monitoring_score": data["monitoring_score"],
+        },
     )
 
     return {
-        "reassessment_required": reassessment_required,
-        "reassessment_status": reassessment_status,
-        "reassessment_action": reassessment_action,
-        "reassessment_risk": reassessment_risk,
-        "reassessment_score": reassessment_score,
+        "reassessment_required": result["reassessment_required"],
+        "reassessment_status": result["reassessment_status"],
+        "reassessment_action": result["reassessment_action"],
+        "reassessment_risk": result["reassessment_risk"],
+        "reassessment_score": result["reassessment_score"],
     }
 
 
