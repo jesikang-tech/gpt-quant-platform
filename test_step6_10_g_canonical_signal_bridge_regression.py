@@ -402,3 +402,41 @@ def test_portfolio_bridge_positive_signal_strength_matches_evaluator():
             80.0
         )
     )
+
+def test_portfolio_bridge_reassessment_required_forces_adaptive_learning(
+    monkeypatch,
+):
+    row = list(_outcome_rows(80.0, False)[0])
+
+    # GH boundary:
+    # stored adaptive_learning_required = False
+    # reassessment_required = True
+    row[26] = 0
+    row[27] = 1
+    row[28] = "REASSESSMENT_REQUIRED"
+
+    monkeypatch.setattr(
+        api_server,
+        "get_ai_decision_history",
+        lambda limit=10: _balanced_history_rows(),
+    )
+    monkeypatch.setattr(
+        api_server,
+        "get_ai_decision_outcome_history",
+        lambda limit=50: [tuple(row)],
+    )
+
+    response = app.test_client().get(
+        "/api/ai-decision/adaptive-strategy"
+    )
+
+    assert response.status_code == 200
+
+    strategy = response.get_json()["strategy"]
+
+    assert strategy["outcome_learning_signal"] == "POSITIVE"
+    assert strategy["adaptive_learning_required"] is True
+
+    print(
+        "GH reassessment_required -> adaptive_learning_required: PASS"
+    )
