@@ -227,3 +227,7 @@ logs/
 
 # VS Code workspace
 .vscode/
+# Local working backups
+*.backup-*
+*.bak
+database/*.backup-*
