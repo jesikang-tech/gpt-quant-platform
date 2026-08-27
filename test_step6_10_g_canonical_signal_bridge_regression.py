@@ -287,6 +287,7 @@ def _portfolio_bridge_outcome_intelligence(
 
     outcome_score = row[18]
     stored_learning_required = bool(row[26])
+    reassessment_required = bool(row[27])
 
     if outcome_score is None:
         signal = "NONE"
@@ -307,6 +308,7 @@ def _portfolio_bridge_outcome_intelligence(
 
     effective_learning_required = (
         stored_learning_required
+        or reassessment_required
         or signal == "NEGATIVE"
     )
 
