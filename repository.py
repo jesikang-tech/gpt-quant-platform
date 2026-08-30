@@ -2836,6 +2836,128 @@ def get_ai_decision_outcome_history_by_id(history_id):
 
 
 
+def get_ai_decision_audit_events(
+    outcome_history_id=None,
+    correlation_key=None,
+    limit=50,
+):
+    """
+    Retrieve AI Decision Audit Events.
+
+    Step6-10-I-17
+
+    Read-only audit event boundary.
+    Events are returned in chronological order.
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        if outcome_history_id is None and correlation_key is None:
+            raise ValueError(
+                "outcome_history_id or correlation_key is required"
+            )
+
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            raise ValueError("limit must be an integer")
+
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
+
+        where_clauses = []
+        params = []
+
+        if outcome_history_id is not None:
+            where_clauses.append(
+                "outcome_history_id = ?"
+            )
+            params.append(outcome_history_id)
+
+        if correlation_key is not None:
+            where_clauses.append(
+                "correlation_key = ?"
+            )
+            params.append(correlation_key)
+
+        cursor.execute(
+            f"""
+            SELECT
+                id,
+                audit_event_id,
+                event_type,
+                event_time,
+                source,
+                status,
+                outcome_history_id,
+                correlation_key,
+                details
+            FROM audit_event
+            WHERE {" AND ".join(where_clauses)}
+            ORDER BY event_time ASC, id ASC
+            LIMIT ?
+            """,
+            (
+                *params,
+                limit,
+            ),
+        )
+
+        return cursor.fetchall()
+
+    finally:
+        conn.close()
+
+def get_ai_decision_audit_lifecycle_timeline(
+    outcome_history_id=None,
+    correlation_key=None,
+    limit=100,
+):
+    """
+    Project persisted AI Decision Audit Events into a
+    lifecycle timeline.
+
+    Step6-10-I-18
+
+    Read-only projection boundary.
+    No business state or audit event is created or modified.
+    """
+
+    rows = get_ai_decision_audit_events(
+        outcome_history_id=outcome_history_id,
+        correlation_key=correlation_key,
+        limit=limit,
+    )
+
+    timeline = []
+
+    for row in rows:
+        details = row[8]
+
+        if isinstance(details, str):
+            try:
+                details = json.loads(details)
+            except (TypeError, ValueError):
+                details = {}
+
+        timeline.append(
+            {
+                "id": row[0],
+                "audit_event_id": row[1],
+                "event_type": row[2],
+                "event_time": row[3],
+                "source": row[4],
+                "status": row[5],
+                "outcome_history_id": row[6],
+                "correlation_key": row[7],
+                "details": details,
+            }
+        )
+
+    return timeline
+
 def get_ai_decision_outcome_learning_summary():
     """
     Aggregate AI Decision Outcome Learning status.
