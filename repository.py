@@ -2503,6 +2503,27 @@ def save_ai_decision_outcome_with_portfolio_transaction(
             saved_count += 1
 
         save_ai_decision_audit_event(
+            event_type="SNAPSHOT_PERSISTED",
+            event_time=created_at,
+            source="outcome_persistence",
+            status="SUCCESS",
+            outcome_history_id=history_id,
+            correlation_key=f"outcome:{history_id}",
+            details={
+                "snapshot_count": saved_count,
+                "snapshot_status": history_kwargs.get(
+                    "snapshot_status",
+                    "COLLECTED",
+                ),
+                "snapshot_purpose": history_kwargs.get(
+                    "snapshot_purpose",
+                    "FUTURE_OUTCOME_EVALUATION",
+                ),
+            },
+            cursor=cursor,
+        )
+
+        save_ai_decision_audit_event(
             event_type="OUTCOME_PERSISTED",
             event_time=created_at,
             source="outcome_persistence",
@@ -3665,6 +3686,22 @@ def evaluate_ai_decision_portfolio_snapshot(
             "portfolio_return": None,
             "positions": []
         }
+
+    save_ai_decision_audit_event(
+        event_type="OUTCOME_EVALUATION_STARTED",
+        event_time=(
+            evaluation_date
+            or datetime.now().astimezone().isoformat()
+        ),
+        source="portfolio_outcome_evaluation",
+        status="STARTED",
+        outcome_history_id=history_id,
+        correlation_key=f"outcome:{history_id}",
+        details={
+            "evaluation_date": evaluation_date,
+            "actual_outcome_gate": True,
+        },
+    )
 
     positions = []
     weighted_return = 0.0

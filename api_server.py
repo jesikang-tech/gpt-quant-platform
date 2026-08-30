@@ -182,6 +182,7 @@ from repository import (
     get_ai_rebalance_recommendation,
     get_ai_portfolio_optimization,
     save_ai_decision_outcome_history,
+    save_ai_decision_audit_event,
     save_ai_decision_outcome_with_portfolio_transaction,
     get_ai_decision_outcome_history,
     get_ai_decision_outcome_learning_summary,
@@ -1500,6 +1501,57 @@ def portfolio_decision_intelligence_api():
     )
 
     # -----------------------------
+    # --------------------------------
+    # Step6-10-I-13
+    # Persist Adaptive Strategy Audit Event
+    # --------------------------------
+
+    adaptive_source_history_id = (
+        outcome_intelligence.get(
+            "source_history_id"
+        )
+    )
+
+    if adaptive_source_history_id is not None:
+        save_ai_decision_audit_event(
+            event_type="ADAPTIVE_STRATEGY_GENERATED",
+            event_time=datetime.now().astimezone().isoformat(),
+            source="adaptive_strategy",
+            status="GENERATED",
+            outcome_history_id=adaptive_source_history_id,
+            correlation_key=(
+                f"outcome:{adaptive_source_history_id}"
+            ),
+            details={
+                "strategy":
+                    adaptive_strategy.get(
+                        "strategy",
+                        "UNKNOWN"
+                    ),
+                "action":
+                    adaptive_strategy.get(
+                        "action",
+                        "UNKNOWN"
+                    ),
+                "outcome_learning_signal":
+                    adaptive_strategy.get(
+                        "outcome_learning_signal",
+                        "NONE"
+                    ),
+                "outcome_learning_signal_strength":
+                    adaptive_strategy.get(
+                        "outcome_learning_signal_strength",
+                        0.0
+                    ),
+                "adaptive_learning_required":
+                    bool(
+                        adaptive_strategy.get(
+                            "adaptive_learning_required",
+                            False
+                        )
+                    ),
+            },
+        )
     # Rebalance
     # -----------------------------
 
@@ -2319,6 +2371,69 @@ def portfolio_decision_intelligence_api():
         )
     )
 
+
+    # -----------------------------
+    # Step6-10-I-16
+    # Persist Runtime Reassessment Audit Event
+    # -----------------------------
+
+    reassessment_source_history_id = (
+        history_id
+    )
+
+    if (
+        reassessment_source_history_id is not None
+        and final_decision_execution_reassessment.get(
+            "reassessment_required",
+            False
+        )
+    ):
+        save_ai_decision_audit_event(
+            event_type="REASSESSMENT_REQUIRED",
+            event_time=datetime.now().astimezone().isoformat(),
+            source="portfolio_reassessment",
+            status="REQUIRED",
+            outcome_history_id=(
+                reassessment_source_history_id
+            ),
+            correlation_key=(
+                f"outcome:{reassessment_source_history_id}"
+            ),
+            details={
+                "reassessment_required":
+                    bool(
+                        final_decision_execution_reassessment.get(
+                            "reassessment_required",
+                            False
+                        )
+                    ),
+                "reassessment_status":
+                    final_decision_execution_reassessment.get(
+                        "reassessment_status",
+                        "UNKNOWN"
+                    ),
+                "reassessment_action":
+                    final_decision_execution_reassessment.get(
+                        "reassessment_action",
+                        "UNKNOWN"
+                    ),
+                "reassessment_risk":
+                    final_decision_execution_reassessment.get(
+                        "reassessment_risk",
+                        "UNKNOWN"
+                    ),
+                "reassessment_score":
+                    final_decision_execution_reassessment.get(
+                        "reassessment_score",
+                        0.0
+                    ),
+                "reassessment_reason":
+                    final_decision_execution_reassessment.get(
+                        "reassessment_reason",
+                        "UNKNOWN"
+                    ),
+            },
+        )
 
     return jsonify(
 
