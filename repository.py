@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 import json
 from database import get_connection
 
@@ -2957,6 +2957,87 @@ def get_ai_decision_audit_lifecycle_timeline(
         )
 
     return timeline
+
+def get_ai_decision_audit_lifecycle_completeness(
+    outcome_history_id=None,
+    correlation_key=None,
+    limit=100,
+):
+    """
+    Assess persisted AI Decision Audit lifecycle completeness.
+
+    Step6-10-I-20
+
+    Read-only projection boundary.
+    Completeness is determined only from persisted audit events.
+    No synthetic event inference or business-state mutation occurs.
+    """
+
+    expected_event_types = [
+        "OUTCOME_EVALUATION_STARTED",
+        "OUTCOME_EVALUATED",
+        "LEARNING_SIGNAL_GENERATED",
+        "REASSESSMENT_REQUIRED",
+        "ADAPTIVE_STRATEGY_GENERATED",
+    ]
+
+    timeline = get_ai_decision_audit_lifecycle_timeline(
+        outcome_history_id=outcome_history_id,
+        correlation_key=correlation_key,
+        limit=limit,
+    )
+
+    present_event_types = []
+    for event in timeline:
+        event_type = event.get("event_type")
+        if (
+            event_type in expected_event_types
+            and event_type not in present_event_types
+        ):
+            present_event_types.append(event_type)
+
+    missing_event_types = [
+        event_type
+        for event_type in expected_event_types
+        if event_type not in present_event_types
+    ]
+
+    if not present_event_types:
+        lifecycle_status = "EMPTY"
+    elif not missing_event_types:
+        lifecycle_status = "COMPLETE"
+    else:
+        lifecycle_status = "PARTIAL"
+
+    resolved_outcome_history_id = outcome_history_id
+    resolved_correlation_key = correlation_key
+
+    if timeline:
+        if resolved_outcome_history_id is None:
+            resolved_outcome_history_id = timeline[0].get(
+                "outcome_history_id"
+            )
+        if resolved_correlation_key is None:
+            resolved_correlation_key = timeline[0].get(
+                "correlation_key"
+            )
+
+    return {
+        "outcome_history_id":
+            resolved_outcome_history_id,
+        "correlation_key":
+            resolved_correlation_key,
+        "lifecycle_status":
+            lifecycle_status,
+        "expected_event_types":
+            expected_event_types,
+        "present_event_types":
+            present_event_types,
+        "missing_event_types":
+            missing_event_types,
+        "event_count":
+            len(timeline),
+    }
 
 def get_ai_decision_outcome_learning_summary():
     """
