@@ -190,7 +190,10 @@ from repository import (
     update_ai_decision_outcome_history,
     save_ai_decision_portfolio_snapshot,
     get_ai_decision_portfolio_snapshot,
-    evaluate_ai_decision_portfolio_snapshot
+    evaluate_ai_decision_portfolio_snapshot,
+    get_ai_decision_audit_events,
+    get_ai_decision_audit_lifecycle_timeline,
+    get_ai_decision_audit_lifecycle_completeness
 )
 
 app = Flask(__name__)
@@ -1049,6 +1052,110 @@ def ai_decision_outcome_history_by_id_api(
             "history": data
         }
     )
+
+@app.route("/api/ai-decision/audit-events")
+def ai_decision_audit_events_api():
+
+    outcome_history_id = request.args.get("outcome_history_id", type=int)
+    correlation_key = request.args.get("correlation_key")
+    limit = request.args.get("limit", default=50, type=int)
+
+    try:
+        events = get_ai_decision_audit_events(
+            outcome_history_id=outcome_history_id,
+            correlation_key=correlation_key,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "success": False,
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "outcome_history_id": outcome_history_id,
+            "correlation_key": correlation_key,
+            "events": [
+                {
+                    "id": row[0],
+                    "audit_event_id": row[1],
+                    "event_type": row[2],
+                    "event_time": row[3],
+                    "source": row[4],
+                    "status": row[5],
+                    "outcome_history_id": row[6],
+                    "correlation_key": row[7],
+                    "details": row[8]
+                }
+                for row in events
+            ]
+        }
+    )
+
+
+@app.route("/api/ai-decision/audit-lifecycle/timeline")
+def ai_decision_audit_lifecycle_timeline_api():
+
+    outcome_history_id = request.args.get("outcome_history_id", type=int)
+    correlation_key = request.args.get("correlation_key")
+    limit = request.args.get("limit", default=100, type=int)
+
+    try:
+        timeline = get_ai_decision_audit_lifecycle_timeline(
+            outcome_history_id=outcome_history_id,
+            correlation_key=correlation_key,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "success": False,
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "outcome_history_id": outcome_history_id,
+            "correlation_key": correlation_key,
+            "timeline": timeline
+        }
+    )
+
+
+@app.route("/api/ai-decision/audit-lifecycle/completeness")
+def ai_decision_audit_lifecycle_completeness_api():
+
+    outcome_history_id = request.args.get("outcome_history_id", type=int)
+    correlation_key = request.args.get("correlation_key")
+    limit = request.args.get("limit", default=100, type=int)
+
+    try:
+        completeness = get_ai_decision_audit_lifecycle_completeness(
+            outcome_history_id=outcome_history_id,
+            correlation_key=correlation_key,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "success": False,
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "completeness": completeness
+        }
+    )
+
 
 @app.route("/api/ai-decision/summary")
 def ai_decision_summary_api():
