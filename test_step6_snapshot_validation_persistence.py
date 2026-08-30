@@ -81,6 +81,23 @@ def build_db():
 
     cursor.execute(
         """
+        CREATE TABLE audit_event (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            audit_event_id TEXT NOT NULL UNIQUE,
+            event_type TEXT NOT NULL,
+            event_time TEXT NOT NULL,
+            source TEXT NOT NULL,
+            status TEXT,
+            decision_history_id INTEGER,
+            outcome_history_id INTEGER,
+            correlation_key TEXT NOT NULL,
+            details TEXT NOT NULL
+        )
+        """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE etf_prices (
             ticker TEXT NOT NULL,
             date TEXT NOT NULL,

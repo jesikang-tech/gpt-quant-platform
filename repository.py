@@ -1,4 +1,5 @@
 ﻿from datetime import datetime
+import json
 from database import get_connection
 
 
@@ -2141,6 +2142,110 @@ def validate_portfolio_snapshot_input(
     return True
 
 
+def save_ai_decision_audit_event(
+    event_type,
+    event_time,
+    source,
+    status=None,
+    decision_history_id=None,
+    outcome_history_id=None,
+    correlation_key=None,
+    details=None,
+    cursor=None,
+):
+    """
+    Persist one AI Decision Audit Event.
+
+    The caller may provide an existing cursor so the event is
+    persisted inside the caller's transaction boundary.
+    """
+
+    if cursor is None:
+        conn = get_connection()
+        cursor = conn.cursor()
+        owns_connection = True
+    else:
+        conn = None
+        owns_connection = False
+
+    try:
+        if not event_type:
+            raise ValueError("event_type is required")
+        if not event_time:
+            raise ValueError("event_time is required")
+        if not source:
+            raise ValueError("source is required")
+
+        if outcome_history_id is not None:
+            default_correlation_key = f"outcome:{outcome_history_id}"
+        elif decision_history_id is not None:
+            default_correlation_key = f"decision:{decision_history_id}"
+        else:
+            default_correlation_key = f"{event_type}:unbound"
+
+        correlation_key = correlation_key or default_correlation_key
+
+        audit_event_id = (
+            f"{event_type}:{correlation_key}:{event_time}"
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO audit_event
+            (
+                audit_event_id,
+                event_type,
+                event_time,
+                source,
+                status,
+                decision_history_id,
+                outcome_history_id,
+                correlation_key,
+                details
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                audit_event_id,
+                event_type,
+                event_time,
+                source,
+                status,
+                decision_history_id,
+                outcome_history_id,
+                correlation_key,
+                json.dumps(
+                    details or {},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+            ),
+        )
+
+        if owns_connection:
+            conn.commit()
+
+        return {
+            "audit_event_id": audit_event_id,
+            "event_type": event_type,
+            "event_time": event_time,
+            "source": source,
+            "status": status,
+            "decision_history_id": decision_history_id,
+            "outcome_history_id": outcome_history_id,
+            "correlation_key": correlation_key,
+        }
+
+    except Exception:
+        if owns_connection:
+            conn.rollback()
+        raise
+
+    finally:
+        if owns_connection:
+            conn.close()
+
+
 def save_ai_decision_outcome_with_portfolio_transaction(
     history_kwargs,
     portfolio,
@@ -2294,6 +2399,41 @@ def save_ai_decision_outcome_with_portfolio_transaction(
             )
 
             saved_count += 1
+
+        save_ai_decision_audit_event(
+            event_type="OUTCOME_PERSISTED",
+            event_time=created_at,
+            source="outcome_persistence",
+            status=history_kwargs.get(
+                "outcome_status",
+                "PENDING",
+            ),
+            outcome_history_id=history_id,
+            correlation_key=f"outcome:{history_id}",
+            details={
+                "decision": history_kwargs.get(
+                    "decision",
+                    "UNKNOWN",
+                ),
+                "action": history_kwargs.get(
+                    "action",
+                    "REVIEW",
+                ),
+                "strategy": history_kwargs.get(
+                    "strategy",
+                    "UNKNOWN",
+                ),
+                "snapshot_status": history_kwargs.get(
+                    "snapshot_status",
+                    "COLLECTED",
+                ),
+                "snapshot_purpose": history_kwargs.get(
+                    "snapshot_purpose",
+                    "FUTURE_OUTCOME_EVALUATION",
+                ),
+            },
+            cursor=cursor,
+        )
 
         conn.commit()
 
@@ -3300,6 +3440,82 @@ def update_ai_decision_portfolio_evaluation(
 # Step6-10-C
 # ==============================
 
+def save_ai_decision_portfolio_evaluation_transaction(
+    history_id,
+    portfolio_return,
+    portfolio_evaluation_date,
+    event_time,
+    evaluated_weight,
+    pending_positions,
+):
+    """
+    Atomically persist completed AI Decision Portfolio evaluation
+    and its audit event.
+
+    Step6-10-I
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            UPDATE ai_decision_outcome_history
+            SET
+                portfolio_return = ?,
+                portfolio_evaluation_date = ?,
+                outcome_status = ?
+            WHERE id = ?
+            """,
+            (
+                portfolio_return,
+                portfolio_evaluation_date,
+                "EVALUATED",
+                history_id,
+            ),
+        )
+
+        updated_count = cursor.rowcount
+
+        if updated_count != 1:
+            raise ValueError("HISTORY_UPDATE_FAILED")
+
+        save_ai_decision_audit_event(
+            event_type="OUTCOME_EVALUATED",
+            event_time=event_time,
+            source="portfolio_outcome_evaluation",
+            status="EVALUATED",
+            outcome_history_id=history_id,
+            correlation_key=f"outcome:{history_id}",
+            details={
+                "portfolio_return": portfolio_return,
+                "portfolio_evaluation_date":
+                    portfolio_evaluation_date,
+                "evaluated_weight": evaluated_weight,
+                "pending_positions": pending_positions,
+            },
+            cursor=cursor,
+        )
+
+        conn.commit()
+
+        return {
+            "history_id": history_id,
+            "portfolio_return": portfolio_return,
+            "portfolio_evaluation_date":
+                portfolio_evaluation_date,
+            "outcome_status": "EVALUATED",
+        }
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
+
 def evaluate_ai_decision_portfolio_snapshot(
     history_id,
     evaluation_date=None
@@ -3486,13 +3702,16 @@ def evaluate_ai_decision_portfolio_snapshot(
             "positions": positions
         }
 
-    update_ai_decision_portfolio_evaluation(
+    save_ai_decision_portfolio_evaluation_transaction(
         history_id=history_id,
         portfolio_return=round(weighted_return, 4),
-        portfolio_evaluation_date=last_evaluation_date
-    )
-    mark_ai_decision_portfolio_outcome_evaluated(
-        history_id=history_id
+        portfolio_evaluation_date=last_evaluation_date,
+        event_time=(
+            evaluation_date
+            or last_evaluation_date
+        ),
+        evaluated_weight=round(evaluated_weight, 4),
+        pending_positions=0,
     )
 
     return {

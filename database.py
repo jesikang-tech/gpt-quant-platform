@@ -198,6 +198,24 @@ def init_database():
                 """
             )
 
+    # AI Decision Audit Event
+    # Phase 6
+    # Step6-10-I
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS audit_event (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        audit_event_id TEXT NOT NULL UNIQUE,
+        event_type TEXT NOT NULL,
+        event_time TEXT NOT NULL,
+        source TEXT NOT NULL,
+        status TEXT,
+        decision_history_id INTEGER,
+        outcome_history_id INTEGER,
+        correlation_key TEXT NOT NULL,
+        details TEXT NOT NULL
+    )
+    """)
+
     # AI Decision Portfolio Snapshot
     # Phase 6
     # Step6-9-A

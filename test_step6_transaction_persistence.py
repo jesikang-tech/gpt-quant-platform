@@ -84,6 +84,23 @@ def build_test_db():
 
     cursor.execute(
         """
+        CREATE TABLE audit_event (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            audit_event_id TEXT NOT NULL UNIQUE,
+            event_type TEXT NOT NULL,
+            event_time TEXT NOT NULL,
+            source TEXT NOT NULL,
+            status TEXT,
+            decision_history_id INTEGER,
+            outcome_history_id INTEGER,
+            correlation_key TEXT NOT NULL,
+            details TEXT NOT NULL
+        )
+        """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE etf_prices (
             ticker TEXT NOT NULL,
             date TEXT NOT NULL,
@@ -213,13 +230,34 @@ try:
 
     snapshot_count = cursor.fetchone()[0]
 
+    cursor.execute(
+        "SELECT COUNT(*) FROM audit_event"
+    )
+
+    audit_count = cursor.fetchone()[0]
+
+    cursor.execute(
+        """
+        SELECT event_type, outcome_history_id, correlation_key
+        FROM audit_event
+        """
+    )
+
+    audit_row = cursor.fetchone()
+
     print("history_count:", history_count)
     print("snapshot_count:", snapshot_count)
+    print("audit_count:", audit_count)
+    print("audit_row:", audit_row)
 
     assert result["history_id"] == 1
     assert result["snapshot_count"] == 2
     assert history_count == 1
     assert snapshot_count == 2
+    assert audit_count == 1
+    assert audit_row[0] == "OUTCOME_PERSISTED"
+    assert audit_row[1] == 1
+    assert audit_row[2] == "outcome:1"
 
     print("RESULT: PASS")
 
