@@ -1058,7 +1058,17 @@ def ai_decision_audit_events_api():
 
     outcome_history_id = request.args.get("outcome_history_id", type=int)
     correlation_key = request.args.get("correlation_key")
-    limit = request.args.get("limit", default=50, type=int)
+    limit = request.args.get("limit", default=50)
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "limit must be an integer"
+                }
+            ), 400
 
     try:
         events = get_ai_decision_audit_events(
@@ -1102,7 +1112,17 @@ def ai_decision_audit_lifecycle_timeline_api():
 
     outcome_history_id = request.args.get("outcome_history_id", type=int)
     correlation_key = request.args.get("correlation_key")
-    limit = request.args.get("limit", default=100, type=int)
+    limit = request.args.get("limit", default=100)
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "limit must be an integer"
+                }
+            ), 400
 
     try:
         timeline = get_ai_decision_audit_lifecycle_timeline(
@@ -1133,7 +1153,17 @@ def ai_decision_audit_lifecycle_completeness_api():
 
     outcome_history_id = request.args.get("outcome_history_id", type=int)
     correlation_key = request.args.get("correlation_key")
-    limit = request.args.get("limit", default=100, type=int)
+    limit = request.args.get("limit", default=100)
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "limit must be an integer"
+                }
+            ), 400
 
     try:
         completeness = get_ai_decision_audit_lifecycle_completeness(
