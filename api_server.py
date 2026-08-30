@@ -1160,8 +1160,33 @@ def ai_decision_adaptive_strategy_api():
 
         outcome_score = outcome_row[18]
 
+        outcome_learning_required = bool(
+            outcome_row[26]
+        )
+
         if outcome_score is None:
-            outcome_score = 0.0
+            outcome_learning_signal = "NONE"
+            outcome_learning_signal_strength = 0.0
+        else:
+            outcome_learning_signal = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal(
+                    float(outcome_score)
+                )
+            )
+
+            outcome_learning_signal_strength = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal_strength(
+                    float(outcome_score)
+                )
+            )
+
+        effective_adaptive_required = (
+            outcome_learning_required
+            or bool(outcome_row[27])
+            or outcome_learning_signal == "NEGATIVE"
+        )
 
         outcome_intelligence = {
             "outcome_status": outcome_row[15],
@@ -1169,17 +1194,14 @@ def ai_decision_adaptive_strategy_api():
             "outcome_grade": outcome_row[19],
             "outcome_learning_status": outcome_row[24],
             "feedback_state": outcome_row[25],
-            "adaptive_learning_required": bool(outcome_row[26]),
+            "adaptive_learning_required":
+                effective_adaptive_required,
             "reassessment_required": bool(outcome_row[27]),
             "reassessment_status": outcome_row[28],
-            "outcome_learning_signal": (
-                "NEGATIVE"
-                if bool(outcome_row[26]) and outcome_score < 50
-                else "POSITIVE"
-                if not bool(outcome_row[26]) and outcome_score >= 70
-                else "NONE"
-            ),
-            "outcome_learning_signal_strength": abs(outcome_score),
+            "outcome_learning_signal":
+                outcome_learning_signal,
+            "outcome_learning_signal_strength":
+                outcome_learning_signal_strength,
             "source_history_id": outcome_row[0]
         }
 
@@ -1420,21 +1442,32 @@ def portfolio_decision_intelligence_api():
 
         outcome_score = outcome_row[18]
 
-        if outcome_score is None:
-            outcome_score = 0.0
-
         outcome_learning_required = bool(
             outcome_row[26]
         )
 
-        outcome_learning_signal = (
-            "NEGATIVE"
-            if outcome_learning_required
-            and outcome_score < 50
-            else "POSITIVE"
-            if not outcome_learning_required
-            and outcome_score >= 70
-            else "NONE"
+        if outcome_score is None:
+            outcome_learning_signal = "NONE"
+            outcome_learning_signal_strength = 0.0
+        else:
+            outcome_learning_signal = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal(
+                    float(outcome_score)
+                )
+            )
+
+            outcome_learning_signal_strength = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal_strength(
+                    float(outcome_score)
+                )
+            )
+
+        effective_adaptive_required = (
+            outcome_learning_required
+            or bool(outcome_row[27])
+            or outcome_learning_signal == "NEGATIVE"
         )
 
         outcome_intelligence = {
@@ -1444,7 +1477,7 @@ def portfolio_decision_intelligence_api():
             "outcome_learning_status": outcome_row[24],
             "feedback_state": outcome_row[25],
             "adaptive_learning_required":
-                outcome_learning_required,
+                effective_adaptive_required,
             "reassessment_required": bool(
                 outcome_row[27]
             ),
@@ -1452,10 +1485,7 @@ def portfolio_decision_intelligence_api():
             "outcome_learning_signal":
                 outcome_learning_signal,
             "outcome_learning_signal_strength":
-                min(
-                    abs(outcome_score) / 100.0,
-                    1.0
-                ),
+                outcome_learning_signal_strength,
             "source_history_id": outcome_row[0]
         }
         break

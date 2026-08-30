@@ -74,6 +74,14 @@ class AIDecisionOutcomeIntelligence:
             "REVIEW"
         )
 
+        strategy = self._first(
+            outcome_evaluation.get("strategy"),
+            final_decision.get("strategy"),
+            final_decision_master_control.get("strategy"),
+            final_execution_decision.get("strategy"),
+            "UNKNOWN"
+        )
+
         execution_status = self._first(
             final_execution_decision.get("execution_status"),
             final_decision_master_control.get("execution_status"),
@@ -319,6 +327,7 @@ class AIDecisionOutcomeIntelligence:
         return {
             "decision": decision,
             "action": action,
+            "strategy": strategy,
             "outcome_status": outcome_status,
             "outcome_score": outcome_score,
             "outcome_grade": outcome_grade,

@@ -2240,6 +2240,51 @@ async function loadDecisionIntelligence() {
         const components =
             intelligenceScore.components || {};
 
+        const finalDecision =
+            result.final_decision || {};
+
+        const finalDecisionGovernance =
+            result.final_decision_governance || {};
+
+        const finalDecisionExecutionControl =
+            result.final_decision_execution_control || {};
+
+        const finalDecisionExecutionAssurance =
+            result.final_decision_execution_assurance || {};
+
+        const finalDecisionExecutionMonitoring =
+            result.final_decision_execution_monitoring || {};
+
+        const finalDecisionExecutionFeedback =
+            result.final_decision_execution_feedback || {};
+
+        const finalDecisionExecutionReassessment =
+            result.final_decision_execution_reassessment || {};
+
+        const finalDecisionLifecycle =
+            result.final_decision_lifecycle || {};
+
+        const finalDecisionLifecycleGovernanceControl =
+            result.final_decision_lifecycle_governance_control || {};
+
+        const finalDecisionOperationalIntelligence =
+            result.final_decision_operational_intelligence || {};
+
+        const finalDecisionIntegratedIntelligence =
+            result.final_decision_integrated_intelligence || {};
+
+        const finalDecisionOrchestration =
+            result.final_decision_orchestration || {};
+
+        const finalExecutionDecision =
+            result.final_execution_decision || {};
+
+        const finalDecisionCertification =
+            result.final_decision_certification || {};
+
+        const finalDecisionMasterControl =
+            result.final_decision_master_control || {};
+
         panel.innerHTML = `
 
             <div class="ai-decision-intelligence-card">
@@ -2870,6 +2915,92 @@ async function loadDecisionIntelligence() {
         </p>
 
         <p>
+           <div class="ai-final-decision-control-chain">
+
+            <h3>
+                Final Decision Execution & Control
+            </h3>
+
+            <p>
+                Final Decision:
+                <br>
+                <b>${finalDecision.decision ?? "-"}</b>
+            </p>
+
+            <p>
+                Action:
+                <br>
+                <b>${finalDecision.action ?? "-"}</b>
+            </p>
+
+            <p>
+                Execution Decision:
+                <br>
+                <b>${finalExecutionDecision.decision ?? "-"}</b>
+            </p>
+
+            <p>
+                Execution Status:
+                <br>
+                <b>${finalExecutionDecision.execution_status ?? "-"}</b>
+            </p>
+
+            <p>
+                Execution Authorization:
+                <br>
+                <b>${finalExecutionDecision.execution_authorization ?? "-"}</b>
+            </p>
+
+            <p>
+                Certification Status:
+                <br>
+                <b>${finalDecisionCertification.certification_status ?? "-"}</b>
+            </p>
+
+            <p>
+                Certification Score:
+                <br>
+                <b>${finalDecisionCertification.certification_score ?? 0}/100</b>
+            </p>
+
+            <p>
+                Master Control Status:
+                <br>
+                <b>${finalDecisionMasterControl.master_control_status ?? "-"}</b>
+            </p>
+
+            <p>
+                Master Control Action:
+                <br>
+                <b>${finalDecisionMasterControl.master_control_action ?? "-"}</b>
+            </p>
+
+            <p>
+                Master Control Risk:
+                <br>
+                <b>${finalDecisionMasterControl.master_control_risk ?? "-"}</b>
+            </p>
+
+            <p>
+                Master Control Score:
+                <br>
+                <b>${finalDecisionMasterControl.master_control_score ?? 0}/100</b>
+            </p>
+
+            <p>
+                Reassessment Status:
+                <br>
+                <b>${finalDecisionExecutionReassessment.reassessment_status ?? "-"}</b>
+            </p>
+
+            <p>
+                Reassessment Required:
+                <br>
+                <b>${finalDecisionExecutionReassessment.reassessment_required ? "YES" : "NO"}</b>
+            </p>
+
+        </div>
+
             Final Action:
             <br>
             <b>${intelligence.final_action ?? "-"}</b>

@@ -6,16 +6,17 @@
 EXPECTED = {
     1: "RETAIN",
     2: "RETAIN",
+    3: "RETAIN",
     4: "RETAIN",
     5: "RETAIN",
-    6: "RETAIN",
-    7: "RETAIN",
-    8: "RETAIN",
-    9: "RETAIN",
-    10: "RETAIN",
-    11: "RETAIN",
+    6: "PROTECTED",
+    7: "PROTECTED",
+    8: "PROTECTED",
+    9: "PROTECTED",
+    10: "PROTECTED",
+    11: "PROTECTED",
     12: "PROTECTED",
-    13: "PROTECTED",
+    16: "PROTECTED",
 }
 
 

@@ -367,7 +367,7 @@
             ):
                 return value
 
-        return None
+        return "UNKNOWN"
 
     @staticmethod
     def _score(*values):
