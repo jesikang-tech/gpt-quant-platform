@@ -2403,6 +2403,7 @@ def save_ai_decision_outcome_with_portfolio_transaction(
             "created_at",
             "execution_status",
             "execution_authorization",
+            "execution_readiness",
             "certification_status",
             "monitoring_status",
             "feedback_status",
@@ -2604,6 +2605,7 @@ def save_ai_decision_outcome_history(
     created_at,
     execution_status,
     execution_authorization,
+    execution_readiness,
     certification_status,
     monitoring_status,
     feedback_status
@@ -2646,6 +2648,7 @@ def save_ai_decision_outcome_history(
             created_at,
             execution_status,
             execution_authorization,
+            execution_readiness,
             certification_status,
             monitoring_status,
             feedback_status
@@ -2653,7 +2656,7 @@ def save_ai_decision_outcome_history(
         VALUES (
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?
+            ?, ?, ?, ?, ?
         )
         """,
         (
@@ -2688,6 +2691,7 @@ def save_ai_decision_outcome_history(
             created_at,
             execution_status,
             execution_authorization,
+            execution_readiness,
             certification_status,
             monitoring_status,
             feedback_status
@@ -2816,6 +2820,7 @@ def get_ai_decision_outcome_history_by_id(history_id):
             portfolio_evaluation_date,
             execution_status,
             execution_authorization,
+            execution_readiness,
             certification_status,
             monitoring_status,
             feedback_status
@@ -3259,6 +3264,7 @@ def get_ai_decision_outcome_history(limit=10):
             portfolio_evaluation_date,
             execution_status,
             execution_authorization,
+            execution_readiness,
             certification_status,
             monitoring_status,
             feedback_status

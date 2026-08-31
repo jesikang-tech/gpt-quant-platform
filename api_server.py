@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 
 from flask import (
     Flask,
@@ -719,9 +719,10 @@ def ai_decision_outcome_history_api():
                 "portfolio_evaluation_date": item[31],
                 "execution_status": item[32],
                 "execution_authorization": item[33],
-                "certification_status": item[34],
-                "monitoring_status": item[35],
-                "feedback_status": item[36]
+                "execution_readiness": item[34],
+                "certification_status": item[35],
+                "monitoring_status": item[36],
+                "feedback_status": item[37]
             }
         )
 
@@ -1041,9 +1042,10 @@ def ai_decision_outcome_history_by_id_api(
         "portfolio_evaluation_date": row[31],
         "execution_status": row[32],
         "execution_authorization": row[33],
-        "certification_status": row[34],
-        "monitoring_status": row[35],
-        "feedback_status": row[36]
+        "execution_readiness": row[34],
+        "certification_status": row[35],
+        "monitoring_status": row[36],
+        "feedback_status": row[37]
     }
 
     return jsonify(
@@ -2413,6 +2415,10 @@ def portfolio_decision_intelligence_api():
         "execution_authorization": decision_outcome_snapshot.get(
             "execution_authorization",
             "UNKNOWN"
+        ),
+        "execution_readiness": decision_outcome_intelligence.get(
+            "execution_readiness",
+            "NOT_READY"
         ),
         "certification_status": decision_outcome_snapshot.get(
             "certification_status",

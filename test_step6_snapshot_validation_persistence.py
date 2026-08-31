@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import repository
 
 
@@ -58,6 +58,7 @@ def build_db():
             created_at TEXT,
             execution_status TEXT,
             execution_authorization TEXT,
+            execution_readiness TEXT,
             certification_status TEXT,
             monitoring_status TEXT,
             feedback_status TEXT
@@ -143,6 +144,7 @@ def history_payload():
         "created_at": "2026-08-20T14:00:00+09:00",
         "execution_status": "EXECUTION_READY",
         "execution_authorization": "AUTHORIZED",
+        "execution_readiness": "READY",
         "certification_status": "CERTIFIED",
         "monitoring_status": "STANDARD_MONITORING",
         "feedback_status": "STABLE",

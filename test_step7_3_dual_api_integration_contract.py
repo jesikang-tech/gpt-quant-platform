@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 
 print("=" * 60)
 print("PHASE 7-3-5 DUAL API INTEGRATION CONTRACT")
@@ -7,12 +7,32 @@ print("=" * 60)
 path = Path("api_server.py")
 lines = path.read_text(encoding="utf-8").splitlines()
 
+adaptive_start = next(
+    i
+    for i, line in enumerate(lines)
+    if line.startswith("def ai_decision_adaptive_strategy_api")
+)
+adaptive_end = next(
+    i
+    for i in range(adaptive_start + 1, len(lines))
+    if lines[i].startswith("@app.route")
+)
 adaptive_block = "\n".join(
-    lines[1149:1214]
+    lines[adaptive_start:adaptive_end]
 )
 
+portfolio_start = next(
+    i
+    for i, line in enumerate(lines)
+    if line.startswith("def portfolio_decision_intelligence_api")
+)
+portfolio_end = next(
+    i
+    for i in range(portfolio_start + 1, len(lines))
+    if lines[i].startswith("@app.route")
+)
 portfolio_block = "\n".join(
-    lines[1430:1498]
+    lines[portfolio_start:portfolio_end]
 )
 
 required_fragments = [

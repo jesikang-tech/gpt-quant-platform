@@ -139,6 +139,7 @@ def init_database():
         portfolio_evaluation_date TEXT,
         execution_status TEXT,
         execution_authorization TEXT,
+        execution_readiness TEXT,
         certification_status TEXT,
         monitoring_status TEXT,
         feedback_status TEXT
@@ -159,6 +160,7 @@ def init_database():
     outcome_history_context_columns = {
         "execution_status": "TEXT",
         "execution_authorization": "TEXT",
+        "execution_readiness": "TEXT",
         "certification_status": "TEXT",
         "monitoring_status": "TEXT",
         "feedback_status": "TEXT"
