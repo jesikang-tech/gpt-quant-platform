@@ -99,6 +99,19 @@ class AIDecisionOutcomeIntelligence:
             "UNAUTHORIZED"
         )
 
+        execution_readiness = self._first(
+            final_decision_master_control.get(
+                "execution_readiness"
+            ),
+            final_decision_certification.get(
+                "execution_readiness"
+            ),
+            final_execution_decision.get(
+                "execution_readiness"
+            ),
+            "NOT_READY"
+        )
+
         master_control_status = self._first(
             final_decision_master_control.get(
                 "master_control_status"
@@ -340,6 +353,7 @@ class AIDecisionOutcomeIntelligence:
             "portfolio_response": portfolio_response,
             "execution_status": execution_status,
             "execution_authorization": execution_authorization,
+            "execution_readiness": execution_readiness,
             "master_control_status": master_control_status,
             "certification_status": certification_status,
             "feedback_status": feedback_status,
