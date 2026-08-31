@@ -1,10 +1,15 @@
-﻿from core.ai_final_decision_integration import AIFinalDecisionIntegration
+from core.ai_final_decision_integration import AIFinalDecisionIntegration
 from core.ai_final_decision_governance import AIFinalDecisionGovernance
 from core.ai_final_decision_execution_control import AIFinalDecisionExecutionControl
 from core.ai_final_decision_execution_assurance import AIFinalDecisionExecutionAssurance
 from core.ai_final_decision_execution_monitoring import AIFinalDecisionExecutionMonitoring
 from core.ai_final_decision_execution_feedback import AIFinalDecisionExecutionFeedback
+from core.ai_final_decision_reassessment import AIFinalDecisionReassessment
+from core.ai_final_decision_lifecycle_governance_control import AIFinalDecisionLifecycleGovernanceControl
+from core.ai_final_decision_lifecycle_intelligence import AIFinalDecisionLifecycleIntelligence
+from core.ai_final_decision_integrated_intelligence import AIFinalDecisionIntegratedIntelligence
 from core.ai_final_decision_operational_intelligence import AIFinalDecisionOperationalIntelligence
+from core.ai_final_execution_decision import AIFinalExecutionDecision
 from core.ai_final_decision_orchestration import AIFinalDecisionOrchestration
 from core.ai_final_decision_certification import AIFinalDecisionCertification
 from core.ai_final_decision_master_control import AIFinalDecisionMasterControl
@@ -185,13 +190,69 @@ print("monitoring_score:", execution_feedback.get("monitoring_score"))
 print("reassessment_required:", execution_feedback.get("reassessment_required"))
 
 # ------------------------------------------------------------
+# STEP 6A
+# Reassessment
+# ------------------------------------------------------------
+
+reassessment = AIFinalDecisionReassessment().reassess(
+    final_decision,
+    governance,
+    execution_control,
+    execution_assurance,
+    execution_feedback,
+    execution_monitoring
+)
+
+print()
+print("=== STEP 5A REASSESSMENT ===")
+print("decision:", reassessment.get("decision"))
+print("action:", reassessment.get("action"))
+print("reassessment_required:", reassessment.get("reassessment_required"))
+print("reassessment_status:", reassessment.get("reassessment_status"))
+print("reassessment_action:", reassessment.get("reassessment_action"))
+print("reassessment_risk:", reassessment.get("reassessment_risk"))
+print("reassessment_score:", reassessment.get("reassessment_score"))
+
+# ------------------------------------------------------------
+lifecycle = AIFinalDecisionLifecycleIntelligence().analyze(
+    final_decision,
+    governance,
+    execution_control,
+    execution_assurance,
+    execution_monitoring,
+    execution_feedback,
+    reassessment
+)
+print()
+print("=== STEP 8 LIFECYCLE INTELLIGENCE ===")
+print("lifecycle_status:", lifecycle.get("lifecycle_status"))
+print("lifecycle_action:", lifecycle.get("lifecycle_action"))
+print("lifecycle_risk:", lifecycle.get("lifecycle_risk"))
+print("lifecycle_score:", lifecycle.get("lifecycle_score"))
+print("lifecycle_grade:", lifecycle.get("lifecycle_grade"))
+print("reassessment_required:", lifecycle.get("reassessment_required"))
+print("reassessment_status:", lifecycle.get("reassessment_status"))
+
+lifecycle_governance_control = AIFinalDecisionLifecycleGovernanceControl().govern(
+    final_decision,
+    governance,
+    execution_control,
+    execution_assurance,
+    execution_monitoring,
+    execution_feedback,
+    reassessment,
+    lifecycle,
+    confidence,
+    validation
+)
+
 # STEP 7
 # Operational Intelligence
 # ------------------------------------------------------------
 
 operational_intelligence = AIFinalDecisionOperationalIntelligence().analyze(
     final_decision,
-    governance,
+    lifecycle_governance_control,
 )
 
 print()
@@ -208,14 +269,19 @@ print("operational_score:", operational_intelligence.get("operational_score"))
 # Orchestration
 # ------------------------------------------------------------
 
-integrated_intelligence = {
-    "integrated_score": 89.2,
-}
-
-lifecycle_governance_control = {
-    "governance_score": governance.get("governance_score"),
-    "lifecycle_score": 100,
-}
+integrated_intelligence = AIFinalDecisionIntegratedIntelligence().analyze(
+    final_decision,
+    validation,
+    governance,
+    execution_control,
+    execution_assurance,
+    execution_monitoring,
+    execution_feedback,
+    reassessment,
+    lifecycle,
+    lifecycle_governance_control,
+    operational_intelligence,
+)
 
 orchestration = AIFinalDecisionOrchestration().analyze(
     final_decision,
@@ -238,15 +304,13 @@ print("orchestration_score:", orchestration.get("orchestration_score"))
 # Certification
 # ------------------------------------------------------------
 
-lifecycle = {
-    "lifecycle_status": "STABLE",
-    "lifecycle_score": 100,
-}
-
-execution_decision = {
-    "execution_status": "AUTHORIZED",
-    "execution_score": 100,
-}
+execution_decision = AIFinalExecutionDecision().analyze(
+    final_decision,
+    orchestration,
+    integrated_intelligence,
+    lifecycle_governance_control,
+    operational_intelligence
+)
 
 certification = AIFinalDecisionCertification().analyze(
     final_decision,
@@ -269,6 +333,19 @@ print("operational_score:", certification.get("operational_score"))
 print("orchestration_score:", certification.get("orchestration_score"))
 print("confidence_score:", certification.get("confidence_score"))
 print("certification_score:", certification.get("certification_score"))
+print("certification_status:", certification.get("certification_status"))
+print("certification_action:", certification.get("certification_action"))
+print("certification_risk:", certification.get("certification_risk"))
+print("execution_readiness:", certification.get("execution_readiness"))
+print("decision_integrity:", certification.get("decision_integrity"))
+print("validation_status:", certification.get("validation_status"))
+print("governance_status:", certification.get("governance_status"))
+print("lifecycle_status:", certification.get("lifecycle_status"))
+print("operational_status:", certification.get("operational_status"))
+print("integrated_status:", certification.get("integrated_status"))
+print("orchestration_status:", certification.get("orchestration_status"))
+print("execution_status:", certification.get("execution_status"))
+print("execution_authorization:", certification.get("execution_authorization"))
 
 # ------------------------------------------------------------
 # STEP 10
@@ -354,7 +431,7 @@ checks = {
 
     "master decision": master_control.get("decision") == "ACCUMULATE",
     "master action": master_control.get("action") == "PROCEED",
-    "master execution status": master_control.get("execution_status") == "AUTHORIZED",
+    "master execution status": master_control.get("execution_status") == "EXECUTION_READY",
     "master certification score": master_control.get("certification_score") == certification.get("certification_score"),
     "master execution readiness exists": master_control.get("execution_readiness") is not None,
     "master reassessment field exists": "reassessment_required" in master_control,
