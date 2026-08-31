@@ -231,3 +231,5 @@ logs/
 *.backup-*
 *.bak
 database/*.backup-*
+
+database/*.db.empty-backup
