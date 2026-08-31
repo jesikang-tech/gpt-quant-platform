@@ -142,6 +142,12 @@
             action
         )
 
+        execution_readiness = (
+            "READY"
+            if execution_status == "EXECUTION_READY"
+            else "NOT_READY"
+        )
+
         execution_risk = self._determine_risk(
             orchestration_risk,
             integrated_intelligence,
@@ -210,6 +216,8 @@
                 execution_decision,
             "execution_status":
                 execution_status,
+            "execution_readiness":
+                execution_readiness,
             "execution_risk":
                 execution_risk,
             "execution_score":
