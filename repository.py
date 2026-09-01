@@ -3866,6 +3866,45 @@ def evaluate_ai_decision_portfolio_snapshot(
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Phase8-6-E
+    # Same-date completed evaluation is idempotent.
+    # Do not re-run evaluation or append duplicate audit events.
+    if evaluation_date is not None:
+        cursor.execute(
+            """
+            SELECT
+                outcome_status,
+                portfolio_return,
+                portfolio_evaluation_date
+            FROM ai_decision_outcome_history
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (
+                history_id,
+            ),
+        )
+
+        existing_evaluation = cursor.fetchone()
+
+        if (
+            existing_evaluation is not None
+            and existing_evaluation[0] == "EVALUATED"
+            and existing_evaluation[2] == evaluation_date
+        ):
+            conn.close()
+
+            return {
+                "evaluation_status": "EVALUATED",
+                "outcome_status": "EVALUATED",
+                "history_id": history_id,
+                "evaluation_date": evaluation_date,
+                "portfolio_return": existing_evaluation[1],
+                "evaluated_weight": 100.0,
+                "pending_positions": 0,
+                "positions": [],
+            }
+
     cursor.execute(
         """
         SELECT
