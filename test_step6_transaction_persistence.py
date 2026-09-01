@@ -61,6 +61,7 @@ def build_test_db():
             created_at TEXT,
             execution_status TEXT,
             execution_authorization TEXT,
+            execution_readiness TEXT,
             certification_status TEXT,
             monitoring_status TEXT,
             feedback_status TEXT
@@ -240,34 +241,46 @@ try:
         """
         SELECT event_type, outcome_history_id, correlation_key
         FROM audit_event
+        ORDER BY id
         """
     )
 
-    audit_row = cursor.fetchone()
+    audit_rows = cursor.fetchall()
 
     print("history_count:", history_count)
     print("snapshot_count:", snapshot_count)
     print("audit_count:", audit_count)
-    print("audit_row:", audit_row)
+    print("audit_rows:", audit_rows)
+
+    audit_event_types = {
+        row[0]
+        for row in audit_rows
+    }
 
     assert result["history_id"] == 1
     assert result["snapshot_count"] == 2
     assert history_count == 1
     assert snapshot_count == 2
-    assert audit_count == 1
-    assert audit_row[0] == "OUTCOME_PERSISTED"
-    assert audit_row[1] == 1
-    assert audit_row[2] == "outcome:1"
+    assert audit_count == 2
+    assert audit_event_types == {
+        "OUTCOME_PERSISTED",
+        "SNAPSHOT_PERSISTED",
+    }
+    assert all(
+        row[1] == 1
+        and row[2] == "outcome:1"
+        for row in audit_rows
+    )
 
     print("RESULT: PASS")
 
     raw_conn.close()
 
     # --------------------------------------------------
-    # CASE 2 - ROLLBACK
+    # CASE 2 - REAL PRODUCTION TRANSACTION ROLLBACK
     # --------------------------------------------------
     print("")
-    print("CASE 2 SNAPSHOT FAILURE -> ROLLBACK")
+    print("CASE 2 REAL PRODUCTION TRANSACTION -> ROLLBACK")
 
     raw_conn = build_test_db()
     test_conn = TestConnection(raw_conn)
@@ -276,122 +289,116 @@ try:
         lambda: test_conn
     )
 
-    original_cursor_execute = None
+    created_at = "2026-08-20T13:00:01+09:00"
+
+    # Force the first audit INSERT inside the real
+    # production transaction to fail by occupying the
+    # exact UNIQUE audit_event_id it will generate.
+    cursor = raw_conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO audit_event
+        (
+            audit_event_id,
+            event_type,
+            event_time,
+            source,
+            status,
+            outcome_history_id,
+            correlation_key,
+            details
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            f"SNAPSHOT_PERSISTED:outcome:1:{created_at}",
+            "TEST_COLLISION",
+            created_at,
+            "test",
+            "TEST",
+            1,
+            "outcome:1",
+            "{}",
+        ),
+    )
+
+    raw_conn.commit()
 
     try:
-        def failing_transaction(
-            history_kwargs,
-            portfolio,
-            created_at,
-        ):
-            conn = repository.get_connection()
-            cursor = conn.cursor()
-
-            try:
-                cursor.execute(
-                    """
-                    INSERT INTO ai_decision_outcome_history
-                    (
-                        decision,
-                        action,
-                        strategy,
-                        outcome_status,
-                        snapshot_status,
-                        snapshot_purpose,
-                        learning_status,
-                        feedback_state,
-                        adaptive_learning_required,
-                        reassessment_required,
-                        reassessment_status,
-                        created_at
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        "MAINTAIN",
-                        "PROCEED",
-                        "MAINTAIN",
-                        "PENDING",
-                        "COLLECTED",
-                        "FUTURE_OUTCOME_EVALUATION",
-                        "WAITING_FOR_OUTCOME",
-                        "COLLECTING",
-                        0,
-                        0,
-                        "NOT_REQUIRED",
-                        created_at,
-                    ),
-                )
-
-                raise RuntimeError(
-                    "SIMULATED_SNAPSHOT_FAILURE"
-                )
-
-            except Exception:
-                conn.rollback()
-                raise
-
-            finally:
-                conn.close()
-
-        original_transaction = (
-            repository
-            .save_ai_decision_outcome_with_portfolio_transaction
+        repository.save_ai_decision_outcome_with_portfolio_transaction(
+            history_kwargs=history_payload(),
+            portfolio=[
+                {
+                    "ticker": "306950",
+                    "weight": 90.0,
+                    "reference_price": 67560.0,
+                    "reference_price_date": "2026-08-20",
+                },
+                {
+                    "ticker": "CASH",
+                    "weight": 10.0,
+                },
+            ],
+            created_at=created_at,
         )
 
-        repository.save_ai_decision_outcome_with_portfolio_transaction = (
-            failing_transaction
+        raise AssertionError(
+            "Expected UNIQUE audit_event failure."
         )
 
-        try:
-            repository.save_ai_decision_outcome_with_portfolio_transaction(
-                history_kwargs=history_payload(),
-                portfolio=[
-                    {
-                        "ticker": "306950",
-                        "weight": 40.0,
-                    }
-                ],
-                created_at="2026-08-20T13:00:01+09:00",
-            )
-
-            raise AssertionError(
-                "Expected simulated transaction failure."
-            )
-
-        except RuntimeError as exc:
-            print(
-                "exception:",
-                str(exc)
-            )
-
-        cursor = raw_conn.cursor()
-
-        cursor.execute(
-            "SELECT COUNT(*) FROM ai_decision_outcome_history"
+    except Exception as exc:
+        print(
+            "exception_type:",
+            type(exc).__name__
+        )
+        print(
+            "exception:",
+            str(exc)
         )
 
-        history_count = cursor.fetchone()[0]
+    cursor = raw_conn.cursor()
 
-        cursor.execute(
-            "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
-        )
+    cursor.execute(
+        "SELECT COUNT(*) FROM ai_decision_outcome_history"
+    )
+    history_count = cursor.fetchone()[0]
 
-        snapshot_count = cursor.fetchone()[0]
+    cursor.execute(
+        "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
+    )
+    snapshot_count = cursor.fetchone()[0]
 
-        print("history_count:", history_count)
-        print("snapshot_count:", snapshot_count)
+    cursor.execute(
+        "SELECT COUNT(*) FROM audit_event"
+    )
+    audit_count = cursor.fetchone()[0]
 
-        assert history_count == 0
-        assert snapshot_count == 0
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM audit_event
+        WHERE audit_event_id = ?
+        """,
+        (
+            f"SNAPSHOT_PERSISTED:outcome:1:{created_at}",
+        ),
+    )
+    collision_count = cursor.fetchone()[0]
 
-        print("RESULT: PASS")
+    print("history_count:", history_count)
+    print("snapshot_count:", snapshot_count)
+    print("audit_count:", audit_count)
+    print("collision_count:", collision_count)
 
-    finally:
-        repository.save_ai_decision_outcome_with_portfolio_transaction = (
-            original_transaction
-        )
-        raw_conn.close()
+    assert history_count == 0
+    assert snapshot_count == 0
+    assert audit_count == 1
+    assert collision_count == 1
+
+    print("RESULT: PASS")
+
+    raw_conn.close()
 
     print("")
     print("=" * 60)
