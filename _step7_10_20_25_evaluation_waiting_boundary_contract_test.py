@@ -6,7 +6,7 @@ import database
 from repository import evaluate_ai_decision_portfolio_snapshot
 
 
-TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
+TEST_DB = Path(r".\database\g7_10_18_ready_fixture.db")
 database.DATABASE_PATH = TEST_DB
 
 
@@ -45,13 +45,17 @@ try:
             portfolio_return,
             portfolio_evaluation_date
         FROM ai_decision_outcome_history
-        WHERE id = 46
+        WHERE outcome_status = 'PENDING'
+          AND snapshot_status = 'COLLECTED'
+          AND snapshot_purpose = 'FUTURE_OUTCOME_EVALUATION'
+        ORDER BY id DESC
+        LIMIT 1
         """
     ).fetchone()
 
     assert_true(
         history is not None,
-        "history 46 -> exists",
+        "latest PENDING history -> exists",
     )
 
     history_id, history_status, history_return, history_date = history
