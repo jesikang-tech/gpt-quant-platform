@@ -3173,7 +3173,7 @@ async function loadAIDecisionSummary(){
 
 
         <h3>
-        AI Decision Analytics
+        AI Decision Summary
         </h3>
 
 
