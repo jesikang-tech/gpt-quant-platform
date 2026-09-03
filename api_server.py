@@ -965,6 +965,32 @@ def ai_decision_portfolio_snapshot_evaluate_api(
         outcome_evaluation[
             "learning_signal_strength"
         ] = learning_signal_strength
+        # --------------------------------
+        # AI Decision Learning Signal Audit
+        # Phase 6
+        # Step6-10-I
+        # --------------------------------
+
+        save_ai_decision_audit_event(
+            event_type="LEARNING_SIGNAL_GENERATED",
+            event_time=datetime.now().astimezone().isoformat(),
+            source="portfolio_outcome_evaluation",
+            status="GENERATED",
+            outcome_history_id=history_id,
+            correlation_key=f"outcome:{history_id}",
+            details={
+                "learning_signal": learning_signal,
+                "learning_signal_strength": learning_signal_strength,
+                "adaptive_learning_required": bool(
+                    adaptive_learning_required
+                ),
+                "reassessment_required": bool(
+                    reassessment_required
+                ),
+                "reassessment_status": reassessment_status,
+            },
+        )
+
 
         outcome_evaluation[
             "adaptive_learning_required"

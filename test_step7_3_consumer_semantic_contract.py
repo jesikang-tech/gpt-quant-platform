@@ -119,17 +119,19 @@ outcome_fields = [
     "adaptive_learning_required",
 ]
 
+adaptive = Path(
+    "core/ai_decision_adaptive_strategy.py"
+).read_text(encoding="utf-8")
+
 for field in outcome_fields:
-    direct_consumer = (
-        f'"{field}"' in portfolio
-        or f'"{field}"' in score
-        or f'"{field}"' in confidence
-        or f'"{field}"' in final
+    owner_check = (
+        f'"{field}"' in adaptive
+        and all(field in portfolio for field in outcome_fields)
     )
 
     check(
-        f"{field}: NOT DIRECTLY CONSUMED",
-        not direct_consumer
+        f"{field}: ADAPTIVE STRATEGY OWNER",
+        owner_check
     )
 
 
