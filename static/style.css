@@ -831,3 +831,47 @@ header h1 {
     border-radius: 5px;
 
 }
+
+/* ETF-Quant-Platform language selector foundation */
+#language-toggle-container {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    z-index: 1000;
+    text-align: right;
+}
+
+#platform-language-toggle {
+    padding: 4px 9px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background: transparent;
+    color: #666;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+#platform-language-toggle:hover {
+    background: #f5f5f5;
+}
+
+#language-menu {
+    margin-top: 5px;
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+#language-menu button {
+    padding: 4px 8px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background: white;
+    color: #555;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+#language-menu button:hover {
+    background: #f5f5f5;
+}
