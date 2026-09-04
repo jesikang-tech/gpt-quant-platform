@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import repository
 
 
-class TestConnection:
+class _TestConnection:
     def __init__(self, connection):
         self._connection = connection
 
@@ -146,7 +146,7 @@ try:
 
         raw_conn.commit()
 
-        repository.get_connection = lambda: TestConnection(
+        repository.get_connection = lambda: _TestConnection(
             raw_conn
         )
 

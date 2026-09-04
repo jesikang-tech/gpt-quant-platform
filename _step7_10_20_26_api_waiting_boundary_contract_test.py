@@ -36,14 +36,14 @@ print("=" * 82)
 original_get_connection = repository.get_connection
 
 
-def test_db_connection():
+def _test_db_connection():
     return sqlite3.connect(
         TEST_DB,
         timeout=30
     )
 
 
-repository.get_connection = test_db_connection
+repository.get_connection = _test_db_connection
 
 try:
     conn = sqlite3.connect(TEST_DB)

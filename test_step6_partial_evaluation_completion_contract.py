@@ -2,7 +2,7 @@
 import repository
 
 
-class TestConnection:
+class _TestConnection:
     def __init__(self, connection):
         self._connection = connection
 
@@ -148,7 +148,7 @@ def run_case(
     )
 
     repository.get_connection = lambda: (
-        TestConnection(raw_conn)
+        _TestConnection(raw_conn)
     )
 
     try:

@@ -194,13 +194,13 @@ print("")
 print("--- CASE 4 FAILURE ROLLBACK ---")
 
 
-test_conn = build_existing_db()
+_test_conn = build_existing_db()
 
 try:
 
-    test_conn.execute("BEGIN")
+    _test_conn.execute("BEGIN")
 
-    test_conn.execute(
+    _test_conn.execute(
         """
         CREATE TABLE audit_event_failure_test (
             id INTEGER PRIMARY KEY
@@ -214,10 +214,10 @@ try:
 
 except RuntimeError:
 
-    test_conn.rollback()
+    _test_conn.rollback()
 
 
-cursor = test_conn.cursor()
+cursor = _test_conn.cursor()
 
 cursor.execute(
     """
@@ -262,7 +262,7 @@ print(
 
 
 conn.close()
-test_conn.close()
+_test_conn.close()
 
 
 print("")
