@@ -4,15 +4,14 @@ from repository import (
     save_ranking_history
 )
 
-from ranking_analyzer import get_enhanced_ranking
-
-from datetime import datetime
 from etf_analyzer import analyze_etf
-from ranking_analyzer import get_enhanced_ranking
 
 
+def run_batch_analysis(analysis_date=None):
 
-def run_batch_analysis():
+    if analysis_date is None:
+        from datetime import date
+        analysis_date = date.today().isoformat()
 
     tickers = get_all_etf_tickers()
 
@@ -51,7 +50,8 @@ def run_batch_analysis():
 
         result = analyze_etf(
             ticker,
-            close_prices
+            close_prices,
+            analysis_date
         )
 
 
@@ -118,7 +118,6 @@ def run_batch_analysis():
 
 
 
-    ranking_date = datetime.now().strftime("%Y-%m-%d")
 
 
     for index, item in enumerate(
@@ -130,7 +129,7 @@ def run_batch_analysis():
             item["ticker"],
             index,
             item["score"],
-            ranking_date
+            analysis_date
         )
 
 

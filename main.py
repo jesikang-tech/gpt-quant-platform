@@ -97,7 +97,7 @@ def main():
     )
 
 
-    run_batch_analysis()
+    run_batch_analysis(end_date)
 
 
 
