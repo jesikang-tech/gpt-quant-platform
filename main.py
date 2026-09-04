@@ -5,7 +5,10 @@ from etf_loader import (
     update_etf_database
 )
 
+from datetime import date
+
 from batch_analyzer import run_batch_analysis
+from collector.incremental_price_updater import IncrementalPriceUpdater
 
 from ranking_report import print_ranking_report
 
@@ -65,9 +68,21 @@ def main():
         "[2] Price Data Update"
     )
 
+    updater = IncrementalPriceUpdater()
+
+    end_date = date.today().isoformat()
+
+    price_update_result = updater.update_all(
+        end_date
+    )
 
     logger.info(
-        "Price update skipped (production mode)"
+        "Price update completed: total=%s updated=%s up_to_date=%s no_new_data=%s failed=%s",
+        price_update_result["total"],
+        price_update_result["updated"],
+        price_update_result["up_to_date"],
+        price_update_result["no_new_data"],
+        price_update_result["failed"],
     )
 
 
