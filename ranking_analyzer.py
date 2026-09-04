@@ -162,7 +162,16 @@ def get_ranking_trend_all():
 
 
 
-def get_all_intelligence_universe():
+def get_all_intelligence_universe(analysis_date=None):
+
+    if analysis_date is None:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT MAX(created_at) FROM etf_scores"
+        )
+        analysis_date = cursor.fetchone()[0]
+        conn.close()
 
     conn = get_connection()
 
@@ -170,11 +179,13 @@ def get_all_intelligence_universe():
 
 
     cursor.execute(
-        """
+        '''
         SELECT ticker
         FROM etf_scores
+        WHERE created_at = ?
         ORDER BY final_score DESC
-        """
+        ''',
+        (analysis_date,)
     )
 
 
@@ -689,9 +700,11 @@ def get_enhanced_ranking():
 
 
 
-def get_universe_enhanced_ranking():
+def get_universe_enhanced_ranking(analysis_date=None):
 
-    tickers = get_all_intelligence_universe()
+    tickers = get_all_intelligence_universe(
+        analysis_date
+    )
 
 
     results = []
@@ -699,75 +712,96 @@ def get_universe_enhanced_ranking():
 
     for ticker in tickers:
 
+        score_detail = get_etf_score_detail(
+            ticker
+        )
+
+        if not score_detail:
+            continue
+
+
         analytics = get_ranking_analytics(
             ticker
         )
 
 
         if "current_score" not in analytics:
-            continue
+
+            current_score = score_detail[4]
+
+            grade = "N/A"
+
+            stability = {
+                "stability_score": 0
+            }
+
+            prediction = {
+                "prediction": "UNCERTAIN"
+            }
+
+            prediction_bonus = 0
+
+            enhanced_score = current_score
+
+        else:
+
+            current_score = analytics["current_score"]
+
+            grade = calculate_analytics_grade(
+                ticker
+            )
 
 
-        grade = calculate_analytics_grade(
-            ticker
-        )
+            stability = get_stability_analytics(
+                ticker
+            )
 
 
-        stability = get_stability_analytics(
-            ticker
-        )
+            prediction = generate_ranking_prediction(
+                ticker
+            )
 
 
-        prediction = generate_ranking_prediction(
-            ticker
-        )
+            grade_bonus = calculate_grade_bonus(
+                ticker
+            )
 
 
-        grade_bonus = calculate_grade_bonus(
-            ticker
-        )
+            prediction_bonus = calculate_prediction_bonus(
+                ticker
+            )
 
 
-        prediction_bonus = calculate_prediction_bonus(
-            ticker
-        )
+            enhanced_score = (
+                current_score
+                +
+                grade_bonus
+                +
+                stability["stability_score"]
+                +
+                prediction_bonus
+            )
 
 
-        enhanced_score = (
-            analytics["current_score"]
-            +
-            grade_bonus
-            +
-            stability["stability_score"]
-            +
-            prediction_bonus
-        )
-
-
-        if enhanced_score > 100:
-            enhanced_score = 100
-
-
-        score_detail = get_etf_score_detail(
-            ticker
-        )    
+            if enhanced_score > 100:
+                enhanced_score = 100
 
 
         results.append(
             {
                 "ticker": ticker,
-                "base_score": analytics["current_score"],
+                "base_score": current_score,
                 "return_score":
-                    score_detail[1] if score_detail else 0,
+                    score_detail[1],
 
                 "trend_score":
-                    score_detail[2] if score_detail else 0,
+                    score_detail[2],
 
                 "slope_score":
-                    score_detail[3] if score_detail else 0,
+                    score_detail[3],
 
                 "final_score":
-                    score_detail[4] if score_detail else 0,
+                    score_detail[4],
                 "grade": grade,
                 "stability_score": stability["stability_score"],
                 "prediction": prediction["prediction"],
@@ -783,8 +817,8 @@ def get_universe_enhanced_ranking():
     )
 
 
-    return results    
 
+    return results
 
 
 def get_intelligence_dashboard_data(
