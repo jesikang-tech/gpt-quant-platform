@@ -862,6 +862,10 @@ header h1 {
     justify-content: flex-end;
 }
 
+#language-menu[hidden] {
+    display: none;
+}
+
 #language-menu button {
     padding: 4px 8px;
     border: 1px solid #d0d0d0;
