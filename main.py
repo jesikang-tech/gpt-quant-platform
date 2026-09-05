@@ -111,7 +111,7 @@ def main():
     )
 
 
-    print_ranking_report()
+    print_ranking_report(analysis_date=end_date)
 
 
 

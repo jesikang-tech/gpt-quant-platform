@@ -15,8 +15,13 @@ from ranking_analyzer import (
 
 
 def print_ranking_report(
-    limit=10
+    limit=10,
+    analysis_date=None
 ):
+    if analysis_date is None:
+        from datetime import date
+        analysis_date = date.today().isoformat()
+
     """
     GPT ETF Ranking Analytics Report
     """
@@ -223,7 +228,7 @@ def print_ranking_report(
             item[0],
             index,
             item[1],
-            "2026-07-31"
+            analysis_date
         )
 
 
