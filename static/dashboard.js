@@ -1,4 +1,4 @@
-﻿let historyChart = null;
+let historyChart = null;
 
 let portfolioMode = "balanced";
 
@@ -4914,4 +4914,94 @@ function selectDashboardLanguage(language) {
     }
 
     console.log("DASHBOARD_LANGUAGE:", currentDashboardLanguage);
+
+    applyDashboardLanguage();
+}
+
+
+/* ETF-Quant-Platform minimal dashboard translations */
+const DASHBOARD_TRANSLATIONS = {
+    ko: {
+        dashboardTitle: "GPT Quant ETF 대시보드",
+        dashboardSubtitle: "AI 기반 ETF 랭킹 시스템",
+        marketRegimeTitle: "🧭 AI 시장 국면",
+        marketRegimeLoading: "시장 국면 불러오는 중...",
+        portfolioOptimizationTitle: "⚙ GPT AI 포트폴리오 최적화",
+        conservative: "보수형",
+        balanced: "균형형",
+        aggressive: "공격형",
+        languageKorean: "한국어",
+        languageEnglish: "English"
+    },
+
+    en: {
+        dashboardTitle: "GPT Quant ETF Dashboard",
+        dashboardSubtitle: "AI Powered ETF Ranking System",
+        marketRegimeTitle: "🧭 AI Market Regime",
+        marketRegimeLoading: "Market Regime Loading...",
+        portfolioOptimizationTitle: "⚙ GPT AI Portfolio Optimization",
+        conservative: "Conservative",
+        balanced: "Balanced",
+        aggressive: "Aggressive",
+        languageKorean: "Korean",
+        languageEnglish: "English"
+    }
+};
+
+function getDashboardText(key) {
+    const translations =
+        DASHBOARD_TRANSLATIONS[currentDashboardLanguage] ||
+        DASHBOARD_TRANSLATIONS.ko;
+
+    return translations[key] || key;
+}
+
+
+function applyDashboardLanguage() {
+    const title = document.querySelector("header h1");
+    const subtitle = document.querySelector("header p");
+    const marketRegimeTitle = document.querySelector("#market-regime h2");
+    const marketRegimeContent = document.getElementById("market-regime-content");
+    const portfolioTitle = document.querySelector("#portfolio-advisor h2");
+    const portfolioModeSelector = document.getElementById(
+        "portfolio-mode-selector"
+    );
+
+    if (title) {
+        title.textContent = getDashboardText("dashboardTitle");
+    }
+
+    if (subtitle) {
+        subtitle.textContent = getDashboardText("dashboardSubtitle");
+    }
+
+    if (marketRegimeTitle) {
+        marketRegimeTitle.textContent =
+            getDashboardText("marketRegimeTitle");
+    }
+
+    if (marketRegimeContent) {
+        marketRegimeContent.textContent =
+            getDashboardText("marketRegimeLoading");
+    }
+
+    if (portfolioTitle) {
+        portfolioTitle.textContent =
+            getDashboardText("portfolioOptimizationTitle");
+    }
+
+    if (portfolioModeSelector) {
+        const buttons = portfolioModeSelector.querySelectorAll("button");
+
+        if (buttons.length >= 3) {
+            buttons[0].textContent =
+                getDashboardText("conservative");
+
+            buttons[1].textContent =
+                getDashboardText("balanced");
+
+            buttons[2].textContent =
+                getDashboardText("aggressive");
+        }
+    }
 }
