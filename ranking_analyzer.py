@@ -821,43 +821,131 @@ def get_universe_enhanced_ranking(analysis_date=None):
     return results
 
 
+def get_latest_ranking_snapshot(
+    limit=10
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+
+    cursor.execute(
+        """
+        SELECT
+            rank,
+            ticker,
+            final_score,
+            ranking_date
+        FROM etf_ranking_history
+        WHERE ranking_date = (
+            SELECT MAX(ranking_date)
+            FROM etf_ranking_history
+        )
+        ORDER BY rank ASC
+        LIMIT ?
+        """,
+        (
+            limit,
+        )
+    )
+
+
+    rows = cursor.fetchall()
+
+
+    conn.close()
+
+
+    return rows
+
+
+
 def get_intelligence_dashboard_data(
     limit=10
 ):
 
-    results = get_universe_enhanced_ranking()
+    ranking_snapshot = get_latest_ranking_snapshot(
+        limit
+    )
+
+
+    intelligence_results = {
+        item["ticker"]: item
+        for item in get_universe_enhanced_ranking()
+    }
 
 
     dashboard = []
 
 
-    for index, item in enumerate(
-        results[:limit],
+    for index, ranking_item in enumerate(
+        ranking_snapshot,
         1
     ):
+
+        ticker = ranking_item[1]
+
+        intelligence = intelligence_results.get(
+            ticker,
+            {}
+        )
+
 
         dashboard.append(
             {
                 "rank": index,
-                "ticker": item["ticker"],
-                "score": item["base_score"],
+                "ticker": ticker,
+                "score": ranking_item[2],
+
                 "return_score":
-                    item.get("return_score", 0),
+                    intelligence.get(
+                        "return_score",
+                        0
+                    ),
 
                 "trend_score":
-                    item.get("trend_score", 0),
+                    intelligence.get(
+                        "trend_score",
+                        0
+                    ),
 
                 "slope_score":
-                    item.get("slope_score", 0),
+                    intelligence.get(
+                        "slope_score",
+                        0
+                    ),
 
-                "final_score":
-                    item.get("final_score", 0),
+                "final_score": ranking_item[2],
 
-                "enhanced_score": item["enhanced_score"],
-                "grade": item["grade"],
-                "stability": item["stability_score"],
-                "prediction": item["prediction"],
-                "prediction_bonus": item["prediction_bonus"]
+                "enhanced_score":
+                    intelligence.get(
+                        "enhanced_score",
+                        ranking_item[2]
+                    ),
+
+                "grade":
+                    intelligence.get(
+                        "grade",
+                        "N/A"
+                    ),
+
+                "stability":
+                    intelligence.get(
+                        "stability_score",
+                        0
+                    ),
+
+                "prediction":
+                    intelligence.get(
+                        "prediction",
+                        "UNCERTAIN"
+                    ),
+
+                "prediction_bonus":
+                    intelligence.get(
+                        "prediction_bonus",
+                        0
+                    )
             }
         )
 
