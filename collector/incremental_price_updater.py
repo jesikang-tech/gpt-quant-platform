@@ -96,8 +96,7 @@ class IncrementalPriceUpdater:
         return [
             row[0]
             for row in rows
-            if str(row[0]).isdigit()
-            and len(str(row[0])) == 6
+            if len(str(row[0])) == 6
         ]
 
     def update_all(self, end_date, initial_start_date="2025-01-01"):
