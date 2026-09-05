@@ -2,7 +2,7 @@ import sqlite3
 import repository
 
 
-class TestConnection:
+class _TestConnection:
     def __init__(self, connection):
         self._connection = connection
 
@@ -247,7 +247,7 @@ try:
     ]
 
     raw_conn = build_db()
-    test_conn = TestConnection(raw_conn)
+    test_conn = _TestConnection(raw_conn)
     repository.get_connection = lambda: test_conn
 
     result = (
@@ -281,7 +281,7 @@ try:
 
     for name, portfolio, expected_reason in invalid_cases:
         raw_conn = build_db()
-        test_conn = TestConnection(raw_conn)
+        test_conn = _TestConnection(raw_conn)
         repository.get_connection = lambda: test_conn
 
         try:

@@ -8,7 +8,7 @@ import database
 import repository
 
 
-class TestConnection:
+class _TestConnection:
     def __init__(self, connection):
         self._connection = connection
 
@@ -125,7 +125,7 @@ try:
     print("CASE 1 SUCCESS")
 
     raw_conn = build_test_db()
-    test_conn = TestConnection(raw_conn)
+    test_conn = _TestConnection(raw_conn)
     repository.get_connection = lambda: test_conn
 
     cursor = raw_conn.cursor()
@@ -214,7 +214,7 @@ try:
     print("CASE 2 FORCED AUDIT COLLISION -> ROLLBACK")
 
     raw_conn = build_test_db()
-    test_conn = TestConnection(raw_conn)
+    test_conn = _TestConnection(raw_conn)
     repository.get_connection = lambda: test_conn
 
     cursor = raw_conn.cursor()

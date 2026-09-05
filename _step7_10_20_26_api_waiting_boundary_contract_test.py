@@ -5,8 +5,8 @@ import api_server
 import repository
 
 
-TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
-HISTORY_ID = 46
+TEST_DB = Path(r".\database\g7_10_18_ready_fixture.db")
+HISTORY_ID = None
 
 
 def assert_equal(actual, expected, label):
@@ -36,19 +36,38 @@ print("=" * 82)
 original_get_connection = repository.get_connection
 
 
-def test_db_connection():
+def _test_db_connection():
     return sqlite3.connect(
         TEST_DB,
         timeout=30
     )
 
 
-repository.get_connection = test_db_connection
+repository.get_connection = _test_db_connection
 
 try:
     conn = sqlite3.connect(TEST_DB)
 
     try:
+        history_row = conn.execute(
+            """
+            SELECT id
+            FROM ai_decision_outcome_history
+            WHERE outcome_status = 'PENDING'
+              AND snapshot_status = 'COLLECTED'
+              AND snapshot_purpose = 'FUTURE_OUTCOME_EVALUATION'
+            ORDER BY id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+
+        assert_true(
+            history_row is not None,
+            "latest PENDING history -> exists",
+        )
+
+        HISTORY_ID = history_row[0]
+
         history_before = conn.execute(
             """
             SELECT
@@ -65,7 +84,7 @@ try:
 
         assert_true(
             history_before is not None,
-            "history 46 -> exists",
+            "latest PENDING history -> exists",
         )
 
         print("")

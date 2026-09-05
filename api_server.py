@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 
 from flask import (
     Flask,
@@ -1453,10 +1453,137 @@ def ai_decision_reliability_api():
 @app.route("/api/portfolio/ai-rebalance")
 def ai_rebalance_api():
 
-    recommendation = (
-        get_ai_rebalance_recommendation()
+    market_regime = analyze_market_regime()
+
+    market_strategy = generate_market_strategy(
+        market_regime
     )
 
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+    top_etf = {
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+    }
+
+    ai_decision = generate_ai_decision(
+        market_regime,
+        market_strategy,
+        portfolio_health,
+        top_etf
+    )
+
+    current_decision_score = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+    current_market_view = market_regime.get(
+        "regime",
+        "UNKNOWN"
+    )
+
+    current_mode = market_strategy.get(
+        "portfolio_mode",
+        "balanced"
+    )
+
+    current_top_etf = top_etf.get(
+        "ticker"
+    )
+
+    rebalance_action = "HOLD"
+    rebalance_changes = []
+
+    if current_decision_score >= 85:
+
+        if current_market_view == "BULLISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Strong market condition and high AI confidence"
+                }
+            )
+
+        elif current_market_view == "BEARISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": "CASH",
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Risk reduction based on market weakness"
+                }
+            )
+
+        else:
+
+            rebalance_action = "MAINTAIN"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "KEEP_WEIGHT",
+                    "reason":
+                    "Balanced market condition"
+                }
+            )
+
+    else:
+
+        rebalance_action = "REDUCE_RISK"
+
+        rebalance_changes.append(
+            {
+                "ticker": "CASH",
+                "action": "INCREASE_WEIGHT",
+                "reason":
+                "AI confidence below optimal level"
+            }
+        )
+
+    recommendation = {
+        "rebalance_action":
+            rebalance_action,
+
+        "confidence":
+            current_decision_score,
+
+        "rebalance_score":
+            current_decision_score,
+
+        "market_view":
+            current_market_view,
+
+        "recommended_mode":
+            current_mode,
+
+        "changes":
+            rebalance_changes,
+
+        "message":
+            "AI portfolio allocation recommendation generated"
+    }
 
     return jsonify(
         {
@@ -1470,10 +1597,71 @@ def ai_rebalance_api():
 @app.route("/api/portfolio/ai-optimization")
 def ai_portfolio_optimization_api():
 
-    optimization = (
-        get_ai_portfolio_optimization()
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
     )
 
+    optimized_allocation = []
+
+    for item in portfolio:
+
+        ticker = item.get(
+            "ticker"
+        )
+
+        current_weight = float(
+            item.get("weight", 0)
+        )
+
+        target_weight = current_weight
+
+        if current_weight >= 40:
+
+            target_weight = current_weight - 5
+
+        elif current_weight <= 10:
+
+            target_weight = current_weight + 5
+
+        optimized_allocation.append(
+            {
+                "ticker": ticker,
+                "current_weight": current_weight,
+                "target_weight": target_weight
+            }
+        )
+
+    optimization_score = 0
+
+    if optimized_allocation:
+
+        optimization_score = 100
+
+        changed = any(
+            item["current_weight"]
+            != item["target_weight"]
+            for item in optimized_allocation
+        )
+
+        if not changed:
+            optimization_score = 80
+
+    optimization = {
+        "optimization_status":
+            "COMPLETED",
+
+        "optimization_score":
+            optimization_score,
+
+        "optimized_allocation":
+            optimized_allocation,
+
+        "message":
+            "AI portfolio optimization completed"
+    }
 
     return jsonify(
         {
@@ -1719,19 +1907,175 @@ def portfolio_decision_intelligence_api():
         )
     # Rebalance
     # -----------------------------
+    # Use the current AI Decision and market state.
 
-    rebalance = (
-        get_ai_rebalance_recommendation()
+    current_decision_score = ai_decision.get(
+        "decision_score",
+        0
     )
+
+    current_market_view = market_regime.get(
+        "regime",
+        "UNKNOWN"
+    )
+
+    current_mode = market_strategy.get(
+        "portfolio_mode",
+        "balanced"
+    )
+
+    current_top_etf = top_etf.get(
+        "ticker"
+    )
+
+    rebalance_action = "HOLD"
+
+    rebalance_changes = []
+
+    if current_decision_score >= 85:
+
+        if current_market_view == "BULLISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Strong market condition and high AI confidence"
+                }
+            )
+
+        elif current_market_view == "BEARISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": "CASH",
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Risk reduction based on market weakness"
+                }
+            )
+
+        else:
+
+            rebalance_action = "MAINTAIN"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "KEEP_WEIGHT",
+                    "reason":
+                    "Balanced market condition"
+                }
+            )
+
+    else:
+
+        rebalance_action = "REDUCE_RISK"
+
+        rebalance_changes.append(
+            {
+                "ticker": "CASH",
+                "action": "INCREASE_WEIGHT",
+                "reason":
+                "AI confidence below optimal level"
+            }
+        )
+
+    rebalance = {
+        "rebalance_action":
+            rebalance_action,
+
+        "confidence":
+            current_decision_score,
+
+        "rebalance_score":
+            current_decision_score,
+
+        "market_view":
+            current_market_view,
+
+        "recommended_mode":
+            current_mode,
+
+        "changes":
+            rebalance_changes,
+
+        "message":
+            "AI portfolio allocation recommendation generated"
+    }
 
 
     # -----------------------------
     # Portfolio Optimization
     # -----------------------------
+    # Use the current in-memory portfolio.
 
-    optimization = (
-        get_ai_portfolio_optimization()
-    )
+    optimized_allocation = []
+
+    for item in portfolio:
+
+        ticker = item.get(
+            "ticker"
+        )
+
+        weight = item.get(
+            "weight",
+            0
+        )
+
+        current_weight = weight
+
+        target_weight = weight
+
+        if weight >= 40:
+
+            target_weight = weight - 5
+
+        elif weight <= 10:
+
+            target_weight = weight + 5
+
+        optimized_allocation.append(
+            {
+                "ticker": ticker,
+                "current_weight": current_weight,
+                "target_weight": target_weight
+            }
+        )
+
+    optimization_score = 0
+
+    if optimized_allocation:
+
+        optimization_score = 100
+
+        changed = any(
+            item["current_weight"]
+            != item["target_weight"]
+            for item in optimized_allocation
+        )
+
+        if not changed:
+            optimization_score = 80
+
+    optimization = {
+        "optimization_status":
+            "COMPLETED",
+
+        "optimization_score":
+            optimization_score,
+
+        "optimized_allocation":
+            optimized_allocation,
+
+        "message":
+            "AI portfolio optimization completed"
+    }
 
 
     # -----------------------------

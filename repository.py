@@ -2073,7 +2073,8 @@ def get_etf_score(ticker):
 # ==============================
 
 def enrich_portfolio_reference_prices(
-    portfolio
+    portfolio,
+    reference_price_cutoff=None
 ):
     """
     Enrich portfolio positions with missing reference
@@ -2132,10 +2133,18 @@ def enrich_portfolio_reference_prices(
                     SELECT date, close_price
                     FROM etf_prices
                     WHERE ticker = ?
+                      AND (
+                          ? IS NULL
+                          OR date <= ?
+                      )
                     ORDER BY date DESC
                     LIMIT 1
                     """,
-                    (ticker,),
+                    (
+                        ticker,
+                        reference_price_cutoff,
+                        reference_price_cutoff,
+                    ),
                 ).fetchone()
 
                 if price_row:
@@ -2360,7 +2369,8 @@ def save_ai_decision_outcome_with_portfolio_transaction(
     """
 
     portfolio = enrich_portfolio_reference_prices(
-        portfolio
+        portfolio,
+        reference_price_cutoff=created_at,
     )
 
     validate_portfolio_snapshot_input(
@@ -2449,10 +2459,11 @@ def save_ai_decision_outcome_with_portfolio_transaction(
                     SELECT date, close_price
                     FROM etf_prices
                     WHERE ticker = ?
+                      AND date <= ?
                     ORDER BY date DESC
                     LIMIT 1
                     """,
-                    (ticker,),
+                    (ticker, str(created_at)[:10]),
                 ).fetchone()
 
                 if price_row:
@@ -2466,12 +2477,14 @@ def save_ai_decision_outcome_with_portfolio_transaction(
                     FROM etf_prices
                     WHERE ticker = ?
                       AND close_price = ?
+                      AND date <= ?
                     ORDER BY date DESC
                     LIMIT 1
                     """,
                     (
                         ticker,
                         reference_price,
+                        str(created_at)[:10],
                     ),
                 ).fetchone()
 

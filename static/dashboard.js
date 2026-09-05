@@ -1,4 +1,4 @@
-let historyChart = null;
+﻿let historyChart = null;
 
 let portfolioMode = "balanced";
 
@@ -3173,7 +3173,7 @@ async function loadAIDecisionSummary(){
 
 
         <h3>
-        AI Decision Analytics
+        AI Decision Summary
         </h3>
 
 
@@ -4885,3 +4885,33 @@ document.addEventListener("DOMContentLoaded", function () {
     loadDecisionIntelligence();
     loadAIDecisionExplainability();
 });
+
+
+/* ETF-Quant-Platform language selector foundation */
+let currentDashboardLanguage = "ko";
+
+function toggleLanguageMenu() {
+    const menu = document.getElementById("language-menu");
+
+    if (!menu) {
+        return;
+    }
+
+    menu.hidden = !menu.hidden;
+}
+
+function selectDashboardLanguage(language) {
+    if (language !== "ko" && language !== "en") {
+        return;
+    }
+
+    currentDashboardLanguage = language;
+
+    const menu = document.getElementById("language-menu");
+
+    if (menu) {
+        menu.hidden = true;
+    }
+
+    console.log("DASHBOARD_LANGUAGE:", currentDashboardLanguage);
+}

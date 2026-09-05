@@ -15,7 +15,8 @@ from repository import (
 
 def analyze_etf(
     ticker,
-    prices
+    prices,
+    analysis_date=None
 ):
     """
     ETF 분석 Pipeline
@@ -53,13 +54,18 @@ def analyze_etf(
     )
 
 
+    if analysis_date is None:
+        from datetime import date
+        analysis_date = date.today().isoformat()
+
+
     save_or_update_etf_score(
         ticker,
         return_score,
         trend_score,
         slope_score,
         final_score,
-        "2026-07-27"
+        analysis_date
     )
 
 
@@ -69,7 +75,7 @@ def analyze_etf(
         trend_score,
         slope_score,
         final_score,
-        "2026-07-27"
+        analysis_date
     )
 
 

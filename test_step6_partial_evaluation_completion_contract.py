@@ -2,7 +2,7 @@
 import repository
 
 
-class TestConnection:
+class _TestConnection:
     def __init__(self, connection):
         self._connection = connection
 
@@ -37,6 +37,22 @@ def build_db(snapshot_rows, price_rows):
         """
     )
 
+    cursor.execute(
+        """
+        CREATE TABLE audit_event (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            audit_event_id TEXT NOT NULL UNIQUE,
+            event_type TEXT NOT NULL,
+            event_time TEXT NOT NULL,
+            source TEXT NOT NULL,
+            status TEXT,
+            decision_history_id INTEGER,
+            outcome_history_id INTEGER,
+            correlation_key TEXT NOT NULL,
+            details TEXT NOT NULL
+        )
+        """
+    )
     cursor.execute(
         """
         CREATE TABLE etf_prices (
@@ -132,7 +148,7 @@ def run_case(
     )
 
     repository.get_connection = lambda: (
-        TestConnection(raw_conn)
+        _TestConnection(raw_conn)
     )
 
     try:
