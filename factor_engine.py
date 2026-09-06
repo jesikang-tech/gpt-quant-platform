@@ -1,3 +1,5 @@
+from config import MIN_RETURN_3M, MIN_UPTREND_RATIO, MIN_REQUIRED_PRICE_DATA
+
 def calculate_return(
     start_price,
     end_price
@@ -26,7 +28,7 @@ def calculate_return_score(
     if return_rate >= 20:
         return 100
 
-    elif return_rate >= 15:
+    elif return_rate >= (MIN_RETURN_3M * 100):
         return 90
 
     elif return_rate >= 10:
@@ -198,6 +200,9 @@ def check_etf_condition(
     상승 유지율 >= 70%
     """
 
+    if len(prices) < MIN_REQUIRED_PRICE_DATA:
+        return False
+
     return_rate = calculate_3month_return(
         prices
     )
@@ -209,9 +214,9 @@ def check_etf_condition(
 
    
     if (
-        return_rate >= 15
+        return_rate >= (MIN_RETURN_3M * 100)
         and
-        uptrend_ratio >= 60
+        uptrend_ratio >= (MIN_UPTREND_RATIO * 100)
     ):
         return True
 

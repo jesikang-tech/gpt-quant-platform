@@ -36,7 +36,7 @@ def save_etf_price(
     conn.close()
 
 
-def get_etf_prices(ticker):
+def get_etf_prices(ticker, end_date=None):
     """
     ?뱀젙 ETF 媛寃?議고쉶
     """
@@ -48,10 +48,10 @@ def get_etf_prices(ticker):
         """
         SELECT date, close_price
         FROM etf_prices
-        WHERE ticker = ?
+        WHERE ticker = ? AND (? IS NULL OR date <= ?)
         ORDER BY date
         """,
-        (ticker,)
+        (ticker, end_date, end_date)
     )
 
     result = cursor.fetchall()

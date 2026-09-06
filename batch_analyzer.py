@@ -5,6 +5,7 @@ from repository import (
 )
 
 from etf_analyzer import analyze_etf
+from config import LOOKBACK_TRADING_DAYS, MIN_REQUIRED_PRICE_DATA
 
 
 def run_batch_analysis(analysis_date=None):
@@ -30,7 +31,8 @@ def run_batch_analysis(analysis_date=None):
 
 
         prices = get_etf_prices(
-            ticker
+            ticker,
+            analysis_date
         )
 
 
@@ -40,13 +42,12 @@ def run_batch_analysis(analysis_date=None):
         ]
 
 
-        if len(close_prices) < 2:
+        if len(close_prices) < MIN_REQUIRED_PRICE_DATA:
 
             skipped_count += 1
 
             continue
-
-
+        close_prices = close_prices[-LOOKBACK_TRADING_DAYS:]
 
         result = analyze_etf(
             ticker,

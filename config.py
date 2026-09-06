@@ -27,7 +27,7 @@ LOG_LEVEL = "INFO"
 # Application
 # --------------------------------------------------
 APP_NAME = "GPT Quant Platform"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 # --------------------------------------------------
 # Data Collection
@@ -39,3 +39,10 @@ DEFAULT_MARKET = "KR"
 # Score Settings
 # --------------------------------------------------
 MIN_RETURN_3M = 0.15
+# --------------------------------------------------
+# Ver.1.1 Selection Rules
+# --------------------------------------------------
+LOOKBACK_TRADING_DAYS = 60
+MIN_UPTREND_RATIO = 0.70
+MIN_REQUIRED_PRICE_DATA = 60
+
