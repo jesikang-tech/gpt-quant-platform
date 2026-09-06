@@ -6,7 +6,7 @@ import database
 from repository import evaluate_ai_decision_portfolio_snapshot
 
 
-TEST_DB = Path(r".\database\g7_10_18_ready_fixture.db")
+TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
 database.DATABASE_PATH = TEST_DB
 
 

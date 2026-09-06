@@ -2,7 +2,7 @@ from pathlib import Path
 
 import database
 
-TEST_DB = Path(r".\database\g7_10_18_ready_fixture.db")
+TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
 database.DATABASE_PATH = TEST_DB
 
 import api_server
