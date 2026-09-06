@@ -155,12 +155,12 @@ function loadDashboard(){
 
 
         <div class="intelligence-title">
-        GPT ETF Intelligence
+        ${getDashboardText("intelligenceTitle")}
         </div>
 
 
         <p>
-        Ranking Count :
+        ${getDashboardText("rankingCount")}
         <b>
         ${result.count}
         </b>
@@ -168,7 +168,7 @@ function loadDashboard(){
 
 
         <p>
-        Top ETF :
+        ${getDashboardText("topETF")}
         <b>
         ${result.data[0].ticker}
         </b>
@@ -176,7 +176,7 @@ function loadDashboard(){
 
 
         <p>
-        Signal :
+        ${getDashboardText("signal")}
         <b>
         ${getSignal(
         result.data[0].prediction
@@ -187,7 +187,7 @@ function loadDashboard(){
 
         <div class="intelligence-score">
 
-        AI Score :
+        ${getDashboardText("aiScore")}
 
         <b>
         ${intelligence.score}
@@ -197,7 +197,7 @@ function loadDashboard(){
 
 
         <p>
-        Grade :
+        ${getDashboardText("grade")}
         <b>
         ${intelligence.grade}
         </b>
@@ -208,7 +208,7 @@ function loadDashboard(){
 
         <div class="recommendation-title">
 
-        AI Recommendation
+        ${getDashboardText("aiRecommendation")}
 
         </div>
 
@@ -224,7 +224,7 @@ function loadDashboard(){
 
         <div class="recommendation-confidence">
 
-        Confidence
+        ${getDashboardText("confidence")}
 
         <br>
 
@@ -241,14 +241,14 @@ function loadDashboard(){
 
         <div class="reason-title">
 
-        AI Analysis Reasons
+        ${getDashboardText("aiAnalysisReasons")}
 
         </div>
 
 
         <div class="reason-item">
 
-        Score Analysis
+        ${getDashboardText("scoreAnalysis")}
 
         <br>
 
@@ -260,7 +260,7 @@ function loadDashboard(){
 
         <div class="reason-item">
 
-        Ranking Analysis
+        ${getDashboardText("rankingAnalysis")}
 
         <br>
 
@@ -272,7 +272,7 @@ function loadDashboard(){
 
         <div class="reason-item">
 
-        Risk Analysis
+        ${getDashboardText("riskAnalysis")}
 
         <br>
 
@@ -362,7 +362,7 @@ function loadDashboard(){
             <div class="score-box">
 
             <p>
-            Score
+            ${getDashboardText("etfScore")}
             </p>
 
             <div class="bar">
@@ -383,7 +383,7 @@ function loadDashboard(){
             <div class="score-box">
 
             <p>
-            Enhanced
+            ${getDashboardText("etfEnhanced")}
             </p>
 
             <div class="bar">
@@ -401,13 +401,13 @@ function loadDashboard(){
 
 
             <p>
-            Grade :
+            ${getDashboardText("etfGrade")}
             ${getGradeBadge(item.grade)}
             </p>
 
 
             <p>
-            Signal :
+            ${getDashboardText("etfSignal")}
             <span class="signal">
             ${getSignal(item.prediction)}
             </span>
@@ -415,7 +415,7 @@ function loadDashboard(){
 
 
             <p>
-            Return Score :
+            ${getDashboardText("etfReturnScore")}
             <b>
             ${item.return_score}
             </b>
@@ -423,7 +423,7 @@ function loadDashboard(){
 
 
             <p>
-            Trend Score :
+            ${getDashboardText("etfTrendScore")}
             <b>
             ${item.trend_score}
             </b>
@@ -431,7 +431,7 @@ function loadDashboard(){
 
 
             <p>
-            📐 Slope Score :
+            ${getDashboardText("etfSlopeScore")}
             <b>
             ${item.slope_score}
             </b>
@@ -439,7 +439,7 @@ function loadDashboard(){
 
 
             <p>
-            Final Score :
+            ${getDashboardText("etfFinalScore")}
             <b>
             ${item.final_score}
             </b>
@@ -447,7 +447,7 @@ function loadDashboard(){
 
 
             <p>
-            Stability :
+            ${getDashboardText("etfStability")}
             ${item.stability}
             </p>
 
@@ -723,92 +723,92 @@ async function loadDetail(ticker){
 
 
     <p>
-    Score :
+    ${getDashboardText("detailScore")}
     <b>${result.score}</b>
     </p>
 
 
     <p>
-    Enhanced :
+    ${getDashboardText("detailEnhanced")}
     <b>${result.enhanced_score}</b>
     </p>
 
 
     <h3>
-    AI Intelligence
+    ${getDashboardText("detailAIIntelligence")}
     </h3>
 
 
     <p>
-    Return Score :
+    ${getDashboardText("etfReturnScore")}
     <b>${result.return_score}</b>
     </p>
 
 
     <p>
-    Trend Score :
+    ${getDashboardText("etfTrendScore")}
     <b>${result.trend_score}</b>
     </p>
 
 
     <p>
-    📐 Slope Score :
+    ${getDashboardText("etfSlopeScore")}
     <b>${result.slope_score}</b>
     </p>
 
 
     <p>
-    Final Score :
+    ${getDashboardText("etfFinalScore")}
     <b>${result.final_score}</b>
     </p>
 
 
     <p>
-    Grade :
+    ${getDashboardText("etfGrade")}
     ${getGradeBadge(result.grade)}
     </p>
 
 
     <p>
-    Signal :
+    ${getDashboardText("etfSignal")}
     ${getSignal(result.prediction)}
     </p>
 
 
     <p>
-    Stability :
+    ${getDashboardText("etfStability")}
     ${result.stability}
     </p>
     
     <hr>
 
     <p>
-    AI Insight
+    ${getDashboardText("detailAIInsight")}
     </p>
 
     <p>
-    Trend :
+    ${getDashboardText("detailTrend")}
     ${result.analysis.trend}
     </p>
 
     <p>
-    Risk :
+    ${getDashboardText("detailRisk")}
     ${result.analysis.risk}
     </p>
 
     <p>
-    Opinion :
+    ${getDashboardText("detailOpinion")}
     ${result.analysis.opinion}
     </p>
 
     <p>
-    Score Momentum :
+    ${getDashboardText("detailScoreMomentum")}
     ${result.analysis.score_change}
     </p>
 
 
     <p>
-    🔮 Prediction :
+    ${getDashboardText("detailPrediction")}
     ${result.analysis.prediction}
     </p>
 
@@ -844,7 +844,7 @@ async function loadPortfolioAdvisor(save=false){
     html += `
 
     <h3>
-    Strategy :
+    ${getDashboardText("portfolioStrategy")}
     ${result.strategy}
     </h3>
 
@@ -879,7 +879,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <div class="portfolio-weight">
 
-            Weight :
+            ${getDashboardText("portfolioWeight")}
             <b>
             ${item.weight}%
             </b>
@@ -889,7 +889,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <div class="portfolio-score">
 
-            Score :
+            ${getDashboardText("etfScore")}
             <b>
             ${item.score ?? "-"}
             </b>
@@ -899,7 +899,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <div class="portfolio-optimization">
 
-            AI Optimization :
+            ${getDashboardText("portfolioOptimization")}
             <b>
             ${item.optimization_score ?? "-"}
             </b>
@@ -914,7 +914,7 @@ async function loadPortfolioAdvisor(save=false){
                     <div class="portfolio-factor">
 
                         <b>
-                        Factor Analysis
+                        ${getDashboardText("factorAnalysis")}
                         </b>
 
                         <br><br>
@@ -922,7 +922,7 @@ async function loadPortfolioAdvisor(save=false){
 
                         <div class="factor-item">
 
-                        Return
+                        ${getDashboardText("factorReturn")}
 
                         <div class="factor-bar">
 
@@ -943,7 +943,7 @@ async function loadPortfolioAdvisor(save=false){
 
                         <div class="factor-item">
 
-                        Trend
+                        ${getDashboardText("factorTrend")}
 
                         <div class="factor-bar">
 
@@ -964,7 +964,7 @@ async function loadPortfolioAdvisor(save=false){
 
                         <div class="factor-item">
 
-                        Slope
+                        ${getDashboardText("factorSlope")}
 
                         <div class="factor-bar">
 
@@ -4931,6 +4931,45 @@ const DASHBOARD_TRANSLATIONS = {
         balanced: "균형형",
         aggressive: "공격형",
         languageKorean: "한국어",
+        intelligenceTitle: "GPT ETF 인텔리전스",
+        rankingCount: "랭킹 종목 수 :",
+        topETF: "최상위 ETF :",
+        signal: "신호 :",
+        aiScore: "AI 점수 :",
+        grade: "등급 :",
+        aiRecommendation: "AI 권고",
+        confidence: "신뢰도",
+        aiAnalysisReasons: "AI 분석 근거",
+        scoreAnalysis: "점수 분석",
+        rankingAnalysis: "랭킹 분석",
+        riskAnalysis: "위험 분석",
+
+        etfScore: "점수",
+        etfEnhanced: "향상 점수",
+        etfGrade: "등급 :",
+        etfSignal: "신호 :",
+        etfReturnScore: "수익률 점수 :",
+        etfTrendScore: "추세 점수 :",
+        etfSlopeScore: "기울기 점수 :",
+        etfFinalScore: "최종 점수 :",
+        etfStability: "안정성 :",
+        detailScore: "점수 :",
+        detailEnhanced: "향상 점수 :",
+        detailAIIntelligence: "AI 인텔리전스",
+        detailAIInsight: "AI 인사이트",
+        detailTrend: "추세 :",
+        detailRisk: "위험 :",
+        detailOpinion: "의견 :",
+        detailScoreMomentum: "점수 모멘텀 :",
+        detailPrediction: "예측 :",
+        portfolioStrategy: "전략 :",
+        portfolioWeight: "비중 :",
+        portfolioOptimization: "AI 최적화 :",
+        factorAnalysis: "팩터 분석",
+        factorReturn: "수익률",
+        factorTrend: "추세",
+        factorSlope: "기울기",
+
         languageEnglish: "English"
     },
 
