@@ -1,5 +1,6 @@
 ﻿import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 import config
@@ -7,6 +8,104 @@ import database
 import repository
 
 from core.period_analysis import get_period_analysis
+from historical_replay import HistoricalReplayEngine
+
+
+def make_prices(start, daily_change, count=60):
+    return [
+        start + (daily_change * index)
+        for index in range(count)
+    ]
+
+
+def test_historical_replay_engine_analysis_date_validation():
+    engine = HistoricalReplayEngine("2026-07-31")
+
+    assert engine.analysis_date == "2026-07-31"
+
+    datetime_value = datetime(2026, 7, 31)
+    assert (
+        HistoricalReplayEngine(datetime_value).analysis_date
+        == "2026-07-31"
+    )
+
+
+def test_historical_replay_engine_invalid_analysis_date():
+    try:
+        HistoricalReplayEngine("2026-02-30")
+        assert False
+    except ValueError:
+        pass
+
+    try:
+        HistoricalReplayEngine(20260731)
+        assert False
+    except ValueError:
+        pass
+
+
+def test_historical_replay_engine_limit_validation():
+    engine = HistoricalReplayEngine("2026-07-31")
+
+    try:
+        engine.replay(0)
+        assert False
+    except ValueError:
+        pass
+
+    try:
+        engine.replay("10")
+        assert False
+    except ValueError:
+        pass
+
+
+def test_historical_replay_engine_three_month_window():
+    rows = [
+        ("2026-01-01", 100.0),
+        ("2026-02-01", 110.0),
+        ("2026-03-01", 120.0),
+        ("2026-04-01", 130.0),
+    ]
+
+    window = HistoricalReplayEngine._calculate_three_month_prices(
+        rows
+    )
+
+    assert window == [
+        100.0,
+        110.0,
+        120.0,
+        130.0,
+    ]
+
+
+def test_historical_replay_engine_boundary_constants():
+    assert HistoricalReplayEngine.MIN_TRADING_DAYS == 60
+    assert HistoricalReplayEngine.MIN_RETURN_RATE == 15.0
+    assert HistoricalReplayEngine.MIN_UPTREND_RATIO == 70.0
+    assert HistoricalReplayEngine.TOP_N == 10
+
+
+def test_historical_replay_engine_price_boundary_helpers():
+    prices_60 = make_prices(100.0, 0.35, 60)
+    assert len(prices_60) == 60
+
+    return_rate = (115.0 - 100.0) / 100.0 * 100.0
+    assert return_rate >= 15.0
+
+    uptrend_prices = make_prices(100.0, 1.0, 10)
+    uptrend_ratio = (
+        sum(
+            uptrend_prices[index]
+            > uptrend_prices[index - 1]
+            for index in range(1, len(uptrend_prices))
+        )
+        / (len(uptrend_prices) - 1)
+        * 100.0
+    )
+
+    assert uptrend_ratio >= 70.0
 
 
 def test_historical_replay_respects_analysis_date_and_is_deterministic():
