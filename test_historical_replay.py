@@ -251,3 +251,127 @@ def test_historical_replay_respects_analysis_date_and_is_deterministic():
             os.remove(db_path)
         except FileNotFoundError:
             pass
+
+def test_historical_replay_engine_ignores_future_prices():
+    fd, db_path = tempfile.mkstemp(
+        prefix="historical_replay_engine_",
+        suffix=".db"
+    )
+    os.close(fd)
+
+    original_config_path = config.DATABASE_PATH
+    original_database_path = database.DATABASE_PATH
+
+    try:
+        test_db_path = Path(db_path)
+
+        config.DATABASE_PATH = test_db_path
+        database.DATABASE_PATH = test_db_path
+
+        database.init_database()
+
+        conn = database.get_connection()
+        cursor = conn.cursor()
+
+        ticker = "TEST_ENGINE_REPLAY"
+        analysis_date = "2026-06-12"
+
+        prices = [
+            (f"2026-03-{day:02d}", 100.0 + index)
+            for index, day in enumerate(range(23, 32))
+        ]
+
+        prices.extend([
+            ("2026-04-01", 109.0),
+            ("2026-04-02", 110.0),
+            ("2026-04-03", 111.0),
+            ("2026-04-06", 112.0),
+            ("2026-04-07", 113.0),
+            ("2026-04-08", 114.0),
+            ("2026-04-09", 115.0),
+            ("2026-04-10", 116.0),
+            ("2026-04-13", 117.0),
+            ("2026-04-14", 118.0),
+            ("2026-04-15", 119.0),
+            ("2026-04-16", 120.0),
+            ("2026-04-17", 121.0),
+            ("2026-04-20", 122.0),
+            ("2026-04-21", 123.0),
+            ("2026-04-22", 124.0),
+            ("2026-04-23", 125.0),
+            ("2026-04-24", 126.0),
+            ("2026-04-27", 127.0),
+            ("2026-04-28", 128.0),
+            ("2026-04-29", 129.0),
+            ("2026-04-30", 130.0),
+            ("2026-05-01", 131.0),
+            ("2026-05-04", 132.0),
+            ("2026-05-05", 133.0),
+            ("2026-05-06", 134.0),
+            ("2026-05-07", 135.0),
+            ("2026-05-08", 136.0),
+            ("2026-05-11", 137.0),
+            ("2026-05-12", 138.0),
+            ("2026-05-13", 139.0),
+            ("2026-05-14", 140.0),
+            ("2026-05-15", 141.0),
+            ("2026-05-18", 142.0),
+            ("2026-05-19", 143.0),
+            ("2026-05-20", 144.0),
+            ("2026-05-21", 145.0),
+            ("2026-05-22", 146.0),
+            ("2026-05-25", 147.0),
+            ("2026-05-26", 148.0),
+            ("2026-05-27", 149.0),
+            ("2026-05-28", 150.0),
+            ("2026-05-29", 151.0),
+            ("2026-06-01", 152.0),
+            ("2026-06-02", 153.0),
+            ("2026-06-03", 154.0),
+            ("2026-06-04", 155.0),
+            ("2026-06-05", 156.0),
+            ("2026-06-08", 157.0),
+            ("2026-06-09", 158.0),
+            ("2026-06-10", 159.0),
+            ("2026-06-11", 160.0),
+            ("2026-06-12", 161.0),
+            ("2026-06-15", 9999.0),
+            ("2026-06-16", 10000.0),
+            ("2026-06-17", 10001.0),
+        ])
+
+        cursor.executemany(
+            """
+            INSERT INTO etf_prices
+            (
+                ticker,
+                date,
+                close_price
+            )
+            VALUES (?, ?, ?)
+            """,
+            [
+                (ticker, date, price)
+                for date, price in prices
+            ],
+        )
+
+        conn.commit()
+        conn.close()
+
+        engine = HistoricalReplayEngine(analysis_date)
+        results = engine.replay()
+
+        assert results
+        assert results[0]["ticker"] == ticker
+        assert results[0]["analysis_date"] == analysis_date
+        assert results[0]["return_rate"] < 1000
+
+    finally:
+        config.DATABASE_PATH = original_config_path
+        database.DATABASE_PATH = original_database_path
+
+        try:
+            os.remove(db_path)
+        except FileNotFoundError:
+            pass
