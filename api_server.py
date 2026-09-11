@@ -1685,7 +1685,7 @@ def portfolio_analytics_api():
 
 
 
-@app.route("/api/portfolio/decision-intelligence")
+@app.route("/api/portfolio/decision-intelligence", methods=["GET", "POST"])
 def portfolio_decision_intelligence_api():
 
     # -----------------------------
@@ -2804,149 +2804,152 @@ def portfolio_decision_intelligence_api():
         ),
     }
 
-    portfolio_snapshot_created_at = (
-        datetime.now().astimezone().isoformat()
-    )
+    history_id = None
 
-    persistence_result = (
-        save_ai_decision_outcome_with_portfolio_transaction(
-            history_kwargs=outcome_history_kwargs,
-            portfolio=portfolio,
-            created_at=portfolio_snapshot_created_at,
+    if request.method == "POST":
+        portfolio_snapshot_created_at = (
+            datetime.now().astimezone().isoformat()
         )
-    )
 
-    history_id = persistence_result["history_id"]
-
-
-    # AI Decision Outcome History Update
-    # Phase 6
-    # Step6-4
-    # -----------------------------
-
-    update_ai_decision_outcome_history(
-        history_id=history_id,
-        outcome_status=decision_outcome_evaluation.get(
-            "outcome_status",
-            "PENDING"
-        ),
-        outcome_score=decision_outcome_evaluation.get(
-            "outcome_score",
-            0.0
-        ),
-        outcome_grade=decision_outcome_evaluation.get(
-            "outcome_grade",
-            "N/A"
-        ),
-        decision_effectiveness=decision_outcome_evaluation.get(
-            "decision_effectiveness",
-            "PENDING"
-        ),
-        strategy_effectiveness=decision_outcome_evaluation.get(
-            "strategy_effectiveness",
-            "PENDING"
-        ),
-        market_response=decision_outcome_evaluation.get(
-            "market_response",
-            "PENDING"
-        ),
-        portfolio_response=decision_outcome_evaluation.get(
-            "portfolio_response",
-            "PENDING"
-        ),
-        learning_status=decision_outcome_intelligence.get(
-            "learning_status",
-            "WAITING_FOR_OUTCOME"
-        ),
-        feedback_state=decision_outcome_intelligence.get(
-            "feedback_state",
-            "COLLECTING"
-        ),
-        adaptive_learning_required=int(
-            bool(
-                decision_outcome_intelligence.get(
-                    "adaptive_learning_required",
-                    False
-                )
+        persistence_result = (
+            save_ai_decision_outcome_with_portfolio_transaction(
+                history_kwargs=outcome_history_kwargs,
+                portfolio=portfolio,
+                created_at=portfolio_snapshot_created_at,
             )
-        ),
-        reassessment_required=int(
-            bool(
-                decision_outcome_snapshot.get(
-                    "reassessment_required",
-                    False
+        )
+
+        history_id = persistence_result["history_id"]
+
+
+        # AI Decision Outcome History Update
+        # Phase 6
+        # Step6-4
+        # -----------------------------
+
+        update_ai_decision_outcome_history(
+            history_id=history_id,
+            outcome_status=decision_outcome_evaluation.get(
+                "outcome_status",
+                "PENDING"
+            ),
+            outcome_score=decision_outcome_evaluation.get(
+                "outcome_score",
+                0.0
+            ),
+            outcome_grade=decision_outcome_evaluation.get(
+                "outcome_grade",
+                "N/A"
+            ),
+            decision_effectiveness=decision_outcome_evaluation.get(
+                "decision_effectiveness",
+                "PENDING"
+            ),
+            strategy_effectiveness=decision_outcome_evaluation.get(
+                "strategy_effectiveness",
+                "PENDING"
+            ),
+            market_response=decision_outcome_evaluation.get(
+                "market_response",
+                "PENDING"
+            ),
+            portfolio_response=decision_outcome_evaluation.get(
+                "portfolio_response",
+                "PENDING"
+            ),
+            learning_status=decision_outcome_intelligence.get(
+                "learning_status",
+                "WAITING_FOR_OUTCOME"
+            ),
+            feedback_state=decision_outcome_intelligence.get(
+                "feedback_state",
+                "COLLECTING"
+            ),
+            adaptive_learning_required=int(
+                bool(
+                    decision_outcome_intelligence.get(
+                        "adaptive_learning_required",
+                        False
+                    )
                 )
+            ),
+            reassessment_required=int(
+                bool(
+                    decision_outcome_snapshot.get(
+                        "reassessment_required",
+                        False
+                    )
+                )
+            ),
+            reassessment_status=decision_outcome_snapshot.get(
+                "reassessment_status",
+                "NOT_REQUIRED"
             )
-        ),
-        reassessment_status=decision_outcome_snapshot.get(
-            "reassessment_status",
-            "NOT_REQUIRED"
         )
-    )
 
 
-    # -----------------------------
-    # Step6-10-I-16
-    # Persist Runtime Reassessment Audit Event
-    # -----------------------------
+        # -----------------------------
+        # Step6-10-I-16
+        # Persist Runtime Reassessment Audit Event
+        # -----------------------------
 
-    reassessment_source_history_id = (
-        history_id
-    )
-
-    if (
-        reassessment_source_history_id is not None
-        and final_decision_execution_reassessment.get(
-            "reassessment_required",
-            False
+        reassessment_source_history_id = (
+            history_id
         )
-    ):
-        save_ai_decision_audit_event(
-            event_type="REASSESSMENT_REQUIRED",
-            event_time=datetime.now().astimezone().isoformat(),
-            source="portfolio_reassessment",
-            status="REQUIRED",
-            outcome_history_id=(
-                reassessment_source_history_id
-            ),
-            correlation_key=(
-                f"outcome:{reassessment_source_history_id}"
-            ),
-            details={
-                "reassessment_required":
-                    bool(
+
+        if (
+            reassessment_source_history_id is not None
+            and final_decision_execution_reassessment.get(
+                "reassessment_required",
+                False
+            )
+        ):
+            save_ai_decision_audit_event(
+                event_type="REASSESSMENT_REQUIRED",
+                event_time=datetime.now().astimezone().isoformat(),
+                source="portfolio_reassessment",
+                status="REQUIRED",
+                outcome_history_id=(
+                    reassessment_source_history_id
+                ),
+                correlation_key=(
+                    f"outcome:{reassessment_source_history_id}"
+                ),
+                details={
+                    "reassessment_required":
+                        bool(
+                            final_decision_execution_reassessment.get(
+                                "reassessment_required",
+                                False
+                            )
+                        ),
+                    "reassessment_status":
                         final_decision_execution_reassessment.get(
-                            "reassessment_required",
-                            False
-                        )
-                    ),
-                "reassessment_status":
-                    final_decision_execution_reassessment.get(
-                        "reassessment_status",
-                        "UNKNOWN"
-                    ),
-                "reassessment_action":
-                    final_decision_execution_reassessment.get(
-                        "reassessment_action",
-                        "UNKNOWN"
-                    ),
-                "reassessment_risk":
-                    final_decision_execution_reassessment.get(
-                        "reassessment_risk",
-                        "UNKNOWN"
-                    ),
-                "reassessment_score":
-                    final_decision_execution_reassessment.get(
-                        "reassessment_score",
-                        0.0
-                    ),
-                "reassessment_reason":
-                    final_decision_execution_reassessment.get(
-                        "reassessment_reason",
-                        "UNKNOWN"
-                    ),
-            },
-        )
+                            "reassessment_status",
+                            "UNKNOWN"
+                        ),
+                    "reassessment_action":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_action",
+                            "UNKNOWN"
+                        ),
+                    "reassessment_risk":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_risk",
+                            "UNKNOWN"
+                        ),
+                    "reassessment_score":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_score",
+                            0.0
+                        ),
+                    "reassessment_reason":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_reason",
+                            "UNKNOWN"
+                        ),
+                },
+            )
 
     return jsonify(
 

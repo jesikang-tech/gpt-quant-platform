@@ -42,7 +42,8 @@ try:
     )
 
     with api_server.app.test_request_context(
-        "/api/portfolio/decision-intelligence"
+        "/api/portfolio/decision-intelligence",
+        method="POST"
     ):
         response = (
             api_server.portfolio_decision_intelligence_api()
