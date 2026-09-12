@@ -560,6 +560,13 @@ def optimize_portfolio_weight(ranking, mode="balanced"):
     portfolio = []
 
 
+    selected_count = min(len(sorted_ranking), 3)
+
+    cash_weight += sum(
+        weights[selected_count:]
+    )
+
+
     for index, etf in enumerate(sorted_ranking[:3]):
 
         portfolio.append(
