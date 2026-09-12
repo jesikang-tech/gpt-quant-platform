@@ -1308,7 +1308,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <p>
 
-            💰 Cash Weight
+            💰 ${getDashboardText("cashWeight")}
 
             <br>
 
@@ -1960,12 +1960,12 @@ async function loadAIDecision(){
 
 
         <h3>
-        GPT AI Decision
+        ${getDashboardText("gptAIDecision")}
         </h3>
 
 
         <p>
-        Decision :
+        ${getDashboardText("decision")} :
         <b>
         ${decision.decision}
         </b>
@@ -1973,7 +1973,7 @@ async function loadAIDecision(){
 
 
         <p>
-        Action :
+        ${getDashboardText("action")} :
         <b>
         ${decision.action}
         </b>
@@ -1989,7 +1989,7 @@ async function loadAIDecision(){
 
 
          <p>
-        Decision Score :
+        ${getDashboardText("decisionScore")} :
         <br>
 
         <span
@@ -2024,14 +2024,14 @@ async function loadAIDecision(){
 
 
         <p>
-        Reason :
+        ${getDashboardText("reason")} :
         <br>
         ${decision.reason}
         </p>
 
 
         <p>
-        Summary :
+        ${getDashboardText("summary")} :
         <br>
         <b>
         ${decision.summary}
@@ -2569,7 +2569,7 @@ async function loadDecisionIntelligence() {
             </p>
 
             <p>
-                Confidence:
+                ${getDashboardText("confidence")}:
                 <br>
                 <b>${validationConfidence}/100</b>
             </p>
@@ -2821,7 +2821,7 @@ async function loadDecisionIntelligence() {
         <p>
             ${getDashboardText("overrideReason")}:
             <br>
-            ${intelligence.adaptive_override_reason || "No adaptive override applied."}
+            ${intelligence.adaptive_override_reason || getDashboardText("noAdaptiveOverride")}
         </p>
 
         <p>
@@ -3021,7 +3021,7 @@ async function loadDecisionIntelligence() {
     catch (error) {
 
         console.error(
-            "AI Decision Intelligence Error",
+            getDashboardText("decisionIntelligenceError"),
             error
         );
 
@@ -3032,7 +3032,7 @@ async function loadDecisionIntelligence() {
         if (panel) {
 
             panel.innerHTML =
-                "AI Decision Intelligence loading failed.";
+                getDashboardText("decisionIntelligenceLoadingFailed");
 
         }
 
@@ -3078,7 +3078,7 @@ async function loadAIDecisionHistory(){
             <div class="ai-history-item">
 
                 <p>
-                Decision :
+                ${getDashboardText("decision")} :
                 <b>
                 ${item.decision}
                 </b>
@@ -3086,7 +3086,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                Score :
+                ${getDashboardText("score")} :
                 <b>
                 ${item.decision_score ?? "-"}
                 </b>
@@ -3102,7 +3102,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                Market :
+                ${getDashboardText("market")} :
                 <b>
                 ${item.market_view}
                 </b>
@@ -3110,7 +3110,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                Top ETF :
+                ${getDashboardText("topETF")}
                 <b>
                 ${item.top_etf}
                 </b>
@@ -3118,7 +3118,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                📅 Date :
+                📅 ${getDashboardText("date")} :
                 <b>
                 ${item.created_at}
                 </b>
@@ -3173,7 +3173,7 @@ async function loadAIDecisionSummary(){
 
 
         <h3>
-        AI Decision Summary
+        ${getDashboardText("aiDecisionSummary")}
         </h3>
 
 
@@ -3195,7 +3195,7 @@ async function loadAIDecisionSummary(){
 
 
         <p>
-        Latest Decision :
+        ${getDashboardText("currentDecision")} :
         <b>
         ${summary.latest_decision}
         </b>
@@ -3211,7 +3211,7 @@ async function loadAIDecisionSummary(){
 
 
         <p>
-        Market Alignment :
+        ${getDashboardText("marketView")} :
         <b>
         ${summary.market_view}
         </b>
@@ -3219,7 +3219,7 @@ async function loadAIDecisionSummary(){
 
 
         <p>
-        Top ETF :
+        ${getDashboardText("topETF")}
         <b>
         ${summary.top_etf}
         </b>
@@ -3265,7 +3265,7 @@ async function loadAIDecisionQuality(){
         </h3>
 
         <p>
-        Quality Level :
+        ${getDashboardText("quality")} :
         <b>
         ${quality.quality_level}
         </b>
@@ -3286,7 +3286,7 @@ async function loadAIDecisionQuality(){
         </p>
 
         <p>
-        AI Evaluation :
+        ${getDashboardText("aiEvaluation")} :
         <br>
         ${quality.evaluation}
         </p>
@@ -3345,7 +3345,7 @@ async function loadAIDecisionTrend(){
     <div class="ai-trend-card">
 
         <h3>
-        ${trendIcon} AI Decision Trend
+        ${trendIcon} ${getDashboardText("aiDecisionTrend")}
         </h3>
 
         <p>
@@ -3377,7 +3377,7 @@ async function loadAIDecisionTrend(){
         </p>
 
         <p>
-        Direction :
+        ${getDashboardText("direction")} :
         <b>
         ${trend.direction}
         </b>
@@ -3391,7 +3391,7 @@ async function loadAIDecisionTrend(){
         </p>
 
         <p>
-        Momentum :
+        ${getDashboardText("momentum")} :
         <b>
         ${trend.momentum}
         </b>
@@ -3405,21 +3405,21 @@ async function loadAIDecisionTrend(){
         </p>
 
         <p>
-        Decision Consistency :
+        ${getDashboardText("decisionConsistency")} :
         <b>
         ${trend.consistency}
         </b>
         </p>
 
         <p>
-        Current Decision :
+        ${getDashboardText("currentDecision")} :
         <b>
         ${trend.decision}
         </b>
         </p>
 
         <p>
-        Summary :
+        ${getDashboardText("summary")} :
         <br>
         ${trend.summary}
         </p>
@@ -3458,7 +3458,7 @@ async function loadAIDecisionChart(){
             datasets:[{
 
                 label:
-                "Decision Score",
+                getDashboardText("decisionScore"),
 
                 data:
                 result.chart.scores,
@@ -3491,7 +3491,7 @@ async function loadAIDecisionChart(){
 
                 title:{
                     display:true,
-                    text:"AI Decision Score History"
+                    text:getDashboardText("aiDecisionScoreHistory")
                 }
 
             },
@@ -3551,7 +3551,7 @@ async function loadAIDecisionStatistics(){
 
 
         <h3>
-        AI Decision Statistics
+        ${getDashboardText("aiDecisionStatistics")}
         </h3>
 
 
@@ -3580,7 +3580,7 @@ async function loadAIDecisionStatistics(){
 
 
         <p>
-        Recent Average :
+        ${getDashboardText("recentAverage")} :
         <b>
         ${statistics.recent_average}
         </b>
@@ -3626,67 +3626,67 @@ async function loadAIDecisionOutcomeLearning(){
     <div class="ai-outcome-learning-card">
 
         <h3>
-        AI Decision Outcome Learning
+        ${getDashboardText("aiDecisionOutcomeLearning")}
         </h3>
 
         <p>
-        Total Outcomes :
+        ${getDashboardText("totalOutcomes")} :
         <b>
         ${summary.total_outcomes}
         </b>
         </p>
 
         <p>
-        Evaluated Outcomes :
+        ${getDashboardText("evaluatedOutcomes")} :
         <b>
         ${summary.evaluated_outcomes}
         </b>
         </p>
 
         <p>
-        Pending Outcomes :
+        ${getDashboardText("pendingOutcomes")} :
         <b>
         ${summary.pending_outcomes}
         </b>
         </p>
 
         <p>
-        Average Outcome Score :
+        ${getDashboardText("averageOutcomeScore")} :
         <b>
         ${summary.average_outcome_score ?? "-"}
         </b>
         </p>
 
         <p>
-        Average Portfolio Return :
+        ${getDashboardText("averagePortfolioReturn")} :
         <b>
         ${summary.average_portfolio_return ?? "-"}
         </b>
         </p>
 
         <p>
-        Positive Outcomes :
+        ${getDashboardText("positiveOutcomes")} :
         <b>
         ${summary.positive_outcomes}
         </b>
         </p>
 
         <p>
-        Negative Outcomes :
+        ${getDashboardText("negativeOutcomes")} :
         <b>
         ${summary.negative_outcomes}
         </b>
         </p>
 
         <p>
-        Adaptive Learning Required :
+        ${getDashboardText("adaptiveLearningRequired")} :
         <b>
         ${summary.adaptive_learning_required}
         </b>
         </p>
 
         <p>
-        Reassessment Required :
+        ${getDashboardText("reassessmentRequired")} :
         <b>
         ${summary.reassessment_required}
         </b>
@@ -3859,7 +3859,7 @@ async function loadAIDecisionReliability(){
 
 
         <p>
-        AI Status :
+        ${getDashboardText("aiStatus")} :
         <br>
         ${reliability.message}
         </p>
@@ -3900,7 +3900,7 @@ async function loadAIAdaptiveStrategy(){
     <div class="ai-adaptive-card">
 
         <h3>
-        🧠 AI Adaptive Strategy
+        🧠 ${getDashboardText("adaptiveStrategy")}
         </h3>
 
         <p>
@@ -3911,7 +3911,7 @@ async function loadAIAdaptiveStrategy(){
         </p>
 
         <p>
-        Recommended Action :
+        ${getDashboardText("recommendedAction")} :
         <b>
         ${strategy.action}
         </b>
@@ -3925,14 +3925,14 @@ async function loadAIAdaptiveStrategy(){
         </p>
 
         <p>
-        Decision Score :
+        ${getDashboardText("decisionScore")} :
         <b>
         ${strategy.score}
         </b>
         </p>
 
         <p>
-        Direction :
+        ${getDashboardText("direction")} :
         <b>
         ${strategy.direction}
         </b>
@@ -3946,7 +3946,7 @@ async function loadAIAdaptiveStrategy(){
         </p>
 
         <p>
-        Momentum :
+        ${getDashboardText("momentum")} :
         <b>
         ${strategy.momentum}
         </b>
@@ -3960,14 +3960,14 @@ async function loadAIAdaptiveStrategy(){
         </p>
 
         <p>
-        Decision Consistency :
+        ${getDashboardText("decisionConsistency")} :
         <b>
         ${strategy.consistency}
         </b>
         </p>
 
         <p>
-        Summary :
+        ${getDashboardText("summary")} :
         <br>
         ${strategy.summary}
         </p>
@@ -4223,7 +4223,7 @@ async function loadPortfolioExplainability(){
             decisionSummary = `
 
                 <h4>
-                AI Decision Summary
+                ${getDashboardText("aiDecisionSummary")}
                 </h4>
 
                 <p>
@@ -4328,19 +4328,19 @@ async function loadPortfolioExplainability(){
             riskHTML = `
 
                 <h4>
-                Risk Analysis
+                ${getDashboardText("riskAnalysis")}
                 </h4>
 
                 <p>
                 <strong>
-                Risk Level:
+                ${getDashboardText("riskLevel")}:
                 </strong>
                 ${explanation.risk_analysis.risk_level}
 
                 <br>
 
                 <strong>
-                Cash Weight:
+                ${getDashboardText("cashWeight")}:
                 </strong>
                 ${explanation.risk_analysis.cash_weight}%
 
@@ -4373,13 +4373,13 @@ async function loadPortfolioExplainability(){
             marketHTML = `
 
                 <h4>
-                Market Analysis
+                ${getDashboardText("marketAnalysis")}
                 </h4>
 
                 <p>
 
                 <strong>
-                Regime:
+                ${getDashboardText("regime")}:
                 </strong>
 
                 ${market.regime}
@@ -4387,7 +4387,7 @@ async function loadPortfolioExplainability(){
                 <br>
 
                 <strong>
-                Impact:
+                ${getDashboardText("impact")}:
                 </strong>
 
                 ${market.impact}
@@ -4419,14 +4419,14 @@ async function loadPortfolioExplainability(){
 
 
             <h4>
-            Factor Analysis
+            ${getDashboardText("factorAnalysis")}
             </h4>
 
             ${factorHTML}
 
 
             <h4>
-            Allocation Reason
+            ${getDashboardText("allocationReason")}
             </h4>
 
             ${allocationHTML}
@@ -4749,7 +4749,7 @@ async function askPortfolioAnalyst(){
 
 
     resultBox.innerHTML =
-        "AI Portfolio Analyst 분석 중...";
+        getDashboardText("aiPortfolioAnalyst") + " 분석 중...";
 
 
 
@@ -4973,6 +4973,13 @@ const DASHBOARD_TRANSLATIONS = {
         aiRecommendation: "AI 추천",
         aiAnalysisReasons: "AI 분석 이유",
         aiMessage: "AI 메시지",
+        gptPortfolioIntelligence: "GPT 포트폴리오 인텔리전스",
+        gptPortfolioInsight: "GPT 포트폴리오 인사이트",
+        rankingCount: "랭킹 종목 수 :",
+        topETF: "최상위 ETF :",
+        signal: "신호 :",
+        aiScore: "AI 점수 :",
+        confidence: "신뢰도",
         scoreAnalysis: "점수 분석",
         rankingAnalysis: "랭킹 분석",
         riskAnalysis: "위험 분석",
@@ -5079,6 +5086,143 @@ const DASHBOARD_TRANSLATIONS = {
         previousScore: "이전 점수",
         scoreChange: "점수 변화",
         recommendedStrategy: "권장 전략"
+        languageEnglish: "English",
+        decisionIntelligenceTitle: "AI 의사결정 인텔리전스",
+        intelligenceScore: "인텔리전스 점수",
+        level: "수준",
+        confidenceScore: "신뢰도 점수",
+        status: "상태",
+        confidenceSummary: "신뢰도 요약",
+        confidenceExplainability: "신뢰도 설명",
+        positiveSignals: "긍정 신호",
+        supportingSignals: "지원 신호",
+        riskSignals: "위험 신호",
+        explanation: "설명",
+        confidenceAssessment: "신뢰도 평가",
+        assessment: "평가",
+        strongestSignals: "가장 강한 신호",
+        attentionSignals: "주의 신호",
+        assessmentSummary: "평가 요약",
+        decisionConfidenceRecommendation: "의사결정 신뢰도 권고",
+        recommendation: "권고",
+        action: "행동",
+        monitoring: "모니터링",
+        recommendationScore: "권고 점수",
+        recommendationSummary: "권고 요약",
+        aiDecisionValidation: "AI 의사결정 검증",
+        validation: "검증",
+        validationScore: "검증 점수",
+        decisionAlignment: "의사결정 정렬",
+        decisionConsistency: "의사결정 일관성",
+        reliability: "신뢰성",
+        optimization: "최적화",
+        validationSignals: "검증 신호",
+        validationSummary: "검증 요약",
+        aiDecisionValidationExplainability: "AI 의사결정 검증 설명",
+        validationStatus: "검증 상태",
+        riskExplanation: "위험 설명",
+        conclusion: "결론",
+        decisionScore: "의사결정 점수",
+        decisionQuality: "의사결정 품질",
+        adaptiveStrategy: "적응형 전략",
+        rebalance: "리밸런싱",
+        quality: "품질",
+        qualityTrend: "품질 추세",
+        marketView: "시장 관점",
+        currentDecision: "최근 의사결정",
+        market: "시장",
+    aiPortfolioAnalyst: "AI 포트폴리오 애널리스트",
+    current: "현재",
+    target: "목표",
+    noAdaptiveOverride: "적응형 오버라이드가 적용되지 않았습니다.",
+    decisionIntelligenceError: "AI 의사결정 인텔리전스 오류",
+    decisionIntelligenceLoadingFailed: "AI 의사결정 인텔리전스 로딩에 실패했습니다.",
+    gptAIDecision: "GPT AI 의사결정",
+    times: "회",
+    averageAllocation: "평균 배분",
+    gptMarketIntelligence: "GPT 시장 인텔리전스",
+    aiMarketStrategy: "AI 시장 전략",
+        date: "날짜",
+        strategyMode: "전략 모드",
+        none: "없음",
+        aiAnswer: "AI 답변",
+        aiDecisionOutcomeLearning: "AI 의사결정 결과 학습",
+        aiDecisionQuality: "AI 의사결정 품질",
+        aiDecisionStatistics: "AI 의사결정 통계",
+        aiDecisionSummary: "AI 의사결정 요약",
+        aiDecisionHistory: "AI 의사결정 이력",
+        aiDecisionScoreHistory: "AI 의사결정 점수 이력",
+        aiPortfolioOptimization: "AI 포트폴리오 최적화",
+        aiPortfolioRebalance: "AI 포트폴리오 리밸런싱",
+        allocation: "배분",
+        marketConfidence: "시장 신뢰도",
+        allocationReason: "배분 사유",
+        cashWeight: "현금 비중",
+        contribution: "기여도",
+        decisionConfidence: "의사결정 신뢰도",
+        decisionConfidenceIntelligence: "의사결정 신뢰도 인텔리전스",
+        etf: "ETF",
+        health: "건전성",
+        healthScore: "건전성 점수",
+        impact: "영향도",
+        marketAnalysis: "시장 분석",
+        marketContribution: "시장 기여도",
+        marketRegime: "시장 국면",
+        portfolioContribution: "포트폴리오 기여도",
+        reason: "사유",
+        recommendedAction: "권고 행동",
+        regime: "국면",
+        risk: "위험",
+        riskAssessment: "위험 평가",
+        riskLevel: "위험 수준",
+        score: "점수",
+        summary: "요약",
+        aiOpinion: "AI 의견",
+        diversification: "분산도",
+        topETFContribution: "최상위 ETF 기여도",
+        decision: "의사결정",
+        strategy: "전략",
+        strategyUsage: "전략 사용 현황",
+        adaptiveOverride: "적응형 오버라이드",
+        overrideReason: "오버라이드 사유",
+        finalStrategy: "최종 전략",
+        consistencyScore: "일관성 점수",
+        consistencySummary: "일관성 요약",
+        adaptiveAction: "적응형 행동",
+        adaptiveConfidence: "적응형 신뢰도",
+        adaptiveScore: "적응형 점수",
+        direction: "방향",
+        momentum: "모멘텀",
+        stability: "안정성",
+        gradeStability: "등급 안정성",
+        consistency: "일관성",
+        adaptiveSummary: "적응형 요약",
+        rebalanceAction: "리밸런싱 행동",
+        finalDecision: "최종 의사결정",
+        executionDecision: "실행 의사결정",
+        executionStatus: "실행 상태",
+        executionAuthorization: "실행 승인",
+        certificationStatus: "인증 상태",
+        certificationScore: "인증 점수",
+        masterControlStatus: "마스터 제어 상태",
+        masterControlAction: "마스터 제어 행동",
+        masterControlRisk: "마스터 제어 위험",
+        masterControlScore: "마스터 제어 점수",
+        reassessmentStatus: "재평가 상태",
+        reassessmentRequired: "재평가 필요 여부",
+        finalAction: "최종 행동",
+        aiSummary: "AI 요약",
+        lastSavedAI: "마지막 저장 AI 전략",
+        currentViewStrategy: "현재 보기 전략",
+        recentAverage: "최근 평균",
+        averageOutcomeScore: "평균 결과 점수",
+        aiStatus: "AI 상태",
+        aiMessage: "AI 메시지",
+        finalDecisionExecutionControl: "최종 의사결정 실행 및 제어",
+        portfolioAnalytics: "포트폴리오 분석",
+        portfolioHistory: "포트폴리오 이력",
+        marketStrength: "시장 강도",
+        breadth: "시장 확산",
     },
 
     en: {
@@ -5092,7 +5236,6 @@ const DASHBOARD_TRANSLATIONS = {
         aggressive: "Aggressive",
         languageKorean: "Korean",
         languageEnglish: "English",
-
         intelligenceTitle: "GPT ETF Intelligence",
         aiMarketStrategy: "AI Market Strategy",
         marketStrength: "Market Strength",
@@ -5112,6 +5255,45 @@ const DASHBOARD_TRANSLATIONS = {
         level: "Level",
         decisionConfidenceIntelligence: "Decision Confidence Intelligence",
         confidenceScore: "Confidence Score",
+        aiAnalysisReasons: "AI Analysis Reasons",
+        aiRecommendation: "AI Recommendation",
+        aiScore: "AI Score :",
+        detailAIInsight: "AI Insight",
+        detailAIIntelligence: "AI Intelligence",
+        detailEnhanced: "Enhanced Score :",
+        detailOpinion: "Opinion :",
+        detailPrediction: "Prediction :",
+        detailRisk: "Risk :",
+        detailScore: "Score :",
+        detailScoreMomentum: "Score Momentum :",
+        detailTrend: "Trend :",
+        etfEnhanced: "Enhanced Score",
+        etfFinalScore: "Final Score :",
+        etfGrade: "Grade :",
+        etfReturnScore: "Return Score :",
+        etfScore: "Score",
+        etfSignal: "Signal :",
+        etfSlopeScore: "Slope Score :",
+        etfStability: "Stability :",
+        etfTrendScore: "Trend Score :",
+        factorReturn: "Return",
+        factorSlope: "Slope",
+        factorTrend: "Trend",
+        gptPortfolioIntelligence: "GPT Portfolio Intelligence",
+        gptPortfolioInsight: "GPT Portfolio Insight",
+        portfolioOptimization: "AI Optimization :",
+        portfolioStrategy: "Strategy :",
+        portfolioWeight: "Weight :",
+        rankingAnalysis: "Ranking Analysis",
+        rankingCount: "Ranking Count :",
+        scoreAnalysis: "Score Analysis",
+        signal: "Signal :",
+        topETF: "Top ETF :",
+        decisionIntelligenceTitle: "AI Decision Intelligence",
+        aiDecisionHistory: "AI Decision History",
+        aiDecisionScoreHistory: "AI Decision Score History",
+        recentAverage: "Recent Average",
+        averageOutcomeScore: "Average Outcome Score",
         status: "Status",
         confidenceSummary: "Confidence Summary",
         confidenceExplainability: "Confidence Explainability",
@@ -5188,6 +5370,61 @@ const DASHBOARD_TRANSLATIONS = {
         qualityTrend: "Quality Trend",
         marketView: "Market View",
         strategyMode: "Strategy Mode",
+        currentDecision: "Latest Decision",
+        market: "Market",
+    aiPortfolioAnalyst: "AI Portfolio Analyst",
+    current: "Current",
+    target: "Target",
+    noAdaptiveOverride: "No adaptive override applied.",
+    decisionIntelligenceError: "AI Decision Intelligence Error",
+    decisionIntelligenceLoadingFailed: "AI Decision Intelligence loading failed.",
+    gptAIDecision: "GPT AI Decision",
+    times: "times",
+    averageAllocation: "Average Allocation",
+    gptMarketIntelligence: "GPT Market Intelligence",
+    aiMarketStrategy: "AI Market Strategy",
+        date: "Date",
+        none: "None",
+        aiAnswer: "AI Answer",
+        aiDecisionOutcomeLearning: "AI Decision Outcome Learning",
+        aiDecisionPerformance: "AI Decision Performance",
+        aiDecisionQuality: "AI Decision Quality",
+        aiDecisionReliability: "AI Decision Reliability",
+        aiDecisionStatistics: "AI Decision Statistics",
+        aiDecisionSummary: "AI Decision Summary",
+        aiPortfolioOptimization: "AI Portfolio Optimization",
+        aiPortfolioRebalance: "AI Portfolio Rebalance",
+        allocation: "Allocation",
+        marketConfidence: "Market Confidence",
+        allocationReason: "Allocation Reason",
+        cashWeight: "Cash Weight",
+        contribution: "Contribution",
+        decisionConfidence: "Decision Confidence",
+        decisionConfidenceIntelligence: "Decision Confidence Intelligence",
+        etf: "ETF",
+        factorAnalysis: "Factor Analysis",
+        health: "Health",
+        healthScore: "Health Score",
+        impact: "Impact",
+        marketAnalysis: "Market Analysis",
+        marketContribution: "Market Contribution",
+        marketRegime: "Market Regime",
+        portfolioContribution: "Portfolio Contribution",
+        reason: "Reason",
+        recommendedAction: "Recommended Action",
+        regime: "Regime",
+        risk: "Risk",
+        riskAnalysis: "Risk Analysis",
+        riskAssessment: "Risk Assessment",
+        riskLevel: "Risk Level",
+        score: "Score",
+        summary: "Summary",
+        aiOpinion: "AI Opinion",
+        diversification: "Diversification",
+        topETFContribution: "Top ETF Contribution",
+        decision: "Decision",
+        strategy: "Strategy",
+        strategyUsage: "Strategy Usage",
         adaptiveOverride: "Adaptive Override",
         overrideReason: "Override Reason",
         finalStrategy: "Final Strategy",
@@ -5203,6 +5440,7 @@ const DASHBOARD_TRANSLATIONS = {
         adaptiveSummary: "Adaptive Summary",
         rebalanceAction: "Rebalance Action",
         finalDecisionExecutionControl: "Final Decision Execution & Control",
+        consistency: "Consistency",
         finalDecision: "Final Decision",
         executionDecision: "Execution Decision",
         executionStatus: "Execution Status",
@@ -5241,6 +5479,15 @@ const DASHBOARD_TRANSLATIONS = {
         previousScore: "Previous Score",
         scoreChange: "Score Change",
         recommendedStrategy: "Recommended Strategy"
+        lastSavedAI: "Last Saved AI Strategy",
+        currentViewStrategy: "Current View Strategy",
+        aiStatus: "AI Status",
+        aiMessage: "AI Message",
+        finalDecisionExecutionControl: "Final Decision Execution & Control",
+        portfolioAnalytics: "Portfolio Analytics",
+        portfolioHistory: "Portfolio History",
+        marketStrength: "Market Strength",
+        breadth: "Market Breadth",
     }
 };
 
