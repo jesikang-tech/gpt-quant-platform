@@ -264,7 +264,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons[1]}
+        ${recommendationData.recommendation.reasons?.[1] ?? "추가 분석 정보 없음"}
 
         </div>
 
@@ -276,7 +276,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons[2]}
+        ${recommendationData.recommendation.reasons?.[2] ?? "추가 분석 정보 없음"}
 
         </div>
 
@@ -5085,7 +5085,7 @@ const DASHBOARD_TRANSLATIONS = {
         latestScore: "최신 점수",
         previousScore: "이전 점수",
         scoreChange: "점수 변화",
-        recommendedStrategy: "권장 전략"
+        recommendedStrategy: "권장 전략",
         languageEnglish: "English",
         decisionIntelligenceTitle: "AI 의사결정 인텔리전스",
         intelligenceScore: "인텔리전스 점수",
@@ -5478,7 +5478,7 @@ const DASHBOARD_TRANSLATIONS = {
         latestScore: "Latest Score",
         previousScore: "Previous Score",
         scoreChange: "Score Change",
-        recommendedStrategy: "Recommended Strategy"
+        recommendedStrategy: "Recommended Strategy",
         lastSavedAI: "Last Saved AI Strategy",
         currentViewStrategy: "Current View Strategy",
         aiStatus: "AI Status",
