@@ -1,7 +1,7 @@
 ﻿import sqlite3
 from pathlib import Path
 
-TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
+TEST_DB = Path(r".\database\g7_10_18_ready_fixture.db")
 
 
 def assert_equal(actual, expected, label):
