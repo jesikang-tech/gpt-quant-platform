@@ -265,7 +265,7 @@ def save_or_update_etf_score(
     conn.close()
 
 
-def get_top_scores(limit=10):
+def get_top_scores(limit=10, analysis_date=None):
     """
     ETF Score Ranking 議고쉶
     """
@@ -279,10 +279,11 @@ def get_top_scores(limit=10):
             ticker,
             final_score
         FROM etf_scores
+        WHERE (? IS NULL OR created_at = ?)
         ORDER BY final_score DESC
         LIMIT ?
         """,
-        (limit,)
+        (analysis_date, analysis_date, limit)
     )
 
     results = cursor.fetchall()
