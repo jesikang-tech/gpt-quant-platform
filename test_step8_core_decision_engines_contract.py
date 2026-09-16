@@ -102,4 +102,3 @@ def test_decision_confidence_explainability_signal_boundaries():
     ]
 
     assert result["confidence_score"] == 95.0
-

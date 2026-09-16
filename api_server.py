@@ -519,7 +519,11 @@ def portfolio_explain_api():
             },
 
             "cash_weight":
-                10
+                sum(
+                    item.get("weight", 0)
+                    for item in portfolio
+                    if item.get("ticker") == "CASH"
+                )
         },
 
         market_info
@@ -1618,14 +1622,6 @@ def ai_portfolio_optimization_api():
 
         target_weight = current_weight
 
-        if current_weight >= 40:
-
-            target_weight = current_weight - 5
-
-        elif current_weight <= 10:
-
-            target_weight = current_weight + 5
-
         optimized_allocation.append(
             {
                 "ticker": ticker,
@@ -2031,14 +2027,6 @@ def portfolio_decision_intelligence_api():
         current_weight = weight
 
         target_weight = weight
-
-        if weight >= 40:
-
-            target_weight = weight - 5
-
-        elif weight <= 10:
-
-            target_weight = weight + 5
 
         optimized_allocation.append(
             {

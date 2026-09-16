@@ -27,7 +27,11 @@ def print_ranking_report(
     """
 
 
-    ranking = get_top_scores()
+    ranking = get_top_scores(analysis_date=analysis_date)
+
+    if not ranking:
+        print(f"No analyzable ETFs for {analysis_date}; Ranking Report skipped.")
+        return
 
     enhanced = get_enhanced_ranking()
 
