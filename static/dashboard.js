@@ -168,6 +168,21 @@ function loadDashboard(){
 
 
         <p>
+        ${getDashboardText("marketDataDate")}
+        <b>
+        ${result.metadata?.market_data_date || "-"}
+        </b>
+        </p>
+
+
+        <p>
+        ${getDashboardText("rankingDate")}
+        <b>
+        ${result.metadata?.ranking_date || "-"}
+        </b>
+        </p>
+
+        <p>
         ${getDashboardText("topETF")}
         <b>
         ${result.data[0].ticker}
@@ -4934,6 +4949,8 @@ const DASHBOARD_TRANSLATIONS = {
         intelligenceTitle: "GPT ETF 인텔리전스",
         gptPortfolioIntelligence: "GPT 포트폴리오 인텔리전스",
         gptPortfolioInsight: "GPT 포트폴리오 인사이트",
+        marketDataDate: "시장 데이터 기준일 :",
+        rankingDate: "랭킹 기준일 :",
         rankingCount: "랭킹 종목 수 :",
         topETF: "최상위 ETF :",
         signal: "신호 :",
@@ -5165,6 +5182,8 @@ const DASHBOARD_TRANSLATIONS = {
         portfolioStrategy: "Strategy :",
         portfolioWeight: "Weight :",
         rankingAnalysis: "Ranking Analysis",
+        marketDataDate: "Market Data Date :",
+        rankingDate: "Ranking Date :",
         rankingCount: "Ranking Count :",
         scoreAnalysis: "Score Analysis",
         signal: "Signal :",
