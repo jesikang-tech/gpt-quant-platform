@@ -1,0 +1,29 @@
+# GPT Quant Platform text encoding and line-ending policy
+
+* text=auto eol=lf
+
+# Source / web files
+*.py   text eol=lf
+*.js   text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+
+# PowerShell scripts
+*.ps1  text eol=lf
+
+# Do not treat binary files as text
+*.db     binary
+*.sqlite  binary
+*.sqlite3 binary
+*.exe     binary
+*.dll     binary
+*.zip     binary
+*.7z      binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
