@@ -1,0 +1,14 @@
+{
+    "schema_version":  "1.0",
+    "translation_set":  "dashboard",
+    "status":  "draft",
+    "canonical_keys":  221,
+    "korean_completed_keys":  1,
+    "english_source":  "en.json",
+    "korean_source":  "ko.json",
+    "dashboard_application":  "static/dashboard.js",
+    "encoding":  "UTF-8 without BOM",
+    "ai_factor_insight":  "English",
+    "baseline_commit":  "02954176b74c7f2834caed854ee38585142d1aa0",
+    "note":  "Canonical UI translation registry. Headings, subtitles, section titles, labels, and terminology may be revised through Git-controlled changes. Do not restore dashboard.js from ko.json until the Korean values are reviewed and approved."
+}
