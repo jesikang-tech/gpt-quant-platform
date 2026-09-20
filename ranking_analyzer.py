@@ -979,13 +979,36 @@ def get_dashboard_api_data(
         limit
     )
 
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT MAX(date)
+        FROM etf_prices
+        """
+    )
+    market_data_date = cursor.fetchone()[0]
+
+    cursor.execute(
+        """
+        SELECT MAX(ranking_date)
+        FROM etf_ranking_history
+        """
+    )
+    ranking_date = cursor.fetchone()[0]
+
+    conn.close()
+
     return {
         "success": True,
         "count": len(data),
-        "data": data
+        "data": data,
+        "metadata": {
+            "market_data_date": market_data_date,
+            "ranking_date": ranking_date
+        }
     }
-
-
 
 def get_etf_detail(ticker):
 

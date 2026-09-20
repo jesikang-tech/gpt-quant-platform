@@ -5,7 +5,7 @@ import api_server
 import repository
 
 
-TEST_DB = Path(r".\database\g7_10_18_ready_fixture.db")
+TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
 HISTORY_ID = None
 
 
