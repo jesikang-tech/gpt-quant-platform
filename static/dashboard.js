@@ -8,29 +8,29 @@ let portfolioAnalytics = null;
 function getRecommendationIcon(signal){
 
     if(signal === "BUY")
-        return "🟢";
+        return "BUY";
 
     if(signal === "SELL")
-        return "🔴";
+        return "SELL";
 
     if(signal === "MAINTAIN")
-        return "🟡";
+        return "HOLD";
 
-    return "⚪";
+    return "N/A";
 }
 
 function getConfidenceIcon(confidence){
 
     if(confidence === "HIGH")
-        return "🟢";
+        return "HIGH";
 
     if(confidence === "MEDIUM")
-        return "🟡";
+        return "MEDIUM";
 
     if(confidence === "LOW")
-        return "🔴";
+        return "LOW";
 
-    return "⚪";
+    return "N/A";
 }
 
 function getRankBadge(rank) {
@@ -50,17 +50,16 @@ function getRankBadge(rank) {
 function getSignal(signal) {
 
     if(signal === "MAINTAIN")
-        return "유지";
+        return "MAINTAIN";
 
     if(signal === "BUY")
-        return "매수";
+        return "BUY";
 
     if(signal === "SELL")
-        return "매도";
+        return "SELL";
 
     return signal;
 }
-
 function getGradeBadge(grade){
 
     if(grade === "A")
@@ -264,7 +263,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons?.[1] ?? "추가 분석 정보 없음"}
+        ${recommendationData.recommendation.reasons?.[1] ?? getDashboardText("none")}
 
         </div>
 
@@ -276,7 +275,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons?.[2] ?? "추가 분석 정보 없음"}
+        ${recommendationData.recommendation.reasons?.[2] ?? getDashboardText("none")}
 
         </div>
 
@@ -460,7 +459,7 @@ function loadDashboard(){
 
 
             <p>
-            판단 :
+            의견 :
             <b>
             ${getSignal(item.prediction)}
             </b>
@@ -468,7 +467,7 @@ function loadDashboard(){
 
 
             <p>
-            안정성:
+            안정성 :
             ${item.stability}
             </p>
 
@@ -521,7 +520,7 @@ function loadDashboard(){
 
 
 
-// 최초 실행
+// 최초 대시보드 실행
 
 loadDashboard();
 
@@ -567,7 +566,7 @@ loadPortfolioExplainability();
 loadAIDecisionHistory();
 
 
-// 10초마다 갱신
+// 10초마다 대시보드 갱신
 
 setInterval(
     loadDashboard,
@@ -808,7 +807,7 @@ async function loadDetail(ticker){
 
 
     <p>
-    🔮 Prediction :
+    ?逾?Prediction :
     ${result.analysis.prediction}
     </p>
 
@@ -1102,9 +1101,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
             <p>
-
-            ❤️ ${getDashboardText("healthScore")} :
-
+            ${getDashboardText("healthScore")} :
             <span
                 style="
                 background:${healthColor};
@@ -1121,9 +1118,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
             <p>
-
-            🛡 ${getDashboardText("riskLevel")} :
-
+            ${getDashboardText("riskLevel")} :
             <span
                 style="
                 background:${riskColor};
@@ -1141,7 +1136,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <p>
 
-            🎯 ${getDashboardText("confidence")} :
+            ${getDashboardText("confidence")} :
 
             <span
                 style="
@@ -1159,9 +1154,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
             <p>
-
-            💰 ${getDashboardText("cashWeight")} :
-
+            ${getDashboardText("cashWeight")} :
             ${result.intelligence.cash_weight}%
 
             </p>
@@ -1189,18 +1182,14 @@ async function loadPortfolioAdvisor(save=false){
 
 
             <p>
-
             ${getDashboardText("marketRegime")} :
-
             ${result.insight.analytics.market_regime}
 
             </p>
 
 
             <p>
-
             ${getDashboardText("marketStrength")} :
-
             ${result.insight.analytics.market_strength}
 
             </p>
@@ -1208,7 +1197,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <p>
 
-            ${getDashboardText("marketConfidence")} :
+            &#128225; ${getDashboardText("confidence")} :
 
             ${result.insight.analytics.market_confidence}%
 
@@ -1216,9 +1205,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
             <p>
-
-            ${getDashboardText("aiRebalance")} :
-
+            ${getDashboardText("aiPortfolioRebalance")} :
             ${result.intelligence.rebalance}
 
             </p>
@@ -1233,7 +1220,7 @@ async function loadPortfolioAdvisor(save=false){
         <div class="portfolio-insight">
 
             <h3>
-            ${getDashboardText("portfolioInsight")}
+            ${getDashboardText("gptPortfolioInsight")}
             </h3>
 
 
@@ -1423,9 +1410,7 @@ async function loadPortfolioHistory(){
 
 
         <br>
-
-
-        ${getDashboardText("healthScore")} :
+            ${getDashboardText("healthScore")} :
         ${item.health_score ?? "-"}
 
 
@@ -1784,7 +1769,7 @@ async function loadMarketRegime(){
         </p>
 
         <p>
-        ${getDashboardText("marketStrength")} :
+            ${getDashboardText("marketStrength")} :
         <b>${result.market_strength}</b>
         </p>
 
@@ -1895,7 +1880,7 @@ async function loadMarketStrategy(){
 
 
         <p>
-        ${getDashboardText("marketStrength")} :
+            ${getDashboardText("marketStrength")} :
         <b>
         ${result.market_strength}
         </b>
@@ -4333,14 +4318,14 @@ async function loadPortfolioExplainability(){
 
                 <p>
                 <strong>
-                ${getDashboardText("riskLevel")}:
+            ${getDashboardText("riskLevel")} :
                 </strong>
                 ${explanation.risk_analysis.risk_level}
 
                 <br>
 
                 <strong>
-                ${getDashboardText("cashWeight")}:
+            ${getDashboardText("cashWeight")} :
                 </strong>
                 ${explanation.risk_analysis.cash_weight}%
 
@@ -4642,7 +4627,7 @@ async function loadAIDecisionExplainability(){
             <p>
 
             <strong>
-            ${getDashboardText("riskLevel")}:
+            ${getDashboardText("riskLevel")} :
             </strong>
 
             ${risk.risk_level || "-"}
@@ -4650,7 +4635,7 @@ async function loadAIDecisionExplainability(){
             <br>
 
             <strong>
-            ${getDashboardText("marketRegime")}:
+            ${getDashboardText("marketRegime")} :
             </strong>
 
             ${risk.market_regime || "-"}
@@ -4821,7 +4806,7 @@ async function askPortfolioAnalyst(){
                 html +=
                 `
                 <p>
-                • ${item}
+                ??${item}
                 </p>
                 `;
 
@@ -4922,310 +4907,232 @@ function selectDashboardLanguage(language) {
 /* ETF-Quant-Platform minimal dashboard translations */
 const DASHBOARD_TRANSLATIONS = {
     ko: {
-        dashboardTitle: "GPT Quant ETF 대시보드",
-        dashboardSubtitle: "AI 기반 ETF 랭킹 시스템",
-        marketRegimeTitle: "AI 시장 국면",
-        marketRegimeLoading: "시장 국면 불러오는 중...",
-        portfolioOptimizationTitle: "GPT AI 포트폴리오 최적화",
-        conservative: "보수형",
-        balanced: "균형형",
-        aggressive: "공격형",
-        languageKorean: "한국어",
-        languageEnglish: "English",
-
-        intelligenceTitle: "GPT ETF 인텔리전스",
-        aiMarketStrategy: "AI 시장 전략",
-        marketStrength: "시장 강도",
-        breadth: "시장 폭",
-        portfolioMode: "포트폴리오 모드",
-        cashTarget: "현금 목표 비중",
-        aiInsight: "AI 인사이트",
-        trend: "추세",
-        risk: "위험",
-        opinion: "의견",
-        scoreMomentum: "점수 모멘텀",
-        aiDecisionGrade: "AI 의사결정 등급",
-        aiGrade: "AI 등급",
-        aiDecisionIntelligence: "AI 의사결정 인텔리전스",
-        intelligenceScore: "인텔리전스 점수",
-        grade: "등급",
-        level: "수준",
-        decisionConfidenceIntelligence: "의사결정 신뢰도 인텔리전스",
-        confidenceScore: "신뢰도 점수",
-        status: "상태",
-        confidenceSummary: "신뢰도 요약",
-        confidenceExplainability: "신뢰도 설명가능성",
-        positiveSignals: "긍정 신호",
-        supportingSignals: "지원 신호",
-        riskSignals: "위험 신호",
-        explanation: "설명",
-        confidenceAssessment: "신뢰도 평가",
-        assessment: "평가",
-        strongestSignals: "가장 강한 신호",
-        attentionSignals: "주의 신호",
-        assessmentSummary: "평가 요약",
-        decisionConfidenceRecommendation: "의사결정 신뢰도 권고",
-        recommendation: "권고",
-        action: "조치",
-        monitoring: "모니터링",
-        recommendationScore: "권고 점수",
-        recommendationSummary: "권고 요약",
-        aiRecommendation: "AI 추천",
-        aiAnalysisReasons: "AI 분석 이유",
-        aiMessage: "AI 메시지",
-        gptPortfolioIntelligence: "GPT 포트폴리오 인텔리전스",
-        gptPortfolioInsight: "GPT 포트폴리오 인사이트",
-        rankingCount: "랭킹 종목 수 :",
-        topETF: "최상위 ETF :",
-        signal: "신호 :",
-        aiScore: "AI 점수 :",
-        confidence: "신뢰도",
-        scoreAnalysis: "점수 분석",
-        rankingAnalysis: "랭킹 분석",
-        riskAnalysis: "위험 분석",
-        aiDecisionHistory: "AI 의사결정 이력",
-        aiDecisionValidation: "AI 의사결정 검증",
-        validation: "검증",
-        validationScore: "검증 점수",
-        decision: "의사결정",
-        aiPortfolioRebalance: "AI 포트폴리오 리밸런싱",
-        aiPortfolioOptimization: "AI 포트폴리오 최적화",
-        recommendedMode: "권장 모드",
-        enhanced: "향상 점수",
-        signal: "시그널",
-        returnScore: "수익률 점수",
-        trendScore: "트렌드 점수",
-        slopeScore: "기울기 점수",
-        finalScore: "최종 점수",
-        gptQuantAiInsight: "GPT Quant AI 인사이트",
-        bonus: "보너스",
-        investmentCharacter: "투자 성격",
-        stableHolding: "안정적 보유",
-        gptAnalyst: "GPT 애널리스트",
-        score: "점수",
-        confidence: "신뢰도",
-        consistency: "일관성",
-        strategy: "전략",
-        decisionAlignment: "의사결정 정합성",
-        decisionConsistency: "의사결정 일관성",
-        reliability: "신뢰도",
-        optimization: "최적화",
-        validationSignals: "검증 신호",
-        validationSummary: "검증 요약",
-        aiDecisionValidationExplainability: "AI 의사결정 검증 설명가능성",
-        validationStatus: "검증 상태",
-        riskExplanation: "위험 설명",
-        marketContribution: "시장 기여도",
-        portfolioContribution: "포트폴리오 기여도",
-        health: "건전성",
-        topETFContribution: "상위 ETF 기여도",
-        etf: "ETF",
-        riskAssessment: "위험 평가",
-        riskLevel: "위험 수준",
-        recommendedAction: "권장 조치",
-        contribution: "기여도",
-        conclusion: "결론",
-        decisionScore: "의사결정 점수",
-        decisionQuality: "의사결정 품질",
-        adaptiveStrategy: "적응형 전략",
-        rebalance: "리밸런싱",
-        quality: "품질",
-        qualityTrend: "품질 추세",
-        marketView: "시장 관점",
-        strategyMode: "전략 모드",
-        adaptiveOverride: "적응형 오버라이드",
-        overrideReason: "오버라이드 이유",
-        finalStrategy: "최종 전략",
-        consistencyScore: "일관성 점수",
-        consistencySummary: "일관성 요약",
-        adaptiveAction: "적응형 조치",
-        adaptiveConfidence: "적응형 신뢰도",
-        adaptiveScore: "적응형 점수",
-        direction: "방향",
-        momentum: "모멘텀",
-        stability: "안정성",
-        gradeStability: "등급 안정성",
-        adaptiveSummary: "적응형 요약",
-        rebalanceAction: "리밸런싱 조치",
-        finalDecisionExecutionControl: "최종 의사결정 실행 및 통제",
-        finalDecision: "최종 의사결정",
-        executionDecision: "실행 의사결정",
-        executionStatus: "실행 상태",
-        executionAuthorization: "실행 승인",
-        certificationStatus: "인증 상태",
-        certificationScore: "인증 점수",
-        masterControlStatus: "마스터 통제 상태",
-        masterControlAction: "마스터 통제 조치",
-        masterControlRisk: "마스터 통제 위험",
-        masterControlScore: "마스터 통제 점수",
-        reassessmentStatus: "재평가 상태",
-        reassessmentRequired: "재평가 필요 여부",
-        finalAction: "최종 조치",
-        aiSummary: "AI 요약",
-        rankingCount: "랭킹 종목 수",
-        topETF: "상위 ETF",
-        aiScore: "AI 점수",
-        portfolioWeight: "비중",
-        aiOptimization: "AI 최적화",
-        factorAnalysis: "팩터 분석",
-        factorReturn: "수익률",
-        factorTrend: "추세",
-        factorSlope: "기울기",
-        aiFactorInsight: "AI 팩터 인사이트",
-        portfolioIntelligence: "포트폴리오 인텔리전스",
-        averageScore: "평균 점수",
-        highestScore: "최고 점수",
-        lowestScore: "최저 점수",
-        scoreSpread: "점수 편차",
-        totalDecisions: "전체 의사결정",
-        aiDecisionPerformance: "AI 의사결정 성과",
-        aiDecisionReliability: "AI 의사결정 신뢰성",
-        marketIntelligence: "GPT 시장 인텔리전스",
-        marketCondition: "시장 상태",
-        latestScore: "최신 점수",
-        previousScore: "이전 점수",
-        scoreChange: "점수 변화",
-        recommendedStrategy: "권장 전략",
-        languageEnglish: "English",
-        decisionIntelligenceTitle: "AI 의사결정 인텔리전스",
-        intelligenceScore: "인텔리전스 점수",
-        level: "수준",
-        confidenceScore: "신뢰도 점수",
-        status: "상태",
-        confidenceSummary: "신뢰도 요약",
-        confidenceExplainability: "신뢰도 설명",
-        positiveSignals: "긍정 신호",
-        supportingSignals: "지원 신호",
-        riskSignals: "위험 신호",
-        explanation: "설명",
-        confidenceAssessment: "신뢰도 평가",
-        assessment: "평가",
-        strongestSignals: "가장 강한 신호",
-        attentionSignals: "주의 신호",
-        assessmentSummary: "평가 요약",
-        decisionConfidenceRecommendation: "의사결정 신뢰도 권고",
-        recommendation: "권고",
-        action: "행동",
-        monitoring: "모니터링",
-        recommendationScore: "권고 점수",
-        recommendationSummary: "권고 요약",
-        aiDecisionValidation: "AI 의사결정 검증",
-        validation: "검증",
-        validationScore: "검증 점수",
-        decisionAlignment: "의사결정 정렬",
-        decisionConsistency: "의사결정 일관성",
-        reliability: "신뢰성",
-        optimization: "최적화",
-        validationSignals: "검증 신호",
-        validationSummary: "검증 요약",
-        aiDecisionValidationExplainability: "AI 의사결정 검증 설명",
-        validationStatus: "검증 상태",
-        riskExplanation: "위험 설명",
-        conclusion: "결론",
-        decisionScore: "의사결정 점수",
-        decisionQuality: "의사결정 품질",
-        adaptiveStrategy: "적응형 전략",
-        rebalance: "리밸런싱",
-        quality: "품질",
-        qualityTrend: "품질 추세",
-        marketView: "시장 관점",
-        currentDecision: "최근 의사결정",
-        market: "시장",
-    aiPortfolioAnalyst: "AI 포트폴리오 애널리스트",
-    current: "현재",
-    target: "목표",
-    noAdaptiveOverride: "적응형 오버라이드가 적용되지 않았습니다.",
-    decisionIntelligenceError: "AI 의사결정 인텔리전스 오류",
-    decisionIntelligenceLoadingFailed: "AI 의사결정 인텔리전스 로딩에 실패했습니다.",
-    gptAIDecision: "GPT AI 의사결정",
-    times: "회",
-    averageAllocation: "평균 배분",
-    gptMarketIntelligence: "GPT 시장 인텔리전스",
-    aiMarketStrategy: "AI 시장 전략",
-        date: "날짜",
-        strategyMode: "전략 모드",
-        none: "없음",
-        aiAnswer: "AI 답변",
-        aiDecisionOutcomeLearning: "AI 의사결정 결과 학습",
-        aiDecisionQuality: "AI 의사결정 품질",
-        aiDecisionStatistics: "AI 의사결정 통계",
-        aiDecisionSummary: "AI 의사결정 요약",
-        aiDecisionHistory: "AI 의사결정 이력",
-        aiDecisionScoreHistory: "AI 의사결정 점수 이력",
-        aiPortfolioOptimization: "AI 포트폴리오 최적화",
-        aiPortfolioRebalance: "AI 포트폴리오 리밸런싱",
-        allocation: "배분",
-        marketConfidence: "시장 신뢰도",
-        allocationReason: "배분 사유",
-        cashWeight: "현금 비중",
-        contribution: "기여도",
-        decisionConfidence: "의사결정 신뢰도",
-        decisionConfidenceIntelligence: "의사결정 신뢰도 인텔리전스",
-        etf: "ETF",
-        health: "건전성",
-        healthScore: "건전성 점수",
-        impact: "영향도",
-        marketAnalysis: "시장 분석",
-        marketContribution: "시장 기여도",
-        marketRegime: "시장 국면",
-        portfolioContribution: "포트폴리오 기여도",
-        reason: "사유",
-        recommendedAction: "권고 행동",
-        regime: "국면",
-        risk: "위험",
-        riskAssessment: "위험 평가",
-        riskLevel: "위험 수준",
-        score: "점수",
-        summary: "요약",
-        aiOpinion: "AI 의견",
-        diversification: "분산도",
-        topETFContribution: "최상위 ETF 기여도",
-        decision: "의사결정",
-        strategy: "전략",
-        strategyUsage: "전략 사용 현황",
-        adaptiveOverride: "적응형 오버라이드",
-        overrideReason: "오버라이드 사유",
-        finalStrategy: "최종 전략",
-        consistencyScore: "일관성 점수",
-        consistencySummary: "일관성 요약",
-        adaptiveAction: "적응형 행동",
-        adaptiveConfidence: "적응형 신뢰도",
-        adaptiveScore: "적응형 점수",
-        direction: "방향",
-        momentum: "모멘텀",
-        stability: "안정성",
-        gradeStability: "등급 안정성",
-        consistency: "일관성",
-        adaptiveSummary: "적응형 요약",
-        rebalanceAction: "리밸런싱 행동",
-        finalDecision: "최종 의사결정",
-        executionDecision: "실행 의사결정",
-        executionStatus: "실행 상태",
-        executionAuthorization: "실행 승인",
-        certificationStatus: "인증 상태",
-        certificationScore: "인증 점수",
-        masterControlStatus: "마스터 제어 상태",
-        masterControlAction: "마스터 제어 행동",
-        masterControlRisk: "마스터 제어 위험",
-        masterControlScore: "마스터 제어 점수",
-        reassessmentStatus: "재평가 상태",
-        reassessmentRequired: "재평가 필요 여부",
-        finalAction: "최종 행동",
-        aiSummary: "AI 요약",
-        lastSavedAI: "마지막 저장 AI 전략",
-        currentViewStrategy: "현재 보기 전략",
-        recentAverage: "최근 평균",
-        averageOutcomeScore: "평균 결과 점수",
-        aiStatus: "AI 상태",
-        aiMessage: "AI 메시지",
-        finalDecisionExecutionControl: "최종 의사결정 실행 및 제어",
-        portfolioAnalytics: "포트폴리오 분석",
-        portfolioHistory: "포트폴리오 이력",
-        marketStrength: "시장 강도",
-        breadth: "시장 확산",
+        "dashboardTitle": "GPT Quant ETF Dashboard",
+        "dashboardSubtitle": "AI 기반 ETF 순위 시스템",
+        "marketRegimeTitle": "AI 시장 국면",
+        "marketRegimeLoading": "시장 국면 로딩 중...",
+        "portfolioOptimizationTitle": "GPT AI 포트폴리오 최적화",
+        "conservative": "보수형",
+        "balanced": "균형형",
+        "aggressive": "공격형",
+        "languageKorean": "한국어",
+        "languageEnglish": "영어",
+        "intelligenceTitle": "GPT ETF 인텔리전스",
+        "aiMarketStrategy": "AI 시장 전략",
+        "marketStrength": "시장 강도",
+        "breadth": "시장 폭",
+        "portfolioMode": "포트폴리오 유형",
+        "cashTarget": "목표 현금 비중",
+        "aiInsight": "AI 판단",
+        "trend": "추세",
+        "risk": "위험",
+        "opinion": "의견",
+        "scoreMomentum": "점수 탄력",
+        "aiDecisionGrade": "AI 의사결정 등급",
+        "aiGrade": "AI 등급",
+        "aiDecisionIntelligence": "AI 의사결정 인텔리전스",
+        "intelligenceScore": "인텔리전스 점수",
+        "grade": "등급",
+        "level": "수준",
+        "decisionConfidenceIntelligence": "의사결정 신뢰 지능",
+        "confidenceScore": "신뢰도 점수",
+        "aiAnalysisReasons": "AI 분석 사유",
+        "aiRecommendation": "AI 추천",
+        "aiScore": "AI 점수",
+        "detailAIInsight": "AI 인사이트",
+        "detailAIIntelligence": "AI 인텔리전스",
+        "detailEnhanced": "강화 점수 :",
+        "detailOpinion": "의견 :",
+        "detailPrediction": "예측 :",
+        "detailRisk": "위험 :",
+        "detailScore": "점수 :",
+        "detailScoreMomentum": "점수 탄력 :",
+        "detailTrend": "추세 :",
+        "etfEnhanced": "강화 점수",
+        "etfFinalScore": "최종 점수 :",
+        "etfGrade": "등급 :",
+        "etfReturnScore": "수익률 점수 :",
+        "etfScore": "점수",
+        "etfSignal": "신호 :",
+        "etfSlopeScore": "기울기 점수 :",
+        "etfStability": "안정성 :",
+        "etfTrendScore": "추세 점수 :",
+        "factorReturn": "수익률 요인 (번역보류)",
+        "factorSlope": "기울기 요인",
+        "factorTrend": "추세 요인",
+        "gptPortfolioIntelligence": "GPT 포트폴리오 정보",
+        "gptPortfolioInsight": "GPT 포트폴리오 판정",
+        "portfolioOptimization": "AI 최적화 :",
+        "portfolioStrategy": "포트폴리오 전략 :",
+        "portfolioWeight": "포트폴리오 비중",
+        "rankingAnalysis": "순위 분석",
+        "rankingCount": "순위 개수",
+        "scoreAnalysis": "점수 분석",
+        "signal": "신호",
+        "topETF": "Top ETF",
+        "decisionIntelligenceTitle": "의사결정 인텔리전스",
+        "aiDecisionHistory": "AI 의사결정 이력",
+        "aiDecisionTrend": "AI 의사결정 추세",
+        "aiDecisionScoreHistory": "AI 의사결정 점수 이력",
+        "recentAverage": "최근 평균",
+        "averageOutcomeScore": "평균 결과 점수",
+        "status": "상태",
+        "confidenceSummary": "신뢰도 요약",
+        "confidenceExplainability": "신뢰도 설명화",
+        "positiveSignals": "긍정 신호",
+        "supportingSignals": "지지 신호",
+        "riskSignals": "위험 신호",
+        "explanation": "설명",
+        "confidenceAssessment": "신뢰도 평가",
+        "assessment": "평가",
+        "strongestSignals": "최강 신호",
+        "attentionSignals": "주의 신호",
+        "assessmentSummary": "평가 요약",
+        "decisionConfidenceRecommendation": "의사결정 신뢰도 추천",
+        "recommendation": "추천",
+        "aiAnswer": "AI 답변",
+        "reason": "사유",
+        "action": "조치",
+        "monitoring": "모니터링",
+        "recommendationScore": "추천 점수",
+        "recommendationSummary": "추천 요약",
+        "aiMessage": "AI 메시지",
+        "riskAnalysis": "위험 분석",
+        "aiDecisionValidation": "AI 의사결정 검증",
+        "validation": "검증",
+        "validationScore": "검증 점수",
+        "decision": "의사결정",
+        "aiPortfolioRebalance": "AI 포트폴리오 균형 재조정",
+        "aiPortfolioOptimization": "AI 포트폴리오 최적화",
+        "recommendedMode": "추천 유형",
+        "enhanced": "강화",
+        "returnScore": "수익률 점수 (번역보류)",
+        "trendScore": "추세 점수",
+        "slopeScore": "기울기 점수",
+        "finalScore": "최종 점수",
+        "gptQuantAiInsight": "GPT Quant AI 분별",
+        "bonus": "보너스",
+        "investmentCharacter": "투자 성격",
+        "stableHolding": "안정적 보유",
+        "gptAnalyst": "GPT 애널리스트",
+        "score": "점수",
+        "confidence": "신뢰도",
+        "consistency": "일관성",
+        "strategy": "전략",
+        "decisionAlignment": "의사결정 정렬",
+        "decisionConsistency": "의사결정 일관화",
+        "reliability": "신뢰성",
+        "optimization": "최적화",
+        "validationSignals": "검증 신호",
+        "validationSummary": "검증 요약",
+        "aiDecisionValidationExplainability": "AI 의사결정 검증 설명화",
+        "validationStatus": "검증 상태",
+        "riskExplanation": "위험성 설명",
+        "marketContribution": "시장 기여도",
+        "portfolioContribution": "포트폴리오 기여도",
+        "health": "건전성",
+        "topETFContribution": "Top ETF 기여도",
+        "etf": "ETF",
+        "riskAssessment": "위험 평가",
+        "riskLevel": "위험 수준",
+        "recommendedAction": "권장 조치",
+        "contribution": "기여도",
+        "conclusion": "결론",
+        "decisionScore": "의사결정 점수",
+        "decisionQuality": "의사결정 품질",
+        "adaptiveStrategy": "적응형 전략",
+        "rebalance": "재균형",
+        "quality": "품질",
+        "qualityTrend": "품질 추세",
+        "marketView": "시장 관점",
+        "strategyMode": "전략 모드",
+        "currentDecision": "현재 의사결정",
+        "market": "시장",
+        "aiPortfolioAnalyst": "AI 포트폴리오 애널리스트",
+        "current": "현재 (번역보류)",
+        "target": "목표",
+        "noAdaptiveOverride": "신청한 거부가 적용되지 않음",
+        "decisionIntelligenceError": "AI 의사결정 인텔리전스 오류",
+        "decisionIntelligenceLoadingFailed": "AI 의사결정 인텔리전스 로딩 실패",
+        "gptAIDecision": "GPT AI 의사결정",
+        "times": "회",
+        "averageAllocation": "평균 배분",
+        "gptMarketIntelligence": "GPT 시장 정보",
+        "date": "날짜",
+        "none": "없음",
+        "aiDecisionOutcomeLearning": "AI 의사결정 결과 학습",
+        "aiDecisionPerformance": "AI 의사결정 성과",
+        "aiDecisionQuality": "AI 의사결정 품질",
+        "aiDecisionReliability": "AI 의사결정 신뢰도",
+        "aiDecisionStatistics": "AI 의사결정 통계",
+        "aiDecisionSummary": "AI 의사결정 요약",
+        "allocation": "배분",
+        "marketConfidence": "시장 신뢰도",
+        "allocationReason": "배분 사유",
+        "cashWeight": "현금 비중",
+        "decisionConfidence": "의사결정 신뢰도",
+        "factorAnalysis": "팩터 분석",
+        "healthScore": "건전성 점수",
+        "impact": "영향도",
+        "marketAnalysis": "시장 분석",
+        "marketRegime": "시장 국면",
+        "regime": "국면",
+        "summary": "요약",
+        "aiOpinion": "AI 의견",
+        "diversification": "분산 투자",
+        "strategyUsage": "전략 활용",
+        "adaptiveOverride": "적응형 거부",
+        "overrideReason": "거부 사유",
+        "finalStrategy": "최종 전략",
+        "consistencyScore": "일관성 점수",
+        "consistencySummary": "일관성 요약",
+        "adaptiveAction": "적응형 조치",
+        "adaptiveConfidence": "적응형 신뢰도",
+        "adaptiveScore": "적응형 점수",
+        "direction": "방향",
+        "momentum": "탄력",
+        "stability": "안정성",
+        "gradeStability": "등급 안정성",
+        "adaptiveSummary": "적응형 요약",
+        "rebalanceAction": "재균형 조치",
+        "finalDecisionExecutionControl": "최종 의사결정 실행 및 통제",
+        "finalDecision": "최종 의사결정",
+        "executionDecision": "실행 의사결정",
+        "executionStatus": "실행 상태",
+        "executionAuthorization": "실행 승인",
+        "certificationStatus": "인증 상태",
+        "certificationScore": "인증 점수",
+        "masterControlStatus": "마스터 통제 상태",
+        "masterControlAction": "마스터 통제 조치",
+        "masterControlRisk": "마스터 통제 위험",
+        "masterControlScore": "마스터 통제 점수",
+        "reassessmentStatus": "재평가 상태",
+        "reassessmentRequired": "재평가 필요 여부",
+        "finalAction": "최종 조치",
+        "aiSummary": "AI 요약",
+        "aiOptimization": "AI 최적화",
+        "aiFactorInsight": "AI 원인 분석",
+        "portfolioIntelligence": "GPT 포트폴리오 정보",
+        "averageScore": "평균 점수",
+        "highestScore": "최고 점수",
+        "lowestScore": "최저 점수",
+        "scoreSpread": "점수 편차",
+        "totalDecisions": "총 의사결정",
+        "marketIntelligence": "시장 정보",
+        "marketCondition": "시장 상태",
+        "latestScore": "최근 점수",
+        "previousScore": "이전 점수",
+        "scoreChange": "점수 변화",
+        "recommendedStrategy": "추천 전략",
+        "lastSavedAI": "최근 저장된 AI",
+        "currentViewStrategy": "현재 시점 전략",
+        "aiStatus": "AI 상태",
+        "portfolioAnalytics": "포트폴리오 분석",
+        "portfolioHistory": "포트폴리오 이력"
     },
 
     en: {
+        "portfolioInsight": "\uD3EC\uD2B8\uD3F4\uB9AC\uC624 \uC778\uC0AC\uC774\uD2B8",
         dashboardTitle: "GPT Quant ETF Dashboard",
         dashboardSubtitle: "AI Powered ETF Ranking System",
         marketRegimeTitle: "AI Market Regime",
@@ -5548,3 +5455,11 @@ function applyDashboardLanguage() {
         }
     }
 }
+
+applyDashboardLanguage();
+
+/* ============================================================
+   V19: Portfolio reference emojis
+   Presentation-only additions. No data or decision logic changed.
+   ============================================================ */
+/* V20: Portfolio Optimization visual cleanup */

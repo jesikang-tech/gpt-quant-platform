@@ -879,3 +879,1732 @@ header h1 {
 #language-menu button:hover {
     background: #f5f5f5;
 }
+
+/* ============================================================
+   Ver.1.1 Dashboard compact two-column layout
+   Left controls are visual placeholders only; no JS/DB binding.
+   ============================================================ */
+
+.ver11-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 72%) minmax(200px, 28%);
+  gap: 18px;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* V12: Put the analysis/main area on the left (72%)
+   and the selection sidebar on the right (28%). */
+.ver11-sidebar {
+  order: 2;
+}
+
+.ver11-main {
+  order: 1;
+  min-width: 0;
+}
+.ver11-sidebar {
+  position: sticky;
+  top: 12px;
+  padding: 16px;
+  border: 1px solid #d9dde3;
+  border-radius: 10px;
+  background: #f1f3f5;
+  color: #737981;
+  opacity: 0.82;
+  box-sizing: border-box;
+}
+
+.ver11-sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6f757c;
+  margin-bottom: 3px;
+}
+
+.ver11-sidebar-subtitle {
+  font-size: 12px;
+  color: #9aa0a6;
+  margin-bottom: 14px;
+}
+
+.ver11-control-group {
+  margin-bottom: 11px;
+}
+
+.ver11-control-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #777d84;
+}
+
+.ver11-control-group input,
+.ver11-control-group select {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  border: 1px solid #d2d6db;
+  border-radius: 6px;
+  background: #e7e9ec;
+  color: #8a9097;
+  font-size: 12px;
+}
+
+.ver11-control-group input:disabled,
+.ver11-control-group select:disabled {
+  cursor: not-allowed;
+}
+
+.ver11-checks {
+  display: grid;
+  gap: 8px;
+  margin: 13px 0 15px;
+  padding-top: 12px;
+  border-top: 1px solid #d9dde3;
+}
+
+.ver11-checks label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #858b92;
+}
+
+.ver11-checks input {
+  margin: 0;
+  accent-color: #b8bdc3;
+}
+
+.ver11-actions {
+  display: grid;
+  gap: 7px;
+}
+
+.ver11-actions button {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #d0d4d9;
+  border-radius: 6px;
+  background: #e1e3e6;
+  color: #979ca2;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+.ver11-main {
+  min-width: 0;
+}
+
+.ver11-main > #summary,
+.ver11-main > #market-regime,
+.ver11-main > #portfolio-advisor,
+.ver11-main > #ai-decision,
+.ver11-main > #ai-optimization,
+.ver11-main > #portfolio-explain,
+.ver11-main > #portfolio-analyst,
+.ver11-main > #ai-decision-history,
+.ver11-main > #portfolio-history,
+.ver11-main > #dashboard,
+.ver11-main > #detail-panel,
+.ver11-main > h2,
+.ver11-main > #historyChart {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ver11-main #summary,
+.ver11-main #market-regime,
+.ver11-main #portfolio-advisor,
+.ver11-main #ai-decision,
+.ver11-main #ai-optimization,
+.ver11-main #portfolio-explain,
+.ver11-main #portfolio-analyst,
+.ver11-main #ai-decision-history,
+.ver11-main #portfolio-history {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .ver11-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ver11-sidebar {
+    position: static;
+  }
+}
+
+/* ============================================================
+   Ver.1.1 Dashboard UI refinement V6
+   Visual refinement only. No JS/DB binding.
+   ============================================================ */
+
+/* 1) Compact the top header. */
+body > header {
+  padding-top: 12px;
+  padding-bottom: 10px;
+}
+
+body > header h1 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 36px;
+  line-height: 1.15;
+}
+
+body > header p {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* 2) Tighten the two-column layout slightly without changing 34/66. */
+.ver11-layout {
+  gap: 16px;
+}
+
+.ver11-sidebar {
+  padding: 14px;
+}
+
+.ver11-sidebar-title {
+  font-size: 16px;
+}
+
+.ver11-sidebar-subtitle {
+  margin-bottom: 10px;
+  font-size: 11px;
+}
+
+.ver11-control-group {
+  margin-bottom: 8px;
+}
+
+.ver11-control-group label {
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+
+.ver11-control-group input,
+.ver11-control-group select {
+  min-height: 31px;
+  padding: 5px 7px;
+  font-size: 11px;
+}
+
+.ver11-checks {
+  gap: 6px;
+  margin-top: 10px;
+  margin-bottom: 11px;
+  padding-top: 9px;
+}
+
+.ver11-checks label {
+  font-size: 11px;
+}
+
+.ver11-actions {
+  gap: 6px;
+}
+
+.ver11-actions button {
+  min-height: 31px;
+  font-size: 11px;
+}
+
+/* 3) Compact the first GPT ETF Intelligence block only. */
+.ver11-main > #summary {
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.ver11-main > #summary h2 {
+  margin-top: 6px;
+  margin-bottom: 8px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.ver11-main > #summary p {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  line-height: 1.25;
+}
+
+.ver11-main > #summary > div {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+/* Keep the existing intelligence card readable while reducing vertical waste. */
+.ver11-main > #summary section,
+.ver11-main > #summary article {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 900px) {
+  body > header h1 {
+    font-size: 30px;
+  }
+}
+
+/* ============================================================
+   Ver.1.1 Dashboard Summary Compact V7
+   Summary layout only. No JS / API / DB changes.
+   ============================================================ */
+
+/*
+   The existing dashboard.js creates:
+   .summary-card
+     .intelligence-title
+     p (ranking count)
+     p (top ETF)
+     p (signal)
+     .intelligence-score
+     p (grade)
+     .recommendation-box
+   This V7 changes only their visual arrangement.
+*/
+
+/* Main intelligence card: compact, horizontal KPI strip. */
+.ver11-main #summary .summary-card {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px 8px;
+  padding: 14px 16px 16px;
+  box-sizing: border-box;
+}
+
+/* Title spans the complete card width. */
+.ver11-main #summary .summary-card .intelligence-title {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 21px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Five top-level KPIs occupy one compact row. */
+.ver11-main #summary .summary-card > p,
+.ver11-main #summary .summary-card > .intelligence-score {
+  margin: 0;
+  min-width: 0;
+  padding: 8px 5px;
+  border-radius: 6px;
+  background: #f6f7f8;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+/* Prevent long labels/values from making the cards excessively tall. */
+.ver11-main #summary .summary-card > p b,
+.ver11-main #summary .summary-card > .intelligence-score b {
+  font-size: 15px;
+}
+
+/* Recommendation remains the main emphasis and spans all five columns. */
+.ver11-main #summary .summary-card > .recommendation-box {
+  grid-column: 1 / -1;
+  margin: 5px 0 0;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+/* Recommendation header and signal become compact. */
+.ver11-main #summary .recommendation-title {
+  margin: 0 0 2px;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.ver11-main #summary .recommendation-signal {
+  margin: 0;
+  font-size: 27px;
+  line-height: 1.05;
+}
+
+/* Confidence and analysis reasons share the next row. */
+.ver11-main #summary .recommendation-confidence {
+  margin: 7px 0 0;
+  padding: 7px 8px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.ver11-main #summary .recommendation-confidence b {
+  font-size: 14px;
+}
+
+.ver11-main #summary .recommendation-reasons {
+  margin-top: 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.ver11-main #summary .reason-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.ver11-main #summary .reason-item {
+  margin: 0;
+  padding: 7px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  box-sizing: border-box;
+}
+
+/* Keep the compact design usable on narrower screens. */
+@media (max-width: 1100px) {
+  .ver11-main #summary .summary-card {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ver11-main #summary .summary-card > p,
+  .ver11-main #summary .summary-card > .intelligence-score {
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 700px) {
+  .ver11-main #summary .summary-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ver11-main #summary .recommendation-reasons {
+    grid-template-columns: 1fr;
+  }
+
+  .ver11-main #summary .reason-title {
+    grid-column: auto;
+  }
+}
+
+/* ============================================================
+   Ver.1.1 GPT Analyst Card Refinement V8
+   Visual refinement only. No JS / API / DB changes.
+   ============================================================ */
+
+/*
+   The existing analyst area is kept functionally unchanged.
+   Only its visual card width, spacing and text wrapping are
+   adjusted so the expanded 66% main column is used naturally.
+*/
+
+.ver11-main > #portfolio-analyst {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.ver11-main > #portfolio-analyst .analyst-card,
+.ver11-main > #portfolio-analyst .portfolio-analyst-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent the existing narrow card from staying stuck on the left. */
+.ver11-main > #portfolio-analyst > div {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Keep analyst title and message readable without excessive height. */
+.ver11-main > #portfolio-analyst h2,
+.ver11-main > #portfolio-analyst h3 {
+  margin-top: 4px;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-analyst p {
+  max-width: 100%;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+/* If the analyst message is presented inside a generated card,
+   let the message use the full available width. */
+.ver11-main > #portfolio-analyst .analyst-message,
+.ver11-main > #portfolio-analyst .portfolio-analyst-message {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  text-align: center;
+  line-height: 1.45;
+}
+
+/* Do not let the analyst area create an oversized empty region. */
+.ver11-main > #portfolio-analyst {
+  min-height: 0;
+}
+
+@media (max-width: 700px) {
+  .ver11-main > #portfolio-analyst {
+    padding: 10px 12px;
+  }
+}
+
+/* ============================================================
+   Ver.1.1 GPT Analyst Width Fix V9
+   Exact target: .intelligence-opinion inside #summary.
+   Visual-only change. No JS / API / DB changes.
+   ============================================================ */
+
+/*
+   dashboard.js places .intelligence-opinion as the final direct
+   child of .summary-card. V7 changed the parent to a 5-column
+   grid, so this item was automatically assigned to one column.
+   Make it span the full summary width.
+*/
+
+.ver11-main #summary .summary-card > .intelligence-opinion {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 5px 0 0;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+
+/* Keep the analyst title and opinion visually compact. */
+.ver11-main #summary .summary-card > .intelligence-opinion br {
+  line-height: 1;
+}
+
+/* Avoid a narrow text block inside the full-width analyst card. */
+.ver11-main #summary .summary-card > .intelligence-opinion * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   Ver.1.1 AI Market Regime Compact V10
+   Visual-only refinement. No JS / API / DB changes.
+   ============================================================ */
+
+/* Compact the section heading that appears immediately below
+   the Intelligence / GPT Analyst area. */
+.ver11-main > #market-regime {
+  width: 100%;
+  max-width: 100%;
+  margin: 8px 0;
+  box-sizing: border-box;
+}
+
+.ver11-main > #market-regime > h2 {
+  margin: 0 0 7px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+/* Use the full 66% main column and reduce the original card's
+   large padding/spacing. */
+.ver11-main > #market-regime .market-regime-card {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 14px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Compact regime badge/title. */
+.ver11-main > #market-regime .market-regime-card h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+/* The regime card's metric paragraphs are kept compact and
+   horizontally readable without changing their content. */
+.ver11-main > #market-regime .market-regime-card p {
+  margin: 5px 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* Keep bold metric values visually clear at the reduced scale. */
+.ver11-main > #market-regime .market-regime-card b {
+  font-size: 13px;
+}
+
+/* Avoid the original 20px card spacing from reappearing through
+   generic headings/elements inside the regime card. */
+.ver11-main > #market-regime .market-regime-card > *:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  .ver11-main > #market-regime > h2 {
+    font-size: 20px;
+  }
+
+  .ver11-main > #market-regime .market-regime-card {
+    padding: 10px 12px;
+  }
+}
+
+/* ============================================================
+   Ver.1.1 AI Market Regime Horizontal V11
+   Exact target: metric layout inside .market-regime-card.
+   Visual-only change. No JS / API / DB changes.
+   ============================================================ */
+
+/*
+   loadMarketRegime() creates one h3 followed by nine p elements.
+   The original p elements stack vertically. V11 keeps all data
+   unchanged but presents the metrics as compact horizontal cards.
+*/
+
+.ver11-main > #market-regime .market-regime-card {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px 8px;
+  align-items: stretch;
+}
+
+/* Regime badge remains prominent and spans the complete card. */
+.ver11-main > #market-regime .market-regime-card > h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 1px;
+  padding: 2px 0 4px;
+  text-align: center;
+}
+
+/* Nine metrics become compact cells. */
+.ver11-main > #market-regime .market-regime-card > p {
+  margin: 0;
+  padding: 7px 5px;
+  min-width: 0;
+  border-radius: 6px;
+  background: #f6f7f8;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.3;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+/* Make metric values slightly stronger without enlarging the card. */
+.ver11-main > #market-regime .market-regime-card > p b {
+  font-size: 13px;
+}
+
+/* The final strategy cell uses the full remaining row width so
+   "Balanced Portfolio" does not become unnecessarily narrow. */
+.ver11-main > #market-regime .market-regime-card > p:last-child {
+  grid-column: 4 / -1;
+}
+
+/* Keep the original colored regime badge dimensions controlled. */
+.ver11-main > #market-regime .market-regime-card > h3 span {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  line-height: 1.1;
+}
+
+@media (max-width: 900px) {
+  .ver11-main > #market-regime .market-regime-card {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ver11-main > #market-regime .market-regime-card > p:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #market-regime .market-regime-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ver11-main > #market-regime .market-regime-card > p:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* ============================================================
+   V13: Compact GPT AI Portfolio Optimization
+   Main area is the left 72% column from V12.
+   Content and logic are unchanged; CSS only.
+   ============================================================ */
+
+.ver11-main > #portfolio-advisor {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.ver11-main > #portfolio-advisor > h2 {
+  margin: 4px 0 7px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin: 0;
+}
+
+/* Strategy heading spans the full portfolio area. */
+.ver11-main > #portfolio-advisor #portfolio-content > h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+/* ETF allocation cards use the wide 72% area efficiently. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 11px;
+  border-radius: 8px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .ticker {
+  margin: 0 0 5px;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .portfolio-weight,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .portfolio-score,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .portfolio-optimization {
+  margin: 4px 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* Factor section remains fully visible but uses less vertical space. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .portfolio-factor {
+  margin-top: 7px;
+  padding-top: 6px;
+  line-height: 1.35;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .portfolio-factor > b {
+  font-size: 12px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .factor-item {
+  margin-bottom: 6px;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .factor-bar {
+  margin: 3px 0;
+  height: 8px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card .factor-insight {
+  margin-top: 6px;
+  padding: 7px 8px;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* Portfolio Intelligence spans the complete width and becomes a compact grid. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 5px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px 7px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence p {
+  min-width: 0;
+  margin: 0;
+  padding: 6px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence p:nth-of-type(5) {
+  grid-column: 1 / -1;
+}
+
+/* Portfolio Insight spans the complete width and uses three compact columns. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 8px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p {
+  min-width: 0;
+  margin: 0;
+  padding: 7px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p:first-of-type,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p:nth-of-type(2) {
+  grid-column: span 3;
+}
+
+/* Keep the compact layout usable as the browser narrows. */
+@media (max-width: 1100px) {
+  .ver11-main > #portfolio-advisor #portfolio-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p:first-of-type,
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p:nth-of-type(2) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .ver11-main > #portfolio-advisor #portfolio-content {
+    grid-template-columns: 1fr;
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence,
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight {
+    grid-template-columns: 1fr;
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-intelligence p:nth-of-type(5),
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p:first-of-type,
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-insight p:nth-of-type(2) {
+    grid-column: auto;
+  }
+}
+
+/* ============================================================
+   V14: Compact Portfolio Intelligence / Portfolio Insight
+   Main area is the left 72% column from V12.
+   Content and logic are unchanged; CSS only.
+   ============================================================ */
+
+/* Portfolio Intelligence: use the wide 72% column efficiently. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence h3 {
+  margin: 0 0 7px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p {
+  display: inline-block;
+  vertical-align: top;
+  width: calc(25% - 7px);
+  margin: 3px 6px 3px 0;
+  padding: 6px 7px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  min-height: 31px;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(4n) {
+  margin-right: 0;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence b {
+  font-size: 13px;
+}
+
+/* Allocation line can use the full width because it may contain
+   several ticker/weight entries. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:last-child {
+  width: 100%;
+  margin-right: 0;
+}
+
+/* Portfolio Insight: compact two-column information layout. */
+.ver11-main > #portfolio-advisor .portfolio-insight {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight h3 {
+  margin: 0 0 7px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight p {
+  display: inline-block;
+  vertical-align: top;
+  width: calc(50% - 5px);
+  margin: 3px 6px 3px 0;
+  padding: 7px 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  min-height: 42px;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(even) {
+  margin-right: 0;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight p:first-of-type,
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(2) {
+  min-height: 54px;
+}
+
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p {
+    width: calc(50% - 4px);
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(4n) {
+    margin-right: 6px;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(2n) {
+    margin-right: 0;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:last-child {
+    width: 100%;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p,
+  .ver11-main > #portfolio-advisor .portfolio-insight p {
+    width: 100%;
+    margin-right: 0;
+  }
+}
+
+/* ============================================================
+   V15: Fix Portfolio Intelligence wrapping
+   Keep V14 Portfolio Insight unchanged.
+   Content and logic are unchanged; CSS only.
+   ============================================================ */
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 6px 8px;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 3px;
+  padding: 0;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p {
+  display: block;
+  width: auto;
+  min-width: 0;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(1),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(2),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(4) {
+  grid-column: span 3;
+  white-space: nowrap;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(5) {
+  grid-column: 1 / -1;
+  white-space: normal;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(6),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(7),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(8) {
+  grid-column: span 2;
+  white-space: nowrap;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(9) {
+  grid-column: span 6;
+  white-space: normal;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence b {
+  font-size: 13px;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence span {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(1),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(2),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(3),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(4) {
+    grid-column: span 3;
+    white-space: normal;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(6),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(7),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(8) {
+    grid-column: span 2;
+    white-space: normal;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(9) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence {
+    grid-template-columns: 1fr;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(n) {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}
+
+/* ============================================================
+   V16: Final compact layout for Portfolio Intelligence / Portfolio Insight
+   User-approved visual arrangement.
+   Content and logic are unchanged; CSS only.
+   ============================================================ */
+
+/* ---------------- Portfolio Intelligence ---------------- */
+
+/* Four primary metrics: one single row. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(1),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(2),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(4) {
+  grid-column: span 3;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Allocation + three market metrics: one single row. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(5) {
+  grid-column: span 6;
+  white-space: nowrap;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(6),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(7),
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(8) {
+  grid-column: span 2;
+  white-space: nowrap;
+}
+
+/* AI Rebalance remains a separate full-width recommendation row. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(9) {
+  grid-column: 1 / -1;
+  white-space: normal;
+  min-height: 34px;
+}
+
+/* ---------------- Portfolio Insight ---------------- */
+
+.ver11-main > #portfolio-advisor .portfolio-insight {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
+/* Title spans the full insight panel. */
+.ver11-main > #portfolio-advisor .portfolio-insight h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 18px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Summary : AI Opinion = 1 : 2 on one row. */
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(1) {
+  grid-column: span 4;
+  min-height: 64px;
+  margin: 0;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(2) {
+  grid-column: span 8;
+  min-height: 64px;
+  margin: 0;
+}
+
+/* Average Score / Top ETF / Diversification / Cash Weight = one row. */
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(4),
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(5),
+.ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(6) {
+  grid-column: span 3;
+  min-height: 44px;
+  margin: 0;
+}
+
+/* Preserve readable text inside the wider AI Opinion area. */
+.ver11-main > #portfolio-advisor .portfolio-insight p {
+  width: auto;
+  box-sizing: border-box;
+  padding: 7px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(1),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(2),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(3),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(4) {
+    grid-column: span 3;
+    white-space: normal;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(5) {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(6),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(7),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(8) {
+    grid-column: span 4;
+    white-space: normal;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(9) {
+    grid-column: 1 / -1;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(1) {
+    grid-column: span 4;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(2) {
+    grid-column: span 8;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(3),
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(4),
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(5),
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(6) {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence,
+  .ver11-main > #portfolio-advisor .portfolio-insight {
+    grid-template-columns: 1fr;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence p:nth-of-type(n),
+  .ver11-main > #portfolio-advisor .portfolio-insight p:nth-of-type(n) {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}
+
+/* ============================================================
+   V17: Robust final grid override
+   Exact user-approved arrangement. CSS only.
+   ============================================================ */
+
+/* Force the Intelligence container to be a real 12-column grid. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 6px 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Row 1: Health / Risk / Confidence / Cash = 4 equal cells. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(1),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(2),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(4) {
+  grid-column: span 3 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Row 2: Allocation / Regime / Strength / Confidence.
+   Allocation gets twice the width of each market metric. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5) {
+  grid-column: span 6 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+  grid-column: span 2 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Row 3: AI Rebalance full width. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(9) {
+  grid-column: 1 / -1 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: normal !important;
+}
+
+/* Force the Insight container to the same robust grid. */
+.ver11-main > #portfolio-advisor .portfolio-insight {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Row 1: Summary : AI Opinion = 1 : 2. */
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(1) {
+  grid-column: span 4 !important;
+  width: auto !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(2) {
+  grid-column: span 8 !important;
+  width: auto !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Row 2: Average Score / Top ETF / Diversification / Cash Weight. */
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(4),
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(5),
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(6) {
+  grid-column: span 3 !important;
+  width: auto !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Keep labels and values readable without changing content. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence p,
+.ver11-main > #portfolio-advisor .portfolio-insight p {
+  box-sizing: border-box !important;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence,
+  .ver11-main > #portfolio-advisor .portfolio-insight {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(n),
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(n) {
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #portfolio-advisor .portfolio-intelligence,
+  .ver11-main > #portfolio-advisor .portfolio-insight {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(n),
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(n) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* ============================================================
+   V18: User-approved compact portfolio layout
+   Exact visual arrangement requested from the edited reference.
+   Content and logic are unchanged; CSS only.
+   ============================================================ */
+
+/* ---------------- CASH card ----------------
+   Keep CASH title on top, then put Weight / Score / AI Optimization
+   on one horizontal row. The fourth portfolio card is CASH in the
+   existing generated portfolio order. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .ticker {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-weight,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-score,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-optimization {
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* ---------------- Portfolio Intelligence ---------------- */
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 6px 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Row 1: Health / Risk / Confidence / Cash = equal 1:1:1:1. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(1),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(2),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(4) {
+  grid-column: span 3 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Row 2: Allocation / Market Regime / Market Strength / Market Confidence
+   = 2:1:1:1. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5) {
+  grid-column: span 6 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+  grid-column: span 2 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* AI Rebalance: full-width row. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(9) {
+  grid-column: 1 / -1 !important;
+  width: auto !important;
+  margin: 0 !important;
+  white-space: normal !important;
+}
+
+/* ---------------- Portfolio Insight ---------------- */
+
+.ver11-main > #portfolio-advisor .portfolio-insight {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Row 1: Summary : AI Opinion = 1 : 3. */
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(1) {
+  grid-column: span 3 !important;
+  width: auto !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(2) {
+  grid-column: span 9 !important;
+  width: auto !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Row 2: Average Score / Top ETF / Diversification / Cash Weight = equal. */
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(4),
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(5),
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(6) {
+  grid-column: span 3 !important;
+  width: auto !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Preserve the compact typography and prevent accidental overflow. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence p,
+.ver11-main > #portfolio-advisor .portfolio-insight p {
+  box-sizing: border-box !important;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* Responsive fallback. */
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence,
+  .ver11-main > #portfolio-advisor .portfolio-insight {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(1),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(2),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(3),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(4) {
+    grid-column: span 3 !important;
+    white-space: normal !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5) {
+    grid-column: 1 / -1 !important;
+    white-space: normal !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+    grid-column: span 2 !important;
+    white-space: normal !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(1) {
+    grid-column: span 2 !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(2) {
+    grid-column: span 4 !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(3),
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(4),
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(5),
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(6) {
+    grid-column: span 3 !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence,
+  .ver11-main > #portfolio-advisor .portfolio-insight {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .ticker,
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-weight,
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-score,
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-optimization,
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(n),
+  .ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(n) {
+    grid-column: 1 / -1 !important;
+    white-space: normal !important;
+  }
+}
+/* ============================================================
+   V19: User-approved portfolio optimization refinement
+   CSS only: CASH full width + Intelligence middle row 2:1:1:1.
+   ============================================================ */
+
+/* CASH is the final portfolio card in the current generated portfolio. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep the CASH internals horizontal across the full available width. */
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child .ticker {
+  grid-column: 1 / -1 !important;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child .portfolio-weight,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child .portfolio-score,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child .portfolio-optimization {
+  min-width: 0 !important;
+}
+
+/* Portfolio Intelligence: force the requested 2:1:1:1 middle row. */
+.ver11-main > #portfolio-advisor .portfolio-intelligence {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5) {
+  grid-column: span 6 !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+  grid-column: span 2 !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Responsive fallback. */
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5) {
+    grid-column: 1 / -1 !important;
+    white-space: normal !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+    grid-column: span 4 !important;
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+    grid-column: 1 / -1 !important;
+    white-space: normal !important;
+  }
+}
+/* ============================================================
+   V20: Portfolio Optimization visual cleanup
+   CSS only: CASH full width + Intelligence 2:1:1:1 middle row
+   ============================================================ */
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .ticker {
+  grid-column: 1 / -1 !important;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px 12px !important;
+  align-items: center !important;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .ticker {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-weight,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-score,
+.ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .portfolio-optimization {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence {
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(1),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(2),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(3),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(4) {
+  grid-column: span 3 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(5) {
+  grid-column: span 6 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(6),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(7),
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(8) {
+  grid-column: span 2 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-intelligence > p:nth-of-type(9) {
+  grid-column: 1 / -1 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight {
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(1) {
+  grid-column: span 3 !important;
+}
+
+.ver11-main > #portfolio-advisor .portfolio-insight > p:nth-of-type(2) {
+  grid-column: span 9 !important;
+}
+
+@media (max-width: 900px) {
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ver11-main > #portfolio-advisor #portfolio-content > .portfolio-card:nth-of-type(4) .ticker,
+  .ver11-main > #portfolio-advisor .portfolio-intelligence > p,
+  .ver11-main > #portfolio-advisor .portfolio-insight > p {
+    grid-column: 1 / -1 !important;
+  }
+}
