@@ -2608,3 +2608,621 @@ body > header p {
     grid-column: 1 / -1 !important;
   }
 }
+
+/* Ver.1.1 Portfolio Horizontal Summary */
+
+.portfolio-summary-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    margin: 14px 0 22px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: #f7f8fa;
+}
+
+.portfolio-summary-item {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.portfolio-summary-label {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.portfolio-summary-value {
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.portfolio-summary-divider,
+.market-info-divider {
+    width: 1px;
+    height: 34px;
+    background: #d9dde3;
+}
+
+.market-info-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: #f7f8fa;
+}
+
+.market-info-item {
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.market-info-label {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.market-info-value {
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .portfolio-summary-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .portfolio-summary-divider,
+    .market-info-divider {
+        display: none;
+    }
+
+    .market-info-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+}
+
+@media (max-width: 600px) {
+    .market-info-row {
+        grid-template-columns: 1fr;
+    }
+
+    .portfolio-summary-item,
+    .market-info-item {
+        justify-content: space-between;
+    }
+}
+/* Ver.1.1 Portfolio Summary Final Compact Refinement */
+.portfolio-summary-item {
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 0;
+}
+
+.portfolio-summary-item:first-child {
+    gap: 8px;
+}
+
+.portfolio-summary-item:not(:first-child) .portfolio-summary-value {
+    font-size: 65% !important;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.portfolio-summary-label,
+.portfolio-summary-value {
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .portfolio-summary-item:not(:first-child) .portfolio-summary-value {
+        font-size: 65% !important;
+        font-weight: 700;
+    }
+}
+/* Ver.1.1 AI Market Strategy Responsive Layout */
+.market-strategy-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 18px;
+    align-items: center;
+}
+
+.market-strategy-card h3 {
+    grid-column: 1 / -1;
+    margin-bottom: 4px;
+}
+
+.market-strategy-card p {
+    margin: 0;
+    min-width: 0;
+    line-height: 1.6;
+}
+
+.market-strategy-card p:last-child {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+}
+
+.market-strategy-card p:last-child br {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .market-strategy-card {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .market-strategy-card {
+        grid-template-columns: 1fr;
+    }
+
+    .market-strategy-card p:last-child {
+        grid-column: 1;
+    }
+}
+
+/* Ver.1.1 GPT AI Decision Responsive Card */
+.ai-decision-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 18px;
+    align-items: center;
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+    box-sizing: border-box;
+}
+
+.ai-decision-card h3 {
+    grid-column: 1 / -1;
+    margin: 0 0 6px 0;
+    font-size: 22px;
+}
+
+.ai-decision-card p {
+    margin: 0;
+    min-width: 0;
+    line-height: 1.6;
+}
+
+.ai-decision-card p:nth-of-type(4) br,
+.ai-decision-card p:nth-of-type(5) br {
+    display: none;
+}
+
+.ai-decision-card p:nth-of-type(6),
+.ai-decision-card p:nth-of-type(7) {
+    grid-column: 1 / -1;
+}
+
+.ai-decision-card p:nth-of-type(6) {
+    margin-top: 4px;
+}
+
+.ai-decision-card p:nth-of-type(7) {
+    margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+    .ai-decision-card {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .ai-decision-card {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-decision-card p:nth-of-type(6),
+    .ai-decision-card p:nth-of-type(7) {
+        grid-column: 1;
+    }
+}
+
+/* Ver.1.1 AI Decision Intelligence Card Layout */
+#ai-decision-intelligence {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#ai-decision-intelligence > div {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+    box-sizing: border-box;
+}
+
+#ai-decision-intelligence > div > h3 {
+    margin: 0 0 12px 0;
+    font-size: 22px;
+}
+
+#ai-decision-intelligence .ai-intelligence-score {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+    align-items: center;
+}
+
+#ai-decision-intelligence .ai-intelligence-score > div {
+    min-width: 0;
+    padding: 6px 0;
+}
+
+#ai-decision-intelligence .ai-intelligence-score span {
+    display: block;
+}
+
+#ai-decision-intelligence .ai-decision-confidence,
+#ai-decision-intelligence .ai-decision-confidence-explainability,
+#ai-decision-intelligence .ai-decision-confidence-assessment,
+#ai-decision-intelligence .ai-decision-confidence-recommendation,
+#ai-decision-intelligence .ai-decision-validation,
+#ai-decision-intelligence .ai-decision-validation-explainability,
+#ai-decision-intelligence .ai-intelligence-components {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+    box-sizing: border-box;
+}
+
+#ai-decision-intelligence .ai-decision-confidence h4,
+#ai-decision-intelligence .ai-decision-confidence-explainability h4,
+#ai-decision-intelligence .ai-decision-confidence-assessment h4,
+#ai-decision-intelligence .ai-decision-confidence-recommendation h4,
+#ai-decision-intelligence .ai-decision-validation h4,
+#ai-decision-intelligence .ai-decision-validation-explainability h4 {
+    margin: 0 0 10px 0;
+    padding: 7px 10px;
+    background: #f3f7fb;
+    border-radius: 6px;
+    font-size: 17px;
+}
+
+#ai-decision-intelligence .ai-decision-confidence,
+#ai-decision-intelligence .ai-decision-confidence-explainability,
+#ai-decision-intelligence .ai-decision-confidence-assessment,
+#ai-decision-intelligence .ai-decision-confidence-recommendation,
+#ai-decision-intelligence .ai-decision-validation,
+#ai-decision-intelligence .ai-decision-validation-explainability {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+    align-items: start;
+}
+
+#ai-decision-intelligence .ai-decision-confidence h4,
+#ai-decision-intelligence .ai-decision-confidence-explainability h4,
+#ai-decision-intelligence .ai-decision-confidence-assessment h4,
+#ai-decision-intelligence .ai-decision-confidence-recommendation h4,
+#ai-decision-intelligence .ai-decision-validation h4,
+#ai-decision-intelligence .ai-decision-validation-explainability h4 {
+    grid-column: 1 / -1;
+}
+
+#ai-decision-intelligence .ai-decision-confidence > .ai-intelligence-score {
+    grid-column: 1 / -1;
+}
+
+#ai-decision-intelligence .ai-decision-confidence p,
+#ai-decision-intelligence .ai-decision-confidence-explainability p,
+#ai-decision-intelligence .ai-decision-confidence-assessment p,
+#ai-decision-intelligence .ai-decision-confidence-recommendation p,
+#ai-decision-intelligence .ai-decision-validation p,
+#ai-decision-intelligence .ai-decision-validation-explainability p {
+    margin: 0;
+    min-width: 0;
+    line-height: 1.5;
+}
+
+#ai-decision-intelligence .ai-decision-confidence-explainability p:last-child,
+#ai-decision-intelligence .ai-decision-confidence-assessment p:last-child,
+#ai-decision-intelligence .ai-decision-confidence-recommendation p:last-child,
+#ai-decision-intelligence .ai-decision-validation p:last-child,
+#ai-decision-intelligence .ai-decision-validation-explainability p:last-child {
+    grid-column: 1 / -1;
+}
+
+#ai-decision-intelligence .ai-decision-validation-explainability p:last-child {
+    margin-top: 4px;
+}
+
+#ai-decision-intelligence .ai-intelligence-components {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > div {
+    min-width: 0;
+}
+
+@media (max-width: 1200px) {
+    #ai-decision-intelligence .ai-decision-confidence,
+    #ai-decision-intelligence .ai-decision-confidence-explainability,
+    #ai-decision-intelligence .ai-decision-confidence-assessment,
+    #ai-decision-intelligence .ai-decision-confidence-recommendation,
+    #ai-decision-intelligence .ai-decision-validation,
+    #ai-decision-intelligence .ai-decision-validation-explainability,
+    #ai-decision-intelligence .ai-intelligence-components {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    #ai-decision-intelligence > div {
+        padding: 14px;
+    }
+
+    #ai-decision-intelligence .ai-intelligence-score,
+    #ai-decision-intelligence .ai-decision-confidence,
+    #ai-decision-intelligence .ai-decision-confidence-explainability,
+    #ai-decision-intelligence .ai-decision-confidence-assessment,
+    #ai-decision-intelligence .ai-decision-confidence-recommendation,
+    #ai-decision-intelligence .ai-decision-validation,
+    #ai-decision-intelligence .ai-decision-validation-explainability,
+    #ai-decision-intelligence .ai-intelligence-components {
+        grid-template-columns: 1fr;
+    }
+
+    #ai-decision-intelligence .ai-decision-confidence h4,
+    #ai-decision-intelligence .ai-decision-confidence-explainability h4,
+    #ai-decision-intelligence .ai-decision-confidence-assessment h4,
+    #ai-decision-intelligence .ai-decision-confidence-recommendation h4,
+    #ai-decision-intelligence .ai-decision-validation h4,
+    #ai-decision-intelligence .ai-decision-validation-explainability h4 {
+        grid-column: 1;
+    }
+
+    #ai-decision-intelligence .ai-decision-confidence-explainability p:last-child,
+    #ai-decision-intelligence .ai-decision-confidence-assessment p:last-child,
+    #ai-decision-intelligence .ai-decision-confidence-recommendation p:last-child,
+    #ai-decision-intelligence .ai-decision-validation p:last-child,
+    #ai-decision-intelligence .ai-decision-validation-explainability p:last-child {
+        grid-column: 1;
+    }
+}
+
+/* Ver.1.1 AI Intelligence Components Final Layout */
+#ai-decision-intelligence .ai-intelligence-components {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+    align-items: start;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+    box-sizing: border-box;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p {
+    margin: 0;
+    min-width: 0;
+    padding: 7px 0;
+    line-height: 1.45;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(10),
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(14),
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(23) {
+    grid-column: 1 / -1;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(10),
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(14),
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(23) {
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(10) {
+    border-top: 1px solid #e5e7eb;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(14) {
+    border-top: 1px solid #e5e7eb;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(23) {
+    border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 1200px) {
+    #ai-decision-intelligence .ai-intelligence-components {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(10),
+    #ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(14),
+    #ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(23) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    #ai-decision-intelligence .ai-intelligence-components {
+        grid-template-columns: 1fr;
+    }
+
+    #ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(10),
+    #ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(14),
+    #ai-decision-intelligence .ai-intelligence-components > p:nth-of-type(23) {
+        grid-column: 1;
+    }
+}
+
+/* Ver.1.1 AI Intelligence Detail Grid */
+#ai-decision-intelligence .ai-intelligence-components {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+    align-items: start;
+}
+
+#ai-decision-intelligence .ai-intelligence-components > p {
+    margin: 0;
+    min-width: 0;
+    padding: 7px 0;
+    line-height: 1.45;
+}
+
+#ai-decision-intelligence .ai-intelligence-components-detail {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+    align-items: start;
+    margin-top: 12px;
+}
+
+#ai-decision-intelligence .ai-intelligence-components-detail > p {
+    margin: 0;
+    min-width: 0;
+    padding: 7px 0;
+    line-height: 1.45;
+}
+
+#ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(10),
+#ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(14),
+#ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(23) {
+    grid-column: 1 / -1;
+}
+
+#ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(10),
+#ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(14),
+#ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(23) {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 1200px) {
+    #ai-decision-intelligence .ai-intelligence-components,
+    #ai-decision-intelligence .ai-intelligence-components-detail {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(10),
+    #ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(14),
+    #ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(23) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    #ai-decision-intelligence .ai-intelligence-components,
+    #ai-decision-intelligence .ai-intelligence-components-detail {
+        grid-template-columns: 1fr;
+    }
+
+    #ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(10),
+    #ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(14),
+    #ai-decision-intelligence .ai-intelligence-components-detail > p:nth-of-type(23) {
+        grid-column: 1;
+    }
+}
+
+/* Ver.1.1 Final Decision Control Card */
+#ai-decision-intelligence .ai-final-decision-control-chain {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 18px;
+    align-items: start;
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+    box-sizing: border-box;
+}
+
+#ai-decision-intelligence .ai-final-decision-control-chain h3 {
+    grid-column: 1 / -1;
+    margin: 0 0 12px 0;
+    padding: 10px 12px;
+    background: #f3f7fb;
+    border-radius: 6px;
+    font-size: 22px;
+}
+
+#ai-decision-intelligence .ai-final-decision-control-chain > p {
+    margin: 0;
+    min-width: 0;
+    padding: 14px 0;
+    line-height: 1.45;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(13),
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(14),
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(15) {
+    grid-column: 1 / -1;
+}
+
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(13) {
+    padding-top: 14px;
+}
+
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(14),
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(15) {
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+#ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(15) {
+    border-bottom: 0;
+}
+
+@media (max-width: 1200px) {
+    #ai-decision-intelligence .ai-final-decision-control-chain {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ai-decision-intelligence .ai-final-decision-control-chain h3,
+    #ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(13),
+    #ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(14),
+    #ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(15) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    #ai-decision-intelligence .ai-final-decision-control-chain {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
+
+    #ai-decision-intelligence .ai-final-decision-control-chain h3,
+    #ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(13),
+    #ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(14),
+    #ai-decision-intelligence .ai-final-decision-control-chain > p:nth-of-type(15) {
+        grid-column: 1;
+    }
+}

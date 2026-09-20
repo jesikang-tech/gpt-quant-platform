@@ -1482,33 +1482,40 @@ async function loadPortfolioAnalytics(){
     </h3>
 
 
-    <p>
-    ${getDashboardText("totalDecisions")} :
-    <b>
-    ${analytics.total_history}
-    </b>
-    </p>
+    <div class="portfolio-summary-row">
+    <div class="portfolio-summary-item">
+        <span class="portfolio-summary-label">
+            ${getDashboardText("totalDecisions")}
+        </span>
+        <b class="portfolio-summary-value">
+            ${analytics.total_history}
+        </b>
+    </div>
 
+    <div class="portfolio-summary-divider"></div>
 
-    <p>
-    ${getDashboardText("lastSavedAIStrategy")} :
-    <br>
-    <b>
-    ${analytics.latest_mode.toUpperCase()}
-    </b>
-    </p>
+    <div class="portfolio-summary-item">
+        <span class="portfolio-summary-label">
+            ${getDashboardText("lastSavedAI")}
+        </span>
+        <b class="portfolio-summary-value">
+            ${analytics.latest_mode.toUpperCase()}
+        </b>
+    </div>
 
+    <div class="portfolio-summary-divider"></div>
 
-    <p>
-    ${getDashboardText("currentViewStrategy")} :
-    <br>
-    <b>
-    ${portfolioMode.toUpperCase()}
-    </b>
-    </p>
+    <div class="portfolio-summary-item">
+        <span class="portfolio-summary-label">
+            ${getDashboardText("currentViewStrategy")}
+        </span>
+        <b class="portfolio-summary-value">
+            ${portfolioMode.toUpperCase()}
+        </b>
+    </div>
+</div>
 
-
-    <h4>
+<h4>
     ${getDashboardText("strategyUsage")}
     </h4>
 
@@ -1655,36 +1662,49 @@ async function loadMarketCondition(){
         </h3>
 
 
-        <p>
-        ${getDashboardText("marketCondition")} :
-        <b>
-        ${market.market}
+        <div class="market-info-row">
+    <div class="market-info-item">
+        <span class="market-info-label">
+            ${getDashboardText("marketCondition")}
+        </span>
+        <b class="market-info-value">
+            ${market.market}
         </b>
-        </p>
+    </div>
 
+    <div class="market-info-divider"></div>
 
-        <p>
-        ${getDashboardText("averageScore")} :
-        <b>
-        ${market.average_score}
+    <div class="market-info-item">
+        <span class="market-info-label">
+            ${getDashboardText("averageScore")}
+        </span>
+        <b class="market-info-value">
+            ${market.average_score}
         </b>
-        </p>
+    </div>
 
+    <div class="market-info-divider"></div>
 
-        <p>
-        ${getDashboardText("confidence")} :
-        <b>
-        ${market.confidence}
+    <div class="market-info-item">
+        <span class="market-info-label">
+            ${getDashboardText("confidence")}
+        </span>
+        <b class="market-info-value">
+            ${market.confidence}
         </b>
-        </p>
+    </div>
 
+    <div class="market-info-divider"></div>
 
-        <p>
-        ${getDashboardText("recommendedStrategy")} :
-        <b>
-        ${market.recommended_mode}
+    <div class="market-info-item">
+        <span class="market-info-label">
+            ${getDashboardText("recommendedStrategy")}
+        </span>
+        <b class="market-info-value">
+            ${market.recommended_mode}
         </b>
-        </p>
+    </div>
+</div>
 
 
     </div>
@@ -2749,6 +2769,8 @@ async function loadDecisionIntelligence() {
 
         </div>
 
+        <div class="ai-intelligence-components-detail">
+
         <p>
             ${getDashboardText("decision")}:
             <br>
@@ -2899,8 +2921,9 @@ async function loadDecisionIntelligence() {
             <b>${intelligence.optimization_status ?? "-"}</b>
         </p>
 
-        <p>
-           <div class="ai-final-decision-control-chain">
+        </div>
+
+        <div class="ai-final-decision-control-chain">
 
             <h3>
                 ${getDashboardText("finalDecisionExecutionControl")}
@@ -2984,18 +3007,19 @@ async function loadDecisionIntelligence() {
                 <b>${finalDecisionExecutionReassessment.reassessment_required ? "YES" : "NO"}</b>
             </p>
 
+            <p>
+                ${getDashboardText("finalAction")}:
+                <br>
+                <b>${intelligence.final_action ?? "-"}</b>
+            </p>
+
+            <p>
+                ${getDashboardText("aiSummary")}:
+                <br>
+                ${intelligence.summary ?? "-"}
+            </p>
+
         </div>
-
-            ${getDashboardText("finalAction")}:
-            <br>
-            <b>${intelligence.final_action ?? "-"}</b>
-        </p>
-
-        <p>
-            ${getDashboardText("aiSummary")}:
-            <br>
-            ${intelligence.summary ?? "-"}
-        </p>
 
     </div>
 
@@ -5124,7 +5148,7 @@ const DASHBOARD_TRANSLATIONS = {
         "previousScore": "이전 점수",
         "scoreChange": "점수 변화",
         "recommendedStrategy": "추천 전략",
-        "lastSavedAI": "최근 저장된 AI",
+        "lastSavedAI": "최근 AI 전략",
         "currentViewStrategy": "현재 시점 전략",
         "aiStatus": "AI 상태",
         "portfolioAnalytics": "포트폴리오 분석",
@@ -5463,3 +5487,5 @@ applyDashboardLanguage();
    Presentation-only additions. No data or decision logic changed.
    ============================================================ */
 /* V20: Portfolio Optimization visual cleanup */
+
+/* FINAL_DECISION_CONTROL_CARD_MARKER */
