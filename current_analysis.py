@@ -145,6 +145,29 @@ def _get_future_performance(ticker: str, analysis_date: str):
     )
 
 
+def _get_period_config(period: str) -> dict:
+    """Return the current analysis configuration for a supported period."""
+    period_config = {
+        "1m": {
+            "lookback_trading_days": 20,
+            "return_threshold": 5.0,
+        },
+        "2m": {
+            "lookback_trading_days": 40,
+            "return_threshold": 10.0,
+        },
+        "3m": {
+            "lookback_trading_days": 60,
+            "return_threshold": 15.0,
+        },
+    }
+
+    if period not in period_config:
+        raise ValueError("Invalid period. Use 1m, 2m, or 3m.")
+
+    return period_config[period]
+
+
 def get_current_analysis_data(
     limit: int = 10,
     analysis_date: Optional[str] = None,
@@ -167,25 +190,7 @@ def get_current_analysis_data(
             "message": "No ETF market data is available.",
         }
 
-    period_config = {
-        "1m": {
-            "lookback_trading_days": 20,
-            "return_threshold": 5.0,
-        },
-        "2m": {
-            "lookback_trading_days": 40,
-            "return_threshold": 10.0,
-        },
-        "3m": {
-            "lookback_trading_days": 60,
-            "return_threshold": 15.0,
-        },
-    }
-
-    if period not in period_config:
-        raise ValueError("Invalid period. Use 1m, 2m, or 3m.")
-
-    selected_period = period_config[period]
+    selected_period = _get_period_config(period)
     lookback_trading_days = selected_period["lookback_trading_days"]
     return_threshold = selected_period["return_threshold"]
     uptrend_threshold = MIN_UPTREND_RATIO * 100
