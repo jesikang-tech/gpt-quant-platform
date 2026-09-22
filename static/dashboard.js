@@ -4958,10 +4958,10 @@ async function runHistoricalReplay() {
         resultContent.innerHTML = `
             <section class="historical-replay-section">
                 <div class="historical-replay-section-title">
-                    Historical Replay ? 당시 Top 10
+                    Historical Replay ? 당시 Final Score Top 10
                 </div>
                 <div class="historical-replay-section-description">
-                    분석일 당시의 과거 데이터만 사용하여 계산한 순위입니다.
+                    분석일 당시 이용 가능한 데이터만 사용하여 ETF Final Score를 계산하고, 전체 ETF 중 점수 상위 종목을 표시합니다.
                 </div>
 
                 <div class="historical-replay-table-wrap">
