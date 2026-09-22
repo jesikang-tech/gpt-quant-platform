@@ -430,7 +430,7 @@ function loadDashboard(){
 
 
             <p>
-            📐 ${getDashboardText("slopeScore")} :
+            ?? ${getDashboardText("slopeScore")} :
             <b>
             ${item.slope_score}
             </b>
@@ -751,7 +751,7 @@ async function loadDetail(ticker){
 
 
     <p>
-    📐 ${getDashboardText("slopeScore")} :
+    ?? ${getDashboardText("slopeScore")} :
     <b>${result.slope_score}</b>
     </p>
 
@@ -1295,7 +1295,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <p>
 
-            💰 ${getDashboardText("cashWeight")}
+            ?? ${getDashboardText("cashWeight")}
 
             <br>
 
@@ -3074,7 +3074,7 @@ async function loadAIDecisionHistory(){
     <div class="ai-history-card">
 
         <h3>
-        📜 ${getDashboardText("aiDecisionHistory")}
+        ?? ${getDashboardText("aiDecisionHistory")}
         </h3>
     `;
 
@@ -3127,7 +3127,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                📅 ${getDashboardText("date")} :
+                ?? ${getDashboardText("date")} :
                 <b>
                 ${item.created_at}
                 </b>
@@ -3329,21 +3329,21 @@ async function loadAIDecisionTrend(){
     );
 
 
-    let trendIcon = "⚪";
+    let trendIcon = "?";
 
 
     if(
         trend.direction === "UP"
     ){
 
-        trendIcon = "📈";
+        trendIcon = "??";
 
     }
     else if(
         trend.direction === "DOWN"
     ){
 
-        trendIcon = "📉";
+        trendIcon = "??";
 
     }
 
@@ -3909,7 +3909,7 @@ async function loadAIAdaptiveStrategy(){
     <div class="ai-adaptive-card">
 
         <h3>
-        🧠 ${getDashboardText("adaptiveStrategy")}
+        ?? ${getDashboardText("adaptiveStrategy")}
         </h3>
 
         <p>
@@ -4522,192 +4522,147 @@ async function loadAIDecisionExplainability(){
 
 
         panel.innerHTML = `
-
-            <h3>
-            ${explanation.decision || "UNKNOWN"}
-            </h3>
-
-
-            <p>
-
-            <strong>
-            ${getDashboardText("decisionScore")}:
-            </strong>
-
-            ${explanation.decision_score ?? 0} / 100
-
-            <br>
-
-            <strong>
-            ${getDashboardText("grade")}:
-            </strong>
-
-            ${explanation.decision_grade || "-"}
-
-            </p>
-
-
-            <h4>
-            ${getDashboardText("marketContribution")}
-            </h4>
-
-            <p>
-
-            <strong>
-            ${getDashboardText("confidence")}:
-            </strong>
-
-            ${market.confidence ?? 0}%
-
-            <br>
-
-            <strong>
-            ${getDashboardText("contribution")}:
-            </strong>
-
-            ${market.contribution ?? 0} points
-
-            <br>
-
-            ${market.reason || ""}
-
-            </p>
-
-
-            <h4>
-            ${getDashboardText("portfolioContribution")}
-            </h4>
-
-            <p>
-
-            <strong>
-            ${getDashboardText("health")}:
-            </strong>
-
-            ${portfolio.health_score ?? 0} / 100
-
-            <br>
-
-            <strong>
-            ${getDashboardText("risk")}:
-            </strong>
-
-            ${portfolio.risk_level || "-"}
-
-            <br>
-
-            <strong>
-            ${getDashboardText("contribution")}:
-            </strong>
-
-            ${portfolio.contribution ?? 0} points
-
-            <br>
-
-            ${portfolio.reason || ""}
-
-            </p>
-
-
-            <h4>
-            ${getDashboardText("topETFContribution")}
-            </h4>
-
-            <p>
-
-            <strong>
-            ${getDashboardText("etf")}:
-            </strong>
-
-            ${topETF.ticker || "-"}
-
-            <br>
-
-            <strong>
-            ${getDashboardText("score")}:
-            </strong>
-
-            ${topETF.score ?? 0} / 100
-
-            <br>
-
-            <strong>
-            ${getDashboardText("contribution")}:
-            </strong>
-
-            ${topETF.contribution ?? 0} points
-
-            <br>
-
-            ${topETF.reason || ""}
-
-            </p>
-
-
-            <h4>
-            ${getDashboardText("riskAssessment")}
-            </h4>
-
-            <p>
-
-            <strong>
-            ${getDashboardText("riskLevel")} :
-            </strong>
-
-            ${risk.risk_level || "-"}
-
-            <br>
-
-            <strong>
-            ${getDashboardText("marketRegime")} :
-            </strong>
-
-            ${risk.market_regime || "-"}
-
-            <br>
-
-            ${risk.assessment || ""}
-
-            </p>
-
-
-            <h4>
-            ${getDashboardText("decisionConfidence")}
-            </h4>
-
-            <p>
-
-            <strong>
-            ${getDashboardText("confidence")}:
-            </strong>
-
-            ${confidence.confidence ?? 0}%
-
-            <br>
-
-            <strong>
-            ${getDashboardText("level")}:
-            </strong>
-
-            ${confidence.level || "-"}
-
-            <br>
-
-            ${confidence.reason || ""}
-
-            </p>
-
-
-            <h4>
-            ${getDashboardText("recommendedAction")}
-            </h4>
-
-            <p>
-
-            ${explanation.recommended_action || "-"}
-
-            </p>
-
+            <div class="ai-explainability-decision-card">
+                <div class="ai-explainability-decision-label">
+                    최종 의사결정
+                </div>
+
+                <div class="ai-explainability-decision-value">
+                    ${explanation.decision || "UNKNOWN"}
+                </div>
+
+                <div class="ai-explainability-decision-metrics">
+                    <div class="ai-explainability-metric">
+                        <span>의사결정 점수</span>
+                        <strong>${explanation.decision_score ?? 0} / 100</strong>
+                    </div>
+
+                    <div class="ai-explainability-metric">
+                        <span>등급</span>
+                        <strong>${explanation.decision_grade || "-"}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <section class="ai-explainability-section">
+                <h3>① ${getDashboardText("marketContribution")}</h3>
+
+                <div class="ai-explainability-content-grid">
+                    <div class="ai-explainability-item">
+                        <span>1) ${getDashboardText("confidence")}</span>
+                        <strong>${market.confidence ?? 0}%</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>2) ${getDashboardText("contribution")}</span>
+                        <strong>${market.contribution ?? 0} points</strong>
+                    </div>
+
+                    <div class="ai-explainability-item ai-explainability-item-wide">
+                        <span>3) 분석 내용</span>
+                        <p>${market.reason || "-"}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ai-explainability-section">
+                <h3>② ${getDashboardText("portfolioContribution")}</h3>
+
+                <div class="ai-explainability-content-grid">
+                    <div class="ai-explainability-item">
+                        <span>1) ${getDashboardText("health")}</span>
+                        <strong>${portfolio.health_score ?? 0} / 100</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>2) ${getDashboardText("risk")}</span>
+                        <strong>${portfolio.risk_level || "-"}</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>3) ${getDashboardText("contribution")}</span>
+                        <strong>${portfolio.contribution ?? 0} points</strong>
+                    </div>
+
+                    <div class="ai-explainability-item ai-explainability-item-wide">
+                        <span>4) 분석 내용</span>
+                        <p>${portfolio.reason || "-"}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ai-explainability-section">
+                <h3>③ ${getDashboardText("topETFContribution")}</h3>
+
+                <div class="ai-explainability-content-grid">
+                    <div class="ai-explainability-item">
+                        <span>1) ${getDashboardText("etf")}</span>
+                        <strong>${topETF.ticker || "-"}</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>2) ${getDashboardText("score")}</span>
+                        <strong>${topETF.score ?? 0} / 100</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>3) ${getDashboardText("contribution")}</span>
+                        <strong>${topETF.contribution ?? 0} points</strong>
+                    </div>
+
+                    <div class="ai-explainability-item ai-explainability-item-wide">
+                        <span>4) 분석 내용</span>
+                        <p>${topETF.reason || "-"}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ai-explainability-section">
+                <h3>④ ${getDashboardText("riskAssessment")}</h3>
+
+                <div class="ai-explainability-content-grid">
+                    <div class="ai-explainability-item">
+                        <span>1) ${getDashboardText("riskLevel")}</span>
+                        <strong>${risk.risk_level || "-"}</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>2) ${getDashboardText("marketRegime")}</span>
+                        <strong>${risk.market_regime || "-"}</strong>
+                    </div>
+
+                    <div class="ai-explainability-item ai-explainability-item-wide">
+                        <span>3) 평가 내용</span>
+                        <p>${risk.assessment || "-"}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ai-explainability-section">
+                <h3>⑤ ${getDashboardText("decisionConfidence")}</h3>
+
+                <div class="ai-explainability-content-grid">
+                    <div class="ai-explainability-item">
+                        <span>1) ${getDashboardText("confidence")}</span>
+                        <strong>${confidence.confidence ?? 0}%</strong>
+                    </div>
+
+                    <div class="ai-explainability-item">
+                        <span>2) ${getDashboardText("level")}</span>
+                        <strong>${confidence.level || "-"}</strong>
+                    </div>
+
+                    <div class="ai-explainability-item ai-explainability-item-wide">
+                        <span>3) 설명</span>
+                        <p>${confidence.reason || "-"}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ai-explainability-recommendation">
+                <h3>권고 행동</h3>
+                <strong>${explanation.recommended_action || "-"}</strong>
+            </section>
         `;
 
     }
@@ -4890,10 +4845,193 @@ async function askPortfolioAnalyst(){
 
 
 
+
+async function runHistoricalReplay() {
+    const dateInput = document.getElementById("analysis-date");
+    const periodInput = document.getElementById("analysis-period");
+    const statusBox = document.getElementById("historical-replay-status");
+    const resultPanel = document.getElementById("historical-replay-result");
+    const resultMeta = document.getElementById("historical-replay-result-meta");
+    const resultContent = document.getElementById("historical-replay-result-content");
+
+    if (!dateInput || !periodInput || !statusBox ||
+        !resultPanel || !resultMeta || !resultContent) {
+        console.error("Historical Replay controls or result area not found.");
+        return;
+    }
+
+    const analysisDate = dateInput.value;
+    const period = periodInput.value || "3m";
+
+    if (!analysisDate) {
+        statusBox.textContent = "분석일자를 선택해 주세요.";
+        return;
+    }
+
+    statusBox.textContent = "Historical Replay 실행 중...";
+
+    try {
+        const response = await fetch(
+            `/api/historical-replay?date=${encodeURIComponent(analysisDate)}&period=${encodeURIComponent(period)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.message || "Historical Replay 실행에 실패했습니다."
+            );
+        }
+
+        const top10 = Array.isArray(data.current_score_top)
+            ? data.current_score_top
+            : [];
+
+        resultMeta.textContent =
+            `${data.analysis_date} / ${data.period} / ` +
+            `${data.lookback_trading_days} 거래일 / ` +
+            `Top ${top10.length}`;
+
+        const replayRows = top10.map((item, index) => {
+            const price = Number(item.price);
+            const aiScore = Number(item.final_score);
+
+            const priceText = Number.isFinite(price)
+                ? price.toLocaleString("ko-KR")
+                : "N/A";
+
+            const aiText = Number.isFinite(aiScore)
+                ? aiScore.toFixed(1)
+                : "N/A";
+
+            return `
+                <tr>
+                    <td class="replay-rank">${index + 1}</td>
+                    <td class="replay-ticker">${item.ticker || ""}</td>
+                    <td class="replay-name">${item.name || ""}</td>
+                    <td class="replay-price">${priceText}</td>
+                    <td class="replay-score">${aiText}</td>
+                </tr>
+            `;
+        }).join("");
+
+        const realityRows = top10.map((item, index) => {
+            const futureValue = item.future_performance;
+            const futureDays = Number(item.future_performance_days);
+
+            let futureText = "N/A";
+            let futureClass = "";
+
+            if (futureValue !== null &&
+                futureValue !== undefined &&
+                Number.isFinite(Number(futureValue))) {
+                const value = Number(futureValue);
+
+                futureText =
+                    `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+
+                futureClass =
+                    value > 0
+                        ? "positive"
+                        : value < 0
+                            ? "negative"
+                            : "neutral";
+            }
+
+            const daysText = Number.isFinite(futureDays)
+                ? `${futureDays}일`
+                : "N/A";
+
+            return `
+                <tr>
+                    <td class="replay-rank">${index + 1}</td>
+                    <td class="replay-ticker">${item.ticker || ""}</td>
+                    <td class="replay-name">${item.name || ""}</td>
+                    <td class="replay-future ${futureClass}">
+                        ${futureText}
+                    </td>
+                    <td>${daysText}</td>
+                </tr>
+            `;
+        }).join("");
+
+        resultContent.innerHTML = `
+            <section class="historical-replay-section">
+                <div class="historical-replay-section-title">
+                    Historical Replay ? 당시 Top 10
+                </div>
+                <div class="historical-replay-section-description">
+                    분석일 당시의 과거 데이터만 사용하여 계산한 순위입니다.
+                </div>
+
+                <div class="historical-replay-table-wrap">
+                    <table class="historical-replay-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">순위</th>
+                                <th scope="col">종목코드</th>
+                                <th scope="col">ETF명</th>
+                                <th scope="col">당시 가격</th>
+                                <th scope="col">Replay Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${replayRows}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="historical-replay-section historical-replay-reality-test">
+                <div class="historical-replay-section-title">
+                    Reality Test ? 이후 실제 성과
+                </div>
+                <div class="historical-replay-section-description">
+                    Replay 이후 실제 시장 데이터로 확인한 사후 성과입니다.
+                    이 값은 Historical Replay 순위 계산에 사용되지 않습니다.
+                </div>
+
+                <div class="historical-replay-table-wrap">
+                    <table class="historical-replay-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">순위</th>
+                                <th scope="col">종목코드</th>
+                                <th scope="col">ETF명</th>
+                                <th scope="col">이후 성과</th>
+                                <th scope="col">관찰 거래일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${realityRows}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        `;
+
+        resultPanel.hidden = false;
+        statusBox.textContent = "Historical Replay 완료";
+    } catch (error) {
+        console.error("Historical Replay error:", error);
+        resultPanel.hidden = true;
+        statusBox.textContent =
+            error.message || "Historical Replay 실행 중 오류가 발생했습니다.";
+    }
+}
 document.addEventListener("DOMContentLoaded", function () {
     loadDecisionIntelligence();
     loadAIDecisionExplainability();
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const replayButton = document.getElementById("historical-replay-button");
+
+    if (replayButton) {
+        replayButton.addEventListener("click", runHistoricalReplay);
+    }
+});
+
 
 
 /* ETF-Quant-Platform language selector foundation */

@@ -1,4 +1,5 @@
-﻿from datetime import datetime
+﻿from current_analysis import get_current_analysis_data
+from datetime import datetime
 
 from flask import (
     Flask,
@@ -198,6 +199,31 @@ from repository import (
 
 app = Flask(__name__)
 
+
+
+@app.route("/api/historical-replay")
+def historical_replay_api():
+    analysis_date = request.args.get("date")
+    period = request.args.get("period", "3m")
+
+    if period not in {"1m", "2m", "3m"}:
+        return jsonify(
+            {"success": False, "message": "Invalid period. Use 1m, 2m, or 3m."}
+        ), 400
+
+    try:
+        data = get_current_analysis_data(
+            limit=10,
+            analysis_date=analysis_date,
+            period=period
+        )
+        return jsonify(data)
+
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 500
 
 
 @app.route("/api/ranking")

@@ -40,7 +40,7 @@ GPT Quant ETF Dashboard
     </button>
 
     <div id="language-menu" hidden>
-        <button type="button" onclick="selectDashboardLanguage('ko')">한국어</button>
+        <button type="button" onclick="selectDashboardLanguage('ko')">?쒓뎅??/button>
         <button type="button" onclick="selectDashboardLanguage('en')">English</button>
     </div>
 </div>
@@ -77,8 +77,66 @@ AI Powered ETF Ranking System
 
 <div class="ver11-layout">
 <aside class="ver11-sidebar" aria-label="&#xBD84;&#xC11D; &#xC870;&#xAC74; &#xC120;&#xD0DD;">
+<section id="historical-replay-panel" class="historical-replay-panel">
+    <div class="historical-replay-title">
+      Historical Replay
+    </div>
+
+    <div class="historical-replay-subtitle">
+      &#xD2B9;&#xC815; &#xB0A0;&#xC9DC;&#xC758; &#xC2DC;&#xC7A5; &#xC0C1;&#xD669;&#xC744; &#xC7AC;&#xD604;&#xD558;&#xC5EC;
+      &#xB2F9;&#xC2DC; Top 10&#xC744; &#xD655;&#xC778;&#xD569;&#xB2C8;&#xB2E4;.
+    </div>
+
+    <div class="historical-replay-control-group">
+      <label for="analysis-date">
+        &#xBD84;&#xC11D;&#xC77C;&#xC790;
+      </label>
+      <input
+        type="date"
+        id="analysis-date"
+        name="analysis-date"
+      >
+    </div>
+
+    <div class="historical-replay-control-group">
+      <label for="analysis-period">
+        &#xBD84;&#xC11D;&#xAE30;&#xAC04;
+      </label>
+      <select
+        id="analysis-period"
+        name="analysis-period"
+      >
+        <option value="1m">
+          1&#xAC1C;&#xC6D4; (20 &#xAC70;&#xB798;&#xC77C;)
+        </option>
+        <option value="2m">
+          2&#xAC1C;&#xC6D4; (40 &#xAC70;&#xB798;&#xC77C;)
+        </option>
+        <option value="3m" selected>
+          3&#xAC1C;&#xC6D4; (60 &#xAC70;&#xB798;&#xC77C;)
+        </option>
+      </select>
+    </div>
+
+    <button
+      type="button"
+      id="historical-replay-button"
+      class="historical-replay-button"
+    >
+      Historical Replay
+    </button>
+
+    <div
+      id="historical-replay-status"
+      class="historical-replay-status"
+      aria-live="polite"
+    ></div>
+  </section>
+
   <div class="ver11-sidebar-title">&#xBD84;&#xC11D; &#xC870;&#xAC74; &#xC120;&#xD0DD;</div>
   <div class="ver11-sidebar-subtitle">Ver.1.1 &#xC900;&#xBE44; &#xD654;&#xBA74;</div>
+
+
 
   <div class="ver11-control-group">
     <label for="ver11-analysis-date">&#xBD84;&#xC11D; &#xC77C;&#xC790;</label>
@@ -140,6 +198,18 @@ AI Powered ETF Ranking System
   </div>
 </aside>
 <main class="ver11-main">
+<section id="historical-replay-result" class="historical-replay-result" hidden>
+    <div class="historical-replay-result-header">
+        <div>
+            <h2>Historical Replay Result</h2>
+            <div id="historical-replay-result-meta" class="historical-replay-result-meta"></div>
+        </div>
+    </div>
+
+    <div id="historical-replay-result-content" class="historical-replay-result-content"></div>
+</section>
+
+
 <div id="summary">
 
 
@@ -156,7 +226,7 @@ AI Powered ETF Ranking System
 
 <h2>
 
-🧭 AI Market Regime
+?㎛ AI Market Regime
 
 </h2>
 
@@ -186,7 +256,7 @@ Market Regime Loading...
 
 <h2>
 
-⚙ GPT AI Portfolio Optimization
+??GPT AI Portfolio Optimization
 
 </h2>
 
@@ -244,7 +314,7 @@ Aggressive
 
 
 
-포트폴리오 분석 중...
+?ы듃?대━??遺꾩꽍 以?..
 
 
 
@@ -320,7 +390,7 @@ AI Market Strategy Loading...
 
 <div id="ai-decision-explainability">
 
-    <h2>🧠 AI Decision Explainability</h2>
+    <h2>?쭬 AI Decision Explainability</h2>
 
     <div id="ai-decision-explainability-content">
 
@@ -357,7 +427,7 @@ AI Market Strategy Loading...
 
 <div>
 
-    <h3>📈 AI Decision Score Trend</h3>
+    <h3>?뱢 AI Decision Score Trend</h3>
 
     <div id="ai-decision-chart" style="height:320px;">
 
@@ -416,14 +486,6 @@ AI Market Strategy Loading...
 
 
 
-</div>
-
-
-
-</div>
-
-
-
 
 
 
@@ -452,7 +514,7 @@ AI Portfolio Optimization Loading...
 
 <h2>
 
-🧠 AI Portfolio Explanation
+?쭬 AI Portfolio Explanation
 
 </h2>
 
@@ -492,7 +554,7 @@ AI Portfolio Explanation Loading...
 
 <h2>
 
-🤖 AI Portfolio Analyst
+?쨼 AI Portfolio Analyst
 
 </h2>
 
@@ -512,7 +574,7 @@ AI Portfolio Explanation Loading...
 
     id="portfolio-question"
 
-    placeholder="포트폴리오에 대한 질문을 하세요"
+    placeholder="?ы듃?대━?ㅼ뿉 ???吏덈Ц???섏꽭??
 
 >
 
@@ -526,7 +588,7 @@ AI Portfolio Explanation Loading...
 
 >
 
-🔍 분석 요청
+?뵇 遺꾩꽍 ?붿껌
 
 </button>
 
@@ -630,7 +692,7 @@ Portfolio History Loading...
 
 <h2>
 
-🔎 ETF Detail
+?뵊 ETF Detail
 
 </h2>
 
@@ -642,7 +704,7 @@ Portfolio History Loading...
 
 
 
-카드를 클릭하면 ETF 상세 정보가 표시됩니다.
+移대뱶瑜??대┃?섎㈃ ETF ?곸꽭 ?뺣낫媛 ?쒖떆?⑸땲??
 
 
 
@@ -660,7 +722,7 @@ Portfolio History Loading...
 
 <h2>
 
-📈 Ranking History
+?뱢 Ranking History
 
 </h2>
 
