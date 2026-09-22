@@ -19,8 +19,6 @@ from typing import Optional
 
 from config import (
     DATABASE_DIR,
-    LOOKBACK_TRADING_DAYS,
-    MIN_RETURN_3M,
     MIN_UPTREND_RATIO,
 )
 from factor_engine import (
