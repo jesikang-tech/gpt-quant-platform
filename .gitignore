@@ -233,3 +233,6 @@ logs/
 database/*.backup-*
 
 database/*.db.empty-backup
+
+# Local development backups
+backup/
