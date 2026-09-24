@@ -206,10 +206,6 @@ def historical_replay_api():
     analysis_date = request.args.get("date")
     period = request.args.get("period", "3m")
 
-    if period not in {"1m", "2m", "3m"}:
-        return jsonify(
-            {"success": False, "message": "Invalid period. Use 1m, 2m, or 3m."}
-        ), 400
 
     try:
         data = get_current_analysis_data(
