@@ -132,8 +132,11 @@ def _get_future_performance(ticker: str, analysis_date: str):
     It reads the analysis-date close and up to the next 40 available trading days.
     No database writes are performed.
     """
+    db_path = Path(DATABASE_DIR) / "etf.db"
+    uri = f"file:{db_path.as_posix()}?mode=ro"
+
     conn = sqlite3.connect(
-        "file:database/etf.db?mode=ro",
+        uri,
         uri=True,
     )
 
