@@ -277,13 +277,6 @@ def get_current_analysis_data(
             and uptrend_pct >= uptrend_threshold
         )
 
-        price, future_performance, future_performance_days = (
-            _get_future_performance(
-                ticker,
-                resolved_date,
-            )
-        )
-
         row = {
             "ticker": ticker,
             "name": name_map.get(ticker, ticker),
@@ -294,9 +287,6 @@ def get_current_analysis_data(
             "uptrend_ratio": round(uptrend_pct, 2),
             "final_score": round(final_score, 2),
             "selection_pass": selection_pass,
-            "price": price,
-            "future_performance": future_performance,
-            "future_performance_days": future_performance_days,
         }
 
         all_scores.append(row)
@@ -325,6 +315,19 @@ def get_current_analysis_data(
         reverse=True,
     )
 
+    current_score_top = all_scores[:limit]
+
+    for row in current_score_top:
+        price, future_performance, future_performance_days = (
+            _get_future_performance(
+                row["ticker"],
+                resolved_date,
+            )
+        )
+        row["price"] = price
+        row["future_performance"] = future_performance
+        row["future_performance_days"] = future_performance_days
+
     return {
         "success": True,
         "analysis_date": resolved_date,
@@ -341,6 +344,6 @@ def get_current_analysis_data(
             "count": selection_count,
             "top": selection_scores[:limit],
         },
-        "current_score_top": all_scores[:limit],
+        "current_score_top": current_score_top,
         "db_write": False,
     }
