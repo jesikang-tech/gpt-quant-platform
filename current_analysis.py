@@ -14,6 +14,7 @@ current scores in memory.
 """
 
 import sqlite3
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -62,6 +63,25 @@ def _get_etf_name_map() -> dict:
     }
 
 
+def _is_trading_day(analysis_date: str) -> bool:
+    """Return whether the requested date exists in the ETF market-price data."""
+    db_path = Path(DATABASE_DIR) / "etf.db"
+    uri = f"file:{db_path.as_posix()}?mode=ro"
+
+    with sqlite3.connect(uri, uri=True) as conn:
+        row = conn.execute(
+            """
+            SELECT 1
+            FROM etf_prices
+            WHERE date = ?
+            LIMIT 1
+            """,
+            (analysis_date,),
+        ).fetchone()
+
+    return row is not None
+
+
 def _normalize_analysis_date(
     analysis_date: Optional[str],
 ) -> Optional[str]:
@@ -69,8 +89,10 @@ def _normalize_analysis_date(
     Resolve the analysis date.
 
     - None -> latest available market date
+    - invalid date -> rejected
     - future date -> rejected
-    - historical date -> used as requested
+    - non-trading date -> rejected
+    - trading date -> used as requested
     """
     latest_date = _get_latest_market_date()
 
@@ -80,10 +102,22 @@ def _normalize_analysis_date(
     if analysis_date is None:
         return latest_date
 
+    try:
+        date.fromisoformat(analysis_date)
+    except (TypeError, ValueError):
+        raise ValueError(
+            f"Invalid analysis date: {analysis_date}."
+        )
+
     if analysis_date > latest_date:
         raise ValueError(
             f"Analysis date {analysis_date} is later than "
             f"latest market data date {latest_date}."
+        )
+
+    if not _is_trading_day(analysis_date):
+        raise ValueError(
+            f"Analysis date {analysis_date} is not a trading day."
         )
 
     return analysis_date
