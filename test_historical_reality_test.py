@@ -316,3 +316,98 @@ def test_invalid_endpoint_is_not_replaced_with_previous_valid_close(market):
     assert result["endpoint_close_return_pct"] is None
     assert result["max_close_return_pct"] == 2
     assert result["high_status"] == "FAIL"
+
+def test_reality_test_excludes_weekend_rows_from_trading_day_window(market):
+    path, seed = market
+    analysis_date = seed([101] * 20, [102] * 20)
+
+    with closing(sqlite3.connect(path)) as conn:
+        first_future = conn.execute(
+            "SELECT MIN(date) FROM etf_ohlcv_prices WHERE date > ?",
+            (analysis_date,),
+        ).fetchone()[0]
+
+        saturday = (
+            date.fromisoformat(first_future)
+            + timedelta(days=(5 - date.fromisoformat(first_future).weekday()) % 7)
+        ).isoformat()
+        sunday = (
+            date.fromisoformat(saturday) + timedelta(days=1)
+        ).isoformat()
+
+        conn.execute(
+            "INSERT OR REPLACE INTO etf_ohlcv_prices "
+            "VALUES ('TEST', ?, 999, 999)",
+            (saturday,),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO etf_ohlcv_prices "
+            "VALUES ('TEST', ?, 999, 999)",
+            (sunday,),
+        )
+        conn.commit()
+
+    result = current_analysis._get_reality_test(
+        "TEST", analysis_date, "1m"
+    )
+
+    assert result["observed_days"] == 20
+    assert result["close_first_hit_day"] is None
+    assert result["high_first_hit_day"] is None
+    assert result["close_status"] == "FAIL"
+    assert result["high_status"] == "FAIL"
+
+
+def test_legacy_future_performance_excludes_weekend_rows(market):
+    path, seed = market
+    analysis_date = seed([101] * 40, [102] * 40)
+
+    with closing(sqlite3.connect(path)) as conn:
+        first_future = conn.execute(
+            "SELECT MIN(date) FROM etf_prices WHERE date > ?",
+            (analysis_date,),
+        ).fetchone()[0]
+        first_future_date = date.fromisoformat(first_future)
+        saturday = (
+            first_future_date
+            + timedelta(days=(5 - first_future_date.weekday()) % 7)
+        ).isoformat()
+        sunday = (
+            date.fromisoformat(saturday) + timedelta(days=1)
+        ).isoformat()
+
+        conn.execute(
+            "INSERT OR REPLACE INTO etf_prices VALUES ('TEST', ?, 999)",
+            (saturday,),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO etf_prices VALUES ('TEST', ?, 999)",
+            (sunday,),
+        )
+        conn.commit()
+
+    assert current_analysis._get_future_performance(
+        "TEST", analysis_date
+    ) == (100, 1.0, 40)
+
+def test_replay_price_history_excludes_weekend_rows(market):
+    path, seed = market
+    analysis_date = seed([101] * 3, [102] * 3)
+
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO etf_prices VALUES ('TEST', ?, 999)",
+            ("2026-03-21",),
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO etf_prices VALUES ('TEST', ?, 999)",
+            ("2026-03-22",),
+        )
+        conn.commit()
+
+    rows = current_analysis.get_etf_prices("TEST", analysis_date)
+
+    assert all(
+        date.fromisoformat(row[0]).weekday() < 5
+        for row in rows
+    )

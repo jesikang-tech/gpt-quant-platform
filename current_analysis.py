@@ -53,7 +53,7 @@ def get_etf_prices(ticker, end_date=None):
             """
             SELECT date, close_price
             FROM etf_prices
-            WHERE ticker = ? AND (? IS NULL OR date <= ?)
+            WHERE ticker = ? AND (? IS NULL OR date <= ?) AND strftime('%w', date) NOT IN ('0', '6')
             ORDER BY date
             """,
             (ticker, end_date, end_date),
@@ -159,6 +159,7 @@ def _get_future_performance(ticker: str, analysis_date: str):
             FROM etf_prices
             WHERE ticker = ?
               AND date >= ?
+              AND strftime('%w', date) NOT IN ('0', '6')
             ORDER BY date
             LIMIT 41
             """,
@@ -267,7 +268,7 @@ def _get_reality_test(ticker: str, analysis_date: str, period: str) -> dict:
             return result
         rows = conn.execute(
             "SELECT date, close_price, high_price FROM etf_ohlcv_prices "
-            "WHERE ticker = ? AND date > ? ORDER BY date LIMIT ?",
+            "WHERE ticker = ? AND date > ? AND strftime('%w', date) NOT IN ('0', '6') ORDER BY date LIMIT ?",
             (ticker, analysis_date, window),
         ).fetchall()
 

@@ -72,7 +72,7 @@ def test_replay_historical_ranking_is_unchanged_by_future_prices(replay_db, peri
     assert path.read_bytes() == original
     assert [row["ticker"] for row in before["current_score_top"]] == ["AAA", "BBB", "CCC"]
     assert before["db_write"] is False
-    future_date = (date.fromisoformat(analysis_date) + timedelta(days=3)).isoformat()
+    future_date = (date.fromisoformat(analysis_date) + timedelta(days=5)).isoformat()
     with closing(sqlite3.connect(path)) as conn:
         conn.executemany("INSERT INTO etf_prices VALUES (?, ?, ?)", [
             ("AAA", future_date, 1.0),
@@ -122,7 +122,7 @@ def test_replay_exact_baseline_and_future_window(replay_db, future_prices, expec
 @pytest.mark.parametrize("baseline", [None, 0.0, -10.0])
 def test_replay_missing_or_nonpositive_baseline_has_no_result(replay_db, baseline):
     path, analysis_date = replay_db
-    future_date = (date.fromisoformat(analysis_date) + timedelta(days=3)).isoformat()
+    future_date = (date.fromisoformat(analysis_date) + timedelta(days=5)).isoformat()
     with closing(sqlite3.connect(path)) as conn:
         if baseline is None:
             conn.execute("DELETE FROM etf_prices WHERE ticker = ? AND date = ?",
