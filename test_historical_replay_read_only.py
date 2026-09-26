@@ -1,0 +1,96 @@
+import sqlite3
+from contextlib import closing
+from datetime import date, timedelta
+
+import pytest
+
+import config
+import current_analysis
+import database
+
+
+@pytest.fixture
+def replay_db(tmp_path, monkeypatch):
+    path = tmp_path / "replay # test.db"
+    days = []
+    day = date(2026, 1, 1)
+    while len(days) < 60:
+        if day.weekday() < 5:
+            days.append(day.isoformat())
+        day += timedelta(days=1)
+    with closing(sqlite3.connect(path)) as conn:
+        conn.executescript(
+            "CREATE TABLE etf_info (ticker TEXT PRIMARY KEY, name TEXT);"
+            "CREATE TABLE etf_prices (ticker TEXT, date TEXT, close_price REAL,"
+            " PRIMARY KEY (ticker, date));"
+        )
+        for ticker, step in [("AAA", 1.0), ("BBB", 0.1), ("CCC", -0.1)]:
+            conn.execute("INSERT INTO etf_info VALUES (?, ?)", (ticker, ticker))
+            conn.executemany(
+                "INSERT INTO etf_prices VALUES (?, ?, ?)",
+                [(ticker, day, 100 + index * step) for index, day in enumerate(days)],
+            )
+        conn.commit()
+    monkeypatch.setattr(config, "DATABASE_PATH", path)
+
+    def reject_shared_connection():
+        pytest.fail("Replay must not use the writable database connection")
+
+    monkeypatch.setattr(database, "get_connection", reject_shared_connection)
+    return path, days[-1]
+
+
+@pytest.mark.parametrize("statement", [
+    "INSERT INTO etf_info VALUES ('WRITE', 'WRITE')",
+    "UPDATE etf_prices SET close_price = 1",
+    "DELETE FROM etf_prices",
+    "CREATE TABLE replay_results (score REAL)",
+])
+def test_replay_boundary_rejects_writes(replay_db, statement):
+    path, _ = replay_db
+    before = path.read_bytes()
+    with closing(current_analysis._get_replay_connection()) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM etf_prices").fetchone()[0] == 180
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            conn.execute(statement)
+    assert path.read_bytes() == before
+
+
+def test_replay_boundary_does_not_create_missing_database(tmp_path, monkeypatch):
+    path = tmp_path / "missing.db"
+    monkeypatch.setattr(config, "DATABASE_PATH", path)
+    with pytest.raises(sqlite3.OperationalError):
+        current_analysis._get_replay_connection()
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("period", ["1m", "2m", "3m"])
+def test_replay_historical_ranking_is_unchanged_by_future_prices(replay_db, period):
+    path, analysis_date = replay_db
+    original = path.read_bytes()
+    before = current_analysis.get_current_analysis_data(analysis_date=analysis_date, period=period)
+    assert path.read_bytes() == original
+    assert [row["ticker"] for row in before["current_score_top"]] == ["AAA", "BBB", "CCC"]
+    assert before["db_write"] is False
+    future_date = (date.fromisoformat(analysis_date) + timedelta(days=3)).isoformat()
+    with closing(sqlite3.connect(path)) as conn:
+        conn.executemany("INSERT INTO etf_prices VALUES (?, ?, ?)", [
+            ("AAA", future_date, 1.0),
+            ("BBB", future_date, 100000.0),
+            ("CCC", future_date, 200000.0),
+        ])
+        conn.commit()
+    updated = path.read_bytes()
+    after = current_analysis.get_current_analysis_data(analysis_date=analysis_date, period=period)
+    assert path.read_bytes() == updated
+
+    def historical_rows(rows):
+        return [{key: value for key, value in row.items()
+                 if key not in ("future_performance", "future_performance_days")}
+                for row in rows]
+
+    assert historical_rows(before["current_score_top"]) == historical_rows(after["current_score_top"])
+    assert historical_rows(before["selection"]["top"]) == historical_rows(after["selection"]["top"])
+    assert before["selection"]["count"] == after["selection"]["count"]
+    assert before["current_score_top"][0]["future_performance"] is None
+    assert after["current_score_top"][0]["future_performance"] is not None

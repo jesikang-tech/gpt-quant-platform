@@ -14,12 +14,14 @@ current scores in memory.
 """
 
 import sqlite3
+from contextlib import closing
+
+import config
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
 from config import (
-    DATABASE_DIR,
     MIN_UPTREND_RATIO,
 )
 from factor_engine import (
@@ -29,16 +31,37 @@ from factor_engine import (
     calculate_slope_score,
     calculate_uptrend_ratio,
 )
-from repository import get_all_etf_tickers, get_etf_prices
+
+def _get_replay_connection():
+    """Open the configured database read-only; never create a missing database."""
+    uri = Path(config.DATABASE_PATH).resolve().as_uri() + "?mode=ro"
+    return sqlite3.connect(uri, uri=True, timeout=30)
+
+
+def get_all_etf_tickers():
+    with closing(_get_replay_connection()) as conn:
+        rows = conn.execute(
+            "SELECT ticker FROM etf_info ORDER BY ticker"
+        ).fetchall()
+    return [row[0] for row in rows]
+
+
+def get_etf_prices(ticker, end_date=None):
+    with closing(_get_replay_connection()) as conn:
+        return conn.execute(
+            """
+            SELECT date, close_price
+            FROM etf_prices
+            WHERE ticker = ? AND (? IS NULL OR date <= ?)
+            ORDER BY date
+            """,
+            (ticker, end_date, end_date),
+        ).fetchall()
 
 
 def _get_latest_market_date() -> Optional[str]:
     """Return the latest available price date without modifying the DB."""
-    db_path = Path(DATABASE_DIR) / "etf.db"
-
-    uri = f"file:{db_path.as_posix()}?mode=ro"
-
-    with sqlite3.connect(uri, uri=True) as conn:
+    with closing(_get_replay_connection()) as conn:
         row = conn.execute(
             "SELECT MAX(date) FROM etf_prices"
         ).fetchone()
@@ -48,11 +71,7 @@ def _get_latest_market_date() -> Optional[str]:
 
 def _get_etf_name_map() -> dict:
     """Return ETF ticker/name mapping using a read-only DB connection."""
-    db_path = Path(DATABASE_DIR) / "etf.db"
-
-    uri = f"file:{db_path.as_posix()}?mode=ro"
-
-    with sqlite3.connect(uri, uri=True) as conn:
+    with closing(_get_replay_connection()) as conn:
         rows = conn.execute(
             "SELECT ticker, name FROM etf_info"
         ).fetchall()
@@ -65,10 +84,7 @@ def _get_etf_name_map() -> dict:
 
 def _is_trading_day(analysis_date: str) -> bool:
     """Return whether the requested date exists in the ETF market-price data."""
-    db_path = Path(DATABASE_DIR) / "etf.db"
-    uri = f"file:{db_path.as_posix()}?mode=ro"
-
-    with sqlite3.connect(uri, uri=True) as conn:
+    with closing(_get_replay_connection()) as conn:
         row = conn.execute(
             """
             SELECT 1
@@ -132,13 +148,7 @@ def _get_future_performance(ticker: str, analysis_date: str):
     It reads the analysis-date close and up to the next 40 available trading days.
     No database writes are performed.
     """
-    db_path = Path(DATABASE_DIR) / "etf.db"
-    uri = f"file:{db_path.as_posix()}?mode=ro"
-
-    conn = sqlite3.connect(
-        uri,
-        uri=True,
-    )
+    conn = _get_replay_connection()
 
     try:
         rows = conn.execute(

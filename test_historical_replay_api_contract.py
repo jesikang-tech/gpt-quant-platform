@@ -1,4 +1,13 @@
 ﻿import api_server
+import current_analysis
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def isolated_market_date(monkeypatch):
+    # API contract tests must never depend on the production database.
+    monkeypatch.setattr(current_analysis, "_get_latest_market_date", lambda: "2026-09-04")
+    monkeypatch.setattr(current_analysis, "_is_trading_day", lambda value: True)
 
 
 def test_historical_replay_api_rejects_unsupported_period():
