@@ -33,9 +33,13 @@ def market(tmp_path, monkeypatch):
             if baseline is not None:
                 conn.execute("INSERT INTO etf_prices VALUES ('TEST', ?, ?)", (analysis_date, baseline))
             conn.executemany("INSERT INTO etf_prices VALUES ('TEST', ?, ?)", zip(days[61:], closes))
-            if highs is not None:
-                conn.execute("CREATE TABLE etf_ohlcv_prices(ticker TEXT, date TEXT, high_price REAL, PRIMARY KEY(ticker,date))")
-                conn.executemany("INSERT INTO etf_ohlcv_prices VALUES ('TEST', ?, ?)", zip(days[61:], highs))
+            conn.execute("CREATE TABLE etf_ohlcv_prices(ticker TEXT, date TEXT, close_price REAL, high_price REAL, PRIMARY KEY(ticker,date))")
+            if baseline is not None:
+                conn.execute("INSERT INTO etf_ohlcv_prices VALUES ('TEST', ?, ?, NULL)", (analysis_date, baseline))
+            highs = highs or []
+            conn.executemany("INSERT INTO etf_ohlcv_prices VALUES ('TEST', ?, ?, ?)",
+                             [(day, close, highs[i] if i < len(highs) else None)
+                              for i, (day, close) in enumerate(zip(days[61:], closes))])
             conn.commit()
         return analysis_date
 
@@ -196,3 +200,119 @@ def test_incomplete_window_without_high_hit_remains_pending(market, highs):
     assert result["high_unavailable_reason"] is None
     assert result["high_observed_days"] == (0 if highs is None else 1)
     assert result["close_status"] == "PENDING"
+
+
+def test_reality_uses_only_ohlcv_basis_and_observation_dates(market):
+    path, seed = market
+    analysis_date = seed([100, 104, 110], [101, 106, 112])
+    with closing(sqlite3.connect(path)) as conn:
+        # OHLCV is on a different price basis from legacy history.
+        conn.execute("UPDATE etf_ohlcv_prices SET close_price=close_price*2, high_price=high_price*2")
+        # A legacy-only date must not count toward the Reality Test window.
+        conn.execute("DELETE FROM etf_ohlcv_prices WHERE date=(SELECT MIN(date) FROM etf_ohlcv_prices WHERE date>?)", (analysis_date,))
+        conn.commit()
+    before = path.read_bytes()
+    result = current_analysis._get_reality_test("TEST", analysis_date, "1m")
+    assert result["observed_days"] == 2
+    assert result["high_first_hit_day"] == 1
+    assert result["close_first_hit_day"] == 2
+    assert result["max_close_return_pct"] == 10
+    assert result["high_status"] == result["close_status"] == "PASS"
+    assert current_analysis._get_future_performance("TEST", analysis_date) == (100, 10, 3)
+    assert path.read_bytes() == before
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute("UPDATE etf_prices SET close_price=7")
+        conn.execute("DELETE FROM etf_prices WHERE date>?", (analysis_date,))
+        conn.commit()
+    assert current_analysis._get_reality_test("TEST", analysis_date, "1m") == result
+    assert current_analysis._get_future_performance("TEST", analysis_date) == (7, None, 0)
+
+
+@pytest.mark.parametrize("case,reason", [
+    ("missing_table", "MISSING_BASELINE"), ("missing_row", "MISSING_BASELINE"),
+    ("null", "INVALID_BASELINE"), ("zero", "INVALID_BASELINE"),
+    ("negative", "INVALID_BASELINE"),
+])
+def test_ohlcv_baseline_never_falls_back_to_valid_legacy(market, case, reason):
+    path, seed = market
+    analysis_date = seed([110], [115])
+    with closing(sqlite3.connect(path)) as conn:
+        if case == "missing_table":
+            conn.execute("DROP TABLE etf_ohlcv_prices")
+        elif case == "missing_row":
+            conn.execute("DELETE FROM etf_ohlcv_prices WHERE date=?", (analysis_date,))
+        else:
+            conn.execute("UPDATE etf_ohlcv_prices SET close_price=? WHERE date=?",
+                         ({"null": None, "zero": 0, "negative": -1}[case], analysis_date))
+        conn.commit()
+    before = path.read_bytes()
+    data = current_analysis.get_current_analysis_data(analysis_date=analysis_date, period="1m")
+    row = data["current_score_top"][0]
+    assert row["reality_test"]["available"] is False
+    assert row["reality_test"]["unavailable_reason"] == reason
+    assert row["reality_test"]["close_status"] is None
+    assert row["price"] == 100
+    assert row["future_performance"] == 10
+    assert path.read_bytes() == before
+
+
+def test_null_future_ohlcv_close_is_not_replaced_by_legacy(market):
+    path, seed = market
+    analysis_date = seed([110, 120], [115, 125])
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute("UPDATE etf_ohlcv_prices SET close_price=NULL WHERE date>?", (analysis_date,))
+        conn.commit()
+    result = current_analysis._get_reality_test("TEST", analysis_date, "1m")
+    assert result["available"] is True
+    assert result["unavailable_reason"] is None
+    assert result["close_status"] == "PENDING"
+    assert result["close_unavailable_reason"] is None
+    assert result["high_status"] == "PASS"
+    assert result["observed_days"] == 2
+    assert result["max_close_return_pct"] is None
+    assert current_analysis._get_future_performance("TEST", analysis_date) == (100, 20, 2)
+
+
+@pytest.mark.parametrize("invalid", [None, float("inf"), float("-inf"), float("nan")])
+@pytest.mark.parametrize("count,hit", [(3, False), (20, False), (3, True), (20, True)])
+def test_invalid_close_coverage_preserves_independent_results(market, invalid, count, hit):
+    path, seed = market
+    closes = [101] * count
+    closes[1] = 105 if hit else 102
+    analysis_date = seed(closes, [106] * count)
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute("UPDATE etf_ohlcv_prices SET close_price=? WHERE date="
+                     "(SELECT MIN(date) FROM etf_ohlcv_prices WHERE date>?)",
+                     (invalid, analysis_date))
+        conn.commit()
+    before = path.read_bytes()
+    result = current_analysis._get_reality_test("TEST", analysis_date, "1m")
+    assert result["available"] is True
+    assert result["unavailable_reason"] is None
+    assert result["observed_days"] == count
+    assert result["high_status"] == "PASS"
+    assert result["high_first_hit_day"] == 1
+    assert result["close_status"] == ("PASS" if hit else None if count == 20 else "PENDING")
+    assert result["close_unavailable_reason"] == (
+        "INCOMPLETE_CLOSE_COVERAGE" if count == 20 and not hit else None
+    )
+    assert result["close_first_hit_day"] == (2 if hit else None)
+    assert result["max_close_return_pct"] == (5 if hit else 2)
+    assert result["endpoint_close_return_pct"] == (1 if count == 20 else None)
+    assert path.read_bytes() == before
+
+
+def test_invalid_endpoint_is_not_replaced_with_previous_valid_close(market):
+    path, seed = market
+    analysis_date = seed([102] * 20, [103] * 20)
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute("UPDATE etf_ohlcv_prices SET close_price=NULL WHERE date="
+                     "(SELECT MAX(date) FROM etf_ohlcv_prices)")
+        conn.commit()
+    result = current_analysis._get_reality_test("TEST", analysis_date, "1m")
+    assert result["observed_days"] == 20
+    assert result["close_status"] is None
+    assert result["close_unavailable_reason"] == "INCOMPLETE_CLOSE_COVERAGE"
+    assert result["endpoint_close_return_pct"] is None
+    assert result["max_close_return_pct"] == 2
+    assert result["high_status"] == "FAIL"

@@ -219,7 +219,7 @@ def _get_period_config(period: str) -> dict:
 
 
 def _get_reality_test(ticker: str, analysis_date: str, period: str) -> dict:
-    """Evaluate future close observations with optional date-matched High data.
+    """Evaluate an exact OHLCV Close baseline and future OHLCV observations.
 
     Percent returns are exposed in percentage points. Missing baselines leave
     statuses null; missing High never supplies a hit. A completed window with
@@ -241,44 +241,47 @@ def _get_reality_test(ticker: str, analysis_date: str, period: str) -> dict:
         "high_unavailable_reason": None,
         "high_first_hit_day": None,
         "close_status": None,
+        "close_unavailable_reason": None,
         "close_first_hit_day": None,
     }
     with closing(_get_replay_connection()) as conn:
+        has_ohlcv = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'etf_ohlcv_prices'"
+        ).fetchone()
+        if not has_ohlcv:
+            result["unavailable_reason"] = "MISSING_BASELINE"
+            return result
         baseline = conn.execute(
-            "SELECT close_price FROM etf_prices WHERE ticker = ? AND date = ?",
+            "SELECT close_price FROM etf_ohlcv_prices WHERE ticker = ? AND date = ?",
             (ticker, analysis_date),
         ).fetchone()
         if baseline is None:
             result["unavailable_reason"] = "MISSING_BASELINE"
+            return result
+        if baseline[0] is None:
+            result["unavailable_reason"] = "INVALID_BASELINE"
             return result
         base = Decimal(str(baseline[0]))
         if not base.is_finite() or base <= 0:
             result["unavailable_reason"] = "INVALID_BASELINE"
             return result
         rows = conn.execute(
-            "SELECT date, close_price FROM etf_prices "
+            "SELECT date, close_price, high_price FROM etf_ohlcv_prices "
             "WHERE ticker = ? AND date > ? ORDER BY date LIMIT ?",
             (ticker, analysis_date, window),
         ).fetchall()
-        highs = {}
-        has_ohlcv = conn.execute(
-            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'etf_ohlcv_prices'"
-        ).fetchone()
-        if has_ohlcv and rows:
-            highs = dict(conn.execute(
-                "SELECT date, high_price FROM etf_ohlcv_prices "
-                "WHERE ticker = ? AND date > ? AND date <= ?",
-                (ticker, analysis_date, rows[-1][0]),
-            ).fetchall())
 
     target = Decimal(str(settings["return_threshold"])) / 100
     close_returns = []
-    for day, (observation_date, close) in enumerate(rows, start=1):
-        close_return = Decimal(str(close)) / base - 1
+    for day, (observation_date, close, high) in enumerate(rows, start=1):
+        close_value = Decimal(str(close)) if close is not None else None
+        close_return = (
+            close_value / base - 1
+            if close_value is not None and close_value.is_finite() else None
+        )
         close_returns.append(close_return)
-        if close_return >= target and result["close_first_hit_day"] is None:
+        if close_return is not None and close_return >= target and result["close_first_hit_day"] is None:
             result["close_first_hit_day"] = day
-        high = highs.get(observation_date)
         if high is not None:
             result["high_observed_days"] += 1
             if Decimal(str(high)) / base - 1 >= target and result["high_first_hit_day"] is None:
@@ -296,10 +299,14 @@ def _get_reality_test(ticker: str, analysis_date: str, period: str) -> dict:
             and result["high_observed_days"] < window):
         result["high_status"] = None
         result["high_unavailable_reason"] = "INCOMPLETE_HIGH_COVERAGE"
-    if close_returns:
-        result["max_close_return_pct"] = float(max(close_returns) * 100)
-        if complete:
-            result["endpoint_close_return_pct"] = float(close_returns[-1] * 100)
+    if complete and result["close_first_hit_day"] is None and None in close_returns:
+        result["close_status"] = None
+        result["close_unavailable_reason"] = "INCOMPLETE_CLOSE_COVERAGE"
+    valid_close_returns = [value for value in close_returns if value is not None]
+    if valid_close_returns:
+        result["max_close_return_pct"] = float(max(valid_close_returns) * 100)
+    if complete and close_returns[-1] is not None:
+        result["endpoint_close_return_pct"] = float(close_returns[-1] * 100)
     return result
 
 
