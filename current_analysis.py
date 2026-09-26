@@ -146,6 +146,7 @@ def _get_future_performance(ticker: str, analysis_date: str):
     The scoring calculation remains strictly historical as of analysis_date.
     This helper is used only after the historical Top 10 has been calculated.
     It reads the analysis-date close and up to the next 40 available trading days.
+    Missing or non-positive exact-date baselines return (None, None, 0).
     No database writes are performed.
     """
     conn = _get_replay_connection()
@@ -165,10 +166,13 @@ def _get_future_performance(ticker: str, analysis_date: str):
     finally:
         conn.close()
 
-    if not rows:
+    if not rows or rows[0][0] != analysis_date:
         return None, None, 0
 
     base_price = float(rows[0][1])
+    if base_price <= 0:
+        return None, None, 0
+
     future_rows = rows[1:41]
 
     if not future_rows:
