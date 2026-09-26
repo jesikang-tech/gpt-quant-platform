@@ -242,12 +242,12 @@ def generate_ai_decision(
                 "시장 모멘텀 모니터링",
 
             "reason":
-                f"Market regime {regime}. "
-                f"Strategy {strategy}. "
-                f"Portfolio risk {risk_level}",
+                f"시장 국면 {regime}. "
+                f"전략 {strategy}. "
+                f"포트폴리오 위험 수준 {risk_level}",
 
             "summary":
-                "Current portfolio allocation should be maintained"
+                "현재 포트폴리오 배분을 유지합니다."
 
         }
 

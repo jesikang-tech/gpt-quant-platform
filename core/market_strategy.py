@@ -116,9 +116,9 @@ def generate_market_strategy(market_regime):
             "rebalance_action": "No Action",
 
             "message":
-                f"Market balance maintained. "
-                f"Strength {strength}. "
-                f"Confidence {confidence}%"                
+                f"시장 균형 상태를 유지합니다. "
+                f"시장 강도 {strength}. "
+                f"신뢰도 {confidence}%"
         }
 
 

@@ -4411,3 +4411,93 @@ body > header p {
         gap: 8px;
     }
 }
+
+/* Dashboard final refinement: emphasize active Historical Replay */
+.historical-replay-panel {
+    margin-bottom: 18px;
+    padding: 15px;
+    border: 1px solid #b9cbe3;
+    border-radius: 10px;
+    background: #f5f9ff;
+    box-shadow: 0 2px 6px rgba(31, 41, 55, 0.06);
+}
+
+.historical-replay-title {
+    font-size: 19px;
+    line-height: 1.2;
+}
+
+.historical-replay-subtitle {
+    color: #5f6f82;
+}
+
+.historical-replay-button {
+    font-weight: 700;
+}
+
+.ver11-sidebar > .ver11-sidebar-title {
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid #d8dde5;
+}
+/* Dashboard final refinement: AI Decision hierarchy */
+#ai-decision {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 16px;
+    margin-bottom: 18px;
+    padding: 14px;
+    border: 1px solid #d9e2ef;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+#ai-decision::before {
+    content: "AI 의사결정 분석";
+    display: block;
+    margin: 0 0 12px 0;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: #eef4fb;
+    color: #243447;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+#ai-decision > #ai-decision-content {
+    margin-bottom: 10px;
+}
+
+#ai-decision > #ai-decision-intelligence {
+    margin-bottom: 12px;
+}
+
+#ai-decision > #ai-decision-summary,
+#ai-decision > #ai-decision-quality,
+#ai-decision > #ai-decision-trend,
+#ai-decision > #ai-decision-statistics,
+#ai-decision > #ai-decision-outcome-learning,
+#ai-decision > #ai-decision-performance,
+#ai-decision > #ai-decision-reliability,
+#ai-decision > #ai-adaptive-strategy,
+#ai-decision > #ai-rebalance,
+#ai-decision > #ai-optimization {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#ai-decision > #ai-decision-intelligence {
+    border-top: 2px solid #b9cbe3;
+    padding-top: 4px;
+}
+
+@media (max-width: 700px) {
+    #ai-decision {
+        padding: 10px;
+    }
+
+    #ai-decision::before {
+        font-size: 16px;
+    }
+}
