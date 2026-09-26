@@ -9,7 +9,7 @@ def save_etf_price(
     close_price
 ):
     """
-    ETF 媛寃??곗씠?????
+    ETF 가격 데이터 저장
     """
 
     conn = get_connection()
@@ -194,7 +194,7 @@ def save_or_update_etf_score(
     created_at
 ):
     """
-    ETF Score ????먮뒗 ?낅뜲?댄듃
+    ETF Score 저장 및 업데이트
     """
 
     conn = get_connection()
@@ -489,7 +489,7 @@ def save_ranking_history(
     ranking_date
 ):
     """
-    ETF Ranking History ????먮뒗 ?낅뜲?댄듃
+    ETF Ranking History 저장 및 업데이트
     """
 
     conn = get_connection()
@@ -1033,7 +1033,7 @@ def get_ai_decision_quality():
             trend,
 
         "evaluation":
-            f"AI decision quality is {quality.lower()} with {stability.lower()} score behavior"
+            f"AI 의사결정 품질은 {quality}이며 점수 흐름은 {stability}입니다."
 
     }
 
@@ -1504,10 +1504,10 @@ def get_ai_decision_reliability():
             score_change,
 
         "message":
-            "AI decision model is operating consistently"
+            "AI 의사결정 모델이 안정적으로 일관되게 작동하고 있습니다."
             if reliability_level == "HIGH"
             else
-            "AI decision model requires monitoring"
+            "AI 의사결정 모델의 지속적인 모니터링이 필요합니다."
 
     }
 

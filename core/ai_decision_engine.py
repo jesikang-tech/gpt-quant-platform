@@ -67,7 +67,7 @@ def generate_ai_decision(
             "market_view": "UNKNOWN",
             "recommended_mode": "balanced",
             "risk_control": "Unknown",
-            "next_action": "Wait for market data",
+            "next_action": "시장 데이터 확인 대기",
             "reason": "Market data unavailable",
             "summary": "Unable to generate AI decision"
         }
@@ -155,7 +155,7 @@ def generate_ai_decision(
                 "Monitor volatility while increasing exposure",
 
             "next_action":
-                "Increase high score ETF allocation",
+                "고득점 ETF 비중 확대",
 
             "reason":
                 f"Market momentum is positive. "
@@ -200,7 +200,7 @@ def generate_ai_decision(
                 "Reduce equity exposure",
 
             "next_action":
-                "Increase defensive allocation",
+                "방어적 자산 비중 확대",
 
             "reason":
                 "Market weakness or portfolio risk detected",
@@ -239,7 +239,7 @@ def generate_ai_decision(
                 "Maintain current portfolio risk",
 
             "next_action":
-                "Monitor market momentum",
+                "시장 모멘텀 모니터링",
 
             "reason":
                 f"Market regime {regime}. "

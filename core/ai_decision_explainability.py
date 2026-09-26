@@ -203,26 +203,25 @@ class AIDecisionExplainability:
 
         if risk_level == "High Risk":
             assessment = (
-                "High portfolio risk detected. "
-                "Risk control should take priority."
+                "포트폴리오 위험 수준이 높습니다. "
+                "위험관리를 우선해야 합니다."
             )
 
         elif regime == "BEARISH":
             assessment = (
-                "Bearish market conditions detected. "
-                "Defensive positioning is recommended."
+                "약세 시장 상황이 감지되었습니다. "
+                "방어적 포지셔닝이 권장됩니다."
             )
 
         elif risk_level == "Medium Risk":
             assessment = (
-                "Moderate portfolio risk detected. "
-                "Market conditions should be monitored."
+                "포트폴리오 위험 수준이 보통입니다. "
+                "시장 상황을 지속적으로 모니터링해야 합니다."
             )
 
         else:
             assessment = (
-                "No critical risk signal detected "
-                "from the current market and portfolio state."
+                "현재 시장 및 포트폴리오 상태에서 중대한 위험 신호가 감지되지 않았습니다."
             )
 
         return {
@@ -259,13 +258,23 @@ class AIDecisionExplainability:
         else:
             level = "Low"
 
+        level_label = {
+            "Very High": "매우 높음",
+            "High": "높음",
+            "Moderate": "보통",
+            "Low": "낮음"
+        }.get(
+            level,
+            level
+        )
+
         return {
             "confidence": confidence,
             "level": level,
             "decision_score": decision_score,
             "reason": (
-                f"AI Decision Score is {decision_score:.1f}/100, "
-                f"resulting in {level.lower()} decision confidence."
+                f"AI {chr(0xC758)}{chr(0xC0AC)}{chr(0xACB0)}{chr(0xC815)} {chr(0xC810)}{chr(0xC218)}{chr(0xB294)} {decision_score:.1f}/100{chr(0xC774)}{chr(0xBA70)}, "
+                f"{chr(0xC758)}{chr(0xC0AC)}{chr(0xACB0)}{chr(0xC815)} {chr(0xC2E0)}{chr(0xB8B0)}{chr(0xB3C4)}{chr(0xB294)} {level_label} {chr(0xC218)}{chr(0xC900)}{chr(0xC785)}{chr(0xB2C8)}{chr(0xB2E4)}."
             )
         }
 

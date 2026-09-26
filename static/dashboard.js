@@ -430,7 +430,7 @@ function loadDashboard(){
 
 
             <p>
-            ?? ${getDashboardText("slopeScore")} :
+            ${getDashboardText("slopeScore")} :
             <b>
             ${item.slope_score}
             </b>
@@ -751,7 +751,7 @@ async function loadDetail(ticker){
 
 
     <p>
-    ?? ${getDashboardText("slopeScore")} :
+    ${getDashboardText("slopeScore")} :
     <b>${result.slope_score}</b>
     </p>
 
@@ -1295,7 +1295,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <p>
 
-            ?? ${getDashboardText("cashWeight")}
+            ${getDashboardText("cashWeight")}
 
             <br>
 
@@ -3074,7 +3074,7 @@ async function loadAIDecisionHistory(){
     <div class="ai-history-card">
 
         <h3>
-        ?? ${getDashboardText("aiDecisionHistory")}
+        ${getDashboardText("aiDecisionHistory")}
         </h3>
     `;
 
@@ -3127,7 +3127,7 @@ async function loadAIDecisionHistory(){
 
 
                 <p>
-                ?? ${getDashboardText("date")} :
+                ${getDashboardText("date")} :
                 <b>
                 ${item.created_at}
                 </b>
@@ -3329,21 +3329,21 @@ async function loadAIDecisionTrend(){
     );
 
 
-    let trendIcon = "?";
+    let trendIcon = "";
 
 
     if(
         trend.direction === "UP"
     ){
 
-        trendIcon = "??";
+        trendIcon = "UP";
 
     }
     else if(
         trend.direction === "DOWN"
     ){
 
-        trendIcon = "??";
+        trendIcon = "DOWN";
 
     }
 
@@ -3909,7 +3909,7 @@ async function loadAIAdaptiveStrategy(){
     <div class="ai-adaptive-card">
 
         <h3>
-        ?? ${getDashboardText("adaptiveStrategy")}
+        ${getDashboardText("adaptiveStrategy")}
         </h3>
 
         <p>
@@ -4340,24 +4340,33 @@ async function loadPortfolioExplainability(){
                 ${getDashboardText("riskAnalysis")}
                 </h4>
 
-                <p>
-                <strong>
-            ${getDashboardText("riskLevel")} :
-                </strong>
-                ${explanation.risk_analysis.risk_level}
+                <div class="portfolio-explain-grid portfolio-explain-risk-grid">
 
-                <br>
+                    <p>
+                    <strong>
+                    ${getDashboardText("riskLevel")}
+                    </strong>
+                    <br>
+                    ${explanation.risk_analysis.risk_level}
+                    </p>
 
-                <strong>
-            ${getDashboardText("cashWeight")} :
-                </strong>
-                ${explanation.risk_analysis.cash_weight}%
+                    <p>
+                    <strong>
+                    ${getDashboardText("cashWeight")}
+                    </strong>
+                    <br>
+                    ${explanation.risk_analysis.cash_weight}%
+                    </p>
 
-                <br>
+                    <p>
+                    <strong>
+                    ${getDashboardText("riskAssessment")}
+                    </strong>
+                    <br>
+                    ${explanation.risk_analysis.reason}
+                    </p>
 
-                ${explanation.risk_analysis.reason}
-
-                </p>
+                </div>
 
             `;
 
@@ -4385,27 +4394,33 @@ async function loadPortfolioExplainability(){
                 ${getDashboardText("marketAnalysis")}
                 </h4>
 
-                <p>
+                <div class="portfolio-explain-grid portfolio-explain-market-grid">
 
-                <strong>
-                ${getDashboardText("regime")}:
-                </strong>
+                    <p>
+                    <strong>
+                    ${getDashboardText("regime")}
+                    </strong>
+                    <br>
+                    ${market.regime}
+                    </p>
 
-                ${market.regime}
+                    <p>
+                    <strong>
+                    ${getDashboardText("impact")}
+                    </strong>
+                    <br>
+                    ${market.impact}
+                    </p>
 
-                <br>
+                    <p>
+                    <strong>
+                    ${getDashboardText("marketReason")}
+                    </strong>
+                    <br>
+                    ${market.reason}
+                    </p>
 
-                <strong>
-                ${getDashboardText("impact")}:
-                </strong>
-
-                ${market.impact}
-
-                <br>
-
-                ${market.reason}
-
-                </p>
+                </div>
 
             `;
 
@@ -4419,32 +4434,61 @@ async function loadPortfolioExplainability(){
 
         panel.innerHTML = `
 
-            <h3>
-            ${explanation.summary}
-            </h3>
+            <div class="portfolio-explain-summary">
+                <h3>
+                ${explanation.summary}
+                </h3>
+            </div>
 
 
-            ${decisionSummary}
+            ${decisionSummary
+                ? `<div class="portfolio-explain-section">
+                    ${decisionSummary}
+                </div>`
+                : ""
+            }
 
 
-            <h4>
-            ${getDashboardText("factorAnalysis")}
-            </h4>
+            <div class="portfolio-explain-section portfolio-explain-factor">
 
-            ${factorHTML}
+                <h4>
+                ${getDashboardText("factorAnalysis")}
+                </h4>
 
+                <div class="portfolio-explain-grid">
+                    ${factorHTML}
+                </div>
 
-            <h4>
-            ${getDashboardText("allocationReason")}
-            </h4>
-
-            ${allocationHTML}
-
-
-            ${riskHTML}
+            </div>
 
 
-            ${marketHTML}
+            <div class="portfolio-explain-section portfolio-explain-allocation">
+
+                <h4>
+                ${getDashboardText("allocationReason")}
+                </h4>
+
+                <div class="portfolio-explain-grid">
+                    ${allocationHTML}
+                </div>
+
+            </div>
+
+
+            ${riskHTML
+                ? `<div class="portfolio-explain-section">
+                    ${riskHTML}
+                </div>`
+                : ""
+            }
+
+
+            ${marketHTML
+                ? `<div class="portfolio-explain-section">
+                    ${marketHTML}
+                </div>`
+                : ""
+            }
 
         `;
 
@@ -4562,6 +4606,8 @@ async function loadAIDecisionExplainability(){
                         <span>3) 분석 내용</span>
                         <p>${market.reason || "-"}</p>
                     </div>
+
+
                 </div>
             </section>
 
@@ -4656,14 +4702,14 @@ async function loadAIDecisionExplainability(){
                         <span>3) 설명</span>
                         <p>${confidence.reason || "-"}</p>
                     </div>
-                </div>
+
+                    <div class="ai-explainability-item ai-explainability-item-wide">
+                        <span>4) 권고 행동</span>
+                        <strong>${explanation.recommended_action || "-"}</strong>
+                    </div>                </div>
             </section>
 
-            <section class="ai-explainability-recommendation">
-                <h3>권고 행동</h3>
-                <strong>${explanation.recommended_action || "-"}</strong>
-            </section>
-        `;
+`;
 
     }
     catch(error){
@@ -4785,7 +4831,7 @@ async function askPortfolioAnalyst(){
                 html +=
                 `
                 <p>
-                ??${item}
+                ${item}
                 </p>
                 `;
 
@@ -5119,7 +5165,7 @@ const DASHBOARD_TRANSLATIONS = {
         "etfSlopeScore": "기울기 점수 :",
         "etfStability": "안정성 :",
         "etfTrendScore": "추세 점수 :",
-        "factorReturn": "수익률 요인 (번역보류)",
+        "factorReturn": "수익률 요인",
         "factorSlope": "기울기 요인",
         "factorTrend": "추세 요인",
         "gptPortfolioIntelligence": "GPT 포트폴리오 정보",
@@ -5138,6 +5184,14 @@ const DASHBOARD_TRANSLATIONS = {
         "aiDecisionScoreHistory": "AI 의사결정 점수 이력",
         "recentAverage": "최근 평균",
         "averageOutcomeScore": "평균 결과 점수",
+        "totalOutcomes": "전체 결과",
+        "evaluatedOutcomes": "평가 완료 결과",
+        "pendingOutcomes": "평가 대기 결과",
+        "averagePortfolioReturn": "평균 포트폴리오 수익률",
+        "positiveOutcomes": "긍정 결과",
+        "negativeOutcomes": "부정 결과",
+        "adaptiveLearningRequired": "적응형 학습 필요 여부",
+        "aiEvaluation": "AI 평가",
         "status": "상태",
         "confidenceSummary": "신뢰도 요약",
         "confidenceExplainability": "신뢰도 설명화",
@@ -5168,7 +5222,7 @@ const DASHBOARD_TRANSLATIONS = {
         "aiPortfolioOptimization": "AI 포트폴리오 최적화",
         "recommendedMode": "추천 유형",
         "enhanced": "강화",
-        "returnScore": "수익률 점수 (번역보류)",
+        "returnScore": "수익률 점수",
         "trendScore": "추세 점수",
         "slopeScore": "기울기 점수",
         "finalScore": "최종 점수",
@@ -5211,7 +5265,7 @@ const DASHBOARD_TRANSLATIONS = {
         "currentDecision": "현재 의사결정",
         "market": "시장",
         "aiPortfolioAnalyst": "AI 포트폴리오 애널리스트",
-        "current": "현재 (번역보류)",
+        "current": "현재",
         "target": "목표",
         "noAdaptiveOverride": "신청한 거부가 적용되지 않음",
         "decisionIntelligenceError": "AI 의사결정 인텔리전스 오류",
