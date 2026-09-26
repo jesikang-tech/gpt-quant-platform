@@ -15,6 +15,7 @@ current scores in memory.
 
 import sqlite3
 from contextlib import closing
+from decimal import Decimal
 
 import config
 from datetime import date
@@ -217,6 +218,91 @@ def _get_period_config(period: str) -> dict:
     return period_config[period]
 
 
+def _get_reality_test(ticker: str, analysis_date: str, period: str) -> dict:
+    """Evaluate future close observations with optional date-matched High data.
+
+    Percent returns are exposed in percentage points. Missing baselines leave
+    statuses null; missing High never supplies a hit. A completed window with
+    no observed High hit is FAIL only with complete High coverage; otherwise
+    High is indeterminate, independently of the Close result.
+    """
+    settings = _get_period_config(period)
+    window = settings["lookback_trading_days"]
+    result = {
+        "available": False,
+        "unavailable_reason": None,
+        "window_days": window,
+        "target_return_pct": settings["return_threshold"],
+        "observed_days": 0,
+        "high_observed_days": 0,
+        "max_close_return_pct": None,
+        "endpoint_close_return_pct": None,
+        "high_status": None,
+        "high_unavailable_reason": None,
+        "high_first_hit_day": None,
+        "close_status": None,
+        "close_first_hit_day": None,
+    }
+    with closing(_get_replay_connection()) as conn:
+        baseline = conn.execute(
+            "SELECT close_price FROM etf_prices WHERE ticker = ? AND date = ?",
+            (ticker, analysis_date),
+        ).fetchone()
+        if baseline is None:
+            result["unavailable_reason"] = "MISSING_BASELINE"
+            return result
+        base = Decimal(str(baseline[0]))
+        if not base.is_finite() or base <= 0:
+            result["unavailable_reason"] = "INVALID_BASELINE"
+            return result
+        rows = conn.execute(
+            "SELECT date, close_price FROM etf_prices "
+            "WHERE ticker = ? AND date > ? ORDER BY date LIMIT ?",
+            (ticker, analysis_date, window),
+        ).fetchall()
+        highs = {}
+        has_ohlcv = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'etf_ohlcv_prices'"
+        ).fetchone()
+        if has_ohlcv and rows:
+            highs = dict(conn.execute(
+                "SELECT date, high_price FROM etf_ohlcv_prices "
+                "WHERE ticker = ? AND date > ? AND date <= ?",
+                (ticker, analysis_date, rows[-1][0]),
+            ).fetchall())
+
+    target = Decimal(str(settings["return_threshold"])) / 100
+    close_returns = []
+    for day, (observation_date, close) in enumerate(rows, start=1):
+        close_return = Decimal(str(close)) / base - 1
+        close_returns.append(close_return)
+        if close_return >= target and result["close_first_hit_day"] is None:
+            result["close_first_hit_day"] = day
+        high = highs.get(observation_date)
+        if high is not None:
+            result["high_observed_days"] += 1
+            if Decimal(str(high)) / base - 1 >= target and result["high_first_hit_day"] is None:
+                result["high_first_hit_day"] = day
+
+    result["available"] = True
+    result["observed_days"] = len(rows)
+    complete = len(rows) == window
+    for kind in ("high", "close"):
+        result[f"{kind}_status"] = (
+            "PASS" if result[f"{kind}_first_hit_day"] is not None
+            else "FAIL" if complete else "PENDING"
+        )
+    if (complete and result["high_first_hit_day"] is None
+            and result["high_observed_days"] < window):
+        result["high_status"] = None
+        result["high_unavailable_reason"] = "INCOMPLETE_HIGH_COVERAGE"
+    if close_returns:
+        result["max_close_return_pct"] = float(max(close_returns) * 100)
+        if complete:
+            result["endpoint_close_return_pct"] = float(close_returns[-1] * 100)
+    return result
+
+
 def get_current_analysis_data(
     limit: int = 10,
     analysis_date: Optional[str] = None,
@@ -344,6 +430,7 @@ def get_current_analysis_data(
         row["price"] = price
         row["future_performance"] = future_performance
         row["future_performance_days"] = future_performance_days
+        row["reality_test"] = _get_reality_test(row["ticker"], resolved_date, period)
 
     return {
         "success": True,
