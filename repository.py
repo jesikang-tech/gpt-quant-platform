@@ -1,6 +1,44 @@
 from datetime import datetime
 import json
+from contextlib import closing
 from database import get_connection
+
+
+def save_etf_ohlcv_price(
+    ticker, date, open_price=None, high_price=None, low_price=None,
+    close_price=None, volume=None,
+):
+    """Save an independent OHLCV observation; unavailable fields remain NULL."""
+    with closing(get_connection()) as conn:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO etf_ohlcv_prices
+                    (ticker, date, open_price, high_price, low_price, close_price, volume)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(ticker, date) DO UPDATE SET
+                    open_price = excluded.open_price,
+                    high_price = excluded.high_price,
+                    low_price = excluded.low_price,
+                    close_price = excluded.close_price,
+                    volume = excluded.volume
+                """,
+                (ticker, date, open_price, high_price, low_price, close_price, volume),
+            )
+
+
+def get_etf_ohlcv_prices(ticker, end_date=None):
+    """Return (date, open, high, low, close, volume) rows in date order."""
+    with closing(get_connection()) as conn:
+        return conn.execute(
+            """
+            SELECT date, open_price, high_price, low_price, close_price, volume
+            FROM etf_ohlcv_prices
+            WHERE ticker = ? AND (? IS NULL OR date <= ?)
+            ORDER BY date
+            """,
+            (ticker, end_date, end_date),
+        ).fetchall()
 
 
 def save_etf_price(

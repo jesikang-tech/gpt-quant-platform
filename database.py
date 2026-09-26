@@ -23,6 +23,20 @@ def init_database():
     )
     """)
 
+    # Independent OHLCV storage; preserve the existing close-price table.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS etf_ohlcv_prices (
+        ticker TEXT NOT NULL,
+        date TEXT NOT NULL,
+        open_price REAL,
+        high_price REAL,
+        low_price REAL,
+        close_price REAL,
+        volume REAL,
+        PRIMARY KEY (ticker, date)
+    )
+    """)
+
     # ETF 기본정보
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS etf_info (

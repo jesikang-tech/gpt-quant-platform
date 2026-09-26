@@ -1,5 +1,6 @@
 from providers.fdr_provider import FDRProvider
-from repository import save_etf_price
+from repository import save_etf_price, save_etf_ohlcv_price
+import pandas as pd
 
 
 class PriceCollector:
@@ -31,6 +32,13 @@ class PriceCollector:
                 ticker,
                 str(date.date()),
                 float(row["Close"])
+            )
+
+            values = [row.get(column) for column in ("Open", "High", "Low", "Close", "Volume")]
+            save_etf_ohlcv_price(
+                ticker,
+                str(date.date()),
+                *[None if pd.isna(value) else float(value) for value in values],
             )
 
 
