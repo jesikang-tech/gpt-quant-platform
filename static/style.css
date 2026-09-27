@@ -4171,20 +4171,9 @@ body > header p {
     opacity: 0.78;
 }
 
-.historical-replay-reality-test {
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(127, 127, 127, 0.22);
-}
-
 @media (max-width: 768px) {
     .historical-replay-section {
         margin-top: 12px;
-    }
-
-    .historical-replay-reality-test {
-        margin-top: 14px;
-        padding-top: 12px;
     }
 }
 
@@ -4502,16 +4491,109 @@ body > header p {
     }
 }
 
-/* Historical Reality Test: keep all eight result columns readable */
-.historical-replay-reality-test .historical-replay-table {
-    min-width: 900px;
+/* Historical Replay combined score + reality table */
+.historical-replay-combined-table {
+    width: 100%;
+    min-width: 820px;
+    table-layout: fixed;
 }
 
-.historical-replay-reality-test .historical-replay-table th:nth-child(7),
-.historical-replay-reality-test .historical-replay-table td:nth-child(7),
-.historical-replay-reality-test .historical-replay-table th:nth-child(8),
-.historical-replay-reality-test .historical-replay-table td:nth-child(8) {
-    width: 11%;
+.historical-replay-combined-table th,
+.historical-replay-combined-table td {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.historical-replay-combined-table th:nth-child(1),
+.historical-replay-combined-table td:nth-child(1) {
+    width: 36px;
+    text-align: center;
+}
+
+.historical-replay-combined-table th:nth-child(2),
+.historical-replay-combined-table td:nth-child(2) {
+    width: 68px;
     text-align: center;
     white-space: nowrap;
+}
+
+.historical-replay-combined-table th:nth-child(3),
+.historical-replay-combined-table td:nth-child(3) {
+    width: 190px;
+    text-align: left;
+}
+
+.historical-replay-combined-table th:nth-child(4),
+.historical-replay-combined-table td:nth-child(4) {
+    width: 60px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.historical-replay-combined-table th:nth-child(5),
+.historical-replay-combined-table td:nth-child(5) {
+    width: 54px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.historical-replay-combined-table th:nth-child(6),
+.historical-replay-combined-table td:nth-child(6),
+.historical-replay-combined-table th:nth-child(7),
+.historical-replay-combined-table td:nth-child(7) {
+    width: 58px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.historical-replay-combined-table th:nth-child(8),
+.historical-replay-combined-table td:nth-child(8) {
+    width: 62px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.historical-replay-combined-table th:nth-child(9),
+.historical-replay-combined-table td:nth-child(9),
+.historical-replay-combined-table th:nth-child(10),
+.historical-replay-combined-table td:nth-child(10) {
+    width: 50px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.historical-replay-combined-table .replay-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Keep Rank, Ticker and ETF Name visible during horizontal scrolling. */
+.historical-replay-combined-table th:nth-child(1),
+.historical-replay-combined-table td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--card-bg, #ffffff);
+}
+
+.historical-replay-combined-table th:nth-child(2),
+.historical-replay-combined-table td:nth-child(2) {
+    position: sticky;
+    left: 36px;
+    z-index: 3;
+    background: var(--card-bg, #ffffff);
+}
+
+.historical-replay-combined-table th:nth-child(3),
+.historical-replay-combined-table td:nth-child(3) {
+    position: sticky;
+    left: 104px;
+    z-index: 3;
+    background: var(--card-bg, #ffffff);
+    box-shadow: 2px 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.historical-replay-combined-table thead th:nth-child(-n+3) {
+    z-index: 4;
 }

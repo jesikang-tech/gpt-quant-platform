@@ -4937,9 +4937,10 @@ async function runHistoricalReplay() {
             `${data.lookback_trading_days} trading days / ` +
             `Top ${top10.length}`;
 
-        const replayRows = top10.map((item, index) => {
+        const combinedRows = top10.map((item, index) => {
             const price = Number(item.price);
             const finalScore = Number(item.final_score);
+            const reality = item.reality_test || {};
 
             const priceText = Number.isFinite(price)
                 ? price.toLocaleString("ko-KR")
@@ -4949,26 +4950,11 @@ async function runHistoricalReplay() {
                 ? finalScore.toFixed(1)
                 : "N/A";
 
-            return `
-                <tr>
-                    <td class="replay-rank">${index + 1}</td>
-                    <td class="replay-ticker">${item.ticker || ""}</td>
-                    <td class="replay-name">${item.name || ""}</td>
-                    <td class="replay-price">${priceText}</td>
-                    <td class="replay-score">${scoreText}</td>
-                </tr>
-            `;
-        }).join("");
-
-        const realityRows = top10.map((item, index) => {
-            const reality = item.reality_test || {};
-
             const closeStatus = reality.close_status ?? "N/A";
             const highStatus = reality.high_status ?? "N/A";
 
             const closeDay = Number(reality.close_first_hit_day);
             const highDay = Number(reality.high_first_hit_day);
-
             const observedDays = Number(reality.observed_days);
             const windowDays = Number(reality.window_days);
 
@@ -4991,68 +4977,45 @@ async function runHistoricalReplay() {
                     <td class="replay-rank">${index + 1}</td>
                     <td class="replay-ticker">${item.ticker || ""}</td>
                     <td class="replay-name">${item.name || ""}</td>
+                    <td class="replay-price">${priceText}</td>
+                    <td class="replay-score">${scoreText}</td>
                     <td class="replay-future">${closeStatus}</td>
                     <td class="replay-future">${highStatus}</td>
-                    <td>${coverageText}</td>
-                    <td>${closeDayText}</td>
-                    <td>${highDayText}</td>
+                    <td class="replay-observed">${coverageText}</td>
+                    <td class="replay-hit">${closeDayText}</td>
+                    <td class="replay-hit">${highDayText}</td>
                 </tr>
             `;
         }).join("");
 
         resultContent.innerHTML = `
-            <section class="historical-replay-section">
+            <section class="historical-replay-section historical-replay-combined">
                 <div class="historical-replay-section-title">
-                    Historical Replay - Final Score Top 10
+                    Historical Replay - Final Score & Reality Test
                 </div>
                 <div class="historical-replay-section-description">
-                    Historical data available as of the analysis date is used
-                    to calculate the ETF Final Score and display the top-ranked ETFs.
+                    Replay Score is calculated only from historical data available as of the analysis date.
+                    Close, High, Observed and Hit results show subsequent market performance and are not used in the ranking calculation.
                 </div>
 
                 <div class="historical-replay-table-wrap">
-                    <table class="historical-replay-table">
+                    <table class="historical-replay-table historical-replay-combined-table">
                         <thead>
                             <tr>
                                 <th scope="col">Rank</th>
                                 <th scope="col">Ticker</th>
                                 <th scope="col">ETF Name</th>
                                 <th scope="col">Price</th>
-                                <th scope="col">Replay Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${replayRows}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section class="historical-replay-section historical-replay-reality-test">
-                <div class="historical-replay-section-title">
-                    Reality Test - Actual Subsequent Performance
-                </div>
-                <div class="historical-replay-section-description">
-                    Subsequent market performance observed after the Replay date.
-                    These values are not used in the Historical Replay ranking calculation.
-                </div>
-
-                <div class="historical-replay-table-wrap">
-                    <table class="historical-replay-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Rank</th>
-                                <th scope="col">Ticker</th>
-                                <th scope="col">ETF Name</th>
+                                <th scope="col">Replay<br>Score</th>
                                 <th scope="col">Close</th>
                                 <th scope="col">High</th>
                                 <th scope="col">Observed</th>
-                                <th scope="col">Close Hit</th>
-                                <th scope="col">High Hit</th>
+                                <th scope="col">Close<br>Hit</th>
+                                <th scope="col">High<br>Hit</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${realityRows}
+                            ${combinedRows}
                         </tbody>
                     </table>
                 </div>
