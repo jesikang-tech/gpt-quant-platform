@@ -4597,3 +4597,186 @@ body > header p {
 .historical-replay-combined-table thead th:nth-child(-n+3) {
     z-index: 4;
 }
+
+/* ============================================================
+   Portfolio History Grid
+   ============================================================ */
+
+.ver11-main #portfolio-history {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 18px;
+  border: 1px solid #d7dce3;
+  border-radius: 10px;
+  background: #f7f8fa;
+  box-sizing: border-box;
+}
+
+.ver11-main #portfolio-history > h3 {
+  margin: 0 0 16px;
+}
+
+.ver11-main #portfolio-history .history-group-list {
+  display: grid;
+  gap: 18px;
+}
+
+.ver11-main #portfolio-history .history-group {
+  min-width: 0;
+  border: 1px solid #d8dde4;
+  border-radius: 9px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.ver11-main #portfolio-history .history-group-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #dfe3e8;
+  background: #f1f3f5;
+}
+
+.ver11-main #portfolio-history .history-group-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.ver11-main #portfolio-history .history-mode {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.ver11-main #portfolio-history .history-group-time {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.ver11-main #portfolio-history .history-group-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ver11-main #portfolio-history .history-group-summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid #dde2e7;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.ver11-main #portfolio-history .history-group-summary strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ver11-main #portfolio-history .history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  align-items: stretch;
+}
+
+.ver11-main #portfolio-history .history-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e4e9;
+  border-radius: 7px;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow: hidden;
+  line-height: 1.45;
+}
+
+.ver11-main #portfolio-history .history-card-primary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  padding: 11px;
+}
+
+.ver11-main #portfolio-history .history-primary-item {
+  min-width: 0;
+  padding: 8px 6px;
+  border: 1px solid #e4e7eb;
+  border-radius: 6px;
+  background: #fafbfc;
+  text-align: center;
+}
+
+.ver11-main #portfolio-history .history-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  opacity: 0.68;
+}
+
+.ver11-main #portfolio-history .history-primary-item strong {
+  display: block;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.ver11-main #portfolio-history .history-card-details {
+  margin: 0 11px;
+  padding: 8px 1px 11px;
+  border-top: 1px solid #eceff2;
+}
+
+.ver11-main #portfolio-history .history-detail-row {
+  display: grid;
+  grid-template-columns: minmax(52px, auto) 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.ver11-main #portfolio-history .history-detail-row > span {
+  font-size: 12px;
+  opacity: 0.68;
+}
+
+.ver11-main #portfolio-history .history-detail-row > strong {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .ver11-main #portfolio-history {
+    padding: 12px;
+  }
+
+  .ver11-main #portfolio-history .history-group-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ver11-main #portfolio-history .history-group-summary {
+    justify-content: flex-start;
+  }
+
+  .ver11-main #portfolio-history .history-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .ver11-main #portfolio-history .history-card-primary {
+    grid-template-columns: 1fr;
+  }
+}

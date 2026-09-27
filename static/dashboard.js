@@ -1367,81 +1367,148 @@ async function loadPortfolioHistory(){
     `;
 
 
+    const groups = new Map();
+
+
     result.history.forEach(item => {
 
+        const key =
+        `${item.mode}__${item.created_at}`;
+
+
+        if (!groups.has(key)) {
+
+            groups.set(
+                key,
+                {
+                    mode: item.mode,
+                    created_at: item.created_at,
+                    health_score: item.health_score,
+                    confidence: item.confidence,
+                    market_condition: item.market_condition,
+                    items: []
+                }
+            );
+
+        }
+
+
+        groups.get(key).items.push(item);
+
+    });
+
+
+    html += `<div class="history-group-list">`;
+
+
+    groups.forEach(group => {
 
         html += `
 
-        <div class="history-card">
+        <section class="history-group">
+
+            <div class="history-group-header">
+
+                <div>
+                    <strong class="history-mode">
+                        ${group.mode.toUpperCase()}
+                    </strong>
+
+                    <span class="history-group-time">
+                        ${group.created_at}
+                    </span>
+                </div>
+
+                <div class="history-group-summary">
+
+                    <span>
+                        ${getDashboardText("healthScore")}
+                        <strong>${group.health_score ?? "-"}</strong>
+                    </span>
+
+                    <span>
+                        ${getDashboardText("confidence")}
+                        <strong>${group.confidence ?? "-"}</strong>
+                    </span>
+
+                    <span>
+                        ${getDashboardText("marketCondition")}
+                        <strong>${group.market_condition ?? "-"}</strong>
+                    </span>
+
+                </div>
+
+            </div>
 
 
-        <b>
-        ${item.mode.toUpperCase()}
-        </b>
-
-
-        <br>
-
-
-        ${getDashboardText("etf")} :
-        ${item.ticker}
-
-
-        <br>
-
-
-        ${getDashboardText("portfolioWeight")} :
-        ${item.weight}%
-
-
-        <br>
-
-
-        ${getDashboardText("score")} :
-        ${item.score ?? "-"}
-
-
-        <br>
-
-
-        ${getDashboardText("reason")} :
-        ${item.reason}
-
-
-        <br>
-            ${getDashboardText("healthScore")} :
-        ${item.health_score ?? "-"}
-
-
-        <br>
-
-
-        ${getDashboardText("confidence")} :
-        ${item.confidence ?? "-"}
-
-
-        <br>
-
-
-        ${getDashboardText("marketCondition")} :
-        ${item.market_condition ?? "-"}
-
-
-        <br>
-
-
-        ${item.created_at}
-
-
-        </div>
+            <div class="history-grid">
 
         `;
 
 
+        group.items.forEach(item => {
+
+            html += `
+
+            <div class="history-card">
+
+                <div class="history-card-primary">
+
+                    <div class="history-primary-item">
+                        <span class="history-label">
+                            ${getDashboardText("etf")}
+                        </span>
+                        <strong>${item.ticker}</strong>
+                    </div>
+
+                    <div class="history-primary-item">
+                        <span class="history-label">
+                            ${getDashboardText("portfolioWeight")}
+                        </span>
+                        <strong>${item.weight}%</strong>
+                    </div>
+
+                    <div class="history-primary-item">
+                        <span class="history-label">
+                            ${getDashboardText("score")}
+                        </span>
+                        <strong>${item.score ?? "-"}</strong>
+                    </div>
+
+                </div>
+
+                <div class="history-card-details">
+
+                    <div class="history-detail-row">
+                        <span>${getDashboardText("reason")}</span>
+                        <strong>${item.reason}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            `;
+
+        });
+
+
+        html += `
+
+            </div>
+
+        </section>
+
+        `;
+
     });
 
+
+    html += `</div>`;
+
+
     panel.innerHTML = html;
-    
+
 
 }
 
