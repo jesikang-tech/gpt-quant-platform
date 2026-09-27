@@ -715,101 +715,117 @@ async function loadDetail(ticker){
     panel.innerHTML =
 
     `
-    <h3>
-    ${result.ticker}
-    </h3>
+    <div class="etf-detail-box">
+
+        <div class="etf-detail-summary">
+
+            <h3>
+            ${result.ticker}
+            </h3>
+
+            <div class="etf-detail-summary-grid">
+
+                <div class="etf-detail-metric">
+                    <span>${getDashboardText("score")}</span>
+                    <b>${result.score}</b>
+                </div>
+
+                <div class="etf-detail-metric">
+                    <span>${getDashboardText("enhanced")}</span>
+                    <b>${result.enhanced_score}</b>
+                </div>
+
+            </div>
+
+        </div>
 
 
-    <p>
-    ${getDashboardText("score")} :
-    <b>${result.score}</b>
-    </p>
+        <section class="etf-detail-section">
+
+            <h3>
+            ${getDashboardText("aiIntelligence")}
+            </h3>
+
+            <div class="etf-detail-data-grid">
+
+                <p>
+                    <span>${getDashboardText("returnScore")}</span>
+                    <b>${result.return_score}</b>
+                </p>
+
+                <p>
+                    <span>${getDashboardText("trendScore")}</span>
+                    <b>${result.trend_score}</b>
+                </p>
+
+                <p>
+                    <span>${getDashboardText("slopeScore")}</span>
+                    <b>${result.slope_score}</b>
+                </p>
+
+                <p>
+                    <span>${getDashboardText("finalScore")}</span>
+                    <b>${result.final_score}</b>
+                </p>
+
+                <p>
+                    <span>${getDashboardText("grade")}</span>
+                    <span>${getGradeBadge(result.grade)}</span>
+                </p>
+
+                <p>
+                    <span>${getDashboardText("signal")}</span>
+                    <span>${getSignal(result.prediction)}</span>
+                </p>
+
+                <p>
+                    <span>${getDashboardText("stability")}</span>
+                    <b>${result.stability}</b>
+                </p>
+
+            </div>
+
+        </section>
 
 
-    <p>
-    ${getDashboardText("enhanced")} :
-    <b>${result.enhanced_score}</b>
-    </p>
+        <section class="etf-detail-section etf-detail-insight">
 
+            <h3>
+            ${getDashboardText("aiInsight")}
+            </h3>
 
-    <h3>
-    ${getDashboardText("aiIntelligence")}
-    </h3>
+            <div class="etf-detail-insight-list">
 
+                <p>
+                    <span>${getDashboardText("trend")}</span>
+                    <strong>${result.analysis.trend}</strong>
+                </p>
 
-    <p>
-    ${getDashboardText("returnScore")} :
-    <b>${result.return_score}</b>
-    </p>
+                <p>
+                    <span>${getDashboardText("risk")}</span>
+                    <strong>${result.analysis.risk}</strong>
+                </p>
 
+                <p>
+                    <span>${getDashboardText("opinion")}</span>
+                    <strong>${result.analysis.opinion}</strong>
+                </p>
 
-    <p>
-    ${getDashboardText("trendScore")} :
-    <b>${result.trend_score}</b>
-    </p>
+                <p>
+                    <span>${getDashboardText("scoreMomentum")}</span>
+                    <strong>${Number.isFinite(Number(result.analysis.score_change)) ? Number(result.analysis.score_change).toFixed(1) : result.analysis.score_change}</strong>
+                </p>
 
+                <p>
+                    <span>Prediction</span>
+                    <strong>${result.analysis.prediction}</strong>
+                </p>
 
-    <p>
-    ${getDashboardText("slopeScore")} :
-    <b>${result.slope_score}</b>
-    </p>
+            </div>
 
+        </section>
 
-    <p>
-    ${getDashboardText("finalScore")} :
-    <b>${result.final_score}</b>
-    </p>
-
-
-    <p>
-    ${getDashboardText("grade")} :
-    ${getGradeBadge(result.grade)}
-    </p>
-
-
-    <p>
-    ${getDashboardText("signal")} :
-    ${getSignal(result.prediction)}
-    </p>
-
-
-    <p>
-    ${getDashboardText("stability")} :
-    ${result.stability}
-    </p>
-    
-    <hr>
-
-    <p>
-    ${getDashboardText("aiInsight")}
-    </p>
-
-    <p>
-    ${getDashboardText("trend")} :
-    ${result.analysis.trend}
-    </p>
-
-    <p>
-    ${getDashboardText("risk")} :
-    ${result.analysis.risk}
-    </p>
-
-    <p>
-    ${getDashboardText("opinion")} :
-    ${result.analysis.opinion}
-    </p>
-
-    <p>
-    ${getDashboardText("scoreMomentum")} :
-    ${result.analysis.score_change}
-    </p>
-
-
-    <p>
-    Prediction :
-    ${result.analysis.prediction}
-    </p>
-
+    </div>
     `;
 }
 
