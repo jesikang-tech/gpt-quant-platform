@@ -4501,3 +4501,17 @@ body > header p {
         font-size: 16px;
     }
 }
+
+/* Historical Reality Test: keep all eight result columns readable */
+.historical-replay-reality-test .historical-replay-table {
+    min-width: 900px;
+}
+
+.historical-replay-reality-test .historical-replay-table th:nth-child(7),
+.historical-replay-reality-test .historical-replay-table td:nth-child(7),
+.historical-replay-reality-test .historical-replay-table th:nth-child(8),
+.historical-replay-reality-test .historical-replay-table td:nth-child(8) {
+    width: 11%;
+    text-align: center;
+    white-space: nowrap;
+}

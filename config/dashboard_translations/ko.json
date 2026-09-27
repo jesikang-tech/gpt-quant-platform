@@ -220,6 +220,18 @@
   "currentViewStrategy": "현재 시점 전략",
   "aiStatus": "AI 상태",
   "portfolioAnalytics": "포트폴리오 분석",
-  "portfolioHistory": "포트폴리오 이력"
+  "portfolioHistory": "포트폴리오 이력",
+  "totalOutcomes": "전체 결과",
+  "evaluatedOutcomes": "평가 완료 결과",
+  "pendingOutcomes": "평가 대기 결과",
+  "averagePortfolioReturn": "평균 포트폴리오 수익률",
+  "positiveOutcomes": "긍정 결과",
+  "negativeOutcomes": "부정 결과",
+  "adaptiveLearningRequired": "적응형 학습 필요 여부",
+  "aiEvaluation": "AI 평가",
+  "portfolioQuestionRequired": "질문을 입력해주세요.",
+  "portfolioAnalystAnalyzing": "AI 포트폴리오 애널리스트 분석 중...",
+  "portfolioAnalystError": "AI 애널리스트 결과 오류",
+  "aiIntelligence": "AI 정보",
+  "marketReason": "시장 판단 사유"
 }
-

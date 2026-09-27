@@ -137,8 +137,8 @@ def run_case_reassessment():
         "reassessment_policy"
     ] = "REQUIRED"
 
-    # Orchestration ???깆젷 contract:
-    # _determine_status()??reassessment_policy?띠럾? ?熬곣뫀鍮??    # operational_status??REASSESSMENT_REQUIRED????????類ｋ펲.
+    # Orchestration reassessment contract:
+    # _determine_status() uses reassessment_policy to determine operational_status.
     data["lifecycle_governance_control"][
         "operational_status"
     ] = "REASSESSMENT_REQUIRED"

@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -26,11 +25,32 @@ EXCLUDED_DIRECTORIES = {
     "build",
     "dist",
     "logs",
+    "backup",
 }
+
+EXCLUDED_FILENAMES = set()
+
+
+# ASCII-only source representation.
+# These are known mojibake sequences previously observed
+# in the project. They are deliberately specific rather
+# than checking isolated Unicode characters.
+MOJIBAKE_PATTERNS = (
+    "\u7B4C\u315C",
+    "\u63F6\uC3D8",
+    "\u91CE\uAF80",
+    "\u9913\uB738",
+    "\uBEE7\uD154",
+    "\uC3C4\uB738",
+    "\u5F5B",
+)
 
 
 def should_check(path: Path) -> bool:
     if not path.is_file():
+        return False
+
+    if path.name in EXCLUDED_FILENAMES:
         return False
 
     if any(part in EXCLUDED_DIRECTORIES for part in path.parts):
@@ -46,13 +66,37 @@ def has_bom(data: bytes) -> bool:
 def validate_utf8(path: Path, data: bytes) -> list[str]:
     errors: list[str] = []
 
-    if b"\x00" in data:
+    if bytes([0]) in data:
         errors.append("NUL byte detected")
 
     try:
-        data.decode("utf-8")
+        text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
         errors.append(f"invalid UTF-8: {exc}")
+        return errors
+
+    if "\ufffd" in text:
+        errors.append("Unicode replacement character detected")
+
+    if re.search(r"\?{3,}", text):
+        errors.append("three-or-more consecutive question marks detected")
+
+    mojibake_hits = sorted(
+        {
+            marker
+            for marker in MOJIBAKE_PATTERNS
+            if marker in text
+        }
+    )
+
+    if mojibake_hits:
+        errors.append(
+            "known mojibake pattern detected: "
+            + ", ".join(
+                repr(item)
+                for item in mojibake_hits
+            )
+        )
 
     return errors
 
@@ -131,18 +175,18 @@ def main() -> int:
                 if head_has_bom:
                     legacy_bom += 1
 
-                # Existing BOM policy is preserved.
-                # A new BOM introduced into a previously BOM-free
-                # tracked file is considered an encoding regression.
                 if not head_has_bom and work_has_bom:
-                    errors.append("new UTF-8 BOM introduced relative to HEAD")
+                    errors.append(
+                        "new UTF-8 BOM introduced relative to HEAD"
+                    )
 
         else:
             new_files += 1
 
-            # New text files must use UTF-8 without BOM.
             if has_bom(data):
-                errors.append("new text file contains UTF-8 BOM")
+                errors.append(
+                    "new text file contains UTF-8 BOM"
+                )
 
         if errors:
             failures.append((relative, errors))
