@@ -1883,7 +1883,10 @@ def portfolio_decision_intelligence_api():
         )
     )
 
-    if adaptive_source_history_id is not None:
+    if (
+        request.method == "POST"
+        and adaptive_source_history_id is not None
+    ):
         save_ai_decision_audit_event(
             event_type="ADAPTIVE_STRATEGY_GENERATED",
             event_time=datetime.now().astimezone().isoformat(),
