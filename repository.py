@@ -485,7 +485,7 @@ def save_score_history(
     analysis_date
 ):
     """
-    ETF Score History ???
+    ETF Score History 저장
     """
 
     conn = get_connection()
@@ -601,7 +601,7 @@ def get_ranking_snapshot(
     ranking_date
 ):
     """
-    ?뱀젙 ?좎쭨 Ranking 議고쉶
+    특정 날짜 Ranking 조회
     """
 
     conn = get_connection()
@@ -636,7 +636,7 @@ def get_ranking_snapshot(
 
 def get_ranking_history(ticker):
     """
-    ETF??Ranking History 議고쉶
+    ETF Ranking History 조회
     """
 
     conn = get_connection()
@@ -671,7 +671,7 @@ def save_portfolio_history(
     market_condition=None
 ):
     """
-    Portfolio Advisor History ???
+    Portfolio Advisor History 저장
     """
 
     conn = get_connection()
@@ -712,7 +712,7 @@ def save_portfolio_history(
 
 def get_portfolio_history(limit=50):
     """
-    Portfolio History 議고쉶
+    Portfolio History 조회
     """
 
     conn = get_connection()
