@@ -57,11 +57,7 @@ def main():
     # Step 2
     # ETF Price Data Update
     #
-    # 현재:
-    # price_data.csv 테스트 데이터 사용 안 함
-    #
-    # 향후:
-    # pykrx 실제 데이터 수집 연결 예정
+    # FinanceDataReader 기반 실제 가격 데이터 증분 수집
     # --------------------------------
 
     logger.info(
