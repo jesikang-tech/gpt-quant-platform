@@ -5370,7 +5370,7 @@ const DASHBOARD_TRANSLATIONS = {
         "finalAction": "최종 조치",
         "aiSummary": "AI 요약",
         "aiOptimization": "AI 최적화",
-        "aiFactorInsight": "AI 원인 분석",
+        "aiFactorInsight": "AI 요인 분석",
         "portfolioIntelligence": "GPT 포트폴리오 정보",
         "averageScore": "평균 점수",
         "highestScore": "최고 점수",
