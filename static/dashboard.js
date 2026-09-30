@@ -400,7 +400,7 @@ function loadDashboard(){
 
 
             <p>
-            ${getDashboardText("grade")} :
+            ${getDashboardText("rankingTrendGrade")} :
             ${getGradeBadge(item.grade)}
             </p>
 
@@ -769,7 +769,7 @@ async function loadDetail(ticker){
                 </p>
 
                 <p>
-                    <span>${getDashboardText("grade")}</span>
+                    <span>${getDashboardText("rankingTrendGrade")}</span>
                     <span>${getGradeBadge(result.grade)}</span>
                 </p>
 
