@@ -936,7 +936,7 @@ async function loadPortfolioAdvisor(save=false){
 
                         <div class="factor-item">
 
-                        ${getDashboardText("factorReturn")}
+                        ${getDashboardText("returnScore")}
 
                         <div class="factor-bar">
 
@@ -957,7 +957,7 @@ async function loadPortfolioAdvisor(save=false){
 
                         <div class="factor-item">
 
-                        ${getDashboardText("factorTrend")}
+                        ${getDashboardText("trendScore")}
 
                         <div class="factor-bar">
 
@@ -978,7 +978,7 @@ async function loadPortfolioAdvisor(save=false){
 
                         <div class="factor-item">
 
-                        ${getDashboardText("factorSlope")}
+                        ${getDashboardText("slopeScore")}
 
                         <div class="factor-bar">
 
@@ -5216,7 +5216,7 @@ const DASHBOARD_TRANSLATIONS = {
         "etfSlopeScore": "기울기 점수 :",
         "etfStability": "안정성 :",
         "etfTrendScore": "추세 점수 :",
-        "factorReturn": "수익률 요인 (번역보류)",
+        "factorReturn": "수익률 요인",
         "factorSlope": "기울기 요인",
         "factorTrend": "추세 요인",
         "gptPortfolioIntelligence": "GPT 포트폴리오 정보",
