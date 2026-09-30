@@ -305,7 +305,7 @@ def save_or_update_etf_score(
 
 def get_top_scores(limit=10, analysis_date=None):
     """
-    ETF Score Ranking 議고쉶
+    ETF Score Ranking 조회
     """
 
     conn = get_connection()
@@ -335,7 +335,7 @@ def get_etf_score_detail(
     ticker
 ):
     """
-    ETF Score ?곸꽭 議고쉶
+    ETF Score 상세 조회
     """
 
     conn = get_connection()
@@ -372,8 +372,8 @@ def get_etf_score_detail(
 
 def remove_duplicate_scores():
     """
-    ETF Score 以묐났 ?쒓굅
-    理쒖떊 ?곗씠?곕쭔 ?좎?
+    ETF Score 중복 제거
+    최신 데이터만 유지
     """
 
     conn = get_connection()
@@ -397,7 +397,7 @@ def remove_duplicate_scores():
 
 def save_etf_list(df):
     """
-    ETF 紐⑸줉 ?꾩껜 ???
+    ETF 목록 전체 저장
     """
 
     conn = get_connection()
@@ -428,7 +428,7 @@ def save_etf_list(df):
 
 def has_price_data(ticker):
     """
-    ?대떦 ETF 媛寃??곗씠??議댁옱 ?щ? ?뺤씤
+    해당 ETF 가격 데이터 존재 여부 확인
     """
 
     conn = get_connection()
@@ -452,7 +452,7 @@ def has_price_data(ticker):
 
 def get_all_etf_tickers():
     """
-    ??λ맂 ETF ticker ?꾩껜 議고쉶
+    저장된 ETF ticker 전체 조회
     """
 
     conn = get_connection()
