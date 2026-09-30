@@ -196,7 +196,7 @@ function loadDashboard(){
 
 
         <p>
-        ${getDashboardText("grade")} :
+        ${getDashboardText("rankingTrendGrade")} :
         <b>
         ${intelligence.grade}
         </b>
@@ -5190,6 +5190,7 @@ const DASHBOARD_TRANSLATIONS = {
         "aiDecisionIntelligence": "AI 의사결정 인텔리전스",
         "intelligenceScore": "인텔리전스 점수",
         "grade": "등급",
+        "rankingTrendGrade": "랭킹 추세 등급",
         "level": "수준",
         "decisionConfidenceIntelligence": "의사결정 신뢰 지능",
         "confidenceScore": "신뢰도 점수",
@@ -5427,6 +5428,7 @@ const DASHBOARD_TRANSLATIONS = {
         "aiDecisionIntelligence": "AI Decision Intelligence",
         "intelligenceScore": "Intelligence Score",
         "grade": "Grade",
+        "rankingTrendGrade": "Ranking Trend Grade",
         "level": "Level",
         "decisionConfidenceIntelligence": "Decision Confidence Intelligence",
         "confidenceScore": "Confidence Score",
