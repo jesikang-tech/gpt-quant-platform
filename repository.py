@@ -76,7 +76,7 @@ def save_etf_price(
 
 def get_etf_prices(ticker, end_date=None):
     """
-    ?뱀젙 ETF 媛寃?議고쉶
+    특정 ETF 가격 조회
     """
 
     conn = get_connection()
@@ -100,7 +100,7 @@ def get_etf_prices(ticker, end_date=None):
 
 def get_all_price_data():
     """
-    ?꾩껜 媛寃??곗씠??議고쉶
+    전체 가격 데이터 조회
     """
 
     conn = get_connection()
@@ -158,7 +158,7 @@ def save_etf_info(
 
 def get_all_etf_info():
     """
-    ?꾩껜 ETF ?뺣낫 議고쉶
+    전체 ETF 정보 조회
     """
 
     conn = get_connection()
@@ -1860,7 +1860,7 @@ def get_ai_portfolio_optimization():
     cursor = conn.cursor()
 
 
-    # 理쒓렐 Portfolio History 議고쉶
+    # 최근 Portfolio History 조회
 
     cursor.execute(
         """
@@ -1975,7 +1975,7 @@ def get_portfolio_analytics():
     cursor = conn.cursor()
 
 
-    # ?꾩껜 History 媛쒖닔
+    # 전체 History 개수
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -1986,7 +1986,7 @@ def get_portfolio_analytics():
     total_history = cursor.fetchone()[0]
 
 
-    # 理쒓렐 Portfolio Mode
+    # 최신 Portfolio Mode
     cursor.execute(
         """
         SELECT mode
@@ -2005,7 +2005,7 @@ def get_portfolio_analytics():
     )
 
 
-    # Mode蹂??ъ슜 ?잛닔
+    # Mode별 사용 횟수
     cursor.execute(
         """
         SELECT
@@ -2020,7 +2020,7 @@ def get_portfolio_analytics():
     mode_analysis = cursor.fetchall()
 
 
-    # ETF蹂??됯퇏 鍮꾩쨷
+    # ETF별 평균 비중
     cursor.execute(
         """
         SELECT
@@ -2049,7 +2049,7 @@ def get_portfolio_analytics():
 
 def get_latest_etf_scores(limit=30):
     """
-    理쒖떊 ETF Score 議고쉶
+    최신 ETF Score 조회
     """
 
     conn = get_connection()
