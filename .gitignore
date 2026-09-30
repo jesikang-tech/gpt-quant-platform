@@ -236,3 +236,4 @@ database/*.db.empty-backup
 
 # Local development backups
 backup/
+*_backup.py
