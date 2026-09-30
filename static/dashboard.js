@@ -446,7 +446,7 @@ function loadDashboard(){
 
 
             <p>
-            ${getDashboardText("stability")} :
+            ${getDashboardText("rankingStabilityScore")} :
             ${item.stability}
             </p>
 
@@ -467,7 +467,7 @@ function loadDashboard(){
 
 
             <p>
-            ${getDashboardText("stability")} :
+            ${getDashboardText("rankingStabilityScore")} :
             ${item.stability}
             </p>
 
@@ -779,7 +779,7 @@ async function loadDetail(ticker){
                 </p>
 
                 <p>
-                    <span>${getDashboardText("stability")}</span>
+                    <span>${getDashboardText("rankingStabilityScore")}</span>
                     <b>${result.stability}</b>
                 </p>
 
@@ -5191,6 +5191,7 @@ const DASHBOARD_TRANSLATIONS = {
         "intelligenceScore": "인텔리전스 점수",
         "grade": "등급",
         "rankingTrendGrade": "랭킹 추세 등급",
+        "rankingStabilityScore": "랭킹 안정성 점수",
         "level": "수준",
         "decisionConfidenceIntelligence": "의사결정 신뢰 지능",
         "confidenceScore": "신뢰도 점수",
@@ -5429,6 +5430,7 @@ const DASHBOARD_TRANSLATIONS = {
         "intelligenceScore": "Intelligence Score",
         "grade": "Grade",
         "rankingTrendGrade": "Ranking Trend Grade",
+        "rankingStabilityScore": "Ranking Stability Score",
         "level": "Level",
         "decisionConfidenceIntelligence": "Decision Confidence Intelligence",
         "confidenceScore": "Confidence Score",
