@@ -5265,7 +5265,7 @@ const DASHBOARD_TRANSLATIONS = {
         "aiPortfolioOptimization": "AI 포트폴리오 최적화",
         "recommendedMode": "추천 유형",
         "enhanced": "강화",
-        "returnScore": "수익률 점수 (번역보류)",
+        "returnScore": "수익률 점수",
         "trendScore": "추세 점수",
         "slopeScore": "기울기 점수",
         "finalScore": "최종 점수",
