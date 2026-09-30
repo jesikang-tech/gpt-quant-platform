@@ -867,7 +867,7 @@ def get_ai_decision_summary():
     cursor = conn.cursor()
 
 
-    # ?꾩껜 ?먮떒 ?잛닔
+    # 전체 의사결정 횟수
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -878,7 +878,7 @@ def get_ai_decision_summary():
     total_decisions = cursor.fetchone()[0]
 
 
-    # ?됯퇏 Decision Score
+    # 평균 Decision Score
     cursor.execute(
         """
         SELECT AVG(decision_score)
@@ -896,7 +896,7 @@ def get_ai_decision_summary():
     )
 
 
-    # 理쒓렐 Decision ?뺣낫
+    # 최신 Decision 정보
     cursor.execute(
         """
         SELECT
@@ -966,7 +966,7 @@ def get_ai_decision_quality():
     cursor = conn.cursor()
 
 
-    # 理쒓렐 Decision Score 5媛?議고쉶
+    # 최근 Decision Score 5개 조회
     cursor.execute(
         """
         SELECT
@@ -1000,7 +1000,7 @@ def get_ai_decision_quality():
         }
 
 
-    # ?됯퇏 ?먯닔
+    # 평균 점수
     average_score = sum(scores) / len(scores)
 
 
@@ -1029,7 +1029,7 @@ def get_ai_decision_quality():
 
 
 
-    # ?먯닔 ?덉젙??
+    # 점수 안정성 평가
     score_range = max(scores) - min(scores)
 
 
@@ -1285,7 +1285,7 @@ def get_ai_decision_performance():
     cursor = conn.cursor()
 
 
-    # ?꾩껜 Decision 媛쒖닔
+    # 전체 Decision 개수
     cursor.execute(
         """
         SELECT COUNT(*)
@@ -1297,7 +1297,7 @@ def get_ai_decision_performance():
     total_decisions = cursor.fetchone()[0]
 
 
-    # ?됯퇏 Score
+    # 평균 Score
     cursor.execute(
         """
         SELECT AVG(decision_score)
@@ -1309,7 +1309,7 @@ def get_ai_decision_performance():
     average_score = cursor.fetchone()[0]
 
 
-    # 理쒓퀬 / 理쒖? Score
+    # 최고 / 최저 Score
     cursor.execute(
         """
         SELECT
@@ -1328,7 +1328,7 @@ def get_ai_decision_performance():
     lowest_score = score_range[1]
 
 
-    # 理쒓렐 Score
+    # 최근 Score
     cursor.execute(
         """
         SELECT decision_score
@@ -1398,7 +1398,7 @@ def get_ai_decision_performance():
 
 
 
-    # Reliability ?먮떒
+    # Reliability 판단
 
     if average_score >= 85:
 
@@ -1558,14 +1558,14 @@ def get_ai_adaptive_strategy():
     Decision Reliability,
     Market View,
     Portfolio Condition
-    湲곕컲 ?꾨왂 議곗젙
+    기반 전략 조정
     """
 
     conn = get_connection()
     cursor = conn.cursor()
 
 
-    # 理쒖떊 AI Decision
+    # 최신 AI Decision
     cursor.execute(
         """
         SELECT
@@ -1604,7 +1604,7 @@ def get_ai_adaptive_strategy():
 
 
 
-    # 湲곕낯媛?
+    # 기본값
 
     strategy_mode = current_mode.upper()
 
@@ -1698,7 +1698,7 @@ def get_ai_rebalance_recommendation():
     cursor = conn.cursor()
 
 
-    # 理쒖떊 Adaptive Strategy 議고쉶
+    # 최신 Adaptive Strategy 조회
 
     cursor.execute(
         """
