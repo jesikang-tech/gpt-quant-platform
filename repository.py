@@ -1004,7 +1004,7 @@ def get_ai_decision_quality():
     average_score = sum(scores) / len(scores)
 
 
-    # 理쒓렐 蹂??遺꾩꽍
+    # 최근 변경 분석
     if len(scores) >= 2:
 
         latest_score = scores[0]
@@ -1852,8 +1852,8 @@ def get_ai_portfolio_optimization():
     """
     AI Portfolio Self Optimization Engine
 
-    Current allocation 遺꾩꽍 ??
-    Target allocation ?쒖븞
+    Current allocation 분석
+    Target allocation 제안
     """
 
     conn = get_connection()
