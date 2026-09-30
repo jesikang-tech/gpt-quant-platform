@@ -5398,7 +5398,7 @@ const DASHBOARD_TRANSLATIONS = {
         "aiEvaluation": "AI 평가",
         "portfolioQuestionRequired": "질문을 입력해주세요.",
         "portfolioAnalystAnalyzing": "AI 포트폴리오 애널리스트 분석 중...",
-        "portfolioAnalystError": "AI 애널리스트 결과 오류",
+        "portfolioAnalystError": "AI 포트폴리오 애널리스트 처리 중 오류가 발생했습니다.",
         "aiIntelligence": "AI 정보",
         "marketReason": "시장 판단 사유"
 },
@@ -5637,7 +5637,7 @@ const DASHBOARD_TRANSLATIONS = {
         "totalOutcomes": "Total Outcomes",
         "portfolioQuestionRequired": "Please enter a question.",
         "portfolioAnalystAnalyzing": "AI Portfolio Analyst analyzing...",
-        "portfolioAnalystError": "AI Analyst result error",
+        "portfolioAnalystError": "An error occurred while processing the AI Portfolio Analyst request.",
         "aiIntelligence": "AI Intelligence",
         "marketReason": "Market Reason"
 }
