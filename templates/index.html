@@ -28,6 +28,78 @@ GPT Quant ETF Dashboard
 
 <body>
 
+<div id="platform-auth-overlay" class="platform-auth-overlay">
+    <section class="platform-auth-card" aria-labelledby="platform-auth-title">
+        <h1 id="platform-auth-title">GPT Quant ETF Platform</h1>
+
+        <p id="platform-auth-description">
+            &#xC0AC;&#xC6A9;&#xC790; &#xC778;&#xC99D;
+        </p>
+
+        <form id="platform-auth-form" autocomplete="off">
+            <input
+                id="platform-auth-password"
+                name="password"
+                type="password"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="4"
+                aria-label="User password"
+                autocomplete="off"
+                required
+            >
+
+            <button id="platform-auth-submit" type="submit">
+                &#xB85C;&#xADF8;&#xC778;
+            </button>
+        </form>
+
+        <p id="platform-auth-message" role="status" aria-live="polite"></p>
+
+        <button id="platform-admin-toggle" type="button">
+            (&#xAD00;&#xB9AC;&#xC790;&#xC6A9;)
+        </button>
+    </section>
+        <section id="platform-admin-panel" class="platform-admin-panel" hidden>
+            <h2>&#xAD00;&#xB9AC;&#xC790; &#xC124;&#xC815;</h2>
+
+            <p>
+                &#xC0AC;&#xC6A9;&#xC790;&#xC6A9; 4&#xC790;&#xB9AC;
+                &#xBE44;&#xBC00;&#xBC88;&#xD638; &#xBCC0;&#xACBD;
+            </p>
+
+            <form id="platform-user-password-form" autocomplete="off">
+                <input
+                    id="platform-new-user-password"
+                    name="new-user-password"
+                    type="password"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    maxlength="4"
+                    aria-label="New user password"
+                    autocomplete="off"
+                    required
+                >
+
+                <button id="platform-user-password-submit" type="submit">
+                    &#xBCC0;&#xACBD;
+                </button>
+            </form>
+
+            <p
+                id="platform-admin-message"
+                role="status"
+                aria-live="polite"
+            ></p>
+
+            <button id="platform-admin-dashboard" type="button">
+                &#xB300;&#xC2DC;&#xBCF4;&#xB4DC;&#xB85C; &#xC774;&#xB3D9;
+            </button>
+        </section>
+
+</div>
+
+
 
 
 

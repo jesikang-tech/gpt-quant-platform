@@ -520,69 +520,382 @@ function loadDashboard(){
 
 
 
-// Initial load
+let platformAuthMode = "user";
 
-loadDashboard();
+function setPlatformAuthMode(mode) {
+    const passwordInput =
+        document.getElementById("platform-auth-password");
+    const description =
+        document.getElementById("platform-auth-description");
+    const message =
+        document.getElementById("platform-auth-message");
 
-console.log("BEFORE PORTFOLIO HISTORY");
+    platformAuthMode = mode === "admin" ? "admin" : "user";
 
-loadPortfolioAdvisor();
+    if (!passwordInput || !description || !message) {
+        return;
+    }
 
-loadPortfolioHistory();
+    passwordInput.value = "";
+    message.textContent = "";
 
-loadMarketCondition();
+    if (platformAuthMode === "admin") {
+        passwordInput.maxLength = 7;
+        passwordInput.setAttribute("aria-label", "Admin password");
+        description.textContent = "\uAD00\uB9AC\uC790 \uC778\uC99D";
+    } else {
+        passwordInput.maxLength = 4;
+        passwordInput.setAttribute("aria-label", "User password");
+        description.textContent = "\uC0AC\uC6A9\uC790 \uC778\uC99D";
+    }
 
-loadMarketRegime();
+    passwordInput.focus();
+}
 
-loadMarketStrategy();
+function showPlatformAuthOverlay() {
+    const overlay =
+        document.getElementById("platform-auth-overlay");
 
-loadAIDecision();
+    if (overlay) {
+        overlay.hidden = false;
+    }
+}
 
-loadAIDecisionSummary();
+function hidePlatformAuthOverlay() {
+    const overlay =
+        document.getElementById("platform-auth-overlay");
 
-loadAIDecisionQuality();
+    if (overlay) {
+        overlay.hidden = true;
+    }
+}
 
-loadAIDecisionTrend();
+function isValidPlatformPassword(password) {
+    const requiredLength =
+        platformAuthMode === "admin" ? 7 : 4;
 
-loadAIDecisionChart();
+    return (
+        password.length === requiredLength
+        && /^[0-9]+$/.test(password)
+    );
+}
 
-loadAIDecisionStatistics();
+async function submitPlatformAuthentication(event) {
+    event.preventDefault();
 
-loadAIDecisionPerformance();
+    const passwordInput =
+        document.getElementById("platform-auth-password");
+    const message =
+        document.getElementById("platform-auth-message");
+    const submitButton =
+        document.getElementById("platform-auth-submit");
 
-loadAIDecisionReliability();
+    if (!passwordInput || !message || !submitButton) {
+        return;
+    }
 
-loadAIAdaptiveStrategy();
+    const password = passwordInput.value;
 
-loadAIDecisionOutcomeLearning();
+    if (!isValidPlatformPassword(password)) {
+        message.textContent =
+            platformAuthMode === "admin"
+                ? "\uAD00\uB9AC\uC790 \uBE44\uBC00\uBC88\uD638\uB294 7\uC790\uB9AC \uC22B\uC790\uC785\uB2C8\uB2E4."
+                : "\uC0AC\uC6A9\uC790 \uBE44\uBC00\uBC88\uD638\uB294 4\uC790\uB9AC \uC22B\uC790\uC785\uB2C8\uB2E4.";
+        passwordInput.focus();
+        return;
+    }
 
-loadAIRebalance();
+    const endpoint =
+        platformAuthMode === "admin"
+            ? "/api/auth/admin-login"
+            : "/api/auth/login";
 
-loadAIOptimization();
+    submitButton.disabled = true;
+    message.textContent = "";
 
-loadPortfolioExplainability();
+    try {
+        const response = await fetch(
+            endpoint,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    password: password
+                })
+            }
+        );
 
+        if (!response.ok) {
+            message.textContent =
+                "\uBE44\uBC00\uBC88\uD638\uB97C \uD655\uC778\uD574 \uC8FC\uC138\uC694.";
+            passwordInput.value = "";
+            passwordInput.focus();
+            return;
+        }
 
-loadAIDecisionHistory();
+        const result = await response.json();
 
+        if (result.success !== true) {
+            message.textContent =
+                "\uC778\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+            return;
+        }
 
-// Refresh every 10 seconds
-setInterval(
-    loadDashboard,
-    10000
+        passwordInput.value = "";
+
+        if (platformAuthMode === "admin") {
+            showPlatformAdminPanel();
+        } else {
+            hidePlatformAuthOverlay();
+        }
+
+        startDashboard();
+    } catch (error) {
+        console.error("Platform authentication error:", error);
+        message.textContent =
+            "\uC778\uC99D \uC11C\uBC84\uC640 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.";
+    } finally {
+        submitButton.disabled = false;
+    }
+}
+
+async function initializePlatformAuthentication() {
+    const form =
+        document.getElementById("platform-auth-form");
+    const adminToggle =
+        document.getElementById("platform-admin-toggle");
+
+    if (!form || !adminToggle) {
+        console.error("Platform authentication UI is missing.");
+        return;
+    }
+
+    form.addEventListener(
+        "submit",
+        submitPlatformAuthentication
+    );
+
+    adminToggle.addEventListener(
+        "click",
+        function () {
+            setPlatformAuthMode(
+                platformAuthMode === "admin"
+                    ? "user"
+                    : "admin"
+            );
+        }
+    );
+
+    setPlatformAuthMode("user");
+    showPlatformAuthOverlay();
+
+    try {
+        const response =
+            await fetch("/api/auth/status");
+
+        if (!response.ok) {
+            return;
+        }
+
+        const status = await response.json();
+
+        if (status.authenticated === true) {
+            if (status.role === "admin") {
+                showPlatformAdminPanel();
+            } else {
+                hidePlatformAuthOverlay();
+            }
+
+            startDashboard();
+        }
+    } catch (error) {
+        console.error(
+            "Platform authentication status error:",
+            error
+        );
+    }
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        initializePlatformAdminPanel();
+        initializePlatformAuthentication();
+    }
 );
 
 
-setInterval(
-    loadPortfolioAdvisor,
-    10000
-);
 
+function showPlatformAdminPanel() {
+    const overlay =
+        document.getElementById("platform-auth-overlay");
+    const authCard =
+        document.querySelector(".platform-auth-card");
+    const adminPanel =
+        document.getElementById("platform-admin-panel");
 
-setInterval(
-    loadMarketRegime,
-    10000
-);
+    if (!overlay || !authCard || !adminPanel) {
+        return;
+    }
+
+    authCard.hidden = true;
+    adminPanel.hidden = false;
+    overlay.hidden = false;
+}
+
+function hidePlatformAdminPanel() {
+    const authCard =
+        document.querySelector(".platform-auth-card");
+    const adminPanel =
+        document.getElementById("platform-admin-panel");
+
+    if (authCard) {
+        authCard.hidden = false;
+    }
+
+    if (adminPanel) {
+        adminPanel.hidden = true;
+    }
+}
+
+async function submitUserPasswordChange(event) {
+    event.preventDefault();
+
+    const passwordInput =
+        document.getElementById("platform-new-user-password");
+    const message =
+        document.getElementById("platform-admin-message");
+    const submitButton =
+        document.getElementById("platform-user-password-submit");
+
+    if (!passwordInput || !message || !submitButton) {
+        return;
+    }
+
+    const password = passwordInput.value;
+
+    if (
+        password.length !== 4
+        || !/^[0-9]+$/.test(password)
+    ) {
+        message.textContent =
+            "\uC0AC\uC6A9\uC790 \uBE44\uBC00\uBC88\uD638\uB294 4\uC790\uB9AC \uC22B\uC790\uC5EC\uC57C \uD569\uB2C8\uB2E4.";
+        passwordInput.focus();
+        return;
+    }
+
+    submitButton.disabled = true;
+    message.textContent = "";
+
+    try {
+        const response = await fetch(
+            "/api/auth/user-password",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    password: password
+                })
+            }
+        );
+
+        if (!response.ok) {
+            message.textContent =
+                "\uBE44\uBC00\uBC88\uD638 \uBCC0\uACBD\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+            return;
+        }
+
+        const result = await response.json();
+
+        if (result.success !== true) {
+            message.textContent =
+                "\uBE44\uBC00\uBC88\uD638 \uBCC0\uACBD\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+            return;
+        }
+
+        passwordInput.value = "";
+        message.textContent =
+            "\uC0AC\uC6A9\uC790 \uBE44\uBC00\uBC88\uD638\uAC00 \uBCC0\uACBD\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+    } catch (error) {
+        console.error(
+            "User password change error:",
+            error
+        );
+        message.textContent =
+            "\uC778\uC99D \uC11C\uBC84\uC640 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.";
+    } finally {
+        submitButton.disabled = false;
+    }
+}
+
+function initializePlatformAdminPanel() {
+    const form =
+        document.getElementById("platform-user-password-form");
+    const dashboardButton =
+        document.getElementById("platform-admin-dashboard");
+
+    if (!form || !dashboardButton) {
+        console.error("Platform admin UI is missing.");
+        return;
+    }
+
+    form.addEventListener(
+        "submit",
+        submitUserPasswordChange
+    );
+
+    dashboardButton.addEventListener(
+        "click",
+        function () {
+            hidePlatformAdminPanel();
+            hidePlatformAuthOverlay();
+        }
+    );
+}
+
+let dashboardStarted = false;
+
+function startDashboard() {
+    if (dashboardStarted) {
+        return;
+    }
+
+    dashboardStarted = true;
+
+    loadDashboard();
+
+    console.log("BEFORE PORTFOLIO HISTORY");
+
+    loadPortfolioAdvisor();
+    loadPortfolioHistory();
+    loadMarketCondition();
+    loadMarketRegime();
+    loadMarketStrategy();
+    loadAIDecision();
+    loadAIDecisionSummary();
+    loadAIDecisionQuality();
+    loadAIDecisionTrend();
+    loadAIDecisionChart();
+    loadAIDecisionStatistics();
+    loadAIDecisionPerformance();
+    loadAIDecisionReliability();
+    loadAIAdaptiveStrategy();
+    loadAIDecisionOutcomeLearning();
+    loadAIRebalance();
+    loadAIOptimization();
+    loadPortfolioExplainability();
+    loadAIDecisionHistory();
+    loadDecisionIntelligence();
+    loadAIDecisionExplainability();
+
+    setInterval(loadDashboard, 10000);
+    setInterval(loadPortfolioAdvisor, 10000);
+    setInterval(loadMarketRegime, 10000);
+}
 
 
 async function loadHistory(ticker){
@@ -5114,11 +5427,6 @@ async function runHistoricalReplay() {
             error.message || "Historical Replay execution error.";
     }
 }
-document.addEventListener("DOMContentLoaded", function () {
-    loadDecisionIntelligence();
-    loadAIDecisionExplainability();
-});
-
 document.addEventListener("DOMContentLoaded", function () {
     const replayButton = document.getElementById("historical-replay-button");
 
