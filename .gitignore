@@ -237,3 +237,6 @@ database/*.db.empty-backup
 # Local development backups
 backup/
 *_backup.py
+
+# Local authentication credentials
+config/platform_auth.json

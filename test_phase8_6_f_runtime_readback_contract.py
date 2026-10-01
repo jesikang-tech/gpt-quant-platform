@@ -7,6 +7,7 @@ import config
 import database
 import repository
 import api_server
+from testing_helpers import authenticated_client
 
 
 def run_test():
@@ -131,7 +132,7 @@ def run_test():
             f"return={evaluation['portfolio_return']}"
         )
 
-        client = api_server.app.test_client()
+        client = authenticated_client(api_server.app)
 
         print("")
         print("CASE 2 OUTCOME HISTORY API READ-BACK")

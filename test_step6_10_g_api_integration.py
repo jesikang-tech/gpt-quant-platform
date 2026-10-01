@@ -1,8 +1,9 @@
-﻿from api_server import app
+from api_server import app
 import api_server
+from testing_helpers import authenticated_client
 
 
-client = app.test_client()
+client = authenticated_client(app)
 
 
 def make_history():

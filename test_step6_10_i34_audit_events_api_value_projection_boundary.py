@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -6,6 +6,7 @@ from pathlib import Path
 import config
 import database
 import api_server
+from testing_helpers import authenticated_client
 
 
 def run_test():
@@ -127,7 +128,7 @@ def run_test():
         expected_rows = cursor.fetchall()
         conn.close()
 
-        client = api_server.app.test_client()
+        client = authenticated_client(api_server.app)
 
         print("=" * 60)
         print("Step6-10-I-34 Audit Events API Value Projection Boundary")

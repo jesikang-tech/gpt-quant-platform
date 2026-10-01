@@ -3,6 +3,7 @@ from contextlib import closing
 from datetime import date, timedelta
 
 import pytest
+from testing_helpers import authenticated_client
 
 import config
 import current_analysis
@@ -66,7 +67,7 @@ def test_period_window_endpoint_and_legacy_compatibility(market, period, window,
     legacy = current_analysis._get_future_performance("TEST", analysis_date)
     assert legacy == (100, 899.0 if window == 20 else 4.0, min(window + 1, 40))
     import api_server
-    response = api_server.app.test_client().get(
+    response = authenticated_client(api_server.app).get(
         f"/api/historical-replay?date={analysis_date}&period={period}"
     )
     assert response.status_code == 200

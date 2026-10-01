@@ -1,7 +1,8 @@
-﻿import api_server
+import api_server
+from testing_helpers import authenticated_client
 
 
-client = api_server.app.test_client()
+client = authenticated_client(api_server.app)
 
 
 def make_row(history_id, readiness):

@@ -1,4 +1,4 @@
-﻿import os
+import os
 import shutil
 import sqlite3
 import tempfile
@@ -29,8 +29,9 @@ def run_test():
         database.DATABASE_PATH = test_db_path
 
         import api_server
+        from testing_helpers import authenticated_client
 
-        client = api_server.app.test_client()
+        client = authenticated_client(api_server.app)
 
         conn = sqlite3.connect(test_db_path)
         cursor = conn.cursor()

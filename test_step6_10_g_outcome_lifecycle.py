@@ -1,8 +1,9 @@
-﻿import api_server
+import api_server
 from api_server import app
+from testing_helpers import authenticated_client
 
 
-client = app.test_client()
+client = authenticated_client(app)
 
 
 def fake_history_reader(history_id):

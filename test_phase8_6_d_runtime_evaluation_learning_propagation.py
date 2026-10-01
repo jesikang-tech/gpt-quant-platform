@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -7,6 +7,7 @@ import config
 import database
 import repository
 import api_server
+from testing_helpers import authenticated_client
 
 
 def run_test():
@@ -112,7 +113,7 @@ def run_test():
         print("")
         print("CASE 1 ENDPOINT EVALUATION")
 
-        client = api_server.app.test_client()
+        client = authenticated_client(api_server.app)
 
         response = client.get(
             f"/api/ai-decision/portfolio-snapshot/"

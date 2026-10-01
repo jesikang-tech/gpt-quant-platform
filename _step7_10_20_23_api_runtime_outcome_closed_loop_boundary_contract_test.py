@@ -6,6 +6,7 @@ TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
 database.DATABASE_PATH = TEST_DB
 
 import api_server
+from testing_helpers import authenticated_client
 
 
 def assert_equal(actual, expected, label):
@@ -24,7 +25,7 @@ print("SOURCE-VERIFIED / TEST-DB / READ-ONLY")
 print("=" * 82)
 
 
-client = api_server.app.test_client()
+client = authenticated_client(api_server.app)
 response = client.get("/api/portfolio/decision-intelligence")
 data = response.get_json()
 

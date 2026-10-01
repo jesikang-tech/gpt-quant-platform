@@ -3,6 +3,7 @@ from contextlib import closing
 from datetime import date, timedelta
 
 import pytest
+from testing_helpers import authenticated_client
 
 import config
 import current_analysis
@@ -139,7 +140,7 @@ def test_replay_missing_or_nonpositive_baseline_has_no_result(replay_db, baselin
     # Exercise the real API path: enough older prices still allow scoring,
     # but a future price must never be exposed as the historical price.
     import api_server
-    response = api_server.app.test_client().get(
+    response = authenticated_client(api_server.app).get(
         f"/api/historical-replay?date={analysis_date}&period=1m"
     )
     assert response.status_code == 200

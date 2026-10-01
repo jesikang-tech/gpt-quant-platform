@@ -1,7 +1,8 @@
-﻿from pathlib import Path
+from pathlib import Path
 import sqlite3
 
 import api_server
+from testing_helpers import authenticated_client
 import repository
 
 
@@ -115,7 +116,7 @@ try:
         print("CASE: API WAITING EVALUATION")
         print("=" * 82)
 
-        client = api_server.app.test_client()
+        client = authenticated_client(api_server.app)
 
         response = client.get(
             f"/api/ai-decision/portfolio-snapshot/{HISTORY_ID}/evaluate"

@@ -10,6 +10,7 @@ import pytest
 
 import api_server
 from api_server import app
+from testing_helpers import authenticated_client
 from core.ai_decision_outcome_evaluation import (
     AIDecisionOutcomeEvaluation,
 )
@@ -67,7 +68,7 @@ def _bridge_signal(monkeypatch, score, adaptive_required):
         lambda limit=50: _outcome_rows(score, adaptive_required),
     )
 
-    response = app.test_client().get(
+    response = authenticated_client(app).get(
         "/api/ai-decision/adaptive-strategy"
     )
 
@@ -158,7 +159,7 @@ def test_adaptive_strategy_bridge_ignores_pending_outcomes(
         lambda limit=50: _pending_outcome_rows(),
     )
 
-    response = app.test_client().get(
+    response = authenticated_client(app).get(
         "/api/ai-decision/adaptive-strategy"
     )
 
@@ -205,7 +206,7 @@ def _adaptive_strategy_result(
         ),
     )
 
-    response = app.test_client().get(
+    response = authenticated_client(app).get(
         "/api/ai-decision/adaptive-strategy"
     )
 
@@ -428,7 +429,7 @@ def test_portfolio_bridge_reassessment_required_forces_adaptive_learning(
         lambda limit=50: [tuple(row)],
     )
 
-    response = app.test_client().get(
+    response = authenticated_client(app).get(
         "/api/ai-decision/adaptive-strategy"
     )
 

@@ -1,11 +1,19 @@
-﻿from current_analysis import get_current_analysis_data
+from current_analysis import get_current_analysis_data
 from datetime import datetime
+
+from core.platform_auth import (
+    DEFAULT_AUTH_CONFIG_PATH,
+    authenticate_password,
+    configure_flask_auth,
+    update_user_password,
+)
 
 from flask import (
     Flask,
     jsonify,
     render_template,
-    request
+    request,
+    session
 )
 
 from ranking_analyzer import (
@@ -199,7 +207,69 @@ from repository import (
 
 app = Flask(__name__)
 
+AUTH_CONFIG_PATH = DEFAULT_AUTH_CONFIG_PATH
 
+PUBLIC_AUTH_ENDPOINTS = {"auth_login_api", "auth_admin_login_api", "auth_status_api"}
+
+@app.before_request
+def require_platform_authentication():
+    if request.endpoint in PUBLIC_AUTH_ENDPOINTS or request.endpoint == "static":
+        return None
+
+    if request.path.startswith("/api/") and session.get("authenticated") is not True:
+        return jsonify({"success": False}), 401
+
+    return None
+
+@app.route("/api/auth/login", methods=["POST"])
+def auth_login_api():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+
+    if not authenticate_password(password, path=AUTH_CONFIG_PATH):
+        return jsonify({"success": False}), 401
+
+    session["authenticated"] = True
+    session["role"] = "user"
+    return jsonify({"success": True})
+
+
+
+@app.route("/api/auth/admin-login", methods=["POST"])
+def auth_admin_login_api():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+
+    if not authenticate_password(password, admin=True, path=AUTH_CONFIG_PATH):
+        return jsonify({"success": False}), 401
+
+    session["authenticated"] = True
+    session["role"] = "admin"
+    return jsonify({"success": True})
+
+@app.route("/api/auth/logout", methods=["POST"])
+def auth_logout_api():
+    session.clear()
+    return jsonify({"success": True})
+
+@app.route("/api/auth/status", methods=["GET"])
+def auth_status_api():
+    return jsonify({"authenticated": session.get("authenticated", False), "role": session.get("role")})
+
+@app.route("/api/auth/user-password", methods=["POST"])
+def auth_user_password_api():
+    if session.get("authenticated") is not True or session.get("role") != "admin":
+        return jsonify({"success": False}), 403
+
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+
+    try:
+        update_user_password(password, AUTH_CONFIG_PATH)
+    except ValueError:
+        return jsonify({"success": False}), 400
+
+    return jsonify({"success": True})
 
 @app.route("/api/historical-replay")
 def historical_replay_api():
@@ -457,6 +527,7 @@ def portfolio_api():
     if save_history == "true":
 
         from datetime import datetime
+
 
         created_at = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
@@ -3076,6 +3147,8 @@ def home():
 
 
 if __name__ == "__main__":
+
+    configure_flask_auth(app)
 
     app.run(
         host="0.0.0.0",

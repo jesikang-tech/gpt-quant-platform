@@ -1,6 +1,7 @@
-﻿import api_server
+import api_server
 import current_analysis
 import pytest
+from testing_helpers import authenticated_client
 
 
 @pytest.fixture(autouse=True)
@@ -11,7 +12,7 @@ def isolated_market_date(monkeypatch):
 
 
 def test_historical_replay_api_rejects_unsupported_period():
-    client = api_server.app.test_client()
+    client = authenticated_client(api_server.app)
 
     response = client.get(
         "/api/historical-replay?date=2026-09-04&period=6m"
@@ -26,7 +27,7 @@ def test_historical_replay_api_rejects_unsupported_period():
 
 
 def test_historical_replay_api_rejects_12m():
-    client = api_server.app.test_client()
+    client = authenticated_client(api_server.app)
 
     response = client.get(
         "/api/historical-replay?date=2026-09-04&period=12m"
@@ -62,7 +63,7 @@ def test_historical_replay_api_passes_supported_period(monkeypatch):
         fake_get_current_analysis_data,
     )
 
-    client = api_server.app.test_client()
+    client = authenticated_client(api_server.app)
 
     response = client.get(
         "/api/historical-replay?date=2026-09-04&period=2m"
@@ -104,7 +105,7 @@ def test_historical_replay_api_defaults_to_3m(monkeypatch):
         fake_get_current_analysis_data,
     )
 
-    client = api_server.app.test_client()
+    client = authenticated_client(api_server.app)
 
     response = client.get(
         "/api/historical-replay?date=2026-09-04"
@@ -167,7 +168,7 @@ def test_historical_replay_api_response_field_contract(monkeypatch):
         fake_get_current_analysis_data,
     )
 
-    client = api_server.app.test_client()
+    client = authenticated_client(api_server.app)
 
     response = client.get(
         "/api/historical-replay?date=2026-09-04&period=3m"
