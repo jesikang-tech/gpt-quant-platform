@@ -50,7 +50,7 @@ def generate_portfolio(
         reverse=True
     )
 
-    market = analyze_market_regime()
+    market = market_regime if market_regime is not None else analyze_market_regime()
 
     regime = market["regime"]
 
@@ -461,27 +461,28 @@ def optimize_portfolio_weight(ranking, mode="balanced"):
 
         base_score = etf.get("score", 0)
 
-        db_score = get_etf_score(
-            etf.get("ticker")
+        has_factor_scores = all(
+            etf.get(key) is not None
+            for key in ("return_score", "trend_score", "slope_score")
         )
 
-
-        if db_score:
-
-            return_score = db_score[2]
-
-            trend_score = db_score[3]
-
-            slope_score = db_score[4]
-
-
+        if has_factor_scores:
+            return_score = etf["return_score"]
+            trend_score = etf["trend_score"]
+            slope_score = etf["slope_score"]
         else:
+            db_score = get_etf_score(
+                etf.get("ticker")
+            )
 
-            return_score = base_score
-
-            trend_score = base_score
-
-            slope_score = base_score
+            if db_score:
+                return_score = db_score[2]
+                trend_score = db_score[3]
+                slope_score = db_score[4]
+            else:
+                return_score = base_score
+                trend_score = base_score
+                slope_score = base_score
 
 
 

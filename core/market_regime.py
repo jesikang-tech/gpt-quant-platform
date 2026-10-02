@@ -1,9 +1,15 @@
 from repository import get_top_scores
 
 
-def analyze_market_regime():
+def analyze_market_regime(scores=None):
 
-    rankings = get_top_scores(limit=30)
+    if scores is None:
+        rankings = get_top_scores(limit=30)
+    else:
+        rankings = [
+            (item.get("ticker"), item.get("final_score", 0))
+            for item in scores
+        ]
 
     if not rankings:
         return {
