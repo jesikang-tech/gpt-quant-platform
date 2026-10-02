@@ -5330,6 +5330,178 @@ async function askPortfolioAnalyst(){
 
 
 
+let latestHistoricalReplayData = null;
+
+function renderHistoricalReplayResult(data) {
+    if (!data) {
+        return;
+    }
+
+    const statusBox = document.getElementById("historical-replay-status");
+    const resultPanel = document.getElementById("historical-replay-result");
+    const resultMeta = document.getElementById("historical-replay-result-meta");
+    const resultContent = document.getElementById("historical-replay-result-content");
+
+    if (!statusBox || !resultPanel || !resultMeta || !resultContent) {
+        return;
+    }
+
+    const marketRegime = data.market_regime || {};
+    const marketStrategy = data.market_strategy || {};
+    const replayPortfolio = Array.isArray(data.portfolio)
+        ? data.portfolio
+        : [];
+
+    const top10 = Array.isArray(data.current_score_top)
+        ? data.current_score_top
+        : [];
+
+    resultMeta.textContent =
+        `${data.analysis_date} / ${data.period} / ` +
+        `${data.lookback_trading_days} ${getDashboardText("historicalReplayTradingDays")} / ` +
+        `${getDashboardText("historicalReplayTop")} ${top10.length}`;
+
+    const replayPortfolioRows = replayPortfolio.map((portfolioItem) => {
+        const score = portfolioItem.score == null
+            ? NaN
+            : Number(portfolioItem.score);
+        const weight = Number(portfolioItem.weight);
+
+        const scoreText = Number.isFinite(score)
+            ? score.toFixed(1)
+            : "N/A";
+
+        const weightText = Number.isFinite(weight)
+            ? `${weight.toFixed(0)}%`
+            : "N/A";
+
+        return `
+            <tr>
+                <td>${portfolioItem.ticker || ""}</td>
+                <td>${weightText}</td>
+                <td>${scoreText}</td>
+            </tr>
+        `;
+    }).join("") || `
+        <tr>
+            <td colspan="3">${getDashboardText("historicalReplayEmptyPortfolio")}</td>
+        </tr>
+    `;
+
+    const combinedRows = top10.map((item, index) => {
+        const price = Number(item.price);
+        const finalScore = Number(item.final_score);
+        const reality = item.reality_test || {};
+
+        const priceText = Number.isFinite(price)
+            ? price.toLocaleString(currentDashboardLanguage === "en" ? "en-US" : "ko-KR")
+            : "N/A";
+
+        const scoreText = Number.isFinite(finalScore)
+            ? finalScore.toFixed(1)
+            : "N/A";
+
+        const closeStatus = reality.close_status ?? "N/A";
+        const highStatus = reality.high_status ?? "N/A";
+
+        const closeDay = Number(reality.close_first_hit_day);
+        const highDay = Number(reality.high_first_hit_day);
+        const observedDays = Number(reality.observed_days);
+        const windowDays = Number(reality.window_days);
+
+        const closeDayText = Number.isFinite(closeDay)
+            ? `${closeDay}d`
+            : "-";
+
+        const highDayText = Number.isFinite(highDay)
+            ? `${highDay}d`
+            : "-";
+
+        const coverageText =
+            Number.isFinite(observedDays) &&
+            Number.isFinite(windowDays)
+                ? `${observedDays}/${windowDays}`
+                : "N/A";
+
+        return `
+            <tr>
+                <td class="replay-rank">${index + 1}</td>
+                <td class="replay-ticker">${item.ticker || ""}</td>
+                <td class="replay-name">${item.name || ""}</td>
+                <td class="replay-price">${priceText}</td>
+                <td class="replay-score">${scoreText}</td>
+                <td class="replay-future">${closeStatus}</td>
+                <td class="replay-future">${highStatus}</td>
+                <td class="replay-observed">${coverageText}</td>
+                <td class="replay-hit">${closeDayText}</td>
+                <td class="replay-hit">${highDayText}</td>
+            </tr>
+        `;
+    }).join("");
+
+    resultContent.innerHTML = `
+        <section class="historical-replay-section historical-replay-portfolio">
+            <div class="historical-replay-section-title">
+                ${getDashboardText("historicalReplayPortfolioTitle")}
+            </div>
+            <div class="historical-replay-section-description">
+                ${getDashboardText("historicalReplayMarketRegime")}: ${marketRegime.regime || "UNKNOWN"} /
+                ${getDashboardText("historicalReplayPortfolioMode")}: ${marketStrategy.portfolio_mode || "balanced"} /
+                ${getDashboardText("historicalReplayCashTarget")}: ${marketStrategy.cash_target ?? "N/A"}%
+            </div>
+
+            <div class="historical-replay-table-wrap">
+                <table class="historical-replay-table historical-replay-portfolio-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">${getDashboardText("historicalReplayTicker")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayWeight")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayScore")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${replayPortfolioRows}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="historical-replay-section historical-replay-combined">
+            <div class="historical-replay-section-title">
+                ${getDashboardText("historicalReplayRealityTitle")}
+            </div>
+            <div class="historical-replay-section-description">
+                ${getDashboardText("historicalReplayRealityDescription")}
+            </div>
+
+            <div class="historical-replay-table-wrap">
+                <table class="historical-replay-table historical-replay-combined-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">${getDashboardText("historicalReplayRank")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayTicker")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayEtfName")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayPrice")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayScore")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayClose")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayHigh")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayObserved")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayCloseHit")}</th>
+                            <th scope="col">${getDashboardText("historicalReplayHighHit")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${combinedRows}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    `;
+
+    resultPanel.hidden = false;
+    statusBox.textContent = getDashboardText("historicalReplayComplete");
+}
+
 async function runHistoricalReplay() {
     const dateInput = document.getElementById("analysis-date");
     const periodInput = document.getElementById("analysis-period");
@@ -5348,11 +5520,11 @@ async function runHistoricalReplay() {
     const period = periodInput.value || "3m";
 
     if (!analysisDate) {
-        statusBox.textContent = "Please select an analysis date.";
+        statusBox.textContent = getDashboardText("historicalReplaySelectDate");
         return;
     }
 
-    statusBox.textContent = "Historical Replay running...";
+    statusBox.textContent = getDashboardText("historicalReplayRunning");
 
     try {
         const response = await fetch(
@@ -5363,170 +5535,18 @@ async function runHistoricalReplay() {
 
         if (!response.ok || !data.success) {
             throw new Error(
-                data.message || "Historical Replay execution failed."
+                data.message || getDashboardText("historicalReplayExecutionFailed")
             );
         }
 
-        const marketRegime = data.market_regime || {};
-        const marketStrategy = data.market_strategy || {};
-        const replayPortfolio = Array.isArray(data.portfolio)
-            ? data.portfolio
-            : [];
+        latestHistoricalReplayData = data;
 
-        const top10 = Array.isArray(data.current_score_top)
-            ? data.current_score_top
-            : [];
-
-        resultMeta.textContent =
-            `${data.analysis_date} / ${data.period} / ` +
-            `${data.lookback_trading_days} trading days / ` +
-            `Top ${top10.length}`;
-
-        const replayPortfolioRows = replayPortfolio.map((portfolioItem) => {
-            const score = portfolioItem.score == null
-                ? NaN
-                : Number(portfolioItem.score);
-            const weight = Number(portfolioItem.weight);
-
-            const scoreText = Number.isFinite(score)
-                ? score.toFixed(1)
-                : "N/A";
-
-            const weightText = Number.isFinite(weight)
-                ? `${weight.toFixed(0)}%`
-                : "N/A";
-
-            return `
-                <tr>
-                    <td>${portfolioItem.ticker || ""}</td>
-                    <td>${weightText}</td>
-                    <td>${scoreText}</td>
-                </tr>
-            `;
-        }).join("") || `
-            <tr>
-                <td colspan="3">No replay portfolio available.</td>
-            </tr>
-        `;
-
-        const combinedRows = top10.map((item, index) => {
-            const price = Number(item.price);
-            const finalScore = Number(item.final_score);
-            const reality = item.reality_test || {};
-
-            const priceText = Number.isFinite(price)
-                ? price.toLocaleString("ko-KR")
-                : "N/A";
-
-            const scoreText = Number.isFinite(finalScore)
-                ? finalScore.toFixed(1)
-                : "N/A";
-
-            const closeStatus = reality.close_status ?? "N/A";
-            const highStatus = reality.high_status ?? "N/A";
-
-            const closeDay = Number(reality.close_first_hit_day);
-            const highDay = Number(reality.high_first_hit_day);
-            const observedDays = Number(reality.observed_days);
-            const windowDays = Number(reality.window_days);
-
-            const closeDayText = Number.isFinite(closeDay)
-                ? `${closeDay}d`
-                : "-";
-
-            const highDayText = Number.isFinite(highDay)
-                ? `${highDay}d`
-                : "-";
-
-            const coverageText =
-                Number.isFinite(observedDays) &&
-                Number.isFinite(windowDays)
-                    ? `${observedDays}/${windowDays}`
-                    : "N/A";
-
-            return `
-                <tr>
-                    <td class="replay-rank">${index + 1}</td>
-                    <td class="replay-ticker">${item.ticker || ""}</td>
-                    <td class="replay-name">${item.name || ""}</td>
-                    <td class="replay-price">${priceText}</td>
-                    <td class="replay-score">${scoreText}</td>
-                    <td class="replay-future">${closeStatus}</td>
-                    <td class="replay-future">${highStatus}</td>
-                    <td class="replay-observed">${coverageText}</td>
-                    <td class="replay-hit">${closeDayText}</td>
-                    <td class="replay-hit">${highDayText}</td>
-                </tr>
-            `;
-        }).join("");
-
-        resultContent.innerHTML = `
-            <section class="historical-replay-section historical-replay-portfolio">
-                <div class="historical-replay-section-title">
-                    Historical Replay - Portfolio
-                </div>
-                <div class="historical-replay-section-description">
-                    Replay Market Regime: ${marketRegime.regime || "UNKNOWN"} /
-                    Replay Portfolio Mode: ${marketStrategy.portfolio_mode || "balanced"} /
-                    Replay Cash Target: ${marketStrategy.cash_target ?? "N/A"}%
-                </div>
-
-                <div class="historical-replay-table-wrap">
-                    <table class="historical-replay-table historical-replay-portfolio-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Ticker</th>
-                                <th scope="col">Weight</th>
-                                <th scope="col">Replay Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${replayPortfolioRows}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section class="historical-replay-section historical-replay-combined">
-                <div class="historical-replay-section-title">
-                    Historical Replay - Final Score & Reality Test
-                </div>
-                <div class="historical-replay-section-description">
-                    Replay Score is calculated only from historical data available as of the analysis date.
-                    Close, High, Observed and Hit results show subsequent market performance and are not used in the ranking calculation.
-                </div>
-
-                <div class="historical-replay-table-wrap">
-                    <table class="historical-replay-table historical-replay-combined-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Rank</th>
-                                <th scope="col">Ticker</th>
-                                <th scope="col">ETF Name</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Replay<br>Score</th>
-                                <th scope="col">Close</th>
-                                <th scope="col">High</th>
-                                <th scope="col">Observed</th>
-                                <th scope="col">Close<br>Hit</th>
-                                <th scope="col">High<br>Hit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${combinedRows}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        `;
-
-        resultPanel.hidden = false;
-        statusBox.textContent = "Historical Replay complete";
+        renderHistoricalReplayResult(data);
     } catch (error) {
         console.error("Historical Replay error:", error);
         resultPanel.hidden = true;
         statusBox.textContent =
-            error.message || "Historical Replay execution error.";
+            error.message || getDashboardText("historicalReplayExecutionError");
     }
 }
 document.addEventListener("DOMContentLoaded", function () {
@@ -5810,7 +5830,39 @@ const DASHBOARD_TRANSLATIONS = {
         "portfolioAnalystAnalyzing": "AI 포트폴리오 애널리스트 분석 중...",
         "portfolioAnalystError": "AI 포트폴리오 애널리스트 처리 중 오류가 발생했습니다.",
         "aiIntelligence": "AI 정보",
-        "marketReason": "시장 판단 사유"
+        "marketReason": "시장 판단 사유",
+        "historicalReplayTitle": "Historical Replay",
+        "historicalReplaySubtitle": "특정 날짜의 시장 상황을 재현하여 당시 Top 10을 확인합니다.",
+        "historicalReplayAnalysisDate": "분석일자",
+        "historicalReplayAnalysisPeriod": "분석기간",
+        "historicalReplayPeriod1m": "1개월 (20 거래일)",
+        "historicalReplayPeriod2m": "2개월 (40 거래일)",
+        "historicalReplayPeriod3m": "3개월 (60 거래일)",
+        "historicalReplayPortfolioTitle": "Historical Replay - 포트폴리오",
+        "historicalReplayRealityTitle": "Historical Replay - 최종 점수 및 Reality Test",
+        "historicalReplaySelectDate": "분석일자를 선택해주세요.",
+        "historicalReplayRunning": "Historical Replay 실행 중...",
+        "historicalReplayExecutionFailed": "Historical Replay 실행에 실패했습니다.",
+        "historicalReplayEmptyPortfolio": "Replay 포트폴리오가 없습니다.",
+        "historicalReplayMarketRegime": "Replay 시장 국면",
+        "historicalReplayPortfolioMode": "Replay 포트폴리오 모드",
+        "historicalReplayCashTarget": "Replay 현금 목표",
+        "historicalReplayTicker": "종목코드",
+        "historicalReplayWeight": "비중",
+        "historicalReplayScore": "Replay 점수",
+        "historicalReplayRank": "순위",
+        "historicalReplayEtfName": "ETF 이름",
+        "historicalReplayPrice": "가격",
+        "historicalReplayClose": "종가",
+        "historicalReplayHigh": "고가",
+        "historicalReplayObserved": "관측",
+        "historicalReplayCloseHit": "종가 Hit",
+        "historicalReplayHighHit": "고가 Hit",
+        "historicalReplayRealityDescription": "Replay 점수는 분석일 당시 이용 가능한 과거 데이터만으로 계산됩니다. Close, High, Observed 및 Hit 결과는 이후 시장 성과를 보여주며 순위 계산에는 사용되지 않습니다.",
+        "historicalReplayComplete": "Historical Replay 완료",
+        "historicalReplayExecutionError": "Historical Replay 실행 중 오류가 발생했습니다.",
+        "historicalReplayTradingDays": "거래일",
+        "historicalReplayTop": "상위"
 },
     en: {
         "dashboardTitle": "GPT Quant ETF Dashboard",
@@ -6049,7 +6101,39 @@ const DASHBOARD_TRANSLATIONS = {
         "portfolioAnalystAnalyzing": "AI Portfolio Analyst analyzing...",
         "portfolioAnalystError": "An error occurred while processing the AI Portfolio Analyst request.",
         "aiIntelligence": "AI Intelligence",
-        "marketReason": "Market Reason"
+        "marketReason": "Market Reason",
+        "historicalReplayTitle": "Historical Replay",
+        "historicalReplaySubtitle": "Reproduce market conditions on a specific date and review the Top 10 at that time.",
+        "historicalReplayAnalysisDate": "Analysis Date",
+        "historicalReplayAnalysisPeriod": "Analysis Period",
+        "historicalReplayPeriod1m": "1 Month (20 Trading Days)",
+        "historicalReplayPeriod2m": "2 Months (40 Trading Days)",
+        "historicalReplayPeriod3m": "3 Months (60 Trading Days)",
+        "historicalReplayPortfolioTitle": "Historical Replay - Portfolio",
+        "historicalReplayRealityTitle": "Historical Replay - Final Score & Reality Test",
+        "historicalReplaySelectDate": "Please select an analysis date.",
+        "historicalReplayRunning": "Historical Replay running...",
+        "historicalReplayExecutionFailed": "Historical Replay execution failed.",
+        "historicalReplayEmptyPortfolio": "No replay portfolio available.",
+        "historicalReplayMarketRegime": "Replay Market Regime",
+        "historicalReplayPortfolioMode": "Replay Portfolio Mode",
+        "historicalReplayCashTarget": "Replay Cash Target",
+        "historicalReplayTicker": "Ticker",
+        "historicalReplayWeight": "Weight",
+        "historicalReplayScore": "Replay Score",
+        "historicalReplayRank": "Rank",
+        "historicalReplayEtfName": "ETF Name",
+        "historicalReplayPrice": "Price",
+        "historicalReplayClose": "Close",
+        "historicalReplayHigh": "High",
+        "historicalReplayObserved": "Observed",
+        "historicalReplayCloseHit": "Close Hit",
+        "historicalReplayHighHit": "High Hit",
+        "historicalReplayRealityDescription": "Replay Score is calculated only from historical data available as of the analysis date. Close, High, Observed and Hit results show subsequent market performance and are not used in the ranking calculation.",
+        "historicalReplayComplete": "Historical Replay complete",
+        "historicalReplayExecutionError": "Historical Replay execution error.",
+        "historicalReplayTradingDays": "trading days",
+        "historicalReplayTop": "Top"
 }
 };
 
@@ -6071,6 +6155,24 @@ function applyDashboardLanguage() {
     const portfolioModeSelector = document.getElementById(
         "portfolio-mode-selector"
     );
+
+    const historicalReplayTitle = document.getElementById("historical-replay-title");
+    const historicalReplaySubtitle = document.getElementById("historical-replay-subtitle");
+    const historicalReplayAnalysisDate = document.getElementById("historical-replay-analysis-date-label");
+    const historicalReplayAnalysisPeriod = document.getElementById("historical-replay-analysis-period-label");
+    const historicalReplayPeriod1m = document.getElementById("historical-replay-period-1m");
+    const historicalReplayPeriod2m = document.getElementById("historical-replay-period-2m");
+    const historicalReplayPeriod3m = document.getElementById("historical-replay-period-3m");
+    const historicalReplayButton = document.getElementById("historical-replay-button");
+
+    if (historicalReplayTitle) historicalReplayTitle.textContent = getDashboardText("historicalReplayTitle");
+    if (historicalReplaySubtitle) historicalReplaySubtitle.textContent = getDashboardText("historicalReplaySubtitle");
+    if (historicalReplayAnalysisDate) historicalReplayAnalysisDate.textContent = getDashboardText("historicalReplayAnalysisDate");
+    if (historicalReplayAnalysisPeriod) historicalReplayAnalysisPeriod.textContent = getDashboardText("historicalReplayAnalysisPeriod");
+    if (historicalReplayPeriod1m) historicalReplayPeriod1m.textContent = getDashboardText("historicalReplayPeriod1m");
+    if (historicalReplayPeriod2m) historicalReplayPeriod2m.textContent = getDashboardText("historicalReplayPeriod2m");
+    if (historicalReplayPeriod3m) historicalReplayPeriod3m.textContent = getDashboardText("historicalReplayPeriod3m");
+    if (historicalReplayButton) historicalReplayButton.textContent = getDashboardText("historicalReplayTitle");
 
     if (title) {
         title.textContent = getDashboardText("dashboardTitle");
@@ -6108,6 +6210,9 @@ function applyDashboardLanguage() {
             buttons[2].textContent =
                 getDashboardText("aggressive");
         }
+    }
+    if (latestHistoricalReplayData) {
+        renderHistoricalReplayResult(latestHistoricalReplayData);
     }
 }
 

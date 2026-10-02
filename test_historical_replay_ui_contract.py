@@ -42,3 +42,22 @@ def test_historical_replay_cash_null_score_is_not_rendered_as_zero():
     source = _dashboard_source()
 
     assert 'portfolioItem.score == null' in source
+
+
+def test_historical_replay_uses_dashboard_translation_system():
+    source = _dashboard_source()
+
+    assert 'historicalReplayTitle' in source
+    assert 'historicalReplayAnalysisDate' in source
+    assert 'historicalReplayAnalysisPeriod' in source
+    assert 'historicalReplayPortfolioTitle' in source
+    assert 'historicalReplayRealityTitle' in source
+    assert 'getDashboardText("historicalReplayPortfolioTitle")' in source
+
+
+def test_historical_replay_rerenders_existing_result_on_language_change():
+    source = _dashboard_source()
+
+    assert 'latestHistoricalReplayData' in source
+    assert 'renderHistoricalReplayResult' in source
+    assert 'renderHistoricalReplayResult(latestHistoricalReplayData)' in source
