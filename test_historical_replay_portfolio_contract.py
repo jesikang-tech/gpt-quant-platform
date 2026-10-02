@@ -93,3 +93,192 @@ def test_optimized_portfolio_uses_replay_factor_scores_without_db_read(monkeypat
     assert result[0]["return_score"] == 96.0
     assert result[0]["trend_score"] == 94.0
     assert result[0]["slope_score"] == 93.0
+
+
+def test_historical_replay_analysis_builds_point_in_time_portfolio(monkeypatch):
+    import current_analysis
+    from core.market_regime import analyze_market_regime
+    from core.market_strategy import generate_market_strategy
+    from core.portfolio_advisor import optimize_portfolio_weight
+
+    replay_analysis = {
+        "success": True,
+        "analysis_date": "2026-06-12",
+        "period": "3m",
+        "current_score_top": [
+            {
+                "ticker": "AAA",
+                "name": "AAA",
+                "return_score": 96.0,
+                "trend_score": 94.0,
+                "slope_score": 93.0,
+                "final_score": 94.8,
+                "uptrend_ratio": 80.0,
+            },
+            {
+                "ticker": "BBB",
+                "name": "BBB",
+                "return_score": 93.0,
+                "trend_score": 91.0,
+                "slope_score": 90.0,
+                "final_score": 91.8,
+                "uptrend_ratio": 75.0,
+            },
+            {
+                "ticker": "CCC",
+                "name": "CCC",
+                "return_score": 91.0,
+                "trend_score": 89.0,
+                "slope_score": 88.0,
+                "final_score": 89.8,
+                "uptrend_ratio": 70.0,
+            },
+        ],
+    }
+
+    def fake_replay_analysis(*args, **kwargs):
+        return replay_analysis
+
+    monkeypatch.setattr(
+        current_analysis,
+        "get_current_analysis_data",
+        fake_replay_analysis,
+    )
+
+    scores = replay_analysis["current_score_top"]
+    regime = analyze_market_regime(scores=scores)
+    strategy = generate_market_strategy(regime)
+
+    ranking = [
+        {
+            "ticker": item["ticker"],
+            "score": item["final_score"],
+            "return_score": item["return_score"],
+            "trend_score": item["trend_score"],
+            "slope_score": item["slope_score"],
+        }
+        for item in scores
+    ]
+
+    portfolio = optimize_portfolio_weight(
+        ranking,
+        mode=strategy["portfolio_mode"],
+    )
+
+    assert regime["regime"] == "BULLISH"
+    assert strategy["portfolio_mode"] == "aggressive"
+    assert [item["ticker"] for item in portfolio] == [
+        "AAA",
+        "BBB",
+        "CCC",
+        "CASH",
+    ]
+    assert [item["weight"] for item in portfolio] == [50, 30, 15, 5]
+    assert portfolio[0]["return_score"] == 96.0
+    assert portfolio[0]["trend_score"] == 94.0
+    assert portfolio[0]["slope_score"] == 93.0
+
+
+def test_historical_replay_api_exposes_point_in_time_portfolio(monkeypatch):
+    import api_server
+
+    replay_scores = [
+        {
+            "ticker": "AAA",
+            "name": "AAA",
+            "return_score": 96.0,
+            "trend_score": 94.0,
+            "slope_score": 93.0,
+            "final_score": 94.8,
+            "uptrend_ratio": 80.0,
+            "selection_pass": True,
+            "price": 150.0,
+            "future_performance": None,
+            "future_performance_days": 0,
+            "reality_test": {},
+        },
+        {
+            "ticker": "BBB",
+            "name": "BBB",
+            "return_score": 93.0,
+            "trend_score": 91.0,
+            "slope_score": 90.0,
+            "final_score": 91.8,
+            "uptrend_ratio": 75.0,
+            "selection_pass": True,
+            "price": 140.0,
+            "future_performance": None,
+            "future_performance_days": 0,
+            "reality_test": {},
+        },
+        {
+            "ticker": "CCC",
+            "name": "CCC",
+            "return_score": 91.0,
+            "trend_score": 89.0,
+            "slope_score": 88.0,
+            "final_score": 89.8,
+            "uptrend_ratio": 70.0,
+            "selection_pass": True,
+            "price": 130.0,
+            "future_performance": None,
+            "future_performance_days": 0,
+            "reality_test": {},
+        },
+    ]
+
+    monkeypatch.setattr(
+        "api_server.get_current_analysis_data",
+        lambda **kwargs: {
+            "success": True,
+            "analysis_date": "2026-06-12",
+            "market_data_date": "2026-06-12",
+            "period": "3m",
+            "lookback_trading_days": 60,
+            "return_threshold": 15,
+            "uptrend_threshold": 60,
+            "total_etf": 3,
+            "enough_data": 3,
+            "selection": {
+                "return_threshold": 15,
+                "uptrend_threshold": 60,
+                "count": 3,
+                "top": replay_scores,
+            },
+            "current_score_top": replay_scores,
+            "db_write": False,
+        },
+    )
+
+    from testing_helpers import authenticated_client
+
+    client = authenticated_client(api_server.app)
+    response = client.get(
+        "/api/historical-replay?date=2026-06-12&period=3m"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["analysis_date"] == "2026-06-12"
+    assert data["period"] == "3m"
+    assert data["db_write"] is False
+    assert "market_regime" in data
+    assert "market_strategy" in data
+    assert "portfolio" in data
+
+    assert data["market_regime"]["regime"] == "BULLISH"
+    assert data["market_strategy"]["portfolio_mode"] == "aggressive"
+    assert [item["ticker"] for item in data["portfolio"]] == [
+        "AAA",
+        "BBB",
+        "CCC",
+        "CASH",
+    ]
+    assert [item["weight"] for item in data["portfolio"]] == [
+        50,
+        30,
+        15,
+        5,
+    ]
