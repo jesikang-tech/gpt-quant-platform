@@ -5119,3 +5119,25 @@ body > header p {
     width: 100%;
   }
 }
+
+.platform-admin-panel {
+  width: min(420px, calc(100% - 32px));
+  padding: 34px 30px 26px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-sizing: border-box;
+  text-align: center;
+  color: #0f172a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+}
+
+.platform-admin-panel[hidden] {
+  display: none;
+}
+
+#platform-admin-message {
+  min-height: 20px;
+  margin: 12px 0;
+  font-size: 13px;
+  color: #166534;
+}

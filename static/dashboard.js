@@ -651,6 +651,7 @@ async function submitPlatformAuthentication(event) {
             hidePlatformAuthOverlay();
         }
 
+        setPlatformLogoutButtonVisible(true);
         startDashboard();
     } catch (error) {
         console.error("Platform authentication error:", error);
@@ -661,15 +662,56 @@ async function submitPlatformAuthentication(event) {
     }
 }
 
+function setPlatformLogoutButtonVisible(visible) {
+    const logoutButton =
+        document.getElementById("platform-logout-button");
+
+    if (logoutButton) {
+        logoutButton.hidden = !visible;
+    }
+}
+
+async function logoutPlatform() {
+    const response = await fetch(
+        "/api/auth/logout",
+        { method: "POST" }
+    );
+
+    if (!response.ok) {
+        throw new Error("Platform logout failed.");
+    }
+
+    hidePlatformAdminPanel();
+    setPlatformLogoutButtonVisible(false);
+
+    setPlatformAuthMode("user");
+    showPlatformAuthOverlay();
+}
+
 async function initializePlatformAuthentication() {
     const form =
         document.getElementById("platform-auth-form");
     const adminToggle =
         document.getElementById("platform-admin-toggle");
+    const logoutButton =
+        document.getElementById("platform-logout-button");
 
     if (!form || !adminToggle) {
         console.error("Platform authentication UI is missing.");
         return;
+    }
+
+    if (logoutButton) {
+        logoutButton.addEventListener(
+            "click",
+            async function () {
+                try {
+                    await logoutPlatform();
+                } catch (error) {
+                    console.error("Platform logout error:", error);
+                }
+            }
+        );
     }
 
     form.addEventListener(
@@ -708,6 +750,7 @@ async function initializePlatformAuthentication() {
                 hidePlatformAuthOverlay();
             }
 
+            setPlatformLogoutButtonVisible(true);
             startDashboard();
         }
     } catch (error) {
