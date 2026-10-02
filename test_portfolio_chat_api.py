@@ -4,121 +4,51 @@ AI Portfolio Conversational Analyst API Test
 """
 
 
-import requests
-
-
-
-BASE_URL = (
-    "http://127.0.0.1:5000"
-)
-
-
-
-def test_portfolio_chat():
-
-
-    print(
-        "\nAI Portfolio Conversational API Test\n"
+def test_portfolio_chat(tmp_path, monkeypatch):
+    import api_server
+    from core.platform_auth import (
+        configure_flask_auth,
+        create_password_hash,
+        save_auth_config,
     )
 
+    config_path = tmp_path / "platform_auth.json"
+    save_auth_config(
+        create_password_hash("1234"),
+        create_password_hash("1234567", admin=True),
+        config_path,
+    )
+
+    configure_flask_auth(api_server.app, config_path)
+    monkeypatch.setattr(api_server, "AUTH_CONFIG_PATH", config_path)
+
+    client = api_server.app.test_client()
+
+    login_response = client.post(
+        "/api/auth/login",
+        json={"password": "1234"},
+    )
+    assert login_response.status_code == 200
 
     payload = {
-
-        "question":
-            "왜 365040 비중이 높은가?"
-
+        "question": "왜 365040 비중이 높은가?"
     }
 
-
-
-    response = requests.post(
-
-        BASE_URL +
+    response = client.post(
         "/api/portfolio/chat",
-
-        json=payload
-
+        json=payload,
     )
-
-
-    print(
-        "Status:",
-        response.status_code
-    )
-
 
     assert response.status_code == 200
 
-
-
-    result = response.json()
-
-
+    result = response.get_json()
 
     assert result["success"] is True
 
-
-
-    print("\nQuestion:")
-
-    print(
-        payload["question"]
-    )
-
-
-
     response_data = result["response"]
 
-
-    print("\nQuestion Type:")
-
-    print(
-        response_data["question_type"]
-    )
-
-
-    print("\nAnswer:")
-
-    print(
-        response_data["answer"]
-    )
-
-
-
-    print("\nReason:")
-
-
-    for item in response_data["reason"]:
-
-        print(
-            "-",
-            item
-        )
-
-
-
-    print("\nRecommendation:")
-
-    print(
-        response_data["recommendation"]
-    )
-
-
-
-    print("\nConfidence:")
-
-    print(
-        response_data["confidence"]
-    )
-
-
-
-    print(
-        "\nPASS - AI Portfolio Conversational API"
-    )
-
-
-
-if __name__ == "__main__":
-
-    test_portfolio_chat()
+    assert "question_type" in response_data
+    assert "answer" in response_data
+    assert "reason" in response_data
+    assert "recommendation" in response_data
+    assert "confidence" in response_data
