@@ -5367,6 +5367,12 @@ async function runHistoricalReplay() {
             );
         }
 
+        const marketRegime = data.market_regime || {};
+        const marketStrategy = data.market_strategy || {};
+        const replayPortfolio = Array.isArray(data.portfolio)
+            ? data.portfolio
+            : [];
+
         const top10 = Array.isArray(data.current_score_top)
             ? data.current_score_top
             : [];
@@ -5375,6 +5381,33 @@ async function runHistoricalReplay() {
             `${data.analysis_date} / ${data.period} / ` +
             `${data.lookback_trading_days} trading days / ` +
             `Top ${top10.length}`;
+
+        const replayPortfolioRows = replayPortfolio.map((portfolioItem) => {
+            const score = portfolioItem.score == null
+                ? NaN
+                : Number(portfolioItem.score);
+            const weight = Number(portfolioItem.weight);
+
+            const scoreText = Number.isFinite(score)
+                ? score.toFixed(1)
+                : "N/A";
+
+            const weightText = Number.isFinite(weight)
+                ? `${weight.toFixed(0)}%`
+                : "N/A";
+
+            return `
+                <tr>
+                    <td>${portfolioItem.ticker || ""}</td>
+                    <td>${weightText}</td>
+                    <td>${scoreText}</td>
+                </tr>
+            `;
+        }).join("") || `
+            <tr>
+                <td colspan="3">No replay portfolio available.</td>
+            </tr>
+        `;
 
         const combinedRows = top10.map((item, index) => {
             const price = Number(item.price);
@@ -5428,6 +5461,32 @@ async function runHistoricalReplay() {
         }).join("");
 
         resultContent.innerHTML = `
+            <section class="historical-replay-section historical-replay-portfolio">
+                <div class="historical-replay-section-title">
+                    Historical Replay - Portfolio
+                </div>
+                <div class="historical-replay-section-description">
+                    Replay Market Regime: ${marketRegime.regime || "UNKNOWN"} /
+                    Replay Portfolio Mode: ${marketStrategy.portfolio_mode || "balanced"} /
+                    Replay Cash Target: ${marketStrategy.cash_target ?? "N/A"}%
+                </div>
+
+                <div class="historical-replay-table-wrap">
+                    <table class="historical-replay-table historical-replay-portfolio-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Ticker</th>
+                                <th scope="col">Weight</th>
+                                <th scope="col">Replay Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${replayPortfolioRows}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section class="historical-replay-section historical-replay-combined">
                 <div class="historical-replay-section-title">
                     Historical Replay - Final Score & Reality Test

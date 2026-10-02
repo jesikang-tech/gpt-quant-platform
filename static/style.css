@@ -5159,3 +5159,24 @@ body > header p {
 #platform-logout-button:hover {
   background: #f5f5f5;
 }
+
+/* Historical Replay point-in-time portfolio */
+.historical-replay-portfolio {
+  margin-bottom: 16px;
+}
+
+.historical-replay-portfolio-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.historical-replay-portfolio-table th:nth-child(1),
+.historical-replay-portfolio-table td:nth-child(1),
+.historical-replay-portfolio-table th:nth-child(2),
+.historical-replay-portfolio-table td:nth-child(2),
+.historical-replay-portfolio-table th:nth-child(3),
+.historical-replay-portfolio-table td:nth-child(3) {
+  width: 33.333%;
+  text-align: center;
+  white-space: nowrap;
+}
