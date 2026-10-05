@@ -681,6 +681,7 @@ async function logoutPlatform() {
         throw new Error("Platform logout failed.");
     }
 
+    stopDashboard();
     hidePlatformAdminPanel();
     setPlatformLogoutButtonVisible(false);
 
@@ -901,6 +902,16 @@ function initializePlatformAdminPanel() {
 }
 
 let dashboardStarted = false;
+let dashboardRefreshIntervalIds = [];
+
+function stopDashboard() {
+    dashboardRefreshIntervalIds.forEach(function (intervalId) {
+        clearInterval(intervalId);
+    });
+
+    dashboardRefreshIntervalIds = [];
+    dashboardStarted = false;
+}
 
 function startDashboard() {
     if (dashboardStarted) {
@@ -935,9 +946,11 @@ function startDashboard() {
     loadDecisionIntelligence();
     loadAIDecisionExplainability();
 
-    setInterval(loadDashboard, 10000);
-    setInterval(loadPortfolioAdvisor, 10000);
-    setInterval(loadMarketRegime, 10000);
+    dashboardRefreshIntervalIds = [
+        setInterval(loadDashboard, 10000),
+        setInterval(loadPortfolioAdvisor, 10000),
+        setInterval(loadMarketRegime, 10000)
+    ];
 }
 
 
