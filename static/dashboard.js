@@ -77,9 +77,9 @@ function getGradeBadge(grade){
 function loadDashboard(){
 
 
-    fetch("/api/ranking")
+    return fetch("/api/ranking")
 
-    .then(response => response.json())
+    .then(response => requireDashboardApiResponse(response))
 
     .then(result => {
 
@@ -94,14 +94,14 @@ function loadDashboard(){
 
 
             fetch("/api/intelligence")
-                .then(response => response.json()),
+                .then(response => requireDashboardApiResponse(response)),
 
 
             fetch(
                 "/api/recommendation/"
                 + topTicker
             )
-                .then(response => response.json())
+                .then(response => requireDashboardApiResponse(response))
 
         ]);
 
@@ -507,6 +507,10 @@ function loadDashboard(){
     })
 
     .catch(error => {
+
+        if (error instanceof DashboardAuthenticationRequiredError) {
+            throw error;
+        }
 
         console.error(
             "Dashboard API Error",
@@ -1162,6 +1166,31 @@ async function runVer11Analysis() {
 }
 
 
+class DashboardAuthenticationRequiredError extends Error {}
+
+
+async function requireDashboardApiResponse(response) {
+    if (response.status === 401) {
+        stopDashboard();
+        hidePlatformAdminPanel();
+        setPlatformLogoutButtonVisible(false);
+        setPlatformAuthMode("user");
+        showPlatformAuthOverlay();
+        throw new DashboardAuthenticationRequiredError(
+            "Dashboard authentication required."
+        );
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            `Dashboard API request failed: HTTP ${response.status}`
+        );
+    }
+
+    return response.json();
+}
+
+
 let dashboardStarted = false;
 let dashboardRefreshIntervalIds = [];
 
@@ -1174,6 +1203,19 @@ function stopDashboard() {
     dashboardStarted = false;
 }
 
+function runDashboardRefresh(loader) {
+    Promise.resolve()
+        .then(() => loader())
+        .catch(error => {
+            if (error instanceof DashboardAuthenticationRequiredError) {
+                return;
+            }
+
+            console.error("Dashboard refresh error", error);
+        });
+}
+
+
 function startDashboard() {
     if (dashboardStarted) {
         return;
@@ -1181,14 +1223,14 @@ function startDashboard() {
 
     dashboardStarted = true;
 
-    loadDashboard();
+    runDashboardRefresh(loadDashboard);
 
     console.log("BEFORE PORTFOLIO HISTORY");
 
-    loadPortfolioAdvisor();
+    runDashboardRefresh(loadPortfolioAdvisor);
     loadPortfolioHistory();
     loadMarketCondition();
-    loadMarketRegime();
+    runDashboardRefresh(loadMarketRegime);
     loadMarketStrategy();
     loadAIDecision();
     loadAIDecisionSummary();
@@ -1208,9 +1250,9 @@ function startDashboard() {
     loadAIDecisionExplainability();
 
     dashboardRefreshIntervalIds = [
-        setInterval(loadDashboard, 10000),
-        setInterval(loadPortfolioAdvisor, 10000),
-        setInterval(loadMarketRegime, 10000)
+        setInterval(() => runDashboardRefresh(loadDashboard), 10000),
+        setInterval(() => runDashboardRefresh(loadPortfolioAdvisor), 10000),
+        setInterval(() => runDashboardRefresh(loadMarketRegime), 10000)
     ];
 }
 
@@ -1225,7 +1267,7 @@ async function loadHistory(ticker){
 
 
     const result =
-    await response.json();
+    await requireDashboardApiResponse(response);
 
 
     const labels =
@@ -1473,7 +1515,7 @@ async function loadPortfolioAdvisor(save=false){
 
 
     const result =
-        await response.json();
+        await requireDashboardApiResponse(response);
 
 
     const panel =
@@ -2434,7 +2476,7 @@ async function loadMarketRegime(){
     );
 
     const result =
-    await response.json();
+    await requireDashboardApiResponse(response);
 
     const panel =
     document.getElementById(

@@ -12,9 +12,9 @@ def test_dashboard_refresh_intervals_are_tracked():
     source = _dashboard_source()
 
     assert "dashboardRefreshIntervalIds" in source
-    assert "setInterval(loadDashboard, 10000)" in source
-    assert "setInterval(loadPortfolioAdvisor, 10000)" in source
-    assert "setInterval(loadMarketRegime, 10000)" in source
+    assert "setInterval(() => runDashboardRefresh(loadDashboard), 10000)" in source
+    assert "setInterval(() => runDashboardRefresh(loadPortfolioAdvisor), 10000)" in source
+    assert "setInterval(() => runDashboardRefresh(loadMarketRegime), 10000)" in source
 
 
 def test_logout_stops_dashboard_refresh_and_allows_restart():
@@ -33,3 +33,92 @@ def test_logout_stops_dashboard_refresh_and_allows_restart():
     logout_source = source[logout_start:logout_end]
 
     assert "stopDashboard();" in logout_source
+
+
+def test_dashboard_api_loaders_reject_unauthorized_responses():
+    source = _dashboard_source()
+
+    assert "async function requireDashboardApiResponse(response)" in source
+    assert "response.status === 401" in source
+    assert "response.ok" in source
+
+    helper_start = source.index(
+        "async function requireDashboardApiResponse(response)"
+    )
+    helper_end = source.index(
+        "let dashboardStarted",
+        helper_start,
+    )
+    helper_source = source[helper_start:helper_end]
+
+    assert "stopDashboard();" in helper_source
+    assert "hidePlatformAdminPanel();" in helper_source
+    assert "setPlatformLogoutButtonVisible(false);" in helper_source
+    assert 'setPlatformAuthMode("user");' in helper_source
+    assert "showPlatformAuthOverlay();" in helper_source
+
+    assert "requireDashboardApiResponse(response)" in source
+
+    load_dashboard_start = source.index("function loadDashboard()")
+    load_dashboard_end = source.index(
+        "let platformAuthMode",
+        load_dashboard_start,
+    )
+    load_dashboard_source = source[
+        load_dashboard_start:load_dashboard_end
+    ]
+
+    assert load_dashboard_source.count(
+        "requireDashboardApiResponse(response)"
+    ) >= 3
+
+    portfolio_start = source.index(
+        "async function loadPortfolioAdvisor"
+    )
+    portfolio_end = source.index(
+        "async function loadPortfolioHistory",
+        portfolio_start,
+    )
+    portfolio_source = source[
+        portfolio_start:portfolio_end
+    ]
+
+    assert "requireDashboardApiResponse(response)" in portfolio_source
+
+    regime_start = source.index(
+        "async function loadMarketRegime"
+    )
+    regime_source = source[regime_start:]
+
+    assert "requireDashboardApiResponse(response)" in regime_source
+
+def test_dashboard_authentication_error_is_handled_without_unhandled_rejection():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "class DashboardAuthenticationRequiredError extends Error" in source
+    assert "function runDashboardRefresh(loader)" in source
+    assert "error instanceof DashboardAuthenticationRequiredError" in source
+
+    start = source.index("function startDashboard")
+    end = source.index("async function loadHistory", start)
+    lifecycle_source = source[start:end]
+
+    assert "runDashboardRefresh(loadDashboard);" in lifecycle_source
+    assert "runDashboardRefresh(loadPortfolioAdvisor);" in lifecycle_source
+    assert "runDashboardRefresh(loadMarketRegime);" in lifecycle_source
+    assert "setInterval(() => runDashboardRefresh(loadDashboard), 10000)" in lifecycle_source
+    assert "setInterval(() => runDashboardRefresh(loadPortfolioAdvisor), 10000)" in lifecycle_source
+    assert "setInterval(() => runDashboardRefresh(loadMarketRegime), 10000)" in lifecycle_source
+
+def test_dashboard_refresh_promise_and_history_use_auth_boundary():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    dashboard_start = source.index("function loadDashboard")
+    dashboard_end = source.index("let platformAuthMode", dashboard_start)
+    dashboard_source = source[dashboard_start:dashboard_end]
+    assert 'return fetch("/api/ranking")' in dashboard_source
+
+    history_start = source.index("async function loadHistory")
+    history_end = source.index("async function", history_start + 1)
+    history_source = source[history_start:history_end]
+    assert "await requireDashboardApiResponse(response)" in history_source
