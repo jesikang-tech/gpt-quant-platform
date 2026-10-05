@@ -950,13 +950,15 @@ header h1 {
   box-sizing: border-box;
   border: 1px solid #d2d6db;
   border-radius: 6px;
-  background: #e7e9ec;
-  color: #8a9097;
+  background: #ffffff;
+  color: #30343b;
   font-size: 12px;
 }
 
 .ver11-control-group input:disabled,
 .ver11-control-group select:disabled {
+  background: #e7e9ec;
+  color: #8a9097;
   cursor: not-allowed;
 }
 
@@ -989,12 +991,19 @@ header h1 {
 .ver11-actions button {
   width: 100%;
   min-height: 34px;
-  border: 1px solid #d0d4d9;
+  border: 1px solid #3f73dc;
   border-radius: 6px;
-  background: #e1e3e6;
-  color: #979ca2;
+  background: #4b7bec;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.ver11-actions button:disabled {
+  border-color: #d0d4d9;
+  background: #e1e3e6;
+  color: #979ca2;
   cursor: not-allowed;
 }
 

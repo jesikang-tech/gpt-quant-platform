@@ -765,6 +765,13 @@ async function initializePlatformAuthentication() {
 document.addEventListener(
     "DOMContentLoaded",
     function () {
+        initializeVer11AnalysisControls();
+    }
+);
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
         initializePlatformAdminPanel();
         initializePlatformAuthentication();
     }
@@ -900,6 +907,260 @@ function initializePlatformAdminPanel() {
         }
     );
 }
+
+function initializeVer11AnalysisControls() {
+    const controlIds = [
+        "ver11-analysis-date",
+        "ver11-analysis-period",
+        "ver11-sort",
+        "ver11-count",
+        "ver11-etf-type",
+        "ver11-market",
+    ];
+
+    controlIds.forEach(function (id) {
+        const control = document.getElementById(id);
+
+        if (control) {
+            control.disabled = false;
+        }
+    });
+
+    const runButton = document.getElementById("ver11-analysis-run");
+
+    if (!runButton) {
+        return;
+    }
+
+    runButton.addEventListener("click", async function () {
+        try {
+            await runVer11Analysis();
+        } catch (error) {
+            console.error("Ver.1.1 analysis error:", error);
+        }
+    });
+
+    const resetButton =
+        document.getElementById("ver11-analysis-reset");
+
+    if (resetButton) {
+        resetButton.disabled = false;
+
+        resetButton.addEventListener("click", function () {
+            const analysisDate =
+                document.getElementById("ver11-analysis-date");
+            const analysisPeriod =
+                document.getElementById("ver11-analysis-period");
+            const sortInput =
+                document.getElementById("ver11-sort");
+            const countInput =
+                document.getElementById("ver11-count");
+            const etfType =
+                document.getElementById("ver11-etf-type");
+            const market =
+                document.getElementById("ver11-market");
+            const resultPanel =
+                document.getElementById("ver11-analysis-result");
+            const resultMeta =
+                document.getElementById("ver11-analysis-result-meta");
+            const resultContent =
+                document.getElementById("ver11-analysis-result-content");
+
+            if (analysisDate) {
+                analysisDate.value = "";
+            }
+            if (analysisPeriod) {
+                analysisPeriod.value = "3m";
+            }
+            if (sortInput) {
+                sortInput.value = "final_score";
+            }
+            if (countInput) {
+                countInput.value = "10";
+            }
+            if (etfType) {
+                etfType.selectedIndex = 0;
+            }
+            if (market) {
+                market.selectedIndex = 0;
+            }
+            if (resultMeta) {
+                resultMeta.textContent = "";
+            }
+            if (resultContent) {
+                resultContent.innerHTML = "";
+            }
+            if (resultPanel) {
+                resultPanel.hidden = true;
+            }
+        });
+    }
+}
+
+
+function renderVer11AnalysisResult(data) {
+    const resultPanel =
+        document.getElementById("ver11-analysis-result");
+    const resultMeta =
+        document.getElementById("ver11-analysis-result-meta");
+    const resultContent =
+        document.getElementById("ver11-analysis-result-content");
+
+    if (!resultPanel || !resultMeta || !resultContent || !data) {
+        return;
+    }
+
+    const rows = Array.isArray(data.current_score_top)
+        ? data.current_score_top
+        : [];
+
+    const sortInput = document.getElementById("ver11-sort");
+    const sortBy = sortInput ? sortInput.value : "final_score";
+    const sortLabels = {
+        final_score: "AI \uC810\uC218",
+        return: "\uC218\uC775\uB960",
+        trend_score: "\uCD94\uC138 \uC810\uC218",
+        slope_score: "\uAE30\uC6B8\uAE30 \uC810\uC218",
+    };
+    const sortLabel = sortLabels[sortBy] || sortLabels.final_score;
+
+    resultMeta.textContent =
+        `${data.analysis_date || "-"} / ` +
+        `${data.period || "3m"} / ` +
+        `${data.lookback_trading_days ?? "-"} \uAC70\uB798\uC77C / ` +
+        `Top ${rows.length} / ` +
+        `\uC815\uB82C: ${sortLabel} \u2193`;
+
+    if (rows.length === 0) {
+        resultContent.innerHTML = `
+            <div class="historical-replay-section">
+                <div class="historical-replay-section-description">
+                    \uBD84\uC11D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.
+                </div>
+            </div>
+        `;
+        resultPanel.hidden = false;
+        return;
+    }
+
+    const tableRows = rows.map((item, index) => {
+        const score = Number(item.final_score);
+        const returnRate = Number(item.return);
+        const uptrendRatio = Number(item.uptrend_ratio);
+
+        const scoreText = Number.isFinite(score)
+            ? score.toFixed(1)
+            : "N/A";
+
+        const returnText = Number.isFinite(returnRate)
+            ? `${returnRate.toFixed(2)}%`
+            : "N/A";
+
+        const uptrendText = Number.isFinite(uptrendRatio)
+            ? `${uptrendRatio.toFixed(2)}%`
+            : "N/A";
+
+        let sortScoreCell = "";
+        if (sortBy === "trend_score" || sortBy === "slope_score") {
+            const sortScore = Number(item[sortBy]);
+            const sortScoreText = Number.isFinite(sortScore)
+                ? sortScore.toFixed(1)
+                : "N/A";
+            sortScoreCell = `<td>${sortScoreText}</td>`;
+        }
+
+        return `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.ticker || ""}</td>
+                <td>${item.name || ""}</td>
+                <td>${returnText}</td>
+                <td>${uptrendText}</td>
+                ${sortScoreCell}
+                <td>${scoreText}</td>
+            </tr>
+        `;
+    }).join("");
+
+    const sortScoreHeader =
+        sortBy === "trend_score"
+            ? `<th scope="col">\uCD94\uC138 \uC810\uC218</th>`
+            : sortBy === "slope_score"
+                ? `<th scope="col">\uAE30\uC6B8\uAE30 \uC810\uC218</th>`
+                : "";
+
+    resultContent.innerHTML = `
+        <section class="historical-replay-section">
+            <div class="historical-replay-table-wrap">
+                <table class="historical-replay-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">\uC21C\uC704</th>
+                            <th scope="col">ETF</th>
+                            <th scope="col">\uC885\uBAA9\uBA85</th>
+                            <th scope="col">\uC218\uC775\uB960</th>
+                            <th scope="col">\uC0C1\uC2B9\uC77C \uBE44\uC728</th>
+                            ${sortScoreHeader}
+                            <th scope="col">AI \uC810\uC218</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    `;
+
+    resultPanel.hidden = false;
+}
+
+
+async function runVer11Analysis() {
+    const dateInput = document.getElementById("ver11-analysis-date");
+    const periodInput = document.getElementById("ver11-analysis-period");
+    const sortInput = document.getElementById("ver11-sort");
+    const countInput = document.getElementById("ver11-count");
+
+    if (!dateInput || !periodInput || !sortInput || !countInput) {
+        return;
+    }
+
+    const analysisDate = dateInput.value;
+    const period = periodInput.value || "3m";
+    const sortBy = sortInput.value || "final_score";
+    const limit = Number.parseInt(countInput.value, 10);
+
+    if (![10, 20, 30].includes(limit)) {
+        throw new Error("Invalid Ver.1.1 analysis limit.");
+    }
+
+    if (!analysisDate) {
+        console.warn("Ver.1.1 analysis date is required.");
+        return;
+    }
+
+    const response = await fetch(
+        `/api/ver11-analysis?date=${encodeURIComponent(analysisDate)}&period=${encodeURIComponent(period)}&limit=${encodeURIComponent(limit)}&sort=${encodeURIComponent(sortBy)}`
+    );
+
+    if (!response.ok) {
+        throw new Error("Ver.1.1 analysis request failed.");
+    }
+
+    const data = await response.json();
+
+    if (data.success === false) {
+        throw new Error(data.message || "Ver.1.1 analysis failed.");
+    }
+
+    renderVer11AnalysisResult(data);
+
+    console.log("VER11_ANALYSIS_RESULT:", data);
+
+    return data;
+}
+
 
 let dashboardStarted = false;
 let dashboardRefreshIntervalIds = [];

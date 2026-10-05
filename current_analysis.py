@@ -315,6 +315,7 @@ def get_current_analysis_data(
     limit: int = 10,
     analysis_date: Optional[str] = None,
     period: str = "3m",
+    sort_by: str = "final_score",
 ) -> dict:
     """
     Calculate current ETF scores entirely in memory.
@@ -324,6 +325,16 @@ def get_current_analysis_data(
 
     if limit < 1:
         raise ValueError("limit must be >= 1")
+
+    allowed_sort_fields = {
+        "final_score",
+        "return",
+        "trend_score",
+        "slope_score",
+    }
+
+    if sort_by not in allowed_sort_fields:
+        raise ValueError("Invalid sort_by.")
 
     resolved_date = _normalize_analysis_date(analysis_date)
 
@@ -406,23 +417,38 @@ def get_current_analysis_data(
             selection_count += 1
             selection_scores.append(row)
 
+    if sort_by == "final_score":
+        sort_fields = [
+            "final_score",
+            "return_score",
+            "trend_score",
+            "slope_score",
+        ]
+    else:
+        sort_fields = [
+            sort_by,
+            *[
+                field
+                for field in (
+                    "final_score",
+                    "return_score",
+                    "trend_score",
+                    "slope_score",
+                )
+                if field != sort_by
+            ],
+        ]
+
+    def score_sort_key(row):
+        return tuple(row[field] for field in sort_fields)
+
     all_scores.sort(
-        key=lambda x: (
-            x["final_score"],
-            x["return_score"],
-            x["trend_score"],
-            x["slope_score"],
-        ),
+        key=score_sort_key,
         reverse=True,
     )
 
     selection_scores.sort(
-        key=lambda x: (
-            x["final_score"],
-            x["return_score"],
-            x["trend_score"],
-            x["slope_score"],
-        ),
+        key=score_sort_key,
         reverse=True,
     )
 

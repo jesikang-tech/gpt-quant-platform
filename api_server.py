@@ -325,6 +325,42 @@ def historical_replay_api():
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
+@app.route("/api/ver11-analysis")
+def ver11_analysis_api():
+    analysis_date = request.args.get("date")
+    period = request.args.get("period", "3m")
+    sort_by = request.args.get("sort", "final_score")
+
+    try:
+        limit = int(request.args.get("limit", "10"))
+    except ValueError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit."
+        }), 400
+
+    try:
+        data = get_current_analysis_data(
+            limit=limit,
+            analysis_date=analysis_date,
+            period=period,
+            sort_by=sort_by,
+        )
+        return jsonify(data)
+
+    except ValueError as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 400
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
 @app.route("/api/ranking")
 def ranking_api():
 

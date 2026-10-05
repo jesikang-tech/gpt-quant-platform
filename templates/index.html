@@ -216,36 +216,34 @@ AI Powered ETF Ranking System
 
   <div class="ver11-control-group">
     <label for="ver11-analysis-date">&#xBD84;&#xC11D; &#xC77C;&#xC790;</label>
-    <input id="ver11-analysis-date" type="date" disabled>
+    <input id="ver11-analysis-date" type="date">
   </div>
 
   <div class="ver11-control-group">
     <label for="ver11-analysis-period">&#xBD84;&#xC11D; &#xAE30;&#xAC04;</label>
-    <select id="ver11-analysis-period" disabled>
-      <option selected>3&#xAC1C;&#xC6D4; (60 &#xAC70;&#xB798;&#xC77C;)</option>
-      <option>2&#xAC1C;&#xC6D4; (40 &#xAC70;&#xB798;&#xC77C;)</option>
-      <option>1&#xAC1C;&#xC6D4; (20 &#xAC70;&#xB798;&#xC77C;)</option>
-      <option>6&#xAC1C;&#xC6D4; (120 &#xAC70;&#xB798;&#xC77C;)</option>
-      <option>12&#xAC1C;&#xC6D4; (240 &#xAC70;&#xB798;&#xC77C;)</option>
+    <select id="ver11-analysis-period">
+      <option value="3m" selected>3&#xAC1C;&#xC6D4; (60 &#xAC70;&#xB798;&#xC77C;)</option>
+      <option value="2m">2&#xAC1C;&#xC6D4; (40 &#xAC70;&#xB798;&#xC77C;)</option>
+      <option value="1m">1&#xAC1C;&#xC6D4; (20 &#xAC70;&#xB798;&#xC77C;)</option>
     </select>
   </div>
 
   <div class="ver11-control-group">
     <label for="ver11-sort">&#xC815;&#xB82C; &#xAE30;&#xC900;</label>
     <select id="ver11-sort" disabled>
-      <option selected>AI &#xC810;&#xC218; (&#xAE30;&#xBCF8;)</option>
-      <option>&#xC218;&#xC775;&#xB960;</option>
-      <option>&#xCD94;&#xC138;</option>
-      <option>&#xAE30;&#xC6B8;&#xAE30;</option>
+      <option value="final_score" selected>AI &#xC810;&#xC218; (&#xAE30;&#xBCF8;)</option>
+      <option value="return">&#xC218;&#xC775;&#xB960;</option>
+      <option value="trend_score">&#xCD94;&#xC138;</option>
+      <option value="slope_score">&#xAE30;&#xC6B8;&#xAE30;</option>
     </select>
   </div>
 
   <div class="ver11-control-group">
     <label for="ver11-count">&#xC885;&#xBAA9; &#xC218;</label>
     <select id="ver11-count" disabled>
-      <option selected>Top 10</option>
-      <option>Top 20</option>
-      <option>Top 30</option>
+      <option value="10" selected>Top 10</option>
+      <option value="20">Top 20</option>
+      <option value="30">Top 30</option>
     </select>
   </div>
 
@@ -269,8 +267,8 @@ AI Powered ETF Ranking System
   </div>
 
   <div class="ver11-actions">
-    <button type="button" disabled>&#xBD84;&#xC11D; &#xC2E4;&#xD589;</button>
-    <button type="button" disabled>&#xC870;&#xAC74; &#xCD08;&#xAE30;&#xD654;</button>
+    <button id="ver11-analysis-run" type="button">&#xBD84;&#xC11D; &#xC2E4;&#xD589;</button>
+    <button id="ver11-analysis-reset" type="button" disabled>&#xC870;&#xAC74; &#xCD08;&#xAE30;&#xD654;</button>
   </div>
 </aside>
 <main class="ver11-main">
@@ -283,6 +281,28 @@ AI Powered ETF Ranking System
     </div>
 
     <div id="historical-replay-result-content" class="historical-replay-result-content"></div>
+</section>
+
+
+<section
+  id="ver11-analysis-result"
+  class="historical-replay-result"
+  hidden
+>
+  <div class="historical-replay-result-header">
+    <div>
+      <h2>Ver.1.1 Analysis Result</h2>
+      <div
+        id="ver11-analysis-result-meta"
+        class="historical-replay-result-meta"
+      ></div>
+    </div>
+  </div>
+
+  <div
+    id="ver11-analysis-result-content"
+    class="historical-replay-result-content"
+  ></div>
 </section>
 
 
