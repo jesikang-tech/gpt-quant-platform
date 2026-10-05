@@ -61,3 +61,25 @@ def test_historical_replay_rerenders_existing_result_on_language_change():
     assert 'latestHistoricalReplayData' in source
     assert 'renderHistoricalReplayResult' in source
     assert 'renderHistoricalReplayResult(latestHistoricalReplayData)' in source
+
+def test_historical_replay_localizes_display_only_values():
+    source = _dashboard_source()
+
+    assert 'getHistoricalReplayDisplayText' in source
+    assert 'historicalReplayRegimeBullish' in source
+    assert 'historicalReplayRegimeNeutral' in source
+    assert 'historicalReplayRegimeBearish' in source
+    assert 'getDashboardText("aggressive")' in source
+    assert 'getDashboardText("balanced")' in source
+    assert 'getDashboardText("conservative")' in source
+    assert 'historicalReplayStatusPass' in source
+    assert 'historicalReplayStatusFail' in source
+    assert 'historicalReplayStatusPending' in source
+    assert 'historicalReplayCash' in source
+    assert 'historicalReplayDaySuffix' in source
+
+def test_historical_replay_null_hit_day_is_not_rendered_as_zero():
+    source = _dashboard_source()
+
+    assert "reality.close_first_hit_day == null" in source
+    assert "reality.high_first_hit_day == null" in source

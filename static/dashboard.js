@@ -5332,6 +5332,35 @@ async function askPortfolioAnalyst(){
 
 let latestHistoricalReplayData = null;
 
+function getHistoricalReplayDisplayText(type, value) {
+    const normalizedValue = String(value ?? "").trim().toUpperCase();
+
+    const translationKeys = {
+        regime: {
+            BULLISH: "historicalReplayRegimeBullish",
+            NEUTRAL: "historicalReplayRegimeNeutral",
+            BEARISH: "historicalReplayRegimeBearish"
+        },
+        mode: {
+            AGGRESSIVE: "aggressive",
+            BALANCED: "balanced",
+            CONSERVATIVE: "conservative"
+        },
+        status: {
+            PASS: "historicalReplayStatusPass",
+            FAIL: "historicalReplayStatusFail",
+            PENDING: "historicalReplayStatusPending"
+        },
+        ticker: {
+            CASH: "historicalReplayCash"
+        }
+    };
+
+    const translationKey = translationKeys[type]?.[normalizedValue];
+    return translationKey ? getDashboardText(translationKey) : value;
+}
+
+
 function renderHistoricalReplayResult(data) {
     if (!data) {
         return;
@@ -5377,7 +5406,7 @@ function renderHistoricalReplayResult(data) {
 
         return `
             <tr>
-                <td>${portfolioItem.ticker || ""}</td>
+                <td>${getHistoricalReplayDisplayText("ticker", portfolioItem.ticker || "")}</td>
                 <td>${weightText}</td>
                 <td>${scoreText}</td>
             </tr>
@@ -5401,20 +5430,30 @@ function renderHistoricalReplayResult(data) {
             ? finalScore.toFixed(1)
             : "N/A";
 
-        const closeStatus = reality.close_status ?? "N/A";
-        const highStatus = reality.high_status ?? "N/A";
+        const closeStatus = getHistoricalReplayDisplayText(
+            "status",
+            reality.close_status ?? "N/A"
+        );
+        const highStatus = getHistoricalReplayDisplayText(
+            "status",
+            reality.high_status ?? "N/A"
+        );
 
-        const closeDay = Number(reality.close_first_hit_day);
-        const highDay = Number(reality.high_first_hit_day);
+        const closeDay = reality.close_first_hit_day == null
+            ? NaN
+            : Number(reality.close_first_hit_day);
+        const highDay = reality.high_first_hit_day == null
+            ? NaN
+            : Number(reality.high_first_hit_day);
         const observedDays = Number(reality.observed_days);
         const windowDays = Number(reality.window_days);
 
         const closeDayText = Number.isFinite(closeDay)
-            ? `${closeDay}d`
+            ? `${closeDay}${getDashboardText("historicalReplayDaySuffix")}`
             : "-";
 
         const highDayText = Number.isFinite(highDay)
-            ? `${highDay}d`
+            ? `${highDay}${getDashboardText("historicalReplayDaySuffix")}`
             : "-";
 
         const coverageText =
@@ -5445,8 +5484,8 @@ function renderHistoricalReplayResult(data) {
                 ${getDashboardText("historicalReplayPortfolioTitle")}
             </div>
             <div class="historical-replay-section-description">
-                ${getDashboardText("historicalReplayMarketRegime")}: ${marketRegime.regime || "UNKNOWN"} /
-                ${getDashboardText("historicalReplayPortfolioMode")}: ${marketStrategy.portfolio_mode || "balanced"} /
+                ${getDashboardText("historicalReplayMarketRegime")}: ${getHistoricalReplayDisplayText("regime", marketRegime.regime || "UNKNOWN")} /
+                ${getDashboardText("historicalReplayPortfolioMode")}: ${getHistoricalReplayDisplayText("mode", marketStrategy.portfolio_mode || "balanced")} /
                 ${getDashboardText("historicalReplayCashTarget")}: ${marketStrategy.cash_target ?? "N/A"}%
             </div>
 
@@ -5862,7 +5901,15 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayComplete": "Historical Replay 완료",
         "historicalReplayExecutionError": "Historical Replay 실행 중 오류가 발생했습니다.",
         "historicalReplayTradingDays": "거래일",
-        "historicalReplayTop": "상위"
+        "historicalReplayTop": "상위",
+        "historicalReplayRegimeBullish": "강세",
+        "historicalReplayRegimeNeutral": "중립",
+        "historicalReplayRegimeBearish": "약세",
+        "historicalReplayStatusPass": "통과",
+        "historicalReplayStatusFail": "실패",
+        "historicalReplayStatusPending": "대기",
+        "historicalReplayCash": "현금",
+        "historicalReplayDaySuffix": "일"
 },
     en: {
         "dashboardTitle": "GPT Quant ETF Dashboard",
@@ -6133,7 +6180,15 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayComplete": "Historical Replay complete",
         "historicalReplayExecutionError": "Historical Replay execution error.",
         "historicalReplayTradingDays": "trading days",
-        "historicalReplayTop": "Top"
+        "historicalReplayTop": "Top",
+        "historicalReplayRegimeBullish": "Bullish",
+        "historicalReplayRegimeNeutral": "Neutral",
+        "historicalReplayRegimeBearish": "Bearish",
+        "historicalReplayStatusPass": "PASS",
+        "historicalReplayStatusFail": "FAIL",
+        "historicalReplayStatusPending": "PENDING",
+        "historicalReplayCash": "CASH",
+        "historicalReplayDaySuffix": "d"
 }
 };
 
