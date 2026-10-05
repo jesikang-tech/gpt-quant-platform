@@ -183,9 +183,7 @@ def update_price_database(
 
 
 if __name__ == "__main__":
-
-    prices = get_csv_price_data()
-
-    update_price_database(
-        prices
+    raise SystemExit(
+        "price_loader.py is a development-only data loader. "
+        "Direct execution against the operational database is disabled."
     )
