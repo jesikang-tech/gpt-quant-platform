@@ -102,3 +102,52 @@ def test_ver11_point_in_time_portfolio_ui_contract():
     assert 'getDashboardText("ver11PortfolioTicker")' in source
     assert 'getDashboardText("ver11PortfolioWeight")' in source
     assert 'getDashboardText("ver11PortfolioScore")' in source
+
+def test_ver11_point_in_time_explain_ui_contract():
+    from pathlib import Path
+
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    required_translation_keys = (
+        "ver11ExplainTitle",
+        "ver11ExplainDate",
+        "ver11ExplainPeriod",
+        "ver11Confidence",
+        "ver11AverageScore",
+        "ver11MarketStrength",
+        "ver11Recommendation",
+        "ver11RebalanceAction",
+        "ver11ReturnScore",
+        "ver11OptimizationScore",
+        "ver11RecommendationBuy",
+        "ver11RecommendationHold",
+        "ver11RecommendationReduce",
+        "ver11RebalanceIncreaseEquity",
+        "ver11RebalanceNoAction",
+        "ver11RebalanceIncreaseCash",
+    )
+
+    for key in required_translation_keys:
+        assert source.count(f'"{key}"') >= 2
+
+    required_fields = (
+        "point_in_time_explanation",
+        "market_regime",
+        "market_strategy",
+        "portfolio",
+        "cash_weight",
+        "analysis_date",
+        "reason",
+    )
+
+    for field in required_fields:
+        assert field in source
+
+    assert "point_in_time_explanation" in source
+    assert "portfolio_mode" in source
+    assert "cash_target" in source
+    assert "recommendation" in source
+    assert "rebalance_action" in source
+    assert "optimization_score" in source
+    assert 'getHistoricalReplayDisplayText("recommendation",' in source
+    assert 'getHistoricalReplayDisplayText("rebalance",' in source

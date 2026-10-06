@@ -1127,6 +1127,39 @@ function renderVer11AnalysisResult(data) {
         </tr>
     `;
 
+    const pointInTimeExplanation =
+        data.point_in_time_explanation || {};
+
+    const explanationRegime =
+        pointInTimeExplanation.market_regime || {};
+
+    const explanationStrategy =
+        pointInTimeExplanation.market_strategy || {};
+
+    const explanationPortfolio =
+        pointInTimeExplanation.portfolio || {};
+
+    const explanationAllocations =
+        Array.isArray(explanationPortfolio.allocations)
+            ? explanationPortfolio.allocations
+            : [];
+
+    const explanationAllocationRows =
+        explanationAllocations.map((item) => `
+            <tr>
+                <td>${getHistoricalReplayDisplayText("ticker", item.ticker || "")}</td>
+                <td>${item.weight ?? "N/A"}%</td>
+                <td>${item.return_score ?? "N/A"}</td>
+                <td>${item.trend_score ?? "N/A"}</td>
+                <td>${item.slope_score ?? "N/A"}</td>
+                <td>${item.optimization_score ?? "N/A"}</td>
+            </tr>
+        `).join("") || `
+            <tr>
+                <td colspan="6">${getDashboardText("ver11EmptyPortfolio")}</td>
+            </tr>
+        `;
+
     resultContent.innerHTML = `
         <section class="historical-replay-section">
             <div class="historical-replay-table-wrap">
@@ -1172,6 +1205,77 @@ function renderVer11AnalysisResult(data) {
                         ${portfolioRows}
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <section class="historical-replay-section historical-replay-portfolio-explain">
+            <div class="historical-replay-section-title">
+                ${getDashboardText("ver11ExplainTitle")}
+            </div>
+
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11ExplainDate")}: ${pointInTimeExplanation.analysis_date || data.analysis_date || "-"} /
+                ${getDashboardText("ver11ExplainPeriod")}: ${pointInTimeExplanation.period || data.period || "-"}
+            </div>
+
+            <div class="historical-replay-section-description">
+                <strong>${getDashboardText("ver11MarketRegime")}:</strong>
+                ${getHistoricalReplayDisplayText("regime", explanationRegime.regime || "UNKNOWN")}
+                /
+                ${getDashboardText("ver11Confidence")}:
+                ${explanationRegime.confidence ?? "N/A"}%
+                /
+                ${getDashboardText("ver11AverageScore")}:
+                ${explanationRegime.avg_score ?? "N/A"}
+                /
+                ${getDashboardText("ver11MarketStrength")}:
+                ${explanationRegime.market_strength || "N/A"}
+            </div>
+
+            <div class="historical-replay-section-description">
+                ${explanationRegime.reason || ""}
+            </div>
+
+            <div class="historical-replay-section-description">
+                <strong>${getDashboardText("ver11PortfolioMode")}:</strong>
+                ${getHistoricalReplayDisplayText("mode", explanationStrategy.portfolio_mode || "balanced")}
+                /
+                ${getDashboardText("ver11CashTarget")}:
+                ${explanationStrategy.cash_target ?? "N/A"}%
+                /
+                ${getDashboardText("ver11Recommendation")}:
+                ${getHistoricalReplayDisplayText("recommendation", explanationStrategy.recommendation || "N/A")}
+                /
+                ${getDashboardText("ver11RebalanceAction")}:
+                ${getHistoricalReplayDisplayText("rebalance", explanationStrategy.rebalance_action || "N/A")}
+            </div>
+
+            <div class="historical-replay-section-description">
+                ${explanationStrategy.reason || ""}
+            </div>
+
+            <div class="historical-replay-table-wrap">
+                <table class="historical-replay-table historical-replay-explain-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">${getDashboardText("ver11PortfolioTicker")}</th>
+                            <th scope="col">${getDashboardText("ver11PortfolioWeight")}</th>
+                            <th scope="col">${getDashboardText("ver11ReturnScore")}</th>
+                            <th scope="col">${getDashboardText("ver11TrendScore")}</th>
+                            <th scope="col">${getDashboardText("ver11SlopeScore")}</th>
+                            <th scope="col">${getDashboardText("ver11OptimizationScore")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${explanationAllocationRows}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11CashTarget")}: ${explanationPortfolio.cash_weight ?? "N/A"}%
+                /
+                ${explanationPortfolio.reason || ""}
             </div>
         </section>
     `;
@@ -5724,6 +5828,16 @@ function getHistoricalReplayDisplayText(type, value) {
             BALANCED: "balanced",
             CONSERVATIVE: "conservative"
         },
+        recommendation: {
+            BUY: "ver11RecommendationBuy",
+            HOLD: "ver11RecommendationHold",
+            REDUCE: "ver11RecommendationReduce"
+        },
+        rebalance: {
+            "INCREASE EQUITY": "ver11RebalanceIncreaseEquity",
+            "NO ACTION": "ver11RebalanceNoAction",
+            "INCREASE CASH": "ver11RebalanceIncreaseCash"
+        },
         status: {
             PASS: "historicalReplayStatusPass",
             FAIL: "historicalReplayStatusFail",
@@ -6354,7 +6468,23 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11PortfolioTicker": "\uC885\uBAA9\uCF54\uB4DC",
         "ver11PortfolioWeight": "\uBE44\uC911",
         "ver11PortfolioScore": "\uC810\uC218",
-        "ver11EmptyPortfolio": "\uD3EC\uD2B8\uD3F4\uB9AC\uC624\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
+        "ver11EmptyPortfolio": "\uD3EC\uD2B8\uD3F4\uB9AC\uC624\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
+        "ver11ExplainTitle": "Point-in-Time \uC124\uBA85",
+        "ver11ExplainDate": "\uBD84\uC11D \uC77C\uC790",
+        "ver11ExplainPeriod": "\uBD84\uC11D \uAE30\uAC04",
+        "ver11Confidence": "\uC2E0\uB8B0\uB3C4",
+        "ver11AverageScore": "\uD3C9\uADE0 \uC810\uC218",
+        "ver11MarketStrength": "\uC2DC\uC7A5 \uAC15\uB3C4",
+        "ver11Recommendation": "\uCD94\uCC9C",
+        "ver11RebalanceAction": "\uB9AC\uBC38\uB7F0\uC2F1 \uC870\uCE58",
+        "ver11ReturnScore": "\uC218\uC775\uB960 \uC810\uC218",
+        "ver11OptimizationScore": "\uCD5C\uC801\uD654 \uC810\uC218",
+        "ver11RecommendationBuy": "\uB9E4\uC218",
+        "ver11RecommendationHold": "\uC720\uC9C0",
+        "ver11RecommendationReduce": "\uBE44\uC911 \uCD95\uC18C",
+        "ver11RebalanceIncreaseEquity": "\uC8FC\uC2DD \uBE44\uC911 \uD655\uB300",
+        "ver11RebalanceNoAction": "\uC870\uCE58 \uC5C6\uC74C",
+        "ver11RebalanceIncreaseCash": "\uD604\uAE08 \uBE44\uC911 \uD655\uB300"
 },
     en: {
         "dashboardTitle": "GPT Quant ETF Dashboard",
@@ -6673,7 +6803,23 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11PortfolioTicker": "Ticker",
         "ver11PortfolioWeight": "Weight",
         "ver11PortfolioScore": "Score",
-        "ver11EmptyPortfolio": "No portfolio available."
+        "ver11EmptyPortfolio": "No portfolio available.",
+        "ver11ExplainTitle": "Point-in-Time Explanation",
+        "ver11ExplainDate": "Analysis Date",
+        "ver11ExplainPeriod": "Analysis Period",
+        "ver11Confidence": "Confidence",
+        "ver11AverageScore": "Average Score",
+        "ver11MarketStrength": "Market Strength",
+        "ver11Recommendation": "Recommendation",
+        "ver11RebalanceAction": "Rebalance Action",
+        "ver11ReturnScore": "Return Score",
+        "ver11OptimizationScore": "Optimization Score",
+        "ver11RecommendationBuy": "Buy",
+        "ver11RecommendationHold": "Hold",
+        "ver11RecommendationReduce": "Reduce",
+        "ver11RebalanceIncreaseEquity": "Increase Equity",
+        "ver11RebalanceNoAction": "No Action",
+        "ver11RebalanceIncreaseCash": "Increase Cash"
 }
 };
 
