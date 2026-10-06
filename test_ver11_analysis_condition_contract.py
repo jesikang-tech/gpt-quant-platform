@@ -87,6 +87,8 @@ def test_ver11_unimplemented_filters_remain_disabled_contract():
 
     assert '<select id="ver11-etf-type" disabled>' in html
     assert '<select id="ver11-market" disabled>' in html
+    assert 'disabled> <span id="ver11-watchlist-only">' in html
+    assert 'disabled> <span id="ver11-holdings-only">' in html
 
     control_block = js.split(
         "const controlIds = [", 1
