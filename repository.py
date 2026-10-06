@@ -819,7 +819,7 @@ def save_ai_decision_history(
 
 def get_ai_decision_history(limit=10):
     """
-    AI Decision History 議고쉶
+    AI Decision History 조회
     """
 
     conn = get_connection()
@@ -1043,7 +1043,7 @@ def get_ai_decision_quality():
 
 
 
-    # Quality ?됯?
+    # Quality 평가
 
     if average_score >= 90:
 
@@ -1968,7 +1968,7 @@ def get_ai_portfolio_optimization():
 
 def get_portfolio_analytics():
     """
-    Portfolio Analytics Data 議고쉶
+    Portfolio Analytics Data 조회
     """
 
     conn = get_connection()
@@ -2080,7 +2080,7 @@ def get_latest_etf_scores(limit=30):
 
 def get_etf_score(ticker):
     """
-    ?뱀젙 ETF Score 議고쉶
+    특정 ETF Score 조회
     """
 
     conn = get_connection()
@@ -3273,7 +3273,7 @@ def get_ai_decision_outcome_learning_summary():
 
 def get_ai_decision_outcome_history(limit=10):
     """
-    AI Decision Outcome History 議고쉶
+    AI Decision Outcome History 조회
     """
 
     conn = get_connection()
