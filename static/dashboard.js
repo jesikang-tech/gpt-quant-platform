@@ -5673,6 +5673,12 @@ function getHistoricalReplayDisplayText(type, value) {
             FAIL: "historicalReplayStatusFail",
             PENDING: "historicalReplayStatusPending"
         },
+        reason: {
+            MISSING_BASELINE: "historicalReplayReasonMissingBaseline",
+            INVALID_BASELINE: "historicalReplayReasonInvalidBaseline",
+            INCOMPLETE_HIGH_COVERAGE: "historicalReplayReasonIncompleteHighCoverage",
+            INCOMPLETE_CLOSE_COVERAGE: "historicalReplayReasonIncompleteCloseCoverage"
+        },
         ticker: {
             CASH: "historicalReplayCash"
         }
@@ -5761,6 +5767,27 @@ function renderHistoricalReplayResult(data) {
             reality.high_status ?? "N/A"
         );
 
+        const closeUnavailableReason =
+            reality.close_unavailable_reason || reality.unavailable_reason;
+        const highUnavailableReason =
+            reality.high_unavailable_reason || reality.unavailable_reason;
+
+        const closeStatusText =
+            reality.close_status == null && closeUnavailableReason
+                ? `${closeStatus} (${getHistoricalReplayDisplayText(
+                    "reason",
+                    closeUnavailableReason
+                )})`
+                : closeStatus;
+
+        const highStatusText =
+            reality.high_status == null && highUnavailableReason
+                ? `${highStatus} (${getHistoricalReplayDisplayText(
+                    "reason",
+                    highUnavailableReason
+                )})`
+                : highStatus;
+
         const closeDay = reality.close_first_hit_day == null
             ? NaN
             : Number(reality.close_first_hit_day);
@@ -5791,8 +5818,8 @@ function renderHistoricalReplayResult(data) {
                 <td class="replay-name">${item.name || ""}</td>
                 <td class="replay-price">${priceText}</td>
                 <td class="replay-score">${scoreText}</td>
-                <td class="replay-future">${closeStatus}</td>
-                <td class="replay-future">${highStatus}</td>
+                <td class="replay-future">${closeStatusText}</td>
+                <td class="replay-future">${highStatusText}</td>
                 <td class="replay-observed">${coverageText}</td>
                 <td class="replay-hit">${closeDayText}</td>
                 <td class="replay-hit">${highDayText}</td>
@@ -6230,6 +6257,10 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayStatusPass": "통과",
         "historicalReplayStatusFail": "실패",
         "historicalReplayStatusPending": "대기",
+        "historicalReplayReasonMissingBaseline": "\uAE30\uC900\uAC00\uACA9 \uC5C6\uC74C",
+        "historicalReplayReasonInvalidBaseline": "\uAE30\uC900\uAC00\uACA9 \uC624\uB958",
+        "historicalReplayReasonIncompleteHighCoverage": "\uACE0\uAC00 \uB370\uC774\uD130 \uBD80\uC871",
+        "historicalReplayReasonIncompleteCloseCoverage": "\uC885\uAC00 \uB370\uC774\uD130 \uBD80\uC871",
         "historicalReplayCash": "현금",
         "historicalReplayDaySuffix": "일",
         "ver11ConditionTitle": "분석 조건 선택",
@@ -6537,6 +6568,10 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayStatusPass": "PASS",
         "historicalReplayStatusFail": "FAIL",
         "historicalReplayStatusPending": "PENDING",
+        "historicalReplayReasonMissingBaseline": "Missing Baseline",
+        "historicalReplayReasonInvalidBaseline": "Invalid Baseline",
+        "historicalReplayReasonIncompleteHighCoverage": "Incomplete High Coverage",
+        "historicalReplayReasonIncompleteCloseCoverage": "Incomplete Close Coverage",
         "historicalReplayCash": "CASH",
         "historicalReplayDaySuffix": "d",
         "ver11ConditionTitle": "Analysis Conditions",

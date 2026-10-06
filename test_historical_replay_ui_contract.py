@@ -83,3 +83,19 @@ def test_historical_replay_null_hit_day_is_not_rendered_as_zero():
 
     assert "reality.close_first_hit_day == null" in source
     assert "reality.high_first_hit_day == null" in source
+
+
+def test_historical_replay_renders_localized_unavailable_reasons():
+    source = _dashboard_source()
+
+    assert 'historicalReplayReasonMissingBaseline' in source
+    assert 'historicalReplayReasonInvalidBaseline' in source
+    assert 'historicalReplayReasonIncompleteHighCoverage' in source
+    assert 'historicalReplayReasonIncompleteCloseCoverage' in source
+    assert 'reality.close_unavailable_reason || reality.unavailable_reason' in source
+    assert 'reality.high_unavailable_reason || reality.unavailable_reason' in source
+    assert 'reality.close_status == null && closeUnavailableReason' in source
+    assert 'reality.high_status == null && highUnavailableReason' in source
+    assert '"reason",' in source
+    assert '${closeStatusText}' in source
+    assert '${highStatusText}' in source
