@@ -71,3 +71,11 @@ def test_ver11_analysis_reset_behavior_contract():
     assert "resultMeta.textContent = \"\"" in source
     assert "resultContent.innerHTML = \"\"" in source
     assert "resultPanel.hidden = true" in source
+
+def test_ver11_sort_and_count_controls_are_enabled_contract():
+    source = Path("templates/index.html").read_text(encoding="utf-8")
+
+    assert '<select id="ver11-sort">' in source
+    assert '<select id="ver11-count">' in source
+    assert '<select id="ver11-sort" disabled>' not in source
+    assert '<select id="ver11-count" disabled>' not in source
