@@ -4163,3 +4163,120 @@ def evaluate_ai_decision_portfolio_snapshot(
         "pending_positions": 0,
         "positions": positions
     }
+
+
+# ============================================================
+# Ver1.1 Point-in-Time Analysis Snapshot
+# ============================================================
+
+def save_ver11_analysis_snapshot(
+    analysis_date,
+    period,
+    sort_by,
+    display_limit,
+    snapshot_payload,
+    snapshot_version="VER11-PIT-SNAPSHOT-v1",
+):
+    created_at = datetime.now().astimezone().isoformat()
+    payload_json = json.dumps(
+        snapshot_payload,
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+
+    with closing(get_connection()) as conn:
+        with conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO ver11_analysis_snapshot
+                (
+                    analysis_date,
+                    period,
+                    sort_by,
+                    display_limit,
+                    snapshot_version,
+                    snapshot_payload,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    analysis_date,
+                    period,
+                    sort_by,
+                    display_limit,
+                    snapshot_version,
+                    payload_json,
+                    created_at,
+                ),
+            )
+            return cursor.lastrowid
+
+
+def get_ver11_analysis_snapshot(snapshot_id):
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            """
+            SELECT
+                id,
+                analysis_date,
+                period,
+                sort_by,
+                display_limit,
+                snapshot_version,
+                snapshot_payload,
+                created_at
+            FROM ver11_analysis_snapshot
+            WHERE id = ?
+            """,
+            (snapshot_id,),
+        ).fetchone()
+
+    if row is None:
+        return None
+
+    return {
+        "id": row[0],
+        "analysis_date": row[1],
+        "period": row[2],
+        "sort_by": row[3],
+        "display_limit": row[4],
+        "snapshot_version": row[5],
+        "snapshot_payload": json.loads(row[6]),
+        "created_at": row[7],
+    }
+
+
+def get_ver11_analysis_snapshot_history(limit=50):
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                id,
+                analysis_date,
+                period,
+                sort_by,
+                display_limit,
+                snapshot_version,
+                snapshot_payload,
+                created_at
+            FROM ver11_analysis_snapshot
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+    return [
+        {
+            "id": row[0],
+            "analysis_date": row[1],
+            "period": row[2],
+            "sort_by": row[3],
+            "display_limit": row[4],
+            "snapshot_version": row[5],
+            "snapshot_payload": json.loads(row[6]),
+            "created_at": row[7],
+        }
+        for row in rows
+    ]

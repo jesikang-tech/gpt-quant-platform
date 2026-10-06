@@ -98,6 +98,20 @@ def init_database():
     """)
 
 
+    # Ver1.1 Point-in-Time Analysis Snapshot
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ver11_analysis_snapshot (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_date TEXT NOT NULL,
+        period TEXT NOT NULL,
+        sort_by TEXT NOT NULL,
+        display_limit INTEGER NOT NULL,
+        snapshot_version TEXT NOT NULL,
+        snapshot_payload TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """)
+
     # AI Decision History
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS ai_decision_history (

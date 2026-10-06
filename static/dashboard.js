@@ -929,9 +929,91 @@ function initializeVer11AnalysisControls() {
     });
 
     const runButton = document.getElementById("ver11-analysis-run");
+    const snapshotSaveButton =
+        document.getElementById("ver11-snapshot-save");
 
     if (!runButton) {
         return;
+    }
+
+    if (snapshotSaveButton) {
+        snapshotSaveButton.disabled = true;
+
+        snapshotSaveButton.addEventListener("click", async function () {
+            const dateInput =
+                document.getElementById("ver11-analysis-date");
+            const periodInput =
+                document.getElementById("ver11-analysis-period");
+            const sortInput =
+                document.getElementById("ver11-sort");
+            const countInput =
+                document.getElementById("ver11-count");
+
+            if (!dateInput || !periodInput || !sortInput || !countInput) {
+                return;
+            }
+
+            const limit = Number.parseInt(countInput.value, 10);
+
+            if (!dateInput.value || ![10, 20, 30].includes(limit)) {
+                return;
+            }
+
+            snapshotSaveButton.disabled = true;
+
+            try {
+                const response = await fetch(
+                    "/api/ver11-analysis/snapshots",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            date: dateInput.value,
+                            period: periodInput.value || "3m",
+                            sort: sortInput.value || "final_score",
+                            limit: limit,
+                        }),
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Ver.1.1 snapshot save request failed.");
+                }
+
+                const data = await response.json();
+
+                if (data.success === false) {
+                    throw new Error(
+                        data.message || "Ver.1.1 snapshot save failed."
+                    );
+                }
+
+                window.alert(getDashboardText("ver11SnapshotSaved"));
+            } catch (error) {
+                console.error("Ver.1.1 snapshot save error:", error);
+            } finally {
+                snapshotSaveButton.disabled =
+                    latestVer11AnalysisData === null;
+            }
+        });
+    }
+
+    const snapshotHistoryButton =
+        document.getElementById("ver11-snapshot-history");
+
+    if (snapshotHistoryButton) {
+        snapshotHistoryButton.addEventListener("click", async function () {
+            try {
+                await loadVer11SnapshotHistory();
+            } catch (error) {
+                console.error(
+                    "Ver.1.1 snapshot history error:",
+                    error
+                );
+            }
+        });
     }
 
     runButton.addEventListener("click", async function () {
@@ -988,6 +1070,10 @@ function initializeVer11AnalysisControls() {
             }
             latestVer11AnalysisData = null;
 
+            if (snapshotSaveButton) {
+                snapshotSaveButton.disabled = true;
+            }
+
             if (resultMeta) {
                 resultMeta.textContent = "";
             }
@@ -1003,6 +1089,247 @@ function initializeVer11AnalysisControls() {
 
 
 let latestVer11AnalysisData = null;
+
+function escapeVer11SnapshotHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function renderVer11SnapshotHistory(snapshots) {
+    const panel =
+        document.getElementById("ver11-snapshot-history-panel");
+    const content =
+        document.getElementById("ver11-snapshot-history-content");
+
+    if (!panel || !content) {
+        return;
+    }
+
+    const rows = Array.isArray(snapshots) ? snapshots : [];
+
+    if (rows.length === 0) {
+        content.innerHTML = `
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11SnapshotEmpty")}
+            </div>
+        `;
+        panel.hidden = false;
+        return;
+    }
+
+    const historyRows = rows.map(function (snapshot) {
+        const snapshotId = escapeVer11SnapshotHtml(snapshot.id);
+        const analysisDate =
+            escapeVer11SnapshotHtml(snapshot.analysis_date);
+        const period =
+            escapeVer11SnapshotHtml(snapshot.period);
+        const sortBy =
+            escapeVer11SnapshotHtml(snapshot.sort_by);
+        const displayLimit =
+            escapeVer11SnapshotHtml(snapshot.display_limit);
+        const createdAt =
+            escapeVer11SnapshotHtml(snapshot.created_at);
+
+        return `
+            <tr>
+                <td>${snapshotId}</td>
+                <td>${analysisDate}</td>
+                <td>${period}</td>
+                <td>${sortBy}</td>
+                <td>${displayLimit}</td>
+                <td>${createdAt}</td>
+                <td>
+                    <button
+                        type="button"
+                        class="ver11-snapshot-view"
+                        data-snapshot-id="${snapshotId}"
+                    >
+                        ${getDashboardText("ver11SnapshotView")}
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    content.innerHTML = `
+        <div class="historical-replay-table-wrap">
+            <table class="historical-replay-table">
+                <thead>
+                    <tr>
+                        <th>${getDashboardText("ver11SnapshotId")}</th>
+                        <th>${getDashboardText("ver11SnapshotDate")}</th>
+                        <th>${getDashboardText("ver11SnapshotPeriod")}</th>
+                        <th>${getDashboardText("ver11SnapshotSort")}</th>
+                        <th>${getDashboardText("ver11SnapshotLimit")}</th>
+                        <th>${getDashboardText("ver11SnapshotCreatedAt")}</th>
+                        <th>${getDashboardText("ver11SnapshotView")}</th>
+                    </tr>
+                </thead>
+                <tbody>${historyRows}</tbody>
+            </table>
+        </div>
+    `;
+
+    panel.hidden = false;
+
+    content.querySelectorAll(".ver11-snapshot-view").forEach(
+        function (button) {
+            button.addEventListener("click", async function () {
+                const snapshotId = button.dataset.snapshotId;
+
+                try {
+                    await loadVer11SnapshotDetail(snapshotId);
+                } catch (error) {
+                    console.error(
+                        "Ver.1.1 snapshot detail error:",
+                        error
+                    );
+                }
+            });
+        }
+    );
+}
+
+function renderVer11SnapshotDetail(snapshot) {
+    const content =
+        document.getElementById("ver11-snapshot-history-content");
+
+    if (!content || !snapshot) {
+        return;
+    }
+
+    const payload = snapshot.snapshot_payload || {};
+    const marketRegime = payload.market_regime || {};
+    const marketStrategy = payload.market_strategy || {};
+    const portfolio = Array.isArray(payload.portfolio)
+        ? payload.portfolio
+        : [];
+
+    const portfolioRows = portfolio.map(function (item) {
+        return `
+            <tr>
+                <td>${escapeVer11SnapshotHtml(item.ticker)}</td>
+                <td>${escapeVer11SnapshotHtml(item.weight)}%</td>
+                <td>${escapeVer11SnapshotHtml(item.score ?? "")}</td>
+            </tr>
+        `;
+    }).join("");
+
+    content.innerHTML = `
+        <section class="historical-replay-section">
+            <h3>${getDashboardText("ver11SnapshotStoredTitle")}</h3>
+
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11SnapshotStoredNotice")}
+            </div>
+
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11SnapshotId")}:
+                ${escapeVer11SnapshotHtml(snapshot.id)}
+                /
+                ${getDashboardText("ver11SnapshotDate")}:
+                ${escapeVer11SnapshotHtml(snapshot.analysis_date)}
+                /
+                ${getDashboardText("ver11SnapshotPeriod")}:
+                ${escapeVer11SnapshotHtml(snapshot.period)}
+                /
+                ${getDashboardText("ver11SnapshotSort")}:
+                ${escapeVer11SnapshotHtml(snapshot.sort_by)}
+                /
+                ${getDashboardText("ver11SnapshotLimit")}:
+                ${escapeVer11SnapshotHtml(snapshot.display_limit)}
+                /
+                ${getDashboardText("ver11SnapshotCreatedAt")}:
+                ${escapeVer11SnapshotHtml(snapshot.created_at)}
+            </div>
+
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11MarketRegime")}:
+                ${escapeVer11SnapshotHtml(
+                    marketRegime.regime || "UNKNOWN"
+                )}
+                /
+                ${getDashboardText("ver11PortfolioMode")}:
+                ${escapeVer11SnapshotHtml(
+                    marketStrategy.portfolio_mode || "N/A"
+                )}
+                /
+                ${getDashboardText("ver11CashTarget")}:
+                ${escapeVer11SnapshotHtml(
+                    marketStrategy.cash_target ?? "N/A"
+                )}%
+            </div>
+
+            <div class="historical-replay-table-wrap">
+                <table class="historical-replay-table">
+                    <thead>
+                        <tr>
+                            <th>${getDashboardText("ver11PortfolioTicker")}</th>
+                            <th>${getDashboardText("ver11PortfolioWeight")}</th>
+                            <th>${getDashboardText("ver11PortfolioScore")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${portfolioRows || `
+                            <tr>
+                                <td colspan="3">
+                                    ${getDashboardText("ver11EmptyPortfolio")}
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    `;
+}
+
+
+async function loadVer11SnapshotDetail(snapshotId) {
+    const response =
+        await fetch(`/api/ver11-analysis/snapshots/${snapshotId}`);
+
+    if (!response.ok) {
+        throw new Error("Ver.1.1 snapshot detail request failed.");
+    }
+
+    const data = await response.json();
+
+    if (data.success === false) {
+        throw new Error(
+            data.message || "Ver.1.1 snapshot detail failed."
+        );
+    }
+
+    renderVer11SnapshotDetail(data.snapshot);
+    return data;
+}
+
+
+async function loadVer11SnapshotHistory() {
+    const response =
+        await fetch("/api/ver11-analysis/snapshots?limit=50");
+
+    if (!response.ok) {
+        throw new Error("Ver.1.1 snapshot history request failed.");
+    }
+
+    const data = await response.json();
+
+    if (data.success === false) {
+        throw new Error(
+            data.message || "Ver.1.1 snapshot history failed."
+        );
+    }
+
+    renderVer11SnapshotHistory(data.snapshots);
+    return data;
+}
+
 
 function renderVer11AnalysisResult(data) {
     const resultPanel =
@@ -1323,6 +1650,13 @@ async function runVer11Analysis() {
     }
 
     latestVer11AnalysisData = data;
+
+    const snapshotSaveButton =
+        document.getElementById("ver11-snapshot-save");
+
+    if (snapshotSaveButton) {
+        snapshotSaveButton.disabled = false;
+    }
 
     renderVer11AnalysisResult(data);
 
@@ -6443,6 +6777,20 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11Market": "시장 필터",
         "ver11Run": "분석 실행",
         "ver11Reset": "조건 초기화",
+        "ver11SnapshotSave": "현재 결과 저장",
+        "ver11SnapshotHistory": "저장 이력 조회",
+        "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot 이력",
+        "ver11SnapshotSaved": "Snapshot이 저장되었습니다.",
+        "ver11SnapshotEmpty": "저장된 Snapshot이 없습니다.",
+        "ver11SnapshotId": "Snapshot ID",
+        "ver11SnapshotDate": "분석 일자",
+        "ver11SnapshotPeriod": "분석 기간",
+        "ver11SnapshotSort": "정렬 기준",
+        "ver11SnapshotLimit": "종목 수",
+        "ver11SnapshotCreatedAt": "저장 시각",
+        "ver11SnapshotView": "상세 보기",
+        "ver11SnapshotStoredTitle": "저장된 Ver.1.1 Snapshot",
+        "ver11SnapshotStoredNotice": "이 결과는 재계산한 결과가 아니라 저장 당시의 Snapshot입니다.",
         "ver11ResultTitle": "Ver.1.1 분석 결과",
         "ver11NoResults": "분석 결과가 없습니다.",
         "ver11TradingDays": "거래일",
@@ -6778,6 +7126,20 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11Market": "Market Filter",
         "ver11Run": "Run Analysis",
         "ver11Reset": "Reset Conditions",
+        "ver11SnapshotSave": "Save Current Result",
+        "ver11SnapshotHistory": "View Saved History",
+        "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot History",
+        "ver11SnapshotSaved": "Snapshot saved.",
+        "ver11SnapshotEmpty": "No saved snapshots.",
+        "ver11SnapshotId": "Snapshot ID",
+        "ver11SnapshotDate": "Analysis Date",
+        "ver11SnapshotPeriod": "Analysis Period",
+        "ver11SnapshotSort": "Sort",
+        "ver11SnapshotLimit": "ETF Count",
+        "ver11SnapshotCreatedAt": "Saved At",
+        "ver11SnapshotView": "View Details",
+        "ver11SnapshotStoredTitle": "Stored Ver.1.1 Snapshot",
+        "ver11SnapshotStoredNotice": "This is the stored Snapshot from the original save time, not a recalculated result.",
         "ver11ResultTitle": "Ver.1.1 Analysis Result",
         "ver11NoResults": "No analysis results.",
         "ver11TradingDays": "trading days",
@@ -6872,6 +7234,11 @@ function applyDashboardLanguage() {
     const ver11HoldingsOnly = document.getElementById("ver11-holdings-only");
     const ver11RunButton = document.getElementById("ver11-analysis-run");
     const ver11ResetButton = document.getElementById("ver11-analysis-reset");
+    const ver11SnapshotSaveButton = document.getElementById("ver11-snapshot-save");
+    const ver11SnapshotHistoryButton = document.getElementById("ver11-snapshot-history");
+    const ver11SnapshotHistoryPanel = document.getElementById("ver11-snapshot-history-panel");
+    const ver11SnapshotHistoryContent = document.getElementById("ver11-snapshot-history-content");
+    const ver11SnapshotHistoryTitle = document.getElementById("ver11-snapshot-history-title");
     const ver11ResultTitle = document.getElementById("ver11-result-title");
 
     if (historicalReplayTitle) historicalReplayTitle.textContent = getDashboardText("historicalReplayTitle");
@@ -6904,6 +7271,9 @@ function applyDashboardLanguage() {
     if (ver11HoldingsOnly) ver11HoldingsOnly.textContent = getDashboardText("ver11HoldingsOnly");
     if (ver11RunButton) ver11RunButton.textContent = getDashboardText("ver11Run");
     if (ver11ResetButton) ver11ResetButton.textContent = getDashboardText("ver11Reset");
+    if (ver11SnapshotSaveButton) ver11SnapshotSaveButton.textContent = getDashboardText("ver11SnapshotSave");
+    if (ver11SnapshotHistoryButton) ver11SnapshotHistoryButton.textContent = getDashboardText("ver11SnapshotHistory");
+    if (ver11SnapshotHistoryTitle) ver11SnapshotHistoryTitle.textContent = getDashboardText("ver11SnapshotHistoryTitle");
     if (ver11ResultTitle) ver11ResultTitle.textContent = getDashboardText("ver11ResultTitle");
 
     if (title) {

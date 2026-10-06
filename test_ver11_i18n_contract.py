@@ -151,3 +151,57 @@ def test_ver11_point_in_time_explain_ui_contract():
     assert "optimization_score" in source
     assert 'getHistoricalReplayDisplayText("recommendation",' in source
     assert 'getHistoricalReplayDisplayText("rebalance",' in source
+
+def test_ver11_snapshot_ui_contract():
+    template = Path("templates/index.html").read_text(encoding="utf-8")
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert 'id="ver11-snapshot-save"' in template
+    assert 'id="ver11-snapshot-history"' in template
+    assert 'id="ver11-snapshot-history-panel"' in template
+    assert 'id="ver11-snapshot-history-content"' in template
+
+    required_translation_keys = (
+        "ver11SnapshotSave",
+        "ver11SnapshotHistory",
+        "ver11SnapshotHistoryTitle",
+        "ver11SnapshotSaved",
+        "ver11SnapshotEmpty",
+    )
+
+    for key in required_translation_keys:
+        assert source.count(f'"{key}"') >= 2
+
+    assert 'document.getElementById("ver11-snapshot-save")' in source
+    assert 'document.getElementById("ver11-snapshot-history")' in source
+    assert 'document.getElementById("ver11-snapshot-history-panel")' in source
+    assert 'document.getElementById("ver11-snapshot-history-content")' in source
+
+def test_ver11_snapshot_save_behavior_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert 'document.getElementById("ver11-snapshot-save")' in source
+    assert '"/api/ver11-analysis/snapshots"' in source
+    assert 'method: "POST"' in source
+    assert "JSON.stringify({" in source
+    assert "date:" in source
+    assert "period:" in source
+    assert "sort:" in source
+    assert "limit:" in source
+
+    assert "snapshotSaveButton.disabled = false;" in source
+    assert "snapshotSaveButton.disabled = true;" in source
+
+def test_ver11_snapshot_history_behavior_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert 'fetch("/api/ver11-analysis/snapshots?limit=50")' in source
+    assert 'fetch(`/api/ver11-analysis/snapshots/${snapshotId}`)' in source
+    assert "renderVer11SnapshotHistory(" in source
+    assert "renderVer11SnapshotDetail(" in source
+    assert "snapshot.snapshot_payload" in source
+    assert "snapshot.analysis_date" in source
+    assert "snapshot.period" in source
+    assert "snapshot.sort_by" in source
+    assert "snapshot.display_limit" in source
+    assert "snapshot.created_at" in source

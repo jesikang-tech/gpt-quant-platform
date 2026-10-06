@@ -175,6 +175,9 @@ from core.ai_decision_outcome_evaluation import (
 )
 
 from repository import (
+    save_ver11_analysis_snapshot,
+    get_ver11_analysis_snapshot,
+    get_ver11_analysis_snapshot_history,
     save_portfolio_history,
     get_portfolio_history,
     get_portfolio_analytics,
@@ -270,6 +273,29 @@ def auth_user_password_api():
         return jsonify({"success": False}), 400
 
     return jsonify({"success": True})
+
+def _build_ver11_snapshot_payload(data):
+    forbidden_future_fields = {
+        "price",
+        "future_performance",
+        "future_performance_days",
+        "reality_test",
+    }
+
+    def sanitize(value):
+        if isinstance(value, dict):
+            return {
+                key: sanitize(child)
+                for key, child in value.items()
+                if key not in forbidden_future_fields
+            }
+
+        if isinstance(value, list):
+            return [sanitize(child) for child in value]
+
+        return value
+
+    return sanitize(data)
 
 def _attach_point_in_time_portfolio(data):
     scores = data.get(
@@ -447,6 +473,117 @@ def ver11_analysis_api():
             "success": False,
             "message": str(exc),
         }), 400
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ver11-analysis/snapshots", methods=["POST"])
+def save_ver11_analysis_snapshot_api():
+    body = request.get_json(silent=True) or {}
+
+    analysis_date = body.get("date")
+    period = body.get("period", "3m")
+    sort_by = body.get("sort", "final_score")
+
+    try:
+        limit = int(body.get("limit", 10))
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit.",
+        }), 400
+
+    try:
+        data = get_current_analysis_data(
+            limit=limit,
+            analysis_date=analysis_date,
+            period=period,
+            sort_by=sort_by,
+        )
+        data = _attach_point_in_time_portfolio(data)
+        snapshot_payload = _build_ver11_snapshot_payload(data)
+
+        snapshot_id = save_ver11_analysis_snapshot(
+            analysis_date=data.get("analysis_date"),
+            period=data.get("period"),
+            sort_by=sort_by,
+            display_limit=limit,
+            snapshot_payload=snapshot_payload,
+        )
+
+        return jsonify({
+            "success": True,
+            "snapshot_id": snapshot_id,
+            "analysis_date": data.get("analysis_date"),
+            "period": data.get("period"),
+            "sort": sort_by,
+            "limit": limit,
+        }), 201
+
+    except ValueError as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 400
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ver11-analysis/snapshots", methods=["GET"])
+def get_ver11_analysis_snapshot_history_api():
+    try:
+        limit = int(request.args.get("limit", "50"))
+    except ValueError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit.",
+        }), 400
+
+    if limit < 1:
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit.",
+        }), 400
+
+    try:
+        snapshots = get_ver11_analysis_snapshot_history(limit=limit)
+
+        return jsonify({
+            "success": True,
+            "count": len(snapshots),
+            "snapshots": snapshots,
+        })
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ver11-analysis/snapshots/<int:snapshot_id>", methods=["GET"])
+def get_ver11_analysis_snapshot_api(snapshot_id):
+    try:
+        snapshot = get_ver11_analysis_snapshot(snapshot_id)
+
+        if snapshot is None:
+            return jsonify({
+                "success": False,
+                "message": "Snapshot not found.",
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "snapshot": snapshot,
+        })
 
     except Exception as exc:
         return jsonify({
