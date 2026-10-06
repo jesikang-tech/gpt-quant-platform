@@ -282,3 +282,68 @@ def test_historical_replay_api_exposes_point_in_time_portfolio(monkeypatch):
         15,
         5,
     ]
+
+
+def test_common_point_in_time_analysis_attaches_portfolio_and_explanation(monkeypatch):
+    from core.point_in_time_analysis import attach_point_in_time_portfolio
+
+    def reject_score_read(*args, **kwargs):
+        raise AssertionError("Point-in-Time portfolio must not read persisted ETF scores")
+
+    monkeypatch.setattr(
+        "core.portfolio_advisor.get_etf_score",
+        reject_score_read,
+    )
+
+    data = {
+        "success": True,
+        "analysis_date": "2026-06-12",
+        "period": "3m",
+        "market_regime_scores": [
+            {
+                "ticker": "AAA",
+                "final_score": 95.0,
+                "return_score": 96.0,
+                "trend_score": 94.0,
+                "slope_score": 93.0,
+            },
+            {
+                "ticker": "BBB",
+                "final_score": 92.0,
+                "return_score": 93.0,
+                "trend_score": 91.0,
+                "slope_score": 90.0,
+            },
+            {
+                "ticker": "CCC",
+                "final_score": 91.0,
+                "return_score": 92.0,
+                "trend_score": 90.0,
+                "slope_score": 89.0,
+            },
+        ],
+    }
+
+    result = attach_point_in_time_portfolio(data)
+
+    assert result["market_regime"]["regime"] == "BULLISH"
+    assert result["market_strategy"]["portfolio_mode"] == "aggressive"
+    assert [item["ticker"] for item in result["portfolio"]] == [
+        "AAA",
+        "BBB",
+        "CCC",
+        "CASH",
+    ]
+    assert [item["weight"] for item in result["portfolio"]] == [50, 30, 15, 5]
+
+    explanation = result["point_in_time_explanation"]
+    assert explanation["analysis_date"] == "2026-06-12"
+    assert explanation["period"] == "3m"
+    assert explanation["market_regime"]["regime"] == "BULLISH"
+    assert explanation["market_strategy"]["portfolio_mode"] == "aggressive"
+    assert explanation["portfolio"]["cash_weight"] == 5
+    assert [item["ticker"] for item in explanation["portfolio"]["allocations"]] == [
+        "AAA",
+        "BBB",
+        "CCC",
+    ]
