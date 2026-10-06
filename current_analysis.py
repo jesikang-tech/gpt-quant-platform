@@ -456,6 +456,10 @@ def get_current_analysis_data(
 
     market_regime_scores = sorted(
         all_scores,
+        key=lambda row: str(row.get("ticker", "")),
+    )
+    market_regime_scores = sorted(
+        market_regime_scores,
         key=lambda row: (
             row["final_score"],
             row["return_score"],
