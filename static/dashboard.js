@@ -1020,6 +1020,12 @@ function renderVer11AnalysisResult(data) {
         ? data.current_score_top
         : [];
 
+    const marketRegime = data.market_regime || {};
+    const marketStrategy = data.market_strategy || {};
+    const portfolio = Array.isArray(data.portfolio)
+        ? data.portfolio
+        : [];
+
     const sortInput = document.getElementById("ver11-sort");
     const sortBy = sortInput ? sortInput.value : "final_score";
     const sortLabels = {
@@ -1095,6 +1101,32 @@ function renderVer11AnalysisResult(data) {
                 ? `<th scope="col">${getDashboardText("ver11SlopeScore")}</th>`
                 : "";
 
+    const portfolioRows = portfolio.map((portfolioItem) => {
+        const score = portfolioItem.score == null
+            ? NaN
+            : Number(portfolioItem.score);
+        const weight = Number(portfolioItem.weight);
+
+        const scoreText = Number.isFinite(score)
+            ? score.toFixed(1)
+            : "N/A";
+        const weightText = Number.isFinite(weight)
+            ? `${weight.toFixed(0)}%`
+            : "N/A";
+
+        return `
+            <tr>
+                <td>${getHistoricalReplayDisplayText("ticker", portfolioItem.ticker || "")}</td>
+                <td>${weightText}</td>
+                <td>${scoreText}</td>
+            </tr>
+        `;
+    }).join("") || `
+        <tr>
+            <td colspan="3">${getDashboardText("ver11EmptyPortfolio")}</td>
+        </tr>
+    `;
+
     resultContent.innerHTML = `
         <section class="historical-replay-section">
             <div class="historical-replay-table-wrap">
@@ -1112,6 +1144,32 @@ function renderVer11AnalysisResult(data) {
                     </thead>
                     <tbody>
                         ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="historical-replay-section historical-replay-portfolio">
+            <div class="historical-replay-section-title">
+                ${getDashboardText("ver11PortfolioTitle")}
+            </div>
+            <div class="historical-replay-section-description">
+                ${getDashboardText("ver11MarketRegime")}: ${getHistoricalReplayDisplayText("regime", marketRegime.regime || "UNKNOWN")} /
+                ${getDashboardText("ver11PortfolioMode")}: ${getHistoricalReplayDisplayText("mode", marketStrategy.portfolio_mode || "balanced")} /
+                ${getDashboardText("ver11CashTarget")}: ${marketStrategy.cash_target ?? "N/A"}%
+            </div>
+
+            <div class="historical-replay-table-wrap">
+                <table class="historical-replay-table historical-replay-portfolio-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">${getDashboardText("ver11PortfolioTicker")}</th>
+                            <th scope="col">${getDashboardText("ver11PortfolioWeight")}</th>
+                            <th scope="col">${getDashboardText("ver11PortfolioScore")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${portfolioRows}
                     </tbody>
                 </table>
             </div>
@@ -6288,7 +6346,15 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SortSlope": "기울기",
         "ver11All": "전체",
         "ver11WatchlistOnly": "관심 종목만 보기",
-        "ver11HoldingsOnly": "보유 종목만 보기"
+        "ver11HoldingsOnly": "보유 종목만 보기",
+        "ver11PortfolioTitle": "Ver.1.1 - \uD3EC\uD2B8\uD3F4\uB9AC\uC624",
+        "ver11MarketRegime": "\uC2DC\uC7A5 \uAD6D\uBA74",
+        "ver11PortfolioMode": "\uD3EC\uD2B8\uD3F4\uB9AC\uC624 \uBAA8\uB4DC",
+        "ver11CashTarget": "\uD604\uAE08 \uBAA9\uD45C",
+        "ver11PortfolioTicker": "\uC885\uBAA9\uCF54\uB4DC",
+        "ver11PortfolioWeight": "\uBE44\uC911",
+        "ver11PortfolioScore": "\uC810\uC218",
+        "ver11EmptyPortfolio": "\uD3EC\uD2B8\uD3F4\uB9AC\uC624\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
 },
     en: {
         "dashboardTitle": "GPT Quant ETF Dashboard",
@@ -6599,7 +6665,15 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SortSlope": "Slope",
         "ver11All": "All",
         "ver11WatchlistOnly": "Watchlist Only",
-        "ver11HoldingsOnly": "Holdings Only"
+        "ver11HoldingsOnly": "Holdings Only",
+        "ver11PortfolioTitle": "Ver.1.1 - Portfolio",
+        "ver11MarketRegime": "Market Regime",
+        "ver11PortfolioMode": "Portfolio Mode",
+        "ver11CashTarget": "Cash Target",
+        "ver11PortfolioTicker": "Ticker",
+        "ver11PortfolioWeight": "Weight",
+        "ver11PortfolioScore": "Score",
+        "ver11EmptyPortfolio": "No portfolio available."
 }
 };
 

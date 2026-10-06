@@ -271,6 +271,37 @@ def auth_user_password_api():
 
     return jsonify({"success": True})
 
+def _attach_point_in_time_portfolio(data):
+    scores = data.get(
+        "market_regime_scores",
+        data.get("current_score_top", []),
+    )
+
+    market_regime = analyze_market_regime(scores=scores)
+    market_strategy = generate_market_strategy(market_regime)
+
+    ranking = [
+        {
+            "ticker": item.get("ticker"),
+            "score": item.get("final_score", 0),
+            "return_score": item.get("return_score"),
+            "trend_score": item.get("trend_score"),
+            "slope_score": item.get("slope_score"),
+        }
+        for item in scores
+    ]
+
+    portfolio = optimize_portfolio_weight(
+        ranking,
+        mode=market_strategy.get("portfolio_mode", "balanced"),
+    )
+
+    data["market_regime"] = market_regime
+    data["market_strategy"] = market_strategy
+    data["portfolio"] = portfolio
+
+    return data
+
 @app.route("/api/historical-replay")
 def historical_replay_api():
     analysis_date = request.args.get("date")
@@ -283,38 +314,7 @@ def historical_replay_api():
             analysis_date=analysis_date,
             period=period
         )
-        replay_scores = data.get("current_score_top", [])
-
-        market_regime = analyze_market_regime(
-            scores=replay_scores
-        )
-
-        market_strategy = generate_market_strategy(
-            market_regime
-        )
-
-        ranking = [
-            {
-                "ticker": item.get("ticker"),
-                "score": item.get("final_score", 0),
-                "return_score": item.get("return_score"),
-                "trend_score": item.get("trend_score"),
-                "slope_score": item.get("slope_score"),
-            }
-            for item in replay_scores
-        ]
-
-        portfolio = optimize_portfolio_weight(
-            ranking,
-            mode=market_strategy.get(
-                "portfolio_mode",
-                "balanced"
-            )
-        )
-
-        data["market_regime"] = market_regime
-        data["market_strategy"] = market_strategy
-        data["portfolio"] = portfolio
+        data = _attach_point_in_time_portfolio(data)
 
         return jsonify(data)
 
@@ -346,6 +346,8 @@ def ver11_analysis_api():
             period=period,
             sort_by=sort_by,
         )
+        data = _attach_point_in_time_portfolio(data)
+
         return jsonify(data)
 
     except ValueError as exc:

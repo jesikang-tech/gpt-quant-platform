@@ -240,3 +240,91 @@ def test_ver11_default_sort_preserves_legacy_return_score_tiebreak(monkeypatch):
         result["current_score_top"][0]["ticker"]
         == "HIGH_RETURN_SCORE"
     )
+
+def test_ver11_market_regime_scores_are_fixed_final_score_top10(monkeypatch):
+    tickers = [f"ETF{i:02d}" for i in range(12)]
+    active_ticker = {"value": None}
+
+    monkeypatch.setattr(
+        current_analysis,
+        "_normalize_analysis_date",
+        lambda analysis_date: "2026-09-04",
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "_get_period_config",
+        lambda period: {
+            "lookback_trading_days": 2,
+            "return_threshold": -999.0,
+        },
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "get_all_etf_tickers",
+        lambda: tickers,
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "_get_etf_name_map",
+        lambda: {ticker: ticker for ticker in tickers},
+    )
+
+    def fake_get_etf_prices(ticker, analysis_date):
+        active_ticker["value"] = ticker
+        return [
+            ("2026-09-03", 100.0),
+            ("2026-09-04", 101.0),
+        ]
+
+    monkeypatch.setattr(
+        current_analysis,
+        "get_etf_prices",
+        fake_get_etf_prices,
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "calculate_return",
+        lambda first, last: float(active_ticker["value"][3:]),
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "calculate_return_score",
+        lambda value: 100.0 - value,
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "calculate_trend_score",
+        lambda prices: 50.0,
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "calculate_slope_score",
+        lambda prices: 50.0,
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "calculate_uptrend_ratio",
+        lambda prices: 100.0,
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "_get_future_performance",
+        lambda ticker, analysis_date: (None, None, None),
+    )
+    monkeypatch.setattr(
+        current_analysis,
+        "_get_reality_test",
+        lambda ticker, analysis_date, period: {},
+    )
+
+    result = current_analysis.get_current_analysis_data(
+        limit=1,
+        analysis_date="2026-09-04",
+        period="1m",
+        sort_by="return",
+    )
+
+    assert result["current_score_top"][0]["ticker"] == "ETF11"
+    assert [row["ticker"] for row in result["market_regime_scores"]] == [
+        f"ETF{i:02d}" for i in range(10)
+    ]

@@ -454,6 +454,17 @@ def get_current_analysis_data(
 
     current_score_top = all_scores[:limit]
 
+    market_regime_scores = sorted(
+        all_scores,
+        key=lambda row: (
+            row["final_score"],
+            row["return_score"],
+            row["trend_score"],
+            row["slope_score"],
+        ),
+        reverse=True,
+    )[:10]
+
     for row in current_score_top:
         price, future_performance, future_performance_days = (
             _get_future_performance(
@@ -483,5 +494,6 @@ def get_current_analysis_data(
             "top": selection_scores[:limit],
         },
         "current_score_top": current_score_top,
+        "market_regime_scores": market_regime_scores,
         "db_write": False,
     }

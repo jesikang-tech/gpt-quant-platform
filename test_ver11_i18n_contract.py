@@ -74,3 +74,31 @@ def test_ver11_result_language_rerender_state_contract():
     assert "latestVer11AnalysisData = null;" in source
     assert "if (latestVer11AnalysisData) {" in source
     assert "renderVer11AnalysisResult(latestVer11AnalysisData);" in source
+
+def test_ver11_point_in_time_portfolio_ui_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    required_keys = (
+        "ver11PortfolioTitle",
+        "ver11MarketRegime",
+        "ver11PortfolioMode",
+        "ver11CashTarget",
+        "ver11PortfolioTicker",
+        "ver11PortfolioWeight",
+        "ver11PortfolioScore",
+        "ver11EmptyPortfolio",
+    )
+
+    for key in required_keys:
+        assert source.count(f'"{key}"') >= 2
+
+    assert "data.market_regime || {}" in source
+    assert "data.market_strategy || {}" in source
+    assert "Array.isArray(data.portfolio)" in source
+    assert 'getDashboardText("ver11PortfolioTitle")' in source
+    assert 'getDashboardText("ver11MarketRegime")' in source
+    assert 'getDashboardText("ver11PortfolioMode")' in source
+    assert 'getDashboardText("ver11CashTarget")' in source
+    assert 'getDashboardText("ver11PortfolioTicker")' in source
+    assert 'getDashboardText("ver11PortfolioWeight")' in source
+    assert 'getDashboardText("ver11PortfolioScore")' in source

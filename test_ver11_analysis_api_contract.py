@@ -173,3 +173,79 @@ def test_ver11_analysis_api_requires_authentication(tmp_path, monkeypatch):
 
     data = response.get_json()
     assert data["success"] is False
+
+
+def test_ver11_analysis_api_exposes_point_in_time_portfolio(monkeypatch):
+    import api_server
+    from testing_helpers import authenticated_client
+
+    replay_scores = [
+        {
+            "ticker": "AAA",
+            "return_score": 96.0,
+            "trend_score": 94.0,
+            "slope_score": 93.0,
+            "final_score": 94.8,
+        },
+        {
+            "ticker": "BBB",
+            "return_score": 93.0,
+            "trend_score": 91.0,
+            "slope_score": 90.0,
+            "final_score": 91.8,
+        },
+        {
+            "ticker": "CCC",
+            "return_score": 91.0,
+            "trend_score": 89.0,
+            "slope_score": 88.0,
+            "final_score": 89.8,
+        },
+    ]
+
+    monkeypatch.setattr(
+        "api_server.get_current_analysis_data",
+        lambda **kwargs: {
+            "success": True,
+            "analysis_date": "2026-06-12",
+            "market_data_date": "2026-06-12",
+            "period": "3m",
+            "current_score_top": [
+                {
+                    "ticker": "DISPLAY_ONLY",
+                    "return_score": 10.0,
+                    "trend_score": 10.0,
+                    "slope_score": 10.0,
+                    "final_score": 10.0,
+                }
+            ],
+            "market_regime_scores": replay_scores,
+            "db_write": False,
+        },
+    )
+
+    client = authenticated_client(api_server.app)
+    response = client.get(
+        "/api/ver11-analysis?date=2026-06-12&period=3m"
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["analysis_date"] == "2026-06-12"
+    assert data["db_write"] is False
+    assert data["market_regime"]["regime"] == "BULLISH"
+    assert data["market_strategy"]["portfolio_mode"] == "aggressive"
+    assert [item["ticker"] for item in data["portfolio"]] == [
+        "AAA",
+        "BBB",
+        "CCC",
+        "CASH",
+    ]
+    assert [item["weight"] for item in data["portfolio"]] == [
+        50,
+        30,
+        15,
+        5,
+    ]
