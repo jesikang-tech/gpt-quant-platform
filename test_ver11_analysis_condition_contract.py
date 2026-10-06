@@ -79,3 +79,18 @@ def test_ver11_sort_and_count_controls_are_enabled_contract():
     assert '<select id="ver11-count">' in source
     assert '<select id="ver11-sort" disabled>' not in source
     assert '<select id="ver11-count" disabled>' not in source
+
+
+def test_ver11_unimplemented_filters_remain_disabled_contract():
+    html = Path("templates/index.html").read_text(encoding="utf-8")
+    js = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert '<select id="ver11-etf-type" disabled>' in html
+    assert '<select id="ver11-market" disabled>' in html
+
+    control_block = js.split(
+        "const controlIds = [", 1
+    )[1].split("];", 1)[0]
+
+    assert '"ver11-etf-type"' not in control_block
+    assert '"ver11-market"' not in control_block

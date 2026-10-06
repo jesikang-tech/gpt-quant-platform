@@ -918,8 +918,6 @@ function initializeVer11AnalysisControls() {
         "ver11-analysis-period",
         "ver11-sort",
         "ver11-count",
-        "ver11-etf-type",
-        "ver11-market",
     ];
 
     controlIds.forEach(function (id) {
