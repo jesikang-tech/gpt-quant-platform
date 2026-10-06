@@ -116,9 +116,9 @@ def test_ver11_sort_evidence_ui_contract():
 
     source = Path("static/dashboard.js").read_text(encoding="utf-8")
 
-    assert 'trend_score: "\\uCD94\\uC138 \\uC810\\uC218"' in source
-    assert 'slope_score: "\\uAE30\\uC6B8\\uAE30 \\uC810\\uC218"' in source
-    assert '`\\uC815\\uB82C: ${sortLabel} \\u2193`' in source
+    assert 'trend_score: getDashboardText("ver11TrendScore")' in source
+    assert 'slope_score: getDashboardText("ver11SlopeScore")' in source
+    assert '`${getDashboardText("ver11SortLabel")}: ${sortLabel} \\u2193`' in source
 
     assert 'sortBy === "trend_score" || sortBy === "slope_score"' in source
     assert "Number(item[sortBy])" in source
@@ -128,7 +128,7 @@ def test_ver11_sort_evidence_ui_contract():
         in source
     )
     assert (
-        '? `<th scope="col">\\uCD94\\uC138 \\uC810\\uC218</th>`'
+        '? `<th scope="col">${getDashboardText("ver11TrendScore")}</th>`'
         in source
     )
     assert (
@@ -136,7 +136,7 @@ def test_ver11_sort_evidence_ui_contract():
         in source
     )
     assert (
-        '? `<th scope="col">\\uAE30\\uC6B8\\uAE30 \\uC810\\uC218</th>`'
+        '? `<th scope="col">${getDashboardText("ver11SlopeScore")}</th>`'
         in source
     )
 

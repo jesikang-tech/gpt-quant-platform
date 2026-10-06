@@ -209,37 +209,37 @@ AI Powered ETF Ranking System
     ></div>
   </section>
 
-  <div class="ver11-sidebar-title">&#xBD84;&#xC11D; &#xC870;&#xAC74; &#xC120;&#xD0DD;</div>
-  <div class="ver11-sidebar-subtitle">Ver.1.1 &#xC900;&#xBE44; &#xD654;&#xBA74;</div>
+  <div id="ver11-condition-title" class="ver11-sidebar-title">&#xBD84;&#xC11D; &#xC870;&#xAC74; &#xC120;&#xD0DD;</div>
+  <div id="ver11-condition-subtitle" class="ver11-sidebar-subtitle">Ver.1.1 &#xBD84;&#xC11D; &#xC870;&#xAC74;</div>
 
 
 
   <div class="ver11-control-group">
-    <label for="ver11-analysis-date">&#xBD84;&#xC11D; &#xC77C;&#xC790;</label>
+    <label id="ver11-analysis-date-label" for="ver11-analysis-date">&#xBD84;&#xC11D; &#xC77C;&#xC790;</label>
     <input id="ver11-analysis-date" type="date">
   </div>
 
   <div class="ver11-control-group">
-    <label for="ver11-analysis-period">&#xBD84;&#xC11D; &#xAE30;&#xAC04;</label>
+    <label id="ver11-analysis-period-label" for="ver11-analysis-period">&#xBD84;&#xC11D; &#xAE30;&#xAC04;</label>
     <select id="ver11-analysis-period">
-      <option value="3m" selected>3&#xAC1C;&#xC6D4; (60 &#xAC70;&#xB798;&#xC77C;)</option>
-      <option value="2m">2&#xAC1C;&#xC6D4; (40 &#xAC70;&#xB798;&#xC77C;)</option>
-      <option value="1m">1&#xAC1C;&#xC6D4; (20 &#xAC70;&#xB798;&#xC77C;)</option>
+      <option id="ver11-period-3m" value="3m" selected>3&#xAC1C;&#xC6D4; (60 &#xAC70;&#xB798;&#xC77C;)</option>
+      <option id="ver11-period-2m" value="2m">2&#xAC1C;&#xC6D4; (40 &#xAC70;&#xB798;&#xC77C;)</option>
+      <option id="ver11-period-1m" value="1m">1&#xAC1C;&#xC6D4; (20 &#xAC70;&#xB798;&#xC77C;)</option>
     </select>
   </div>
 
   <div class="ver11-control-group">
-    <label for="ver11-sort">&#xC815;&#xB82C; &#xAE30;&#xC900;</label>
+    <label id="ver11-sort-label" for="ver11-sort">&#xC815;&#xB82C; &#xAE30;&#xC900;</label>
     <select id="ver11-sort" disabled>
-      <option value="final_score" selected>AI &#xC810;&#xC218; (&#xAE30;&#xBCF8;)</option>
-      <option value="return">&#xC218;&#xC775;&#xB960;</option>
-      <option value="trend_score">&#xCD94;&#xC138;</option>
-      <option value="slope_score">&#xAE30;&#xC6B8;&#xAE30;</option>
+      <option id="ver11-sort-final-score" value="final_score" selected>AI &#xC810;&#xC218; (&#xAE30;&#xBCF8;)</option>
+      <option id="ver11-sort-return" value="return">&#xC218;&#xC775;&#xB960;</option>
+      <option id="ver11-sort-trend" value="trend_score">&#xCD94;&#xC138;</option>
+      <option id="ver11-sort-slope" value="slope_score">&#xAE30;&#xC6B8;&#xAE30;</option>
     </select>
   </div>
 
   <div class="ver11-control-group">
-    <label for="ver11-count">&#xC885;&#xBAA9; &#xC218;</label>
+    <label id="ver11-count-label" for="ver11-count">&#xC885;&#xBAA9; &#xC218;</label>
     <select id="ver11-count" disabled>
       <option value="10" selected>Top 10</option>
       <option value="20">Top 20</option>
@@ -248,22 +248,22 @@ AI Powered ETF Ranking System
   </div>
 
   <div class="ver11-control-group">
-    <label for="ver11-etf-type">ETF &#xC720;&#xD615;</label>
+    <label id="ver11-etf-type-label" for="ver11-etf-type">ETF &#xC720;&#xD615;</label>
     <select id="ver11-etf-type" disabled>
-      <option selected>&#xC804;&#xCCB4;</option>
+      <option id="ver11-etf-type-all" selected>&#xC804;&#xCCB4;</option>
     </select>
   </div>
 
   <div class="ver11-control-group">
-    <label for="ver11-market">&#xC2DC;&#xC7A5; &#xD544;&#xD130;</label>
+    <label id="ver11-market-label" for="ver11-market">&#xC2DC;&#xC7A5; &#xD544;&#xD130;</label>
     <select id="ver11-market" disabled>
-      <option selected>&#xC804;&#xCCB4;</option>
+      <option id="ver11-market-all" selected>&#xC804;&#xCCB4;</option>
     </select>
   </div>
 
   <div class="ver11-checks">
-    <label><input type="checkbox" disabled> &#xAD00;&#xC2EC; &#xC885;&#xBAA9;&#xB9CC; &#xBCF4;&#xAE30;</label>
-    <label><input type="checkbox" disabled> &#xBCF4;&#xC720; &#xC885;&#xBAA9;&#xB9CC; &#xBCF4;&#xAE30;</label>
+    <label><input type="checkbox" disabled> <span id="ver11-watchlist-only">&#xAD00;&#xC2EC; &#xC885;&#xBAA9;&#xB9CC; &#xBCF4;&#xAE30;</span></label>
+    <label><input type="checkbox" disabled> <span id="ver11-holdings-only">&#xBCF4;&#xC720; &#xC885;&#xBAA9;&#xB9CC; &#xBCF4;&#xAE30;</span></label>
   </div>
 
   <div class="ver11-actions">
@@ -291,7 +291,7 @@ AI Powered ETF Ranking System
 >
   <div class="historical-replay-result-header">
     <div>
-      <h2>Ver.1.1 Analysis Result</h2>
+      <h2 id="ver11-result-title">Ver.1.1 Analysis Result</h2>
       <div
         id="ver11-analysis-result-meta"
         class="historical-replay-result-meta"

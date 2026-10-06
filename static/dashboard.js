@@ -988,6 +988,8 @@ function initializeVer11AnalysisControls() {
             if (market) {
                 market.selectedIndex = 0;
             }
+            latestVer11AnalysisData = null;
+
             if (resultMeta) {
                 resultMeta.textContent = "";
             }
@@ -1001,6 +1003,8 @@ function initializeVer11AnalysisControls() {
     }
 }
 
+
+let latestVer11AnalysisData = null;
 
 function renderVer11AnalysisResult(data) {
     const resultPanel =
@@ -1021,25 +1025,25 @@ function renderVer11AnalysisResult(data) {
     const sortInput = document.getElementById("ver11-sort");
     const sortBy = sortInput ? sortInput.value : "final_score";
     const sortLabels = {
-        final_score: "AI \uC810\uC218",
-        return: "\uC218\uC775\uB960",
-        trend_score: "\uCD94\uC138 \uC810\uC218",
-        slope_score: "\uAE30\uC6B8\uAE30 \uC810\uC218",
+        final_score: getDashboardText("ver11AiScore"),
+        return: getDashboardText("ver11Return"),
+        trend_score: getDashboardText("ver11TrendScore"),
+        slope_score: getDashboardText("ver11SlopeScore"),
     };
     const sortLabel = sortLabels[sortBy] || sortLabels.final_score;
 
     resultMeta.textContent =
         `${data.analysis_date || "-"} / ` +
         `${data.period || "3m"} / ` +
-        `${data.lookback_trading_days ?? "-"} \uAC70\uB798\uC77C / ` +
+        `${data.lookback_trading_days ?? "-"} ${getDashboardText("ver11TradingDays")} / ` +
         `Top ${rows.length} / ` +
-        `\uC815\uB82C: ${sortLabel} \u2193`;
+        `${getDashboardText("ver11SortLabel")}: ${sortLabel} \u2193`;
 
     if (rows.length === 0) {
         resultContent.innerHTML = `
             <div class="historical-replay-section">
                 <div class="historical-replay-section-description">
-                    \uBD84\uC11D \uACB0\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.
+                    ${getDashboardText("ver11NoResults")}
                 </div>
             </div>
         `;
@@ -1088,9 +1092,9 @@ function renderVer11AnalysisResult(data) {
 
     const sortScoreHeader =
         sortBy === "trend_score"
-            ? `<th scope="col">\uCD94\uC138 \uC810\uC218</th>`
+            ? `<th scope="col">${getDashboardText("ver11TrendScore")}</th>`
             : sortBy === "slope_score"
-                ? `<th scope="col">\uAE30\uC6B8\uAE30 \uC810\uC218</th>`
+                ? `<th scope="col">${getDashboardText("ver11SlopeScore")}</th>`
                 : "";
 
     resultContent.innerHTML = `
@@ -1099,13 +1103,13 @@ function renderVer11AnalysisResult(data) {
                 <table class="historical-replay-table">
                     <thead>
                         <tr>
-                            <th scope="col">\uC21C\uC704</th>
+                            <th scope="col">${getDashboardText("ver11Rank")}</th>
                             <th scope="col">ETF</th>
-                            <th scope="col">\uC885\uBAA9\uBA85</th>
-                            <th scope="col">\uC218\uC775\uB960</th>
-                            <th scope="col">\uC0C1\uC2B9\uC77C \uBE44\uC728</th>
+                            <th scope="col">${getDashboardText("ver11EtfName")}</th>
+                            <th scope="col">${getDashboardText("ver11Return")}</th>
+                            <th scope="col">${getDashboardText("ver11UptrendRatio")}</th>
                             ${sortScoreHeader}
-                            <th scope="col">AI \uC810\uC218</th>
+                            <th scope="col">${getDashboardText("ver11AiScore")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1157,6 +1161,8 @@ async function runVer11Analysis() {
     if (data.success === false) {
         throw new Error(data.message || "Ver.1.1 analysis failed.");
     }
+
+    latestVer11AnalysisData = data;
 
     renderVer11AnalysisResult(data);
 
@@ -6225,7 +6231,35 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayStatusFail": "실패",
         "historicalReplayStatusPending": "대기",
         "historicalReplayCash": "현금",
-        "historicalReplayDaySuffix": "일"
+        "historicalReplayDaySuffix": "일",
+        "ver11ConditionTitle": "분석 조건 선택",
+        "ver11ConditionSubtitle": "Ver.1.1 분석 조건",
+        "ver11AnalysisDate": "분석 일자",
+        "ver11AnalysisPeriod": "분석 기간",
+        "ver11Sort": "정렬 기준",
+        "ver11Count": "종목 수",
+        "ver11EtfType": "ETF 유형",
+        "ver11Market": "시장 필터",
+        "ver11Run": "분석 실행",
+        "ver11Reset": "조건 초기화",
+        "ver11ResultTitle": "Ver.1.1 분석 결과",
+        "ver11NoResults": "분석 결과가 없습니다.",
+        "ver11TradingDays": "거래일",
+        "ver11SortLabel": "정렬",
+        "ver11Rank": "순위",
+        "ver11EtfName": "종목명",
+        "ver11Return": "수익률",
+        "ver11UptrendRatio": "상승일 비율",
+        "ver11AiScore": "AI 점수",
+        "ver11TrendScore": "추세 점수",
+        "ver11SlopeScore": "기울기 점수",
+        "ver11SortAiScore": "AI 점수 (기본)",
+        "ver11SortReturn": "수익률",
+        "ver11SortTrend": "추세",
+        "ver11SortSlope": "기울기",
+        "ver11All": "전체",
+        "ver11WatchlistOnly": "관심 종목만 보기",
+        "ver11HoldingsOnly": "보유 종목만 보기"
 },
     en: {
         "dashboardTitle": "GPT Quant ETF Dashboard",
@@ -6504,7 +6538,35 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayStatusFail": "FAIL",
         "historicalReplayStatusPending": "PENDING",
         "historicalReplayCash": "CASH",
-        "historicalReplayDaySuffix": "d"
+        "historicalReplayDaySuffix": "d",
+        "ver11ConditionTitle": "Analysis Conditions",
+        "ver11ConditionSubtitle": "Ver.1.1 Analysis Conditions",
+        "ver11AnalysisDate": "Analysis Date",
+        "ver11AnalysisPeriod": "Analysis Period",
+        "ver11Sort": "Sort By",
+        "ver11Count": "Number of ETFs",
+        "ver11EtfType": "ETF Type",
+        "ver11Market": "Market Filter",
+        "ver11Run": "Run Analysis",
+        "ver11Reset": "Reset Conditions",
+        "ver11ResultTitle": "Ver.1.1 Analysis Result",
+        "ver11NoResults": "No analysis results.",
+        "ver11TradingDays": "trading days",
+        "ver11SortLabel": "Sort",
+        "ver11Rank": "Rank",
+        "ver11EtfName": "ETF Name",
+        "ver11Return": "Return",
+        "ver11UptrendRatio": "Up-day Ratio",
+        "ver11AiScore": "AI Score",
+        "ver11TrendScore": "Trend Score",
+        "ver11SlopeScore": "Slope Score",
+        "ver11SortAiScore": "AI Score (Default)",
+        "ver11SortReturn": "Return",
+        "ver11SortTrend": "Trend",
+        "ver11SortSlope": "Slope",
+        "ver11All": "All",
+        "ver11WatchlistOnly": "Watchlist Only",
+        "ver11HoldingsOnly": "Holdings Only"
 }
 };
 
@@ -6536,6 +6598,29 @@ function applyDashboardLanguage() {
     const historicalReplayPeriod3m = document.getElementById("historical-replay-period-3m");
     const historicalReplayButton = document.getElementById("historical-replay-button");
 
+    const ver11ConditionTitle = document.getElementById("ver11-condition-title");
+    const ver11ConditionSubtitle = document.getElementById("ver11-condition-subtitle");
+    const ver11AnalysisDateLabel = document.getElementById("ver11-analysis-date-label");
+    const ver11AnalysisPeriodLabel = document.getElementById("ver11-analysis-period-label");
+    const ver11Period1m = document.getElementById("ver11-period-1m");
+    const ver11Period2m = document.getElementById("ver11-period-2m");
+    const ver11Period3m = document.getElementById("ver11-period-3m");
+    const ver11SortLabel = document.getElementById("ver11-sort-label");
+    const ver11SortFinalScore = document.getElementById("ver11-sort-final-score");
+    const ver11SortReturn = document.getElementById("ver11-sort-return");
+    const ver11SortTrend = document.getElementById("ver11-sort-trend");
+    const ver11SortSlope = document.getElementById("ver11-sort-slope");
+    const ver11CountLabel = document.getElementById("ver11-count-label");
+    const ver11EtfTypeLabel = document.getElementById("ver11-etf-type-label");
+    const ver11EtfTypeAll = document.getElementById("ver11-etf-type-all");
+    const ver11MarketLabel = document.getElementById("ver11-market-label");
+    const ver11MarketAll = document.getElementById("ver11-market-all");
+    const ver11WatchlistOnly = document.getElementById("ver11-watchlist-only");
+    const ver11HoldingsOnly = document.getElementById("ver11-holdings-only");
+    const ver11RunButton = document.getElementById("ver11-analysis-run");
+    const ver11ResetButton = document.getElementById("ver11-analysis-reset");
+    const ver11ResultTitle = document.getElementById("ver11-result-title");
+
     if (historicalReplayTitle) historicalReplayTitle.textContent = getDashboardText("historicalReplayTitle");
     if (historicalReplaySubtitle) historicalReplaySubtitle.textContent = getDashboardText("historicalReplaySubtitle");
     if (historicalReplayAnalysisDate) historicalReplayAnalysisDate.textContent = getDashboardText("historicalReplayAnalysisDate");
@@ -6544,6 +6629,29 @@ function applyDashboardLanguage() {
     if (historicalReplayPeriod2m) historicalReplayPeriod2m.textContent = getDashboardText("historicalReplayPeriod2m");
     if (historicalReplayPeriod3m) historicalReplayPeriod3m.textContent = getDashboardText("historicalReplayPeriod3m");
     if (historicalReplayButton) historicalReplayButton.textContent = getDashboardText("historicalReplayTitle");
+
+    if (ver11ConditionTitle) ver11ConditionTitle.textContent = getDashboardText("ver11ConditionTitle");
+    if (ver11ConditionSubtitle) ver11ConditionSubtitle.textContent = getDashboardText("ver11ConditionSubtitle");
+    if (ver11AnalysisDateLabel) ver11AnalysisDateLabel.textContent = getDashboardText("ver11AnalysisDate");
+    if (ver11AnalysisPeriodLabel) ver11AnalysisPeriodLabel.textContent = getDashboardText("ver11AnalysisPeriod");
+    if (ver11Period1m) ver11Period1m.textContent = getDashboardText("historicalReplayPeriod1m");
+    if (ver11Period2m) ver11Period2m.textContent = getDashboardText("historicalReplayPeriod2m");
+    if (ver11Period3m) ver11Period3m.textContent = getDashboardText("historicalReplayPeriod3m");
+    if (ver11SortLabel) ver11SortLabel.textContent = getDashboardText("ver11Sort");
+    if (ver11SortFinalScore) ver11SortFinalScore.textContent = getDashboardText("ver11SortAiScore");
+    if (ver11SortReturn) ver11SortReturn.textContent = getDashboardText("ver11SortReturn");
+    if (ver11SortTrend) ver11SortTrend.textContent = getDashboardText("ver11SortTrend");
+    if (ver11SortSlope) ver11SortSlope.textContent = getDashboardText("ver11SortSlope");
+    if (ver11CountLabel) ver11CountLabel.textContent = getDashboardText("ver11Count");
+    if (ver11EtfTypeLabel) ver11EtfTypeLabel.textContent = getDashboardText("ver11EtfType");
+    if (ver11EtfTypeAll) ver11EtfTypeAll.textContent = getDashboardText("ver11All");
+    if (ver11MarketLabel) ver11MarketLabel.textContent = getDashboardText("ver11Market");
+    if (ver11MarketAll) ver11MarketAll.textContent = getDashboardText("ver11All");
+    if (ver11WatchlistOnly) ver11WatchlistOnly.textContent = getDashboardText("ver11WatchlistOnly");
+    if (ver11HoldingsOnly) ver11HoldingsOnly.textContent = getDashboardText("ver11HoldingsOnly");
+    if (ver11RunButton) ver11RunButton.textContent = getDashboardText("ver11Run");
+    if (ver11ResetButton) ver11ResetButton.textContent = getDashboardText("ver11Reset");
+    if (ver11ResultTitle) ver11ResultTitle.textContent = getDashboardText("ver11ResultTitle");
 
     if (title) {
         title.textContent = getDashboardText("dashboardTitle");
@@ -6582,6 +6690,10 @@ function applyDashboardLanguage() {
                 getDashboardText("aggressive");
         }
     }
+    if (latestVer11AnalysisData) {
+        renderVer11AnalysisResult(latestVer11AnalysisData);
+    }
+
     if (latestHistoricalReplayData) {
         renderHistoricalReplayResult(latestHistoricalReplayData);
     }
