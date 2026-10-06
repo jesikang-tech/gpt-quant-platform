@@ -1331,6 +1331,17 @@ async function loadVer11SnapshotHistory() {
 }
 
 
+function formatVer11ExplainText(key, values = {}) {
+    let text = getDashboardText(key);
+
+    Object.entries(values).forEach(([name, value]) => {
+        text = text.replaceAll(`{${name}}`, String(value ?? "N/A"));
+    });
+
+    return text;
+}
+
+
 function renderVer11AnalysisResult(data) {
     const resultPanel =
         document.getElementById("ver11-analysis-result");
@@ -1466,6 +1477,47 @@ function renderVer11AnalysisResult(data) {
     const explanationPortfolio =
         pointInTimeExplanation.portfolio || {};
 
+    const explanationRegimeValue = String(
+        explanationRegime.regime || "NEUTRAL"
+    ).toUpperCase();
+    const explanationRegimeReasonKey = {
+        BULLISH: "ver11ExplainRegimeBullishReason",
+        NEUTRAL: "ver11ExplainRegimeNeutralReason",
+        BEARISH: "ver11ExplainRegimeBearishReason"
+    }[explanationRegimeValue] || "ver11ExplainRegimeNeutralReason";
+
+    const localizedRegimeReason = formatVer11ExplainText(
+        explanationRegimeReasonKey,
+        {
+            avgScore: explanationRegime.avg_score ?? "N/A",
+            confidence: explanationRegime.confidence ?? "N/A"
+        }
+    );
+
+    const localizedStrategyReason = formatVer11ExplainText(
+        "ver11ExplainStrategyReason",
+        {
+            mode: getHistoricalReplayDisplayText(
+                "mode",
+                explanationStrategy.portfolio_mode || "BALANCED"
+            )
+        }
+    );
+
+    const localizedPortfolioReason = formatVer11ExplainText(
+        "ver11ExplainPortfolioReason",
+        {
+            regime: getHistoricalReplayDisplayText(
+                "regime",
+                explanationRegime.regime || "NEUTRAL"
+            ),
+            mode: getHistoricalReplayDisplayText(
+                "mode",
+                explanationStrategy.portfolio_mode || "BALANCED"
+            )
+        }
+    );
+
     const explanationAllocations =
         Array.isArray(explanationPortfolio.allocations)
             ? explanationPortfolio.allocations
@@ -1560,7 +1612,7 @@ function renderVer11AnalysisResult(data) {
             </div>
 
             <div class="historical-replay-section-description">
-                ${explanationRegime.reason || ""}
+                ${localizedRegimeReason}
             </div>
 
             <div class="historical-replay-section-description">
@@ -1578,7 +1630,7 @@ function renderVer11AnalysisResult(data) {
             </div>
 
             <div class="historical-replay-section-description">
-                ${explanationStrategy.reason || ""}
+                ${localizedStrategyReason}
             </div>
 
             <div class="historical-replay-table-wrap">
@@ -1602,7 +1654,7 @@ function renderVer11AnalysisResult(data) {
             <div class="historical-replay-section-description">
                 ${getDashboardText("ver11CashTarget")}: ${explanationPortfolio.cash_weight ?? "N/A"}%
                 /
-                ${explanationPortfolio.reason || ""}
+                ${localizedPortfolioReason}
             </div>
         </section>
     `;
@@ -6832,7 +6884,12 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11RecommendationReduce": "\uBE44\uC911 \uCD95\uC18C",
         "ver11RebalanceIncreaseEquity": "\uC8FC\uC2DD \uBE44\uC911 \uD655\uB300",
         "ver11RebalanceNoAction": "\uC870\uCE58 \uC5C6\uC74C",
-        "ver11RebalanceIncreaseCash": "\uD604\uAE08 \uBE44\uC911 \uD655\uB300"
+        "ver11RebalanceIncreaseCash": "\uD604\uAE08 \uBE44\uC911 \uD655\uB300",
+        "ver11ExplainRegimeBullishReason": "Point-in-Time \uD3C9\uADE0 \uC810\uC218 {avgScore}, \uC2E0\uB8B0\uB3C4 {confidence}%\uB97C \uAE30\uC900\uC73C\uB85C \uC0C1\uC2B9 \uC2DC\uC7A5 \uAD6D\uBA74\uC73C\uB85C \uD310\uB2E8\uD569\uB2C8\uB2E4.",
+        "ver11ExplainRegimeNeutralReason": "Point-in-Time \uD3C9\uADE0 \uC810\uC218 {avgScore}, \uC2E0\uB8B0\uB3C4 {confidence}%\uB97C \uAE30\uC900\uC73C\uB85C \uC911\uB9BD \uC2DC\uC7A5 \uAD6D\uBA74\uC73C\uB85C \uD310\uB2E8\uD569\uB2C8\uB2E4.",
+        "ver11ExplainRegimeBearishReason": "Point-in-Time \uD3C9\uADE0 \uC810\uC218 {avgScore}, \uC2E0\uB8B0\uB3C4 {confidence}%\uB97C \uAE30\uC900\uC73C\uB85C \uD558\uB77D \uC2DC\uC7A5 \uAD6D\uBA74\uC73C\uB85C \uD310\uB2E8\uD569\uB2C8\uB2E4.",
+        "ver11ExplainStrategyReason": "Point-in-Time \uC2DC\uC7A5 \uAD6D\uBA74\uC5D0 \uB530\uB77C {mode} \uD3EC\uD2B8\uD3F4\uB9AC\uC624 \uC804\uB7B5\uC744 \uC801\uC6A9\uD569\uB2C8\uB2E4.",
+        "ver11ExplainPortfolioReason": "\uD3EC\uD2B8\uD3F4\uB9AC\uC624 \uBE44\uC911\uC740 {regime} \uC2DC\uC7A5 \uAD6D\uBA74\uC758 Point-in-Time {mode} \uC804\uB7B5\uC744 \uB530\uB985\uB2C8\uB2E4."
 },
     en: {
         "dashboardTitle": "GPT Quant ETF Dashboard",
@@ -7181,7 +7238,12 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11RecommendationReduce": "Reduce",
         "ver11RebalanceIncreaseEquity": "Increase Equity",
         "ver11RebalanceNoAction": "No Action",
-        "ver11RebalanceIncreaseCash": "Increase Cash"
+        "ver11RebalanceIncreaseCash": "Increase Cash",
+        "ver11ExplainRegimeBullishReason": "Point-in-Time average score {avgScore} supports a bullish market regime with {confidence}% confidence.",
+        "ver11ExplainRegimeNeutralReason": "Point-in-Time average score {avgScore} supports a neutral market regime with {confidence}% confidence.",
+        "ver11ExplainRegimeBearishReason": "Point-in-Time average score {avgScore} supports a bearish market regime with {confidence}% confidence.",
+        "ver11ExplainStrategyReason": "The {mode} portfolio strategy follows the Point-in-Time market regime.",
+        "ver11ExplainPortfolioReason": "Portfolio allocation follows the Point-in-Time {mode} strategy under the {regime} market regime."
 }
 };
 

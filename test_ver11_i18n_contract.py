@@ -205,3 +205,30 @@ def test_ver11_snapshot_history_behavior_contract():
     assert "snapshot.sort_by" in source
     assert "snapshot.display_limit" in source
     assert "snapshot.created_at" in source
+
+def test_ver11_point_in_time_explain_reason_i18n_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    required_reason_keys = (
+        "ver11ExplainRegimeBullishReason",
+        "ver11ExplainRegimeNeutralReason",
+        "ver11ExplainRegimeBearishReason",
+        "ver11ExplainStrategyReason",
+        "ver11ExplainPortfolioReason",
+    )
+
+    for key in required_reason_keys:
+        assert source.count(f'"{key}"') >= 2
+
+    assert "function formatVer11ExplainText(key, values = {})" in source
+    assert "const localizedRegimeReason = formatVer11ExplainText(" in source
+    assert "const localizedStrategyReason = formatVer11ExplainText(" in source
+    assert "const localizedPortfolioReason = formatVer11ExplainText(" in source
+
+    assert "${localizedRegimeReason}" in source
+    assert "${localizedStrategyReason}" in source
+    assert "${localizedPortfolioReason}" in source
+
+    assert '${explanationRegime.reason || ""}' not in source
+    assert '${explanationStrategy.reason || ""}' not in source
+    assert '${explanationPortfolio.reason || ""}' not in source
