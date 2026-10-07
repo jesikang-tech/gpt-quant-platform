@@ -488,3 +488,37 @@ def test_api_server_direct_start_initializes_database_before_auth():
     assert main_block.index("init_database()") < main_block.index(
         "configure_flask_auth(app)"
     )
+
+def test_ver11_snapshot_save_api_rejects_invalid_limit(
+    tmp_path,
+    monkeypatch,
+):
+    import api_server
+    import config
+    import database
+
+    db_path = tmp_path / "ver11_snapshot_invalid_save_limit_api.db"
+    monkeypatch.setattr(config, "DATABASE_PATH", db_path)
+    monkeypatch.setattr(database, "DATABASE_PATH", db_path)
+    database.init_database()
+
+    from testing_helpers import authenticated_client
+
+    client = authenticated_client(api_server.app)
+
+    for invalid_limit in ("abc", "0", "-1"):
+        response = client.post(
+            "/api/ver11-analysis/snapshots",
+            json={
+                "date": "2026-06-12",
+                "period": "3m",
+                "sort": "final_score",
+                "limit": invalid_limit,
+            },
+        )
+
+        assert response.status_code == 400
+
+        data = response.get_json()
+
+        assert data["success"] is False
