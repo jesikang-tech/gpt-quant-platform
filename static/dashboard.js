@@ -1191,6 +1191,7 @@ function renderVer11SnapshotHistory(snapshots) {
                         "Ver.1.1 snapshot detail error:",
                         error
                     );
+                    renderVer11SnapshotDetailError(error);
                 }
             });
         }
@@ -1312,6 +1313,26 @@ async function loadVer11SnapshotDetail(snapshotId) {
     return data;
 }
 
+
+function renderVer11SnapshotDetailError(error) {
+    const panel =
+        document.getElementById("ver11-snapshot-history-panel");
+    const content =
+        document.getElementById("ver11-snapshot-history-content");
+
+    if (!panel || !content) {
+        return;
+    }
+
+    content.innerHTML = `
+        <div class="historical-replay-section-description">
+            ${getDashboardText("ver11SnapshotDetailError")}
+        </div>
+    `;
+
+    panel.hidden = false;
+    focusVer11SnapshotHistoryPanel();
+}
 
 function renderVer11SnapshotHistoryError(error) {
     const panel =
@@ -6891,6 +6912,7 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SnapshotHistory": "저장 이력 조회",
         "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot 이력",
         "ver11SnapshotHistoryError": "Snapshot 이력을 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+        "ver11SnapshotDetailError": "Snapshot 상세 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "ver11SnapshotSaved": "Snapshot이 저장되었습니다.",
         "ver11SnapshotSaveError": "Snapshot을 저장할 수 없습니다. 잠시 후 다시 시도해주세요.",
         "ver11SnapshotEmpty": "저장된 Snapshot이 없습니다.",
@@ -7248,6 +7270,7 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SnapshotHistory": "View Saved History",
         "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot History",
         "ver11SnapshotHistoryError": "Snapshot history could not be loaded. Please try again.",
+        "ver11SnapshotDetailError": "Snapshot details could not be loaded. Please try again.",
         "ver11SnapshotSaved": "Snapshot saved.",
         "ver11SnapshotSaveError": "Snapshot could not be saved. Please try again.",
         "ver11SnapshotEmpty": "No saved snapshots.",

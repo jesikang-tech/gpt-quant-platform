@@ -293,3 +293,15 @@ def test_ver11_snapshot_save_error_ui_contract():
 
     # Korean and English dictionaries must both define the message.
     assert source.count('"ver11SnapshotSaveError"') >= 3
+
+
+def test_ver11_snapshot_detail_error_ui_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function renderVer11SnapshotDetailError(error)" in source
+    assert 'getDashboardText("ver11SnapshotDetailError")' in source
+    assert "renderVer11SnapshotDetailError(error);" in source
+
+    # A failed detail request must be visible in the Snapshot panel
+    # instead of ending only in the browser console.
+    assert source.count('"ver11SnapshotDetailError"') >= 3
