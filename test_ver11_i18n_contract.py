@@ -282,3 +282,14 @@ def test_ver11_snapshot_history_error_ui_contract():
 
     # Korean and English dictionaries must both define the message.
     assert source.count('"ver11SnapshotHistoryError"') >= 3
+
+def test_ver11_snapshot_save_error_ui_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    # A failed save request must be visible to the user instead of
+    # ending only in the browser console. Keep the current analysis
+    # result intact and use the same alert-style feedback as save success.
+    assert 'window.alert(getDashboardText("ver11SnapshotSaveError"));' in source
+
+    # Korean and English dictionaries must both define the message.
+    assert source.count('"ver11SnapshotSaveError"') >= 3

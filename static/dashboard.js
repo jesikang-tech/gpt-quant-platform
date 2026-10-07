@@ -993,6 +993,7 @@ function initializeVer11AnalysisControls() {
                 window.alert(getDashboardText("ver11SnapshotSaved"));
             } catch (error) {
                 console.error("Ver.1.1 snapshot save error:", error);
+                window.alert(getDashboardText("ver11SnapshotSaveError"));
             } finally {
                 snapshotSaveButton.disabled =
                     latestVer11AnalysisData === null;
@@ -6891,6 +6892,7 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot 이력",
         "ver11SnapshotHistoryError": "Snapshot 이력을 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "ver11SnapshotSaved": "Snapshot이 저장되었습니다.",
+        "ver11SnapshotSaveError": "Snapshot을 저장할 수 없습니다. 잠시 후 다시 시도해주세요.",
         "ver11SnapshotEmpty": "저장된 Snapshot이 없습니다.",
         "ver11SnapshotId": "Snapshot ID",
         "ver11SnapshotDate": "분석 일자",
@@ -7247,6 +7249,7 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot History",
         "ver11SnapshotHistoryError": "Snapshot history could not be loaded. Please try again.",
         "ver11SnapshotSaved": "Snapshot saved.",
+        "ver11SnapshotSaveError": "Snapshot could not be saved. Please try again.",
         "ver11SnapshotEmpty": "No saved snapshots.",
         "ver11SnapshotId": "Snapshot ID",
         "ver11SnapshotDate": "Analysis Date",
