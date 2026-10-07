@@ -1826,6 +1826,21 @@ async function requireDashboardApiResponse(response) {
 
 let dashboardStarted = false;
 let dashboardRefreshIntervalIds = [];
+const dashboardRefreshFailures = new Set();
+
+function setDashboardConnectionErrorVisible(visible) {
+    const statusBox =
+        document.getElementById("dashboard-connection-status");
+
+    if (!statusBox) {
+        return;
+    }
+
+    statusBox.textContent = visible
+        ? getDashboardText("dashboardConnectionError")
+        : "";
+    statusBox.hidden = !visible;
+}
 
 function stopDashboard() {
     dashboardRefreshIntervalIds.forEach(function (intervalId) {
@@ -1833,17 +1848,27 @@ function stopDashboard() {
     });
 
     dashboardRefreshIntervalIds = [];
+    dashboardRefreshFailures.clear();
+    setDashboardConnectionErrorVisible(false);
     dashboardStarted = false;
 }
 
 function runDashboardRefresh(loader) {
     Promise.resolve()
         .then(() => loader())
+        .then(() => {
+            dashboardRefreshFailures.delete(loader);
+            setDashboardConnectionErrorVisible(
+                dashboardRefreshFailures.size > 0
+            );
+        })
         .catch(error => {
             if (error instanceof DashboardAuthenticationRequiredError) {
                 return;
             }
 
+            dashboardRefreshFailures.add(loader);
+            setDashboardConnectionErrorVisible(true);
             console.error("Dashboard refresh error", error);
         });
 }
@@ -6827,6 +6852,7 @@ const DASHBOARD_TRANSLATIONS = {
         "decisionConfidence": "의사결정 신뢰도",
         "factorAnalysis": "팩터 분석",
         "platformLogoutError": "로그아웃할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+        "dashboardConnectionError": "대시보드 연결이 일시적으로 불안정합니다. 자동으로 다시 시도합니다.",
         "portfolioExplainabilityError": "포트폴리오 설명 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "aiDecisionExplainabilityError": "AI 의사결정 설명 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "healthScore": "건전성 점수",
@@ -7187,6 +7213,7 @@ const DASHBOARD_TRANSLATIONS = {
         "decisionConfidence": "Decision Confidence",
         "factorAnalysis": "Factor Analysis",
         "platformLogoutError": "Could not log out. Please try again.",
+        "dashboardConnectionError": "The dashboard connection is temporarily unavailable. Retrying automatically.",
         "portfolioExplainabilityError": "Portfolio explainability could not be loaded. Please try again.",
         "aiDecisionExplainabilityError": "AI decision explainability could not be loaded. Please try again.",
         "healthScore": "Health Score",

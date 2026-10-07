@@ -136,3 +136,24 @@ def test_logout_failure_is_visible_to_user():
 
     assert 'getDashboardText("platformLogoutError")' in auth_source
     assert 'window.alert(' in auth_source
+
+def test_dashboard_refresh_connection_status_lifecycle_contract():
+    source = _dashboard_source()
+
+    assert "dashboardRefreshFailures" in source
+    assert "function setDashboardConnectionErrorVisible" in source
+    assert "dashboardRefreshFailures.add(loader);" in source
+    assert "dashboardRefreshFailures.delete(loader);" in source
+    assert "dashboardRefreshFailures.size > 0" in source
+    assert 'getDashboardText("dashboardConnectionError")' in source
+
+
+def test_stop_dashboard_clears_connection_failure_state():
+    source = _dashboard_source()
+
+    start = source.index("function stopDashboard()")
+    end = source.index("function runDashboardRefresh", start)
+    stop_source = source[start:end]
+
+    assert "dashboardRefreshFailures.clear();" in stop_source
+    assert "setDashboardConnectionErrorVisible(false);" in stop_source

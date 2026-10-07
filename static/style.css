@@ -152,6 +152,16 @@ header {
 }
 
 
+.dashboard-connection-status {
+
+    margin: -15px 0 20px;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+}
+
 
 header h1 {
 
