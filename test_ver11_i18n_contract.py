@@ -232,3 +232,21 @@ def test_ver11_point_in_time_explain_reason_i18n_contract():
     assert '${explanationRegime.reason || ""}' not in source
     assert '${explanationStrategy.reason || ""}' not in source
     assert '${explanationPortfolio.reason || ""}' not in source
+
+def test_ver11_analysis_error_ui_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function renderVer11AnalysisError(error)" in source
+    assert 'document.getElementById("ver11-analysis-result")' in source
+    assert 'document.getElementById("ver11-analysis-result-meta")' in source
+    assert 'document.getElementById("ver11-analysis-result-content")' in source
+    assert 'getDashboardText("ver11AnalysisError")' in source
+    assert "renderVer11AnalysisError(error);" in source
+
+    # A failed request must not leave the previous successful result
+    # visible as though it belonged to the newly requested date.
+    assert 'resultContent.innerHTML = "";' in source
+    assert "resultPanel.hidden = false;" in source
+
+    # Both Korean and English dictionaries must define the message.
+    assert source.count('"ver11AnalysisError"') >= 3

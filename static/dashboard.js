@@ -1021,6 +1021,7 @@ function initializeVer11AnalysisControls() {
             await runVer11Analysis();
         } catch (error) {
             console.error("Ver.1.1 analysis error:", error);
+            renderVer11AnalysisError(error);
         }
     });
 
@@ -1341,6 +1342,23 @@ function formatVer11ExplainText(key, values = {}) {
     return text;
 }
 
+
+function renderVer11AnalysisError(error) {
+    const resultPanel =
+        document.getElementById("ver11-analysis-result");
+    const resultMeta =
+        document.getElementById("ver11-analysis-result-meta");
+    const resultContent =
+        document.getElementById("ver11-analysis-result-content");
+
+    if (!resultPanel || !resultMeta || !resultContent) {
+        return;
+    }
+
+    resultMeta.textContent = getDashboardText("ver11AnalysisError");
+    resultContent.innerHTML = "";
+    resultPanel.hidden = false;
+}
 
 function renderVer11AnalysisResult(data) {
     const resultPanel =
@@ -6821,6 +6839,7 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayDaySuffix": "일",
         "ver11ConditionTitle": "분석 조건 선택",
         "ver11ConditionSubtitle": "Ver.1.1 분석 조건",
+        "ver11AnalysisError": "분석 요청을 처리할 수 없습니다. 분석 일자와 조건을 확인해 주세요.",
         "ver11AnalysisDate": "분석 일자",
         "ver11AnalysisPeriod": "분석 기간",
         "ver11Sort": "정렬 기준",
@@ -7175,6 +7194,7 @@ const DASHBOARD_TRANSLATIONS = {
         "historicalReplayDaySuffix": "d",
         "ver11ConditionTitle": "Analysis Conditions",
         "ver11ConditionSubtitle": "Ver.1.1 Analysis Conditions",
+        "ver11AnalysisError": "The analysis request could not be processed. Check the analysis date and conditions.",
         "ver11AnalysisDate": "Analysis Date",
         "ver11AnalysisPeriod": "Analysis Period",
         "ver11Sort": "Sort By",
