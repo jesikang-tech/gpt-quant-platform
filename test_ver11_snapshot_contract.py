@@ -1,5 +1,6 @@
-﻿import sqlite3
+import sqlite3
 from contextlib import closing
+from pathlib import Path
 
 import pytest
 
@@ -475,3 +476,15 @@ def test_ver11_snapshot_payload_recursively_excludes_future_only_fields():
 
     assert_no_forbidden_fields(payload)
 
+
+def test_api_server_direct_start_initializes_database_before_auth():
+    source = Path("api_server.py").read_text(encoding="utf-8")
+
+    assert "from database import init_database" in source
+
+    main_block = source.split('if __name__ == "__main__":', 1)[1]
+    assert "init_database()" in main_block
+    assert "configure_flask_auth(app)" in main_block
+    assert main_block.index("init_database()") < main_block.index(
+        "configure_flask_auth(app)"
+    )

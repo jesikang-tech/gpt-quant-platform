@@ -250,3 +250,35 @@ def test_ver11_analysis_error_ui_contract():
 
     # Both Korean and English dictionaries must define the message.
     assert source.count('"ver11AnalysisError"') >= 3
+
+def test_ver11_snapshot_history_visibility_and_layout_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+    style = Path("static/style.css").read_text(encoding="utf-8")
+
+    # Snapshot history has seven columns and must not inherit only the
+    # six-column Historical Replay width contract.
+    assert 'class="historical-replay-table ver11-snapshot-history-table"' in source
+    assert ".ver11-snapshot-history-table" in style
+
+    # A successful history request must bring the newly opened panel
+    # into view so the button does not appear to do nothing.
+    assert "function focusVer11SnapshotHistoryPanel()" in source
+    assert "panel.scrollIntoView(" in source
+    assert "focusVer11SnapshotHistoryPanel();" in source
+
+def test_ver11_snapshot_history_error_ui_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function renderVer11SnapshotHistoryError(error)" in source
+    assert 'document.getElementById("ver11-snapshot-history-panel")' in source
+    assert 'document.getElementById("ver11-snapshot-history-content")' in source
+    assert 'getDashboardText("ver11SnapshotHistoryError")' in source
+    assert "renderVer11SnapshotHistoryError(error);" in source
+
+    # A failed history request must be visible to the user instead of
+    # ending only in the browser console.
+    assert "panel.hidden = false;" in source
+    assert "focusVer11SnapshotHistoryPanel();" in source
+
+    # Korean and English dictionaries must both define the message.
+    assert source.count('"ver11SnapshotHistoryError"') >= 3

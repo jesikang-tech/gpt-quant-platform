@@ -5189,3 +5189,55 @@ body > header p {
   text-align: center;
   white-space: nowrap;
 }
+
+/* Ver1.1 Snapshot history table - seven-column layout */
+.ver11-snapshot-history-table {
+    min-width: 820px;
+}
+
+.ver11-snapshot-history-table th,
+.ver11-snapshot-history-table td {
+    white-space: nowrap;
+}
+
+.ver11-snapshot-history-table th:nth-child(1),
+.ver11-snapshot-history-table td:nth-child(1) {
+    width: 10%;
+    text-align: center;
+}
+
+.ver11-snapshot-history-table th:nth-child(2),
+.ver11-snapshot-history-table td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+}
+
+.ver11-snapshot-history-table th:nth-child(3),
+.ver11-snapshot-history-table td:nth-child(3) {
+    width: 10%;
+    text-align: center;
+}
+
+.ver11-snapshot-history-table th:nth-child(4),
+.ver11-snapshot-history-table td:nth-child(4) {
+    width: 16%;
+    text-align: center;
+}
+
+.ver11-snapshot-history-table th:nth-child(5),
+.ver11-snapshot-history-table td:nth-child(5) {
+    width: 10%;
+    text-align: center;
+}
+
+.ver11-snapshot-history-table th:nth-child(6),
+.ver11-snapshot-history-table td:nth-child(6) {
+    width: 29%;
+    text-align: center;
+}
+
+.ver11-snapshot-history-table th:nth-child(7),
+.ver11-snapshot-history-table td:nth-child(7) {
+    width: 10%;
+    text-align: center;
+}

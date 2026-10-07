@@ -1,4 +1,5 @@
 from current_analysis import get_current_analysis_data
+from database import init_database
 from datetime import datetime
 
 from core.platform_auth import (
@@ -3327,6 +3328,7 @@ def home():
 
 if __name__ == "__main__":
 
+    init_database()
     configure_flask_auth(app)
 
     app.run(

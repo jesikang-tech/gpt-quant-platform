@@ -1012,6 +1012,7 @@ function initializeVer11AnalysisControls() {
                     "Ver.1.1 snapshot history error:",
                     error
                 );
+                renderVer11SnapshotHistoryError(error);
             }
         });
     }
@@ -1158,7 +1159,7 @@ function renderVer11SnapshotHistory(snapshots) {
 
     content.innerHTML = `
         <div class="historical-replay-table-wrap">
-            <table class="historical-replay-table">
+            <table class="historical-replay-table ver11-snapshot-history-table">
                 <thead>
                     <tr>
                         <th>${getDashboardText("ver11SnapshotId")}</th>
@@ -1311,6 +1312,42 @@ async function loadVer11SnapshotDetail(snapshotId) {
 }
 
 
+function renderVer11SnapshotHistoryError(error) {
+    const panel =
+        document.getElementById("ver11-snapshot-history-panel");
+    const content =
+        document.getElementById("ver11-snapshot-history-content");
+
+    if (!panel || !content) {
+        return;
+    }
+
+    content.innerHTML = `
+        <div class="historical-replay-section-description">
+            ${getDashboardText("ver11SnapshotHistoryError")}
+        </div>
+    `;
+
+    panel.hidden = false;
+    focusVer11SnapshotHistoryPanel();
+}
+
+
+function focusVer11SnapshotHistoryPanel() {
+    const panel =
+        document.getElementById("ver11-snapshot-history-panel");
+
+    if (!panel) {
+        return;
+    }
+
+    panel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+
 async function loadVer11SnapshotHistory() {
     const response =
         await fetch("/api/ver11-analysis/snapshots?limit=50");
@@ -1328,6 +1365,7 @@ async function loadVer11SnapshotHistory() {
     }
 
     renderVer11SnapshotHistory(data.snapshots);
+    focusVer11SnapshotHistoryPanel();
     return data;
 }
 
@@ -6851,6 +6889,7 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SnapshotSave": "현재 결과 저장",
         "ver11SnapshotHistory": "저장 이력 조회",
         "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot 이력",
+        "ver11SnapshotHistoryError": "Snapshot 이력을 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "ver11SnapshotSaved": "Snapshot이 저장되었습니다.",
         "ver11SnapshotEmpty": "저장된 Snapshot이 없습니다.",
         "ver11SnapshotId": "Snapshot ID",
@@ -7206,6 +7245,7 @@ const DASHBOARD_TRANSLATIONS = {
         "ver11SnapshotSave": "Save Current Result",
         "ver11SnapshotHistory": "View Saved History",
         "ver11SnapshotHistoryTitle": "Ver.1.1 Snapshot History",
+        "ver11SnapshotHistoryError": "Snapshot history could not be loaded. Please try again.",
         "ver11SnapshotSaved": "Snapshot saved.",
         "ver11SnapshotEmpty": "No saved snapshots.",
         "ver11SnapshotId": "Snapshot ID",
