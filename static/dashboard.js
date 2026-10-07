@@ -5580,6 +5580,16 @@ async function loadPortfolioExplainability(){
 
         if(!result.success){
 
+            const panel =
+            document.getElementById(
+                "portfolio-explain-content"
+            );
+
+            if(panel){
+                panel.innerHTML =
+                    getDashboardText("portfolioExplainabilityError");
+            }
+
             return;
 
         }
@@ -5884,6 +5894,16 @@ async function loadPortfolioExplainability(){
             error
         );
 
+        const panel =
+        document.getElementById(
+            "portfolio-explain-content"
+        );
+
+        if(panel){
+            panel.innerHTML =
+                getDashboardText("portfolioExplainabilityError");
+        }
+
     }
 
 }
@@ -5906,6 +5926,16 @@ async function loadAIDecisionExplainability(){
 
 
         if(!result.success){
+
+            const panel =
+            document.getElementById(
+                "ai-decision-explainability-content"
+            );
+
+            if(panel){
+                panel.innerHTML =
+                    getDashboardText("aiDecisionExplainabilityError");
+            }
 
             return;
 
@@ -6102,6 +6132,16 @@ async function loadAIDecisionExplainability(){
             "AI Decision Explainability Error:",
             error
         );
+
+        const panel =
+        document.getElementById(
+            "ai-decision-explainability-content"
+        );
+
+        if(panel){
+            panel.innerHTML =
+                getDashboardText("aiDecisionExplainabilityError");
+        }
 
     }
 
@@ -6783,6 +6823,8 @@ const DASHBOARD_TRANSLATIONS = {
         "cashWeight": "현금 비중",
         "decisionConfidence": "의사결정 신뢰도",
         "factorAnalysis": "팩터 분석",
+        "portfolioExplainabilityError": "포트폴리오 설명 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+        "aiDecisionExplainabilityError": "AI 의사결정 설명 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "healthScore": "건전성 점수",
         "impact": "영향도",
         "marketAnalysis": "시장 분석",
@@ -7140,6 +7182,8 @@ const DASHBOARD_TRANSLATIONS = {
         "cashWeight": "Cash Weight",
         "decisionConfidence": "Decision Confidence",
         "factorAnalysis": "Factor Analysis",
+        "portfolioExplainabilityError": "Portfolio explainability could not be loaded. Please try again.",
+        "aiDecisionExplainabilityError": "AI decision explainability could not be loaded. Please try again.",
         "healthScore": "Health Score",
         "impact": "Impact",
         "marketAnalysis": "Market Analysis",

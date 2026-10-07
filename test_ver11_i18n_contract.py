@@ -305,3 +305,15 @@ def test_ver11_snapshot_detail_error_ui_contract():
     # A failed detail request must be visible in the Snapshot panel
     # instead of ending only in the browser console.
     assert source.count('"ver11SnapshotDetailError"') >= 3
+
+
+def test_explainability_error_ui_contract():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert 'getDashboardText("portfolioExplainabilityError")' in source
+    assert 'getDashboardText("aiDecisionExplainabilityError")' in source
+
+    # Both explainability loaders must surface failures in their existing
+    # result panels instead of ending only in the browser console.
+    assert source.count('"portfolioExplainabilityError"') >= 3
+    assert source.count('"aiDecisionExplainabilityError"') >= 3
