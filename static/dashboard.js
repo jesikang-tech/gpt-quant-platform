@@ -714,6 +714,9 @@ async function initializePlatformAuthentication() {
                     await logoutPlatform();
                 } catch (error) {
                     console.error("Platform logout error:", error);
+                    window.alert(
+                        getDashboardText("platformLogoutError")
+                    );
                 }
             }
         );
@@ -6823,6 +6826,7 @@ const DASHBOARD_TRANSLATIONS = {
         "cashWeight": "현금 비중",
         "decisionConfidence": "의사결정 신뢰도",
         "factorAnalysis": "팩터 분석",
+        "platformLogoutError": "로그아웃할 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "portfolioExplainabilityError": "포트폴리오 설명 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "aiDecisionExplainabilityError": "AI 의사결정 설명 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
         "healthScore": "건전성 점수",
@@ -7182,6 +7186,7 @@ const DASHBOARD_TRANSLATIONS = {
         "cashWeight": "Cash Weight",
         "decisionConfidence": "Decision Confidence",
         "factorAnalysis": "Factor Analysis",
+        "platformLogoutError": "Could not log out. Please try again.",
         "portfolioExplainabilityError": "Portfolio explainability could not be loaded. Please try again.",
         "aiDecisionExplainabilityError": "AI decision explainability could not be loaded. Please try again.",
         "healthScore": "Health Score",

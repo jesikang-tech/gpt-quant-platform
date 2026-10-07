@@ -122,3 +122,17 @@ def test_dashboard_refresh_promise_and_history_use_auth_boundary():
     history_end = source.index("async function", history_start + 1)
     history_source = source[history_start:history_end]
     assert "await requireDashboardApiResponse(response)" in history_source
+
+
+def test_logout_failure_is_visible_to_user():
+    source = _dashboard_source()
+
+    start = source.index("async function initializePlatformAuthentication()")
+    end = source.index(
+        'document.addEventListener(',
+        start,
+    )
+    auth_source = source[start:end]
+
+    assert 'getDashboardText("platformLogoutError")' in auth_source
+    assert 'window.alert(' in auth_source
