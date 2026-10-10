@@ -6,39 +6,13 @@ import csv
 from pathlib import Path
 
 
-def load_price_data(
-    price_list
-):
-    """
-    가격 데이터 저장
+def load_price_data(price_list):
+    """Reject legacy development price writes."""
 
-    형식:
-
-    [
-        {
-            "ticker": "069500",
-            "date": "2026-07-20",
-            "close_price": 10000
-        }
-    ]
-
-    """
-
-
-    for price in price_list:
-
-        save_etf_price(
-            price["ticker"],
-            price["date"],
-            price["close_price"]
-        )
-
-
-    print(
-        f"{len(price_list)} prices loaded"
+    raise RuntimeError(
+        "Development price writes are disabled. "
+        "Use an isolated test database instead."
     )
-
-
 
 def get_sample_price_data():
 
@@ -126,61 +100,13 @@ def get_csv_price_data(
     return price_list
 
 
-def update_price_database(
-    price_list
-):
-    """
-    가격 데이터 자동 갱신
-    """
+def update_price_database(price_list):
+    """Reject legacy development price updates."""
 
-    before = get_all_price_data()
-
-
-    before_dict = {
-        (
-            item[0],
-            item[1]
-        ): item
-        for item in before
-    }
-
-
-    added = 0
-    updated = 0
-
-
-    for price in price_list:
-
-        key = (
-            price["ticker"],
-            price["date"]
-        )
-
-
-        if key in before_dict:
-
-            updated += 1
-
-        else:
-
-            added += 1
-
-
-        save_etf_price(
-            price["ticker"],
-            price["date"],
-            price["close_price"]
-        )
-
-
-    print(
-        f"Added : {added}"
+    raise RuntimeError(
+        "Development price writes are disabled. "
+        "Use an isolated test database instead."
     )
-
-    print(
-        f"Updated : {updated}"
-    )
-
 
 if __name__ == "__main__":
     raise SystemExit(
