@@ -251,7 +251,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons[0]}
+        ${getLocalizedAnalysisReason(recommendationData.recommendation.reasons[0])}
 
         </div>
 
@@ -263,7 +263,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons?.[1] ?? getDashboardText("none")}
+        ${getLocalizedAnalysisReason(recommendationData.recommendation.reasons?.[1] ?? getDashboardText("none"))}
 
         </div>
 
@@ -275,7 +275,7 @@ function loadDashboard(){
 
         <br>
 
-        ${recommendationData.recommendation.reasons?.[2] ?? getDashboardText("none")}
+        ${getLocalizedAnalysisReason(recommendationData.recommendation.reasons?.[2] ?? getDashboardText("none"))}
 
         </div>
 
@@ -294,7 +294,7 @@ function loadDashboard(){
         <br><br>
 
 
-        ${intelligence.opinion}
+        ${getLocalizedIntelligenceOpinion(intelligence)}
 
 
         </div>
@@ -1874,13 +1874,7 @@ function runDashboardRefresh(loader) {
 }
 
 
-function startDashboard() {
-    if (dashboardStarted) {
-        return;
-    }
-
-    dashboardStarted = true;
-
+function refreshDashboardContent() {
     runDashboardRefresh(loadDashboard);
 
     console.log("BEFORE PORTFOLIO HISTORY");
@@ -1906,6 +1900,17 @@ function startDashboard() {
     loadAIDecisionHistory();
     loadDecisionIntelligence();
     loadAIDecisionExplainability();
+}
+
+
+function startDashboard() {
+    if (dashboardStarted) {
+        return;
+    }
+
+    dashboardStarted = true;
+
+    refreshDashboardContent();
 
     dashboardRefreshIntervalIds = [
         setInterval(() => runDashboardRefresh(loadDashboard), 10000),
@@ -2551,7 +2556,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <p>
             ${getDashboardText("aiPortfolioRebalance")} :
-            ${result.intelligence.rebalance}
+            ${getLocalizedPortfolioRebalance(result)}
 
             </p>
 
@@ -2577,7 +2582,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <br>
 
-            ${result.insight.summary}
+            ${getLocalizedPortfolioSummary(result)}
 
             </p>
 
@@ -2590,7 +2595,7 @@ async function loadPortfolioAdvisor(save=false){
 
             <br>
 
-            ${result.insight.opinion}
+            ${getLocalizedPortfolioInsightOpinion(result)}
 
             </p>
 
@@ -3337,7 +3342,7 @@ async function loadMarketStrategy(){
         <p>
         ${getDashboardText("aiMessage")}
         <br>
-        ${result.message}
+        ${getLocalizedMarketStrategyMessage(result)}
         </p>
 
 
@@ -3443,7 +3448,7 @@ async function loadAIDecision(){
         <p>
         ${getDashboardText("reason")} :
         <br>
-        ${decision.reason}
+        ${getLocalizedAIDecisionReason(decision)}
         </p>
 
 
@@ -3451,7 +3456,7 @@ async function loadAIDecision(){
         ${getDashboardText("summary")} :
         <br>
         <b>
-        ${decision.summary}
+        ${getLocalizedAIDecisionSummary(decision)}
         </b>
         </p>
 
@@ -4709,7 +4714,7 @@ async function loadAIDecisionQuality(){
         <p>
         ${getDashboardText("aiEvaluation")} :
         <br>
-        ${quality.evaluation}
+        ${getLocalizedDecisionQualityEvaluation(quality)}
         </p>
 
     </div>
@@ -5282,7 +5287,7 @@ async function loadAIDecisionReliability(){
         <p>
         ${getDashboardText("aiStatus")} :
         <br>
-        ${reliability.message}
+        ${getLocalizedDecisionReliabilityMessage(reliability)}
         </p>
 
 
@@ -6121,7 +6126,7 @@ async function loadAIDecisionExplainability(){
 
                     <div class="ai-explainability-item ai-explainability-item-wide">
                         <span>3) ${getDashboardText("assessment")}</span>
-                        <p>${risk.assessment || "-"}</p>
+                        <p>${getLocalizedRiskAssessment(risk)}</p>
                     </div>
                 </div>
             </section>
@@ -6142,12 +6147,12 @@ async function loadAIDecisionExplainability(){
 
                     <div class="ai-explainability-item ai-explainability-item-wide">
                         <span>3) ${getDashboardText("reason")}</span>
-                        <p>${confidence.reason || "-"}</p>
+                        <p>${getLocalizedConfidenceReason(confidence)}</p>
                     </div>
 
                     <div class="ai-explainability-item ai-explainability-item-wide">
                         <span>4) ${getDashboardText("recommendedAction")}</span>
-                        <strong>${explanation.recommended_action || "-"}</strong>
+                        <strong>${getLocalizedRecommendedAction(explanation.recommended_action)}</strong>
                     </div>                </div>
             </section>
 
@@ -6678,6 +6683,10 @@ function selectDashboardLanguage(language) {
     console.log("DASHBOARD_LANGUAGE:", currentDashboardLanguage);
 
     applyDashboardLanguage();
+
+    if (dashboardStarted) {
+        refreshDashboardContent();
+    }
 }
 
 
@@ -6921,6 +6930,15 @@ const DASHBOARD_TRANSLATIONS = {
         "adaptiveLearningRequired": "적응형 학습 필요 여부",
         "aiEvaluation": "AI 평가",
         "portfolioQuestionRequired": "질문을 입력해주세요.",
+        "aiDecisionExplainabilityTitle": "의사결정 설명",
+        "aiDecisionChartTitle": "의사결정 점수 추세",
+        "portfolioExplainabilityTitle": "AI 포트폴리오 설명",
+        "portfolioAnalystTitle": "AI 포트폴리오 애널리스트",
+        "portfolioAnalystPlaceholder": "포트폴리오에 대한 질문을 하세요",
+        "portfolioAnalystSubmit": "분석 요청",
+        "etfDetailTitle": "ETF 상세",
+        "etfDetailEmpty": "카드를 클릭하면 ETF 상세 정보가 표시됩니다.",
+        "rankingHistoryTitle": "순위 이력",
         "portfolioAnalystAnalyzing": "AI 포트폴리오 애널리스트 분석 중...",
         "portfolioAnalystError": "AI 포트폴리오 애널리스트 처리 중 오류가 발생했습니다.",
         "aiIntelligence": "AI 정보",
@@ -7283,6 +7301,15 @@ const DASHBOARD_TRANSLATIONS = {
         "positiveOutcomes": "Positive Outcomes",
         "totalOutcomes": "Total Outcomes",
         "portfolioQuestionRequired": "Please enter a question.",
+        "aiDecisionExplainabilityTitle": "Decision Explainability",
+        "aiDecisionChartTitle": "AI Decision Score Trend",
+        "portfolioExplainabilityTitle": "AI Portfolio Explainability",
+        "portfolioAnalystTitle": "AI Portfolio Analyst",
+        "portfolioAnalystPlaceholder": "Ask a question about the portfolio",
+        "portfolioAnalystSubmit": "Analyze",
+        "etfDetailTitle": "ETF Details",
+        "etfDetailEmpty": "Click a card to view ETF details.",
+        "rankingHistoryTitle": "Ranking History",
         "portfolioAnalystAnalyzing": "AI Portfolio Analyst analyzing...",
         "portfolioAnalystError": "An error occurred while processing the AI Portfolio Analyst request.",
         "aiIntelligence": "AI Intelligence",
@@ -7417,8 +7444,269 @@ function getDashboardText(key) {
     return translations[key] || key;
 }
 
+function getLocalizedAnalysisReason(reason) {
+    if (currentDashboardLanguage !== "en") {
+        return reason;
+    }
 
+    const translations = {
+        "Enhanced Score 우수": "Strong enhanced score",
+        "상승 모멘텀 유지": "Upward momentum is maintained",
+        "안정적인 Ranking 유지": "Ranking remains stable",
+        "Ranking 안정성 우수": "Strong ranking stability"
+    };
+
+    return translations[reason] ?? reason;
+}
+function getLocalizedRiskAssessment(risk) {
+    const assessment = risk?.assessment || "-";
+
+    if (currentDashboardLanguage !== "en") {
+        return assessment;
+    }
+
+    const translations = {
+        "포트폴리오 위험 수준이 높습니다. 위험관리를 우선해야 합니다.":
+            "Portfolio risk is high. Risk management should take priority.",
+        "약세 시장 상황이 감지되었습니다. 방어적 포지셔닝이 권장됩니다.":
+            "Bearish market conditions have been detected. Defensive positioning is recommended.",
+        "포트폴리오 위험 수준이 보통입니다. 시장 상황을 지속적으로 모니터링해야 합니다.":
+            "Portfolio risk is moderate. Market conditions should be monitored continuously.",
+        "현재 시장 및 포트폴리오 상태에서 중대한 위험 신호가 감지되지 않았습니다.":
+            "No material risk signals were detected in the current market and portfolio conditions."
+    };
+
+    return translations[assessment] ?? assessment;
+}
+
+function getLocalizedConfidenceReason(confidence) {
+    const reason = confidence?.reason || "-";
+
+    if (currentDashboardLanguage !== "en") {
+        return reason;
+    }
+
+    if (
+        confidence?.decision_score == null ||
+        !Number.isFinite(Number(confidence.decision_score))
+    ) {
+        return reason;
+    }
+
+    const score = Number(confidence.decision_score);
+    const level =
+        score >= 90 ? "Very High" :
+        score >= 80 ? "High" :
+        score >= 70 ? "Moderate" : "Low";
+
+    return `The AI decision score is ${score.toFixed(1)}/100, ` +
+        `indicating a ${level.toLowerCase()} decision confidence level.`;
+}
+function getLocalizedRecommendedAction(action) {
+    if (currentDashboardLanguage !== "en") {
+        return action || "-";
+    }
+
+    const translations = {
+        "시장 모멘텀 모니터링": "Monitor market momentum"
+    };
+
+    return translations[action] ?? action ?? "-";
+}
+
+function getLocalizedDecisionQualityEvaluation(quality) {
+    const evaluation = quality?.evaluation || "-";
+
+    if (currentDashboardLanguage !== "en") {
+        return evaluation;
+    }
+
+    const match = evaluation.match(
+        /^AI 의사결정 품질은 (.+)이며 점수 흐름은 (.+)입니다\.$/
+    );
+
+    if (!match) {
+        return evaluation;
+    }
+
+    return `AI decision quality is ${match[1]}, and score stability is ${match[2]}.`;
+}
+
+function getLocalizedDecisionReliabilityMessage(reliability) {
+    const message = reliability?.message || "-";
+
+    if (currentDashboardLanguage !== "en") {
+        return message;
+    }
+
+    const translations = {
+        "AI 의사결정 모델이 안정적으로 일관되게 작동하고 있습니다.":
+            "The AI decision model is operating consistently and reliably.",
+        "AI 의사결정 모델의 지속적인 모니터링이 필요합니다.":
+            "The AI decision model requires continued monitoring."
+    };
+
+    return translations[message] ?? message;
+}
+function getLocalizedIntelligenceOpinion(intelligence) {
+    if (currentDashboardLanguage !== "en") {
+        return intelligence.opinion;
+    }
+
+    switch (intelligence.prediction) {
+        case "UPTREND":
+            return "Upward momentum is strengthening, so active attention is recommended.";
+        case "MAINTAIN":
+            return "Score and ranking stability support maintaining the current holding strategy.";
+        case "DOWNRISK":
+            return "Ranking weakness may develop, so caution is recommended.";
+        default:
+            return "Additional data should be reviewed.";
+    }
+}
+
+function getLocalizedPortfolioSummary(result) {
+    if (currentDashboardLanguage !== "en") {
+        return result.insight.summary;
+    }
+
+    const allocation = result.intelligence?.allocation || {};
+    const etfCount = Object.keys(allocation).length;
+    const riskLevel = result.intelligence?.risk_level || "Portfolio";
+
+    return `${riskLevel} AI Portfolio (${etfCount} ETF allocation)`;
+}
+
+function getLocalizedPortfolioInsightOpinion(result) {
+    if (currentDashboardLanguage !== "en") {
+        return result.insight.opinion;
+    }
+
+    const analytics = result.insight.analytics;
+    const averageScore = analytics.average_score ?? "-";
+    const regime = analytics.market_regime || "UNKNOWN";
+    const strength = analytics.market_strength || "UNKNOWN";
+    const confidence = analytics.market_confidence ?? "-";
+    const topEtf = analytics.top_etf || "the leading ETF";
+    const cashWeight = analytics.cash_weight ?? "-";
+    const diversification = analytics.diversification || "UNKNOWN";
+
+    return `The current portfolio has an average score of ${averageScore}. ` +
+        `The market regime is ${regime}, with ${strength} strength and ` +
+        `${confidence}% AI confidence. ` +
+        `${topEtf} currently shows the strongest momentum. ` +
+        `A ${cashWeight}% cash allocation provides a risk buffer, and ` +
+        `diversification is assessed as ${diversification}.`;
+}
+
+function getLocalizedPortfolioRebalance(result) {
+    if (currentDashboardLanguage !== "en") {
+        return result.intelligence.rebalance;
+    }
+
+    const analytics = result.insight.analytics;
+    const regime = analytics.market_regime || "UNKNOWN";
+    const strength = analytics.market_strength || "UNKNOWN";
+    const topEtf = analytics.top_etf || "the leading ETF";
+
+    if (regime === "BULLISH") {
+        return `${topEtf}-centered growth positioning is recommended. ` +
+            `The market is ${regime} with ${strength} strength. ` +
+            "A higher allocation to strong ETFs may be appropriate.";
+    }
+
+    if (regime === "BEARISH") {
+        return `${topEtf}-centered defensive positioning is recommended. ` +
+            `The market is ${regime} with ${strength} strength. ` +
+            "Increasing cash and strengthening risk management are recommended.";
+    }
+
+    return `${topEtf}-centered balanced positioning is recommended. ` +
+        `The market is ${regime} with ${strength} strength. ` +
+        "Maintaining the current portfolio is preferable to making abrupt changes.";
+}
+
+
+function getLocalizedMarketStrategyMessage(result) {
+    if (currentDashboardLanguage !== "en") {
+        return result.message;
+    }
+
+    const strength = result.market_strength || "UNKNOWN";
+    const confidence = result.confidence ?? "-";
+
+    switch (result.portfolio_mode) {
+        case "aggressive":
+            return `A growth-oriented market stance is recommended. Market strength is ${strength}, with ${confidence}% confidence.`;
+        case "conservative":
+            return `A defensive market stance is recommended. Market strength is ${strength}, with ${confidence}% confidence.`;
+        default:
+            return `A balanced market stance is recommended. Market strength is ${strength}, with ${confidence}% confidence.`;
+    }
+}
+
+function getLocalizedAIDecisionReason(decision) {
+    if (currentDashboardLanguage !== "en") {
+        return decision.reason;
+    }
+
+    const action = decision.action || decision.decision || "the current action";
+    const confidence = decision.confidence ?? "-";
+    const score = decision.decision_score ?? "-";
+
+    return `The AI recommends ${action} with ${confidence}% confidence and a decision score of ${score}/100.`;
+}
+
+function getLocalizedAIDecisionSummary(decision) {
+    if (currentDashboardLanguage !== "en") {
+        return decision.summary;
+    }
+
+    switch (decision.decision) {
+        case "INCREASE":
+            return "The AI recommends increasing portfolio exposure.";
+        case "REDUCE":
+            return "The AI recommends reducing portfolio exposure.";
+        case "MAINTAIN":
+            return "The AI recommends maintaining the current portfolio allocation.";
+        default:
+            return `The current AI decision is ${decision.decision || "under review"}.`;
+    }
+}
 function applyDashboardLanguage() {
+    const lowerStaticTranslations = [
+        ["ai-decision-explainability-title", "aiDecisionExplainabilityTitle"],
+        ["ai-decision-chart-title", "aiDecisionChartTitle"],
+        ["portfolio-explainability-title", "portfolioExplainabilityTitle"],
+        ["portfolio-analyst-title", "portfolioAnalystTitle"],
+        ["portfolio-analyst-submit", "portfolioAnalystSubmit"],
+        ["etf-detail-title", "etfDetailTitle"],
+        ["ranking-history-title", "rankingHistoryTitle"]
+    ];
+
+    for (const [elementId, translationKey] of lowerStaticTranslations) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = getDashboardText(translationKey);
+        }
+    }
+
+    const portfolioQuestion = document.getElementById("portfolio-question");
+    if (portfolioQuestion) {
+        portfolioQuestion.placeholder = getDashboardText("portfolioAnalystPlaceholder");
+    }
+
+    const detailContent = document.getElementById("detail-content");
+    if (detailContent) {
+        const currentText = detailContent.textContent.trim();
+        const koEmpty = "카드를 클릭하면 ETF 상세 정보가 표시됩니다.";
+        const enEmpty = "Click a card to view ETF details.";
+
+        if (currentText === koEmpty || currentText === enEmpty) {
+            detailContent.textContent = getDashboardText("etfDetailEmpty");
+        }
+    }
+
     const title = document.querySelector("header h1");
     const subtitle = document.querySelector("header p");
     const marketRegimeTitle = document.querySelector("#market-regime h2");

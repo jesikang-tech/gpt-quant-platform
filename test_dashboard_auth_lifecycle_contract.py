@@ -99,13 +99,17 @@ def test_dashboard_authentication_error_is_handled_without_unhandled_rejection()
     assert "function runDashboardRefresh(loader)" in source
     assert "error instanceof DashboardAuthenticationRequiredError" in source
 
-    start = source.index("function startDashboard")
+    refresh_start = source.index("function refreshDashboardContent")
+    start = source.index("function startDashboard", refresh_start)
     end = source.index("async function loadHistory", start)
+
+    refresh_source = source[refresh_start:start]
     lifecycle_source = source[start:end]
 
-    assert "runDashboardRefresh(loadDashboard);" in lifecycle_source
-    assert "runDashboardRefresh(loadPortfolioAdvisor);" in lifecycle_source
-    assert "runDashboardRefresh(loadMarketRegime);" in lifecycle_source
+    assert "refreshDashboardContent();" in lifecycle_source
+    assert "runDashboardRefresh(loadDashboard);" in refresh_source
+    assert "runDashboardRefresh(loadPortfolioAdvisor);" in refresh_source
+    assert "runDashboardRefresh(loadMarketRegime);" in refresh_source
     assert "setInterval(() => runDashboardRefresh(loadDashboard), 10000)" in lifecycle_source
     assert "setInterval(() => runDashboardRefresh(loadPortfolioAdvisor), 10000)" in lifecycle_source
     assert "setInterval(() => runDashboardRefresh(loadMarketRegime), 10000)" in lifecycle_source

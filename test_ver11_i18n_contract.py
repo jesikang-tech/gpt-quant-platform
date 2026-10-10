@@ -317,3 +317,86 @@ def test_explainability_error_ui_contract():
     # result panels instead of ending only in the browser console.
     assert source.count('"portfolioExplainabilityError"') >= 3
     assert source.count('"aiDecisionExplainabilityError"') >= 3
+
+def test_dashboard_dynamic_intelligence_text_uses_localized_renderers():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function getLocalizedIntelligenceOpinion" in source
+    assert "function getLocalizedPortfolioRebalance" in source
+    assert "function getLocalizedPortfolioInsightOpinion" in source
+
+    assert "getLocalizedIntelligenceOpinion(intelligence)" in source
+    assert "getLocalizedPortfolioRebalance(result)" in source
+    assert "getLocalizedPortfolioInsightOpinion(result)" in source
+
+
+def test_dashboard_portfolio_summary_uses_localized_renderer():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function getLocalizedPortfolioSummary" in source
+    assert "getLocalizedPortfolioSummary(result)" in source
+
+def test_dashboard_language_switch_refreshes_dynamic_sections():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function refreshDashboardContent()" in source
+    assert "refreshDashboardContent();" in source
+
+    selector_start = source.index("function selectDashboardLanguage(language)")
+    selector_end = source.index("/* ETF-Quant-Platform minimal dashboard translations */")
+    selector_source = source[selector_start:selector_end]
+
+    assert "applyDashboardLanguage();" in selector_source
+    assert "refreshDashboardContent();" in selector_source
+def test_dashboard_market_strategy_and_ai_decision_text_use_localized_renderers():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+
+    assert "function getLocalizedMarketStrategyMessage" in source
+    assert "function getLocalizedAIDecisionReason" in source
+    assert "function getLocalizedAIDecisionSummary" in source
+
+    assert "getLocalizedMarketStrategyMessage(result)" in source
+    assert "getLocalizedAIDecisionReason(decision)" in source
+    assert "getLocalizedAIDecisionSummary(decision)" in source
+
+def test_dashboard_lower_static_sections_are_localized():
+    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+    template = Path("templates/index.html").read_text(encoding="utf-8")
+
+    expected_ids = [
+        "ai-decision-explainability-title",
+        "ai-decision-chart-title",
+        "portfolio-explainability-title",
+        "portfolio-analyst-title",
+        "portfolio-question",
+        "portfolio-analyst-submit",
+        "etf-detail-title",
+        "detail-content",
+        "ranking-history-title",
+    ]
+
+    for element_id in expected_ids:
+        assert f'id="{element_id}"' in template
+
+        if element_id in ("portfolio-question", "detail-content"):
+            assert f'getElementById("{element_id}")' in source
+        else:
+            assert f'"{element_id}"' in source
+
+    assert "document.getElementById(elementId)" in source
+    assert "getDashboardText(translationKey)" in source
+
+    expected_translation_keys = [
+        "aiDecisionExplainabilityTitle",
+        "aiDecisionChartTitle",
+        "portfolioExplainabilityTitle",
+        "portfolioAnalystTitle",
+        "portfolioAnalystPlaceholder",
+        "portfolioAnalystSubmit",
+        "etfDetailTitle",
+        "etfDetailEmpty",
+        "rankingHistoryTitle",
+    ]
+
+    for key in expected_translation_keys:
+        assert f'"{key}"' in source
