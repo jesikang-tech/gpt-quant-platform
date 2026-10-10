@@ -122,3 +122,125 @@ def summarize_price_quality_by_date(database_path, analysis_date):
             counts[status] += 1
 
     return counts
+
+def summarize_price_quality_overall(database_path):
+    """Summarize all stored ETF prices without modifying the database."""
+
+    from datetime import date
+
+    path = Path(database_path).resolve()
+
+    counts = {
+        "total": 0,
+        "MATCH": 0,
+        "MISMATCH": 0,
+        "MISSING_SOURCE": 0,
+        "INVALID_PRICE": 0,
+        "weekend_rows": 0,
+        "price_source_verified": False,
+    }
+
+    with closing(
+        sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+    ) as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                p.date,
+                p.close_price,
+                o.close_price,
+                p.ticker,
+                o.ticker
+            FROM etf_prices AS p
+            LEFT JOIN etf_ohlcv_prices AS o
+              ON p.ticker = o.ticker
+             AND p.date = o.date
+
+            UNION ALL
+
+            SELECT
+                o.date,
+                p.close_price,
+                o.close_price,
+                p.ticker,
+                o.ticker
+            FROM etf_ohlcv_prices AS o
+            LEFT JOIN etf_prices AS p
+              ON p.ticker = o.ticker
+             AND p.date = o.date
+            WHERE p.ticker IS NULL
+            """
+        )
+
+        for day, legacy, ohlcv, legacy_ticker, ohlcv_ticker in rows:
+            counts["total"] += 1
+
+            try:
+                if date.fromisoformat(day).weekday() >= 5:
+                    counts["weekend_rows"] += 1
+            except (ValueError, TypeError):
+                pass
+
+            if legacy_ticker is None or ohlcv_ticker is None:
+                status = "MISSING_SOURCE"
+            elif not _valid_price(legacy) or not _valid_price(ohlcv):
+                status = "INVALID_PRICE"
+            elif Decimal(str(legacy)) == Decimal(str(ohlcv)):
+                status = "MATCH"
+            else:
+                status = "MISMATCH"
+
+            counts[status] += 1
+
+    return counts
+
+
+def rank_price_quality_dates(database_path, limit=10):
+    """Rank dates by cross-table close-price mismatch rate."""
+
+    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
+        raise ValueError("limit must be a positive integer")
+
+    path = Path(database_path).resolve()
+
+    with closing(
+        sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+    ) as conn:
+        dates = [
+            row[0]
+            for row in conn.execute(
+                """
+                SELECT date FROM etf_prices
+                UNION
+                SELECT date FROM etf_ohlcv_prices
+                ORDER BY date
+                """
+            )
+        ]
+
+    results = []
+
+    for day in dates:
+        summary = summarize_price_quality_by_date(
+            database_path,
+            day,
+        )
+
+        total = summary["total"]
+        summary["mismatch_rate"] = (
+            summary["MISMATCH"] / total
+            if total else 0.0
+        )
+
+        results.append(summary)
+
+    results.sort(
+        key=lambda item: (
+            -item["mismatch_rate"],
+            -item["MISMATCH"],
+            -item["MISSING_SOURCE"],
+            item["date"],
+        )
+    )
+
+    return results[:limit]
