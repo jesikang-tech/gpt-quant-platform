@@ -311,6 +311,130 @@ def _get_reality_test(ticker: str, analysis_date: str, period: str) -> dict:
     return result
 
 
+
+def _get_close_only_reality_test(
+    ticker: str, analysis_date: str, period: str
+) -> dict:
+    """Evaluate future Close observations from etf_prices, read-only."""
+    settings = _get_period_config(period)
+    window = settings["lookback_trading_days"]
+    result = {
+        "available": False,
+        "unavailable_reason": None,
+        "window_days": window,
+        "target_return_pct": settings["return_threshold"],
+        "observed_days": 0,
+        "max_close_return_pct": None,
+        "endpoint_close_return_pct": None,
+        "close_status": None,
+        "close_unavailable_reason": None,
+        "close_first_hit_day": None,
+    }
+
+    with closing(_get_replay_connection()) as conn:
+        baseline = conn.execute(
+            "SELECT close_price FROM etf_prices "
+            "WHERE ticker = ? AND date = ?",
+            (ticker, analysis_date),
+        ).fetchone()
+
+        if baseline is None:
+            result["unavailable_reason"] = "MISSING_BASELINE"
+            return result
+
+        if baseline[0] is None:
+            result["unavailable_reason"] = "INVALID_BASELINE"
+            return result
+
+        base = Decimal(str(baseline[0]))
+        if not base.is_finite() or base <= 0:
+            result["unavailable_reason"] = "INVALID_BASELINE"
+            return result
+
+        market_dates = [
+            row[0] for row in conn.execute(
+                "SELECT DISTINCT date FROM etf_prices "
+                "WHERE date > ? "
+                "AND strftime('%w', date) NOT IN ('0', '6') "
+                "ORDER BY date LIMIT ?",
+                (analysis_date, window),
+            )
+        ]
+
+        rows = conn.execute(
+            "SELECT date, close_price FROM etf_prices "
+            "WHERE ticker = ? AND date > ? "
+            "AND strftime('%w', date) NOT IN ('0', '6') "
+            "ORDER BY date LIMIT ?",
+            (ticker, analysis_date, window),
+        ).fetchall()
+
+        market_date_set = set(market_dates)
+        rows = [
+            row for row in rows
+            if row[0] in market_date_set
+        ]
+
+    observed_dates = {row[0] for row in rows}
+    missing_market_dates = [
+        day for day in market_dates
+        if day not in observed_dates
+    ]
+
+    target = Decimal(str(settings["return_threshold"])) / 100
+    returns = []
+
+    market_day_numbers = {
+        market_date: day
+        for day, market_date in enumerate(market_dates, start=1)
+    }
+
+    for observation_date, close in rows:
+        day = market_day_numbers[observation_date]
+        value = Decimal(str(close)) if close is not None else None
+        ret = (
+            value / base - 1
+            if value is not None and value.is_finite() and value > 0
+            else None
+        )
+        returns.append(ret)
+
+        if (
+            ret is not None
+            and ret >= target
+            and result["close_first_hit_day"] is None
+        ):
+            result["close_first_hit_day"] = day
+
+    result["available"] = True
+    result["observed_days"] = len(rows)
+
+    complete = (
+        len(market_dates) == window
+        and len(rows) == window
+        and not missing_market_dates
+    )
+    hit = result["close_first_hit_day"] is not None
+
+    result["close_status"] = (
+        "PASS" if hit else "FAIL" if complete else "PENDING"
+    )
+
+    if complete and not hit and None in returns:
+        result["close_status"] = None
+        result["close_unavailable_reason"] = "INCOMPLETE_CLOSE_COVERAGE"
+
+    valid_returns = [ret for ret in returns if ret is not None]
+
+    if valid_returns:
+        result["max_close_return_pct"] = float(max(valid_returns) * 100)
+
+    if complete and returns[-1] is not None:
+        result["endpoint_close_return_pct"] = float(returns[-1] * 100)
+
+    return result
+
+
 def get_current_analysis_data(
     limit: int = 10,
     analysis_date: Optional[str] = None,
@@ -480,6 +604,7 @@ def get_current_analysis_data(
         row["future_performance"] = future_performance
         row["future_performance_days"] = future_performance_days
         row["reality_test"] = _get_reality_test(row["ticker"], resolved_date, period)
+        row["close_only_reality_test"] = _get_close_only_reality_test(row["ticker"], resolved_date, period)
 
     return {
         "success": True,

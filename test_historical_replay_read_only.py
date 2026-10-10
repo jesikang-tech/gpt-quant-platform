@@ -87,7 +87,7 @@ def test_replay_historical_ranking_is_unchanged_by_future_prices(replay_db, peri
 
     def historical_rows(rows):
         return [{key: value for key, value in row.items()
-                 if key not in ("future_performance", "future_performance_days", "reality_test")}
+                 if key not in ("future_performance", "future_performance_days", "reality_test", "close_only_reality_test")}
                 for row in rows]
 
     assert historical_rows(before["current_score_top"]) == historical_rows(after["current_score_top"])
