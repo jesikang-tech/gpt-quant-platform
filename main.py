@@ -69,7 +69,8 @@ def main():
     end_date = date.today().isoformat()
 
     price_update_result = updater.update_all(
-        end_date
+        end_date,
+        current_date=date.today(),
     )
 
     logger.info(

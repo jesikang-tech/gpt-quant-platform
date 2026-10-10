@@ -40,7 +40,17 @@ class IncrementalPriceUpdater:
 
         return row[0] if row and row[0] else None
 
-    def update_ticker(self, ticker, end_date, initial_start_date="2025-01-01"):
+    def update_ticker(
+        self, ticker, end_date, initial_start_date="2025-01-01",
+        current_date=None,
+    ):
+        if current_date is not None:
+            safe_end_date = current_date - timedelta(days=1)
+            end_date = min(
+                date.fromisoformat(end_date),
+                safe_end_date,
+            ).isoformat()
+
         latest_date = self.get_latest_price_date(ticker)
 
         start_date, end_date = calculate_update_range(
@@ -99,7 +109,10 @@ class IncrementalPriceUpdater:
             if len(str(row[0])) == 6
         ]
 
-    def update_all(self, end_date, initial_start_date="2025-01-01"):
+    def update_all(
+        self, end_date, initial_start_date="2025-01-01",
+        current_date=None,
+    ):
         tickers = self.get_etf_list()
 
         results = []
@@ -114,6 +127,7 @@ class IncrementalPriceUpdater:
                     ticker,
                     end_date,
                     initial_start_date=initial_start_date,
+                    current_date=current_date,
                 )
 
                 results.append(result)
