@@ -135,9 +135,9 @@ def synthetic_snapshot_db(isolated_price_db):
 
     now = datetime.now(timezone.utc)
     cases = [
-        ("PENDING", 1, 1, "ACTIVE_OUTCOME_TRACKING", "PROTECTED"),
-        ("PENDING", 1, 120, "ACTIVE_OUTCOME_TRACKING", "PROTECTED"),
-        ("EVALUATED", 1, 45, "COMPLETED", "RETAIN_LONG_TERM"),
+        ("PENDING", 4, 1, "ACTIVE_OUTCOME_TRACKING", "PROTECTED"),
+        ("PENDING", 4, 120, "ACTIVE_OUTCOME_TRACKING", "PROTECTED"),
+        ("EVALUATED", 4, 45, "COMPLETED", "RETAIN_LONG_TERM"),
         ("EVALUATED", 0, 5, "LEGACY_EVALUATED_CANDIDATE", "RETAIN"),
         ("EVALUATED", 0, 30, "LEGACY_EVALUATED_CANDIDATE", "REVIEW_REQUIRED"),
         ("PENDING", 0, 6, "LEGACY_ORPHAN_CANDIDATE", "RETAIN"),
@@ -159,7 +159,9 @@ def synthetic_snapshot_db(isolated_price_db):
             conn.close()
         if count:
             assert save_ai_decision_portfolio_snapshot(
-                history_id, [{"ticker": "CASH", "weight": 100}], created
+                history_id, [{"ticker": ticker, "weight": 25,
+                              "reference_price": 100, "reference_price_date": created[:10]}
+                             for ticker in ("111111", "222222", "333333", "CASH")], created
             ) == count
         expected[history_id] = (lifecycle, retention, count)
     return SimpleNamespace(db=isolated_price_db, expected=expected)

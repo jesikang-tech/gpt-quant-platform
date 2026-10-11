@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import sys
 import pytest
-from price_test_support import isolated_price_db
+from price_test_support import isolated_price_db, isolated_evaluation_api
 
 
 def test_imports_do_not_open_databases_or_collect_data(tmp_path):
@@ -43,6 +43,7 @@ for name in (
     "test_price_database", "test_ranking_history", "test_market_regime", "test_portfolio_advisor",
     "test_ranking_analytics", "test_recommendation", "test_step6_10_h8_repository_integrated_safety",
     "test_step6_history_snapshot_lifecycle_classification", "test_step6_retention_classification_contract",
+    "test_step6_10_g_api_integration", "test_step6_10_g_collector_persistence",
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
@@ -130,6 +131,14 @@ def test_isolation_fixture_restores_paths_and_guards(tmp_path):
             generator = isolated_price_db.__wrapped__(tmp_path, patches)
             isolated = next(generator)
             assert config.DATABASE_PATH == database.DATABASE_PATH == isolated.path
+            import api_server
+            original_secret = api_server.app.secret_key
+            api_functions = (api_server.get_ai_decision_history,
+                             api_server.get_ai_decision_outcome_history,
+                             api_server.save_ai_decision_outcome_with_portfolio_transaction,
+                             api_server.update_ai_decision_outcome_history,
+                             api_server.save_ai_decision_audit_event)
+            isolated_evaluation_api.__wrapped__(isolated, patches)
             conn = database.get_connection()
             try:
                 assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated.path
@@ -142,3 +151,9 @@ def test_isolation_fixture_restores_paths_and_guards(tmp_path):
     assert (sqlite3.connect, sqlite3.dbapi2.connect) == original_connections
     assert (socket.socket.connect, socket.socket.connect_ex,
             socket.create_connection, socket.getaddrinfo) == original_network
+
+    assert api_server.app.secret_key == original_secret
+    assert (api_server.get_ai_decision_history, api_server.get_ai_decision_outcome_history,
+            api_server.save_ai_decision_outcome_with_portfolio_transaction,
+            api_server.update_ai_decision_outcome_history,
+            api_server.save_ai_decision_audit_event) == api_functions

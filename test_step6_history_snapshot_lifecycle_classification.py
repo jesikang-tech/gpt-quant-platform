@@ -11,4 +11,6 @@ def test_lifecycle_classification(synthetic_snapshot_db):
         expected, _, count = synthetic_snapshot_db.expected[row["history_id"]]
         assert row["classification"] == expected
         assert row["snapshot_count"] == count
+        if expected in ("ACTIVE_OUTCOME_TRACKING", "COMPLETED"):
+            assert row["snapshot_count"] == 4
     assert synthetic_snapshot_db.db.path.read_bytes() == before
