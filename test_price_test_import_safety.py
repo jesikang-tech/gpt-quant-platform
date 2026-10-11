@@ -43,6 +43,7 @@ for name in (
     "test_step6_partial_evaluation_completion_contract", "test_step6_cleanup_candidate_repository",
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
     "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
+    "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -443,6 +444,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_api_server",
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
     "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
+    "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -764,3 +766,82 @@ def test_replay_connections_restore_after_failure(isolated_price_db, test_name, 
             generator.close()
     assert (config.DATABASE_PATH, database.DATABASE_PATH, database.get_connection,
             repository.get_connection, dict(api_server.app.config), api_server.AUTH_CONFIG_PATH) == original
+
+
+@pytest.mark.parametrize("module_name", [
+    "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
+])
+@pytest.mark.parametrize("failure", [None, "assertion", "sql"])
+def test_sort_close_only_scope_blocks_fallback_and_restores(isolated_price_db, module_name, failure):
+    import importlib
+    import sqlite3
+    import config
+    import database
+    import current_analysis as analysis
+    import api_server
+
+    module = importlib.import_module(module_name)
+    names = ("_get_replay_connection", "_normalize_analysis_date", "_get_period_config",
+             "get_all_etf_tickers", "_get_etf_name_map", "get_etf_prices", "calculate_return",
+             "calculate_return_score", "calculate_trend_score", "calculate_slope_score",
+             "calculate_uptrend_ratio", "_get_future_performance", "_get_reality_test")
+    functions = tuple(getattr(analysis, name) for name in names)
+    original = (config.DATABASE_PATH, database.DATABASE_PATH, dict(api_server.app.config),
+                api_server.AUTH_CONFIG_PATH)
+    handles = []
+    with pytest.MonkeyPatch.context() as patches:
+        generator = module._protected_flask_state.__wrapped__(isolated_price_db, patches)
+        scope = next(generator)
+        real_read = analysis._get_replay_connection
+
+        def read():
+            conn = real_read()
+            handles.append(conn)
+            assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == scope.db.path
+            with pytest.raises(sqlite3.OperationalError, match="readonly"):
+                conn.execute("DELETE FROM etf_prices")
+            if failure == "assertion":
+                raise AssertionError("synthetic close-only interruption")
+            if failure == "sql":
+                conn.execute("SELECT * FROM synthetic_missing_table")
+            return conn
+
+        scope.patches.setattr(analysis, "_get_replay_connection", read)
+        try:
+            # Reproduce a default-path fallback using a nonexistent synthetic path.
+            virtual = scope.db.path.parent / "virtual-production" / "database" / "etf.db"
+            accesses = list(scope.db.accesses)
+            with pytest.MonkeyPatch.context() as fallback:
+                fallback.setattr(config, "DATABASE_PATH", virtual)
+                fallback.setattr(database, "DATABASE_PATH", virtual)
+                with pytest.raises(AssertionError, match="outside the isolated"):
+                    real_read()
+                with pytest.raises(AssertionError, match="outside the isolated"):
+                    database.get_connection()
+                with pytest.raises(AssertionError, match="outside the isolated"):
+                    sqlite3.dbapi2.connect(virtual)
+            assert scope.db.accesses == accesses
+            assert not virtual.exists()
+
+            def run():
+                if module_name == "test_ver11_analysis_sort_contract":
+                    module.test_ver11_sort_is_applied_before_limit(scope.patches, "final_score", "FINAL")
+                else:
+                    market = module.close_market.__wrapped__(scope)
+                    module.test_close_only_complete_window(market, "1m", 20, 5)
+
+            if failure:
+                expected = AssertionError if failure == "assertion" else sqlite3.OperationalError
+                with pytest.raises(expected, match="synthetic close-only interruption|no such table"):
+                    run()
+            else:
+                run()
+            assert handles, "The real Close-only read path must be exercised"
+        finally:
+            generator.close()
+    assert tuple(getattr(analysis, name) for name in names) == functions
+    assert (config.DATABASE_PATH, database.DATABASE_PATH, dict(api_server.app.config),
+            api_server.AUTH_CONFIG_PATH) == original
+    for conn in handles:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            conn.execute("SELECT 1")

@@ -1,6 +1,6 @@
 import pytest
 
-import current_analysis
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 @pytest.mark.parametrize(
@@ -114,7 +114,7 @@ def test_ver11_sort_is_applied_before_limit(monkeypatch, sort_by, expected_ticke
 def test_ver11_sort_evidence_ui_contract():
     from pathlib import Path
 
-    source = Path("static/dashboard.js").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parent / "static/dashboard.js").read_text(encoding="utf-8")
 
     assert 'trend_score: getDashboardText("ver11TrendScore")' in source
     assert 'slope_score: getDashboardText("ver11SlopeScore")' in source
@@ -432,3 +432,23 @@ def test_ver11_market_regime_scores_are_deterministic_across_display_sort(monkey
         row["ticker"]
         for row in return_result["market_regime_scores"]
     ] == expected
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    # Install DB/network guards before importing analysis or Flask modules.
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import current_analysis as analysis
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "current_analysis": analysis,
+                            "_scope": scope}.items():
+            monkeypatch.setattr(module, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before

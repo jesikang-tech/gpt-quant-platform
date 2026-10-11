@@ -4,14 +4,12 @@ from datetime import date, timedelta
 
 import pytest
 
-import config
-import current_analysis
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 @pytest.fixture
-def close_market(tmp_path, monkeypatch):
-    db = tmp_path / "close_only_reality.db"
-    monkeypatch.setattr(config, "DATABASE_PATH", db)
+def close_market(_protected_flask_state):
+    db = _protected_flask_state.db.path
 
     def seed(closes, baseline=100):
         start = date(2026, 1, 1)
@@ -182,7 +180,7 @@ def test_close_only_hit_day_uses_market_day_number(close_market):
 def test_close_only_result_attached_after_ranking():
     from pathlib import Path
 
-    source = Path("current_analysis.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parent / "current_analysis.py").read_text(encoding="utf-8")
 
     ranking = source.index("current_score_top = all_scores[:limit]")
     attachment = source.index(
@@ -197,3 +195,25 @@ def test_close_only_result_attached_after_ranking():
     assert expected in source
     assert source.index(expected) > ranking
     assert source.index(expected) > attachment
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    # Install DB/network guards before importing analysis or Flask modules.
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import current_analysis as analysis
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "current_analysis": analysis,
+                            "_scope": scope}.items():
+            monkeypatch.setattr(module, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        # Recreate only the fixture-owned DB with the original legacy schema.
+        scope.db.path.unlink()
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before
