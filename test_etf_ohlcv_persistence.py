@@ -1,18 +1,15 @@
+from price_test_support import isolated_price_db, phase8_test_scope
 import sqlite3
 from contextlib import closing
 
 import pandas as pd
 import pytest
 
-import config
-import database
-import repository
-from collector.price_collector import PriceCollector
 
 
 @pytest.fixture
-def isolated_db(tmp_path, monkeypatch):
-    path = tmp_path / "ohlcv.db"
+def isolated_db(tmp_path, monkeypatch, _protected_collection):
+    path = _protected_collection.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", path)
     monkeypatch.setattr(database, "DATABASE_PATH", path)
     return path
@@ -106,3 +103,23 @@ def test_replay_does_not_require_ohlcv(isolated_db, create_ohlcv):
     assert result["current_score_top"][0]["return"] == 19
     assert result["db_write"] is False
     assert isolated_db.read_bytes() == before
+
+
+@pytest.fixture(autouse=True)
+def _protected_collection(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import collector.incremental_price_updater as updater
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "database": scope.database,
+                            "repository": scope.repository, "updater_module": updater,
+                            "IncrementalPriceUpdater": updater.IncrementalPriceUpdater,
+                            "calculate_update_range": updater.calculate_update_range,
+                            "_scope": scope}.items():
+            scope.patches.setattr(module, name, value, raising=False)
+        from collector.price_collector import PriceCollector
+        scope.patches.setattr(module, "PriceCollector", PriceCollector, raising=False)
+        # Only remove this fixture's freshly initialized temporary DB, so the
+        # original legacy/custom schema tests still start with an empty file.
+        scope.db.path.unlink()
+        yield scope

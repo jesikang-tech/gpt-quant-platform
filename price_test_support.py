@@ -19,7 +19,8 @@ def isolated_price_db(tmp_path, monkeypatch):
     accesses = []
 
     def guarded_connect(database, *args, **kwargs):
-        if str(database).startswith("file:") or Path(database).resolve() != path:
+        readonly_uri = str(database) == path.as_uri() + "?mode=ro" and kwargs.get("uri") is True
+        if not readonly_uri and (str(database).startswith("file:") or Path(database).resolve() != path):
             raise AssertionError("SQLite access outside the isolated test DB")
         accesses.append(path)
         conn = original_connect(database, *args, **kwargs)

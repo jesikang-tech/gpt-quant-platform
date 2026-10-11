@@ -1,6 +1,7 @@
-﻿import pandas as pd
+from price_test_support import isolated_price_db, phase8_test_scope
+import pytest
+import pandas as pd
 
-from collector.incremental_price_updater import IncrementalPriceUpdater
 
 
 class FakePriceCollector:
@@ -14,13 +15,6 @@ class FakePriceCollector:
         return pd.DataFrame({"Close": [100.0, 101.0]})
 
 
-class HarnessUpdater(IncrementalPriceUpdater):
-    def __init__(self, latest_date, price_collector):
-        self._latest_date = latest_date
-        self.price_collector = price_collector
-
-    def get_latest_price_date(self, ticker):
-        return self._latest_date
 
 
 def test_update_ticker_skips_when_up_to_date():
@@ -64,7 +58,6 @@ def test_update_ticker_collects_initial_history_when_missing():
     ]
 import pandas as pd
 
-from collector.incremental_price_updater import IncrementalPriceUpdater
 
 
 class FakePriceCollector:
@@ -82,16 +75,6 @@ class FakePriceCollector:
         return pd.DataFrame({"Close": [100.0]})
 
 
-class BatchHarnessUpdater(IncrementalPriceUpdater):
-    def __init__(self, latest_dates, price_collector):
-        self.latest_dates = latest_dates
-        self.price_collector = price_collector
-
-    def get_etf_list(self):
-        return list(self.latest_dates.keys())
-
-    def get_latest_price_date(self, ticker):
-        return self.latest_dates[ticker]
 
 
 def test_update_all_returns_structured_summary_and_isolates_failures():
@@ -179,3 +162,43 @@ def test_update_ticker_returns_no_new_data_when_collector_is_empty():
     assert collector.calls == [
         ("069500", "2026-08-05", "2026-09-04")
     ]
+
+
+def _install_harnesses(IncrementalPriceUpdater):
+    class HarnessUpdater(IncrementalPriceUpdater):
+        def __init__(self, latest_date, price_collector):
+            self._latest_date = latest_date
+            self.price_collector = price_collector
+
+        def get_latest_price_date(self, ticker):
+            return self._latest_date
+
+    class BatchHarnessUpdater(IncrementalPriceUpdater):
+        def __init__(self, latest_dates, price_collector):
+            self.latest_dates = latest_dates
+            self.price_collector = price_collector
+
+        def get_etf_list(self):
+            return list(self.latest_dates.keys())
+
+        def get_latest_price_date(self, ticker):
+            return self.latest_dates[ticker]
+
+    return {'HarnessUpdater': HarnessUpdater, 'BatchHarnessUpdater': BatchHarnessUpdater}
+
+
+@pytest.fixture(autouse=True)
+def _protected_collection(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import collector.incremental_price_updater as updater
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "database": scope.database,
+                            "repository": scope.repository, "updater_module": updater,
+                            "IncrementalPriceUpdater": updater.IncrementalPriceUpdater,
+                            "calculate_update_range": updater.calculate_update_range,
+                            "_scope": scope}.items():
+            scope.patches.setattr(module, name, value, raising=False)
+        for name, value in _install_harnesses(updater.IncrementalPriceUpdater).items():
+            scope.patches.setattr(module, name, value, raising=False)
+        yield scope

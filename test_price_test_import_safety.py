@@ -38,6 +38,7 @@ for name in (
     "test_step6_10_i5_audit_persistence_design",
     "test_step6_10_i8_audit_event_table_design",
     "test_step6_10_i9_audit_migration_safety_contract",
+    "test_etf_ohlcv_persistence", "test_incremental_price_updater_contract", "test_incremental_price_updater_db_contract", "test_incremental_price_updater_update_contract", "test_price_collection_date_safety", "test_price_collection_operational_safety",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -493,3 +494,64 @@ def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name
                 api_server.get_current_analysis_data, api_server.get_dashboard_api_data) == original
     with api_server.app.test_client() as client:
         assert client.get("/api/ranking").status_code == 401
+
+
+@pytest.mark.parametrize("module_name", ['test_etf_ohlcv_persistence', 'test_incremental_price_updater_contract', 'test_incremental_price_updater_db_contract', 'test_incremental_price_updater_update_contract', 'test_price_collection_date_safety', 'test_price_collection_operational_safety'])
+@pytest.mark.parametrize("failure", [None, "assertion", "sql"])
+def test_collection_scope_restores_after_failure(isolated_price_db, module_name, failure):
+    import importlib
+    import sqlite3
+    import FinanceDataReader as fdr
+    import collector.incremental_price_updater as updater
+    import repository
+    import database
+    import config
+
+    target = importlib.import_module(module_name)
+    original = (updater.get_connection, repository.get_connection, database.get_connection,
+                config.DATABASE_PATH, database.DATABASE_PATH)
+    generator = target._protected_collection.__wrapped__(isolated_price_db)
+    scope = next(generator)
+    try:
+        conn = scope.memory()
+        for connect in (sqlite3.connect, sqlite3.dbapi2.connect):
+            with pytest.raises(AssertionError, match="outside the isolated"):
+                connect(scope.db.path.parent / "virtual-collection-forbidden.db")
+        with pytest.raises(AssertionError, match="External FDR"):
+            fdr.StockListing("ETF/KR")
+        scope.patches.setattr(updater, "get_connection", lambda: conn)
+        if failure == "assertion":
+            with pytest.raises(AssertionError, match="synthetic collection failure"):
+                generator.throw(AssertionError("synthetic collection failure"))
+        elif failure == "sql":
+            with pytest.raises(sqlite3.OperationalError) as caught:
+                conn.execute("SELECT * FROM synthetic_missing_table")
+            with pytest.raises(sqlite3.OperationalError):
+                generator.throw(caught.value)
+    finally:
+        generator.close()
+    assert (updater.get_connection, repository.get_connection, database.get_connection,
+            config.DATABASE_PATH, database.DATABASE_PATH) == original
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        conn.execute("SELECT 1")
+
+
+def test_only_exact_isolated_readonly_uri_is_allowed(isolated_price_db):
+    import sqlite3
+
+    uri = isolated_price_db.path.as_uri() + "?mode=ro"
+    conn = sqlite3.connect(uri, uri=True)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM etf_prices").fetchone()[0] == 0
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            conn.execute("INSERT INTO etf_prices VALUES ('TEST', '2026-01-01', 100)")
+        with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
+            conn.execute("ATTACH DATABASE ':memory:' AS forbidden")
+    finally:
+        conn.close()
+    for forbidden in (isolated_price_db.path.as_uri() + "?mode=rw",
+                      (isolated_price_db.path.parent / "virtual-uri.db").as_uri() + "?mode=ro"):
+        with pytest.raises(AssertionError, match="outside the isolated"):
+            sqlite3.connect(forbidden, uri=True)
+    with pytest.raises(AssertionError, match="outside the isolated"):
+        sqlite3.connect(uri)

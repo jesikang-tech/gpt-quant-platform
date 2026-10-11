@@ -1,29 +1,13 @@
-﻿import sqlite3
+from price_test_support import isolated_price_db, phase8_test_scope
+import pytest
+import sqlite3
 
-from collector.incremental_price_updater import IncrementalPriceUpdater
 
 
-class _TestUpdater(IncrementalPriceUpdater):
-
-    def __init__(self, conn):
-        self._conn = conn
-        self.price_collector = None
-
-    def get_latest_price_date(self, ticker):
-        row = self._conn.execute(
-            """
-            SELECT MAX(date)
-            FROM etf_prices
-            WHERE ticker = ?
-            """,
-            (ticker,),
-        ).fetchone()
-
-        return row[0] if row and row[0] else None
 
 
 def build_test_db():
-    conn = sqlite3.connect(":memory:")
+    conn = _scope.memory()
 
     conn.execute(
         """
@@ -94,12 +78,10 @@ def test_latest_date_does_not_cross_tickers():
     conn.close()
 import sqlite3
 
-import collector.incremental_price_updater as updater_module
-from collector.incremental_price_updater import IncrementalPriceUpdater
 
 
 def build_temp_db(tmp_path):
-    db_path = tmp_path / "price_test.db"
+    db_path = _scope.db.path
     conn = sqlite3.connect(db_path)
     conn.execute("""
         CREATE TABLE etf_prices (
@@ -140,3 +122,45 @@ def test_real_get_latest_price_date_uses_isolated_db(tmp_path, monkeypatch):
     assert updater.get_latest_price_date("069500") == "2026-08-04"
     assert updater.get_latest_price_date("305720") == "2026-08-04"
     assert updater.get_latest_price_date("999999") is None
+
+
+def _install_harnesses(IncrementalPriceUpdater):
+    class _TestUpdater(IncrementalPriceUpdater):
+
+        def __init__(self, conn):
+            self._conn = conn
+            self.price_collector = None
+
+        def get_latest_price_date(self, ticker):
+            row = self._conn.execute(
+                """
+                SELECT MAX(date)
+                FROM etf_prices
+                WHERE ticker = ?
+                """,
+                (ticker,),
+            ).fetchone()
+
+            return row[0] if row and row[0] else None
+
+    return {'_TestUpdater': _TestUpdater}
+
+
+@pytest.fixture(autouse=True)
+def _protected_collection(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import collector.incremental_price_updater as updater
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "database": scope.database,
+                            "repository": scope.repository, "updater_module": updater,
+                            "IncrementalPriceUpdater": updater.IncrementalPriceUpdater,
+                            "calculate_update_range": updater.calculate_update_range,
+                            "_scope": scope}.items():
+            scope.patches.setattr(module, name, value, raising=False)
+        for name, value in _install_harnesses(updater.IncrementalPriceUpdater).items():
+            scope.patches.setattr(module, name, value, raising=False)
+        # Only remove this fixture's freshly initialized temporary DB, so the
+        # original legacy/custom schema tests still start with an empty file.
+        scope.db.path.unlink()
+        yield scope
