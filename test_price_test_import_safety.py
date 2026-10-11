@@ -57,6 +57,11 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_step6_10_i25_audit_read_api_identifier_value_boundary",
+    "test_step6_10_i26_audit_timeline_details_projection_boundary",
+    "test_step6_10_i27_audit_timeline_details_api_projection_boundary",
+    "test_step6_10_i28_audit_timeline_limit_prefix_projection_boundary",
+
     "test_step6_10_i21_audit_lifecycle_read_api_boundary_contract",
     "test_step6_10_i22_audit_read_api_input_validation_boundary",
     "test_step6_10_i23_audit_lifecycle_read_api_response_schema_boundary",
