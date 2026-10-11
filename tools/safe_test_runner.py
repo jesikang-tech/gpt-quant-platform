@@ -4,6 +4,7 @@ This module never executes pytest or imports test modules.
 Allowlist membership does not authorize test execution.
 """
 
+from enum import Enum
 from pathlib import Path
 import sys
 
@@ -11,6 +12,29 @@ import sys
 ALLOWED_TEST_FILES = frozenset({
     "test_price_test_import_safety.py",
 })
+
+
+class OSIsolationStatus(Enum):
+    NOT_IMPLEMENTED = "NOT IMPLEMENTED"
+    UNCONFIRMED = "UNCONFIRMED"
+
+
+def check_os_isolation() -> OSIsolationStatus:
+    """Report unavailable verification without probing OS or data resources.
+
+    No trusted procedure exists to prove OS-level access denial. Environment
+    variables, file presence, identity and privilege are not isolation evidence.
+    A VERIFIED status is deliberately not provided.
+    """
+    return OSIsolationStatus.NOT_IMPLEMENTED
+
+
+def os_isolation_approved(status: object) -> bool:
+    """Deny every status, including unknown or externally supplied values.
+
+    This preflight cannot approve isolation or authorize execution.
+    """
+    return False
 
 
 def validate_candidate(candidate: str) -> tuple[bool, str]:
@@ -37,7 +61,10 @@ def main() -> int:
     print("===== SAFE TEST RUNNER: PREFLIGHT ONLY =====")
     print(f"Project root: {project_root}")
     print("Test execution: DISABLED")
-    print("OS isolation verification: NOT IMPLEMENTED")
+    isolation_status = check_os_isolation()
+    isolation_approved = os_isolation_approved(isolation_status)
+    print(f"OS isolation verification: {isolation_status.value}")
+    print(f"OS isolation approval: {'APPROVED' if isolation_approved else 'DENIED'}")
     print("Database access: NOT PERFORMED")
 
     if len(sys.argv) != 2:
