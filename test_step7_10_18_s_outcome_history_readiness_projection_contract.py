@@ -1,8 +1,4 @@
-import api_server
-from testing_helpers import authenticated_client
-
-
-client = authenticated_client(api_server.app)
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 def make_row(history_id, readiness):
@@ -53,172 +49,163 @@ def make_row(history_id, readiness):
     return tuple(row)
 
 
-print("=" * 70)
-print("PHASE 7-10-18-S")
-print("OUTCOME HISTORY API READINESS PROJECTION CONTRACT")
-print("=" * 70)
+def test_outcome_history_readiness_projection(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        api_server = scope.api
+        from testing_helpers import authenticated_client
+        client = authenticated_client(api_server.app)
+        print()
+        print("=== CASE 1: LIST API READY PROJECTION ===")
+
+        scope.patches.setattr(api_server, "get_ai_decision_outcome_history", (
+            lambda limit=10: [make_row(1001, "READY")]
+        ))
+
+        response = client.get(
+            "/api/ai-decision/outcome-history"
+        )
+
+        assert response.status_code == 200
+        payload = response.get_json()
+
+        assert payload["success"] is True
+        assert len(payload["history"]) == 1
+
+        item = payload["history"][0]
+
+        assert item["id"] == 1001
+        assert item["execution_status"] == "EXECUTION_READY"
+        assert item["execution_authorization"] == "AUTHORIZED"
+        assert item["execution_readiness"] == "READY"
+        assert item["certification_status"] == "CERTIFIED"
+        assert item["monitoring_status"] == "STANDARD_MONITORING"
+        assert item["feedback_status"] == "STABLE"
+
+        print("LIST API READY projection: PASS")
 
 
-original_list = api_server.get_ai_decision_outcome_history
-original_by_id = api_server.get_ai_decision_outcome_history_by_id
+        print()
+        print("=== CASE 2: LIST API NOT_READY PROJECTION ===")
 
-try:
-    print()
-    print("=== CASE 1: LIST API READY PROJECTION ===")
+        scope.patches.setattr(api_server, "get_ai_decision_outcome_history", (
+            lambda limit=10: [make_row(1002, "NOT_READY")]
+        ))
 
-    api_server.get_ai_decision_outcome_history = (
-        lambda limit=10: [make_row(1001, "READY")]
-    )
+        response = client.get(
+            "/api/ai-decision/outcome-history"
+        )
 
-    response = client.get(
-        "/api/ai-decision/outcome-history"
-    )
+        assert response.status_code == 200
+        payload = response.get_json()
 
-    assert response.status_code == 200
-    payload = response.get_json()
+        item = payload["history"][0]
 
-    assert payload["success"] is True
-    assert len(payload["history"]) == 1
+        assert item["id"] == 1002
+        assert item["execution_status"] == "EXECUTION_READY"
+        assert item["execution_authorization"] == "AUTHORIZED"
+        assert item["execution_readiness"] == "NOT_READY"
+        assert item["certification_status"] == "CERTIFIED"
 
-    item = payload["history"][0]
-
-    assert item["id"] == 1001
-    assert item["execution_status"] == "EXECUTION_READY"
-    assert item["execution_authorization"] == "AUTHORIZED"
-    assert item["execution_readiness"] == "READY"
-    assert item["certification_status"] == "CERTIFIED"
-    assert item["monitoring_status"] == "STANDARD_MONITORING"
-    assert item["feedback_status"] == "STABLE"
-
-    print("LIST API READY projection: PASS")
+        print("LIST API NOT_READY projection: PASS")
 
 
-    print()
-    print("=== CASE 2: LIST API NOT_READY PROJECTION ===")
+        print()
+        print("=== CASE 3: BY-ID API READY PROJECTION ===")
 
-    api_server.get_ai_decision_outcome_history = (
-        lambda limit=10: [make_row(1002, "NOT_READY")]
-    )
+        scope.patches.setattr(api_server, "get_ai_decision_outcome_history_by_id", (
+            lambda history_id: make_row(history_id, "READY")
+        ))
 
-    response = client.get(
-        "/api/ai-decision/outcome-history"
-    )
+        response = client.get(
+            "/api/ai-decision/outcome-history/2001"
+        )
 
-    assert response.status_code == 200
-    payload = response.get_json()
+        assert response.status_code == 200
+        payload = response.get_json()
 
-    item = payload["history"][0]
+        assert payload["success"] is True
 
-    assert item["id"] == 1002
-    assert item["execution_status"] == "EXECUTION_READY"
-    assert item["execution_authorization"] == "AUTHORIZED"
-    assert item["execution_readiness"] == "NOT_READY"
-    assert item["certification_status"] == "CERTIFIED"
+        item = payload["history"]
 
-    print("LIST API NOT_READY projection: PASS")
+        assert item["id"] == 2001
+        assert item["execution_status"] == "EXECUTION_READY"
+        assert item["execution_authorization"] == "AUTHORIZED"
+        assert item["execution_readiness"] == "READY"
+        assert item["certification_status"] == "CERTIFIED"
+        assert item["monitoring_status"] == "STANDARD_MONITORING"
+        assert item["feedback_status"] == "STABLE"
 
-
-    print()
-    print("=== CASE 3: BY-ID API READY PROJECTION ===")
-
-    api_server.get_ai_decision_outcome_history_by_id = (
-        lambda history_id: make_row(history_id, "READY")
-    )
-
-    response = client.get(
-        "/api/ai-decision/outcome-history/2001"
-    )
-
-    assert response.status_code == 200
-    payload = response.get_json()
-
-    assert payload["success"] is True
-
-    item = payload["history"]
-
-    assert item["id"] == 2001
-    assert item["execution_status"] == "EXECUTION_READY"
-    assert item["execution_authorization"] == "AUTHORIZED"
-    assert item["execution_readiness"] == "READY"
-    assert item["certification_status"] == "CERTIFIED"
-    assert item["monitoring_status"] == "STANDARD_MONITORING"
-    assert item["feedback_status"] == "STABLE"
-
-    print("BY-ID API READY projection: PASS")
+        print("BY-ID API READY projection: PASS")
 
 
-    print()
-    print("=== CASE 4: BY-ID API NOT_READY PROJECTION ===")
+        print()
+        print("=== CASE 4: BY-ID API NOT_READY PROJECTION ===")
 
-    api_server.get_ai_decision_outcome_history_by_id = (
-        lambda history_id: make_row(history_id, "NOT_READY")
-    )
+        scope.patches.setattr(api_server, "get_ai_decision_outcome_history_by_id", (
+            lambda history_id: make_row(history_id, "NOT_READY")
+        ))
 
-    response = client.get(
-        "/api/ai-decision/outcome-history/2002"
-    )
+        response = client.get(
+            "/api/ai-decision/outcome-history/2002"
+        )
 
-    assert response.status_code == 200
-    payload = response.get_json()
+        assert response.status_code == 200
+        payload = response.get_json()
 
-    assert payload["success"] is True
+        assert payload["success"] is True
 
-    item = payload["history"]
+        item = payload["history"]
 
-    assert item["id"] == 2002
-    assert item["execution_status"] == "EXECUTION_READY"
-    assert item["execution_authorization"] == "AUTHORIZED"
-    assert item["execution_readiness"] == "NOT_READY"
-    assert item["certification_status"] == "CERTIFIED"
-    assert item["monitoring_status"] == "STANDARD_MONITORING"
-    assert item["feedback_status"] == "STABLE"
+        assert item["id"] == 2002
+        assert item["execution_status"] == "EXECUTION_READY"
+        assert item["execution_authorization"] == "AUTHORIZED"
+        assert item["execution_readiness"] == "NOT_READY"
+        assert item["certification_status"] == "CERTIFIED"
+        assert item["monitoring_status"] == "STANDARD_MONITORING"
+        assert item["feedback_status"] == "STABLE"
 
-    print("BY-ID API NOT_READY projection: PASS")
-
-
-    print()
-    print("=== CASE 5: FIELD ORDER / PROJECTION BOUNDARY ===")
-
-    api_server.get_ai_decision_outcome_history = (
-        lambda limit=10: [make_row(3001, "READY")]
-    )
-
-    response = client.get(
-        "/api/ai-decision/outcome-history"
-    )
-
-    item = response.get_json()["history"][0]
-
-    assert (
-        item["execution_status"],
-        item["execution_authorization"],
-        item["execution_readiness"],
-        item["certification_status"],
-        item["monitoring_status"],
-        item["feedback_status"],
-    ) == (
-        "EXECUTION_READY",
-        "AUTHORIZED",
-        "READY",
-        "CERTIFIED",
-        "STANDARD_MONITORING",
-        "STABLE",
-    )
-
-    print("FIELD ORDER / PROJECTION boundary: PASS")
+        print("BY-ID API NOT_READY projection: PASS")
 
 
-    print()
-    print("=== PRODUCTION DB SAFETY ===")
-    print("All API repository calls were mocked.")
-    print("Production database mutation: NONE")
+        print()
+        print("=== CASE 5: FIELD ORDER / PROJECTION BOUNDARY ===")
+
+        scope.patches.setattr(api_server, "get_ai_decision_outcome_history", (
+            lambda limit=10: [make_row(3001, "READY")]
+        ))
+
+        response = client.get(
+            "/api/ai-decision/outcome-history"
+        )
+
+        item = response.get_json()["history"][0]
+
+        assert (
+            item["execution_status"],
+            item["execution_authorization"],
+            item["execution_readiness"],
+            item["certification_status"],
+            item["monitoring_status"],
+            item["feedback_status"],
+        ) == (
+            "EXECUTION_READY",
+            "AUTHORIZED",
+            "READY",
+            "CERTIFIED",
+            "STANDARD_MONITORING",
+            "STABLE",
+        )
+
+        print("FIELD ORDER / PROJECTION boundary: PASS")
 
 
-    print()
-    print("=" * 70)
-    print("OVERALL RESULT: PASS")
-    print("=" * 70)
+        print()
+        print("=== PRODUCTION DB SAFETY ===")
+        print("All API repository calls were mocked.")
+        print("Production database mutation: NONE")
 
-finally:
-    api_server.get_ai_decision_outcome_history = original_list
-    api_server.get_ai_decision_outcome_history_by_id = original_by_id
+
+        print()
+        print("=" * 70)
+        print("OVERALL RESULT: PASS")
+        print("=" * 70)

@@ -57,6 +57,7 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_step7_10_18_s_outcome_history_readiness_projection_contract",
     "test_step6_transaction_persistence", "test_step6_snapshot_validation_persistence",
     "test_database_summary", "test_score_history", "test_ranking_snapshot", "test_score_detail",
     "test_step6_10_i33_audit_lifecycle_completeness_api_value_projection_boundary",
@@ -372,3 +373,48 @@ def test_persistence_scope_closes_memory_on_failure(
     assert len(handles) == 1
     with pytest.raises(sqlite3.ProgrammingError, match="closed"):
         handles[0].execute("SELECT 1")
+
+
+@pytest.mark.parametrize("failure", [None, "assertion", "api"])
+def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, failure):
+    import sqlite3
+    from contextlib import nullcontext
+    import api_server
+    import test_step7_10_18_s_outcome_history_readiness_projection_contract as target
+
+    original = (api_server.get_ai_decision_outcome_history,
+                api_server.get_ai_decision_outcome_history_by_id,
+                api_server.app.secret_key, api_server.AUTH_CONFIG_PATH,
+                dict(api_server.app.config))
+    original_make_row = target.make_row
+    handles = []
+
+    def checked_row(history_id, readiness):
+        for connect in (sqlite3.connect, sqlite3.dbapi2.connect):
+            with pytest.raises(AssertionError, match="outside the isolated"):
+                connect(isolated_price_db.path.parent / "virtual-readiness-forbidden.db")
+        conn = sqlite3.connect(isolated_price_db.path)
+        handles.append(conn)
+        if failure == "assertion":
+            row = list(original_make_row(history_id, readiness))
+            row[34] = "WRONG_READINESS"
+            return tuple(row)
+        if failure == "api":
+            raise RuntimeError("synthetic readiness API failure")
+        return original_make_row(history_id, readiness)
+
+    monkeypatch.setattr(target, "make_row", checked_row)
+    # Flask returns HTTP 500 for the injected API exception; the original
+    # response-status assertion must fail rather than treating it as success.
+    with pytest.raises(AssertionError) if failure else nullcontext():
+        target.test_outcome_history_readiness_projection(isolated_price_db)
+    assert (api_server.get_ai_decision_outcome_history,
+            api_server.get_ai_decision_outcome_history_by_id,
+            api_server.app.secret_key, api_server.AUTH_CONFIG_PATH,
+            dict(api_server.app.config)) == original
+    assert handles
+    for conn in handles:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            conn.execute("SELECT 1")
+    with api_server.app.test_client() as client:
+        assert client.get("/api/ai-decision/outcome-history").status_code == 401
