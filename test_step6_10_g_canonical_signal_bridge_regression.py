@@ -8,8 +8,7 @@ All repository calls are monkeypatched; no SQLite connection is used.
 
 import pytest
 
-import api_server
-from api_server import app
+from price_test_support import isolated_price_db, phase8_test_scope
 from testing_helpers import authenticated_client
 from core.ai_decision_outcome_evaluation import (
     AIDecisionOutcomeEvaluation,
@@ -443,3 +442,21 @@ def test_portfolio_bridge_reassessment_required_forces_adaptive_learning(
     print(
         "GH reassessment_required -> adaptive_learning_required: PASS"
     )
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    # The DB/network fixture runs before api_server is imported.
+    with phase8_test_scope(isolated_price_db) as scope:
+        api = scope.api
+        import sys
+        monkeypatch.setattr(sys.modules[__name__], "api_server", api, raising=False)
+        monkeypatch.setattr(sys.modules[__name__], "app", api.app, raising=False)
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before

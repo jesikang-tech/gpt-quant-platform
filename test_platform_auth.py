@@ -1,3 +1,5 @@
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
 from core.platform_auth import validate_password_format
 
 
@@ -538,3 +540,18 @@ def test_ranking_api_rejects_unauthenticated_request(tmp_path, monkeypatch):
 
     assert response.status_code == 401
     assert response.get_json()["success"] is False
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    # The DB/network fixture runs before api_server is imported.
+    with phase8_test_scope(isolated_price_db) as scope:
+        api = scope.api
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before
