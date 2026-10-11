@@ -39,6 +39,7 @@ for name in (
     "test_step6_10_i8_audit_event_table_design",
     "test_step6_10_i9_audit_migration_safety_contract",
     "test_etf_ohlcv_persistence", "test_incremental_price_updater_contract", "test_incremental_price_updater_db_contract", "test_incremental_price_updater_update_contract", "test_price_collection_date_safety", "test_price_collection_operational_safety",
+    'test_step6_history_snapshot_lifecycle_repository', 'test_step6_history_snapshot_retention_repository', 'test_step6_history_snapshot_referential_integrity',
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -349,6 +350,9 @@ def test_isolated_db_cleans_own_files_on_generator_exit(tmp_path, interrupt):
 
 @pytest.mark.parametrize("module_name,builder_name,test_name", [
     ("test_step6_transaction_persistence", "build_test_db", "test_transaction_persistence"),
+    ('test_step6_history_snapshot_lifecycle_repository', 'build_db', 'test_snapshot_lifecycle_repository'),
+    ('test_step6_history_snapshot_retention_repository', 'build_db', 'test_snapshot_retention_repository'),
+    ('test_step6_history_snapshot_referential_integrity', 'build_db', 'test_snapshot_referential_integrity'),
     ('test_step6_10_i5_audit_persistence_design', 'build_db', 'test_i5_audit_persistence_design'),
     ('test_step6_10_i8_audit_event_table_design', 'build_db', 'test_i8_audit_event_table_design'),
     ('test_step6_10_i9_audit_migration_safety_contract', 'build_existing_db', 'test_i9_audit_migration_safety_contract'),
