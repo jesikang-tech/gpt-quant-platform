@@ -5,13 +5,12 @@ from datetime import date, timedelta
 import pytest
 from testing_helpers import authenticated_client
 
-import config
-import current_analysis
+from price_test_support import _isolated_price_db, phase8_test_scope
 
 
 @pytest.fixture
-def market(tmp_path, monkeypatch):
-    path = tmp_path / "reality.db"
+def market(tmp_path, monkeypatch, _protected_flask_state):
+    path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", path)
 
     def seed(closes, highs=None, baseline=100):
@@ -412,3 +411,30 @@ def test_replay_price_history_excludes_weekend_rows(market):
         date.fromisoformat(row[0]).weekday() < 5
         for row in rows
     )
+
+
+@pytest.fixture
+def isolated_price_db(tmp_path, monkeypatch):
+    yield from _isolated_price_db(tmp_path, monkeypatch, 'reality.db')
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import current_analysis as analysis
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "database": scope.database,
+                            "current_analysis": analysis, "_scope": scope}.items():
+            monkeypatch.setattr(module, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        # The original tests create legacy-only schemas, or intentionally open
+        # an absent DB. Remove only the freshly initialized fixture-owned file.
+        scope.db.path.unlink()
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before

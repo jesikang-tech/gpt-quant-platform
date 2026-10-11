@@ -14,9 +14,18 @@ import pytest
 
 @pytest.fixture
 def isolated_price_db(tmp_path, monkeypatch):
-    path = (tmp_path / "prices.db").resolve()
+    yield from _isolated_price_db(tmp_path, monkeypatch)
+
+
+def _isolated_price_db(tmp_path, monkeypatch, filename="prices.db"):
+    # Keep custom test filenames (including URI-escaped characters) inside tmp_path.
+    if Path(filename).name != filename or filename in ("", ".", ".."):
+        raise AssertionError("Isolated DB filename must be a single leaf name")
+    path = (tmp_path / filename).resolve()
+    assert path.parent == tmp_path.resolve()
     original_connect = sqlite3.connect
     accesses = []
+    connections = []
 
     def guarded_connect(database, *args, **kwargs):
         readonly_uri = str(database) == path.as_uri() + "?mode=ro" and kwargs.get("uri") is True
@@ -24,6 +33,7 @@ def isolated_price_db(tmp_path, monkeypatch):
             raise AssertionError("SQLite access outside the isolated test DB")
         accesses.append(path)
         conn = original_connect(database, *args, **kwargs)
+        connections.append(conn)
         conn.set_authorizer(
             lambda action, *unused: sqlite3.SQLITE_DENY
             if action == sqlite3.SQLITE_ATTACH else sqlite3.SQLITE_OK
@@ -51,19 +61,22 @@ def isolated_price_db(tmp_path, monkeypatch):
     monkeypatch.setattr(fdr, "StockListing", deny_external)
     monkeypatch.setattr(config, "DATABASE_PATH", path)
     monkeypatch.setattr(database, "DATABASE_PATH", path)
-    database.init_database()
     def connect_memory():
         # Fixed memory target only; no arbitrary path or URI is accepted.
         conn = original_connect(":memory:")
+        connections.append(conn)
         conn.set_authorizer(lambda action, *unused: sqlite3.SQLITE_DENY
                             if action == sqlite3.SQLITE_ATTACH else sqlite3.SQLITE_OK)
         return conn
 
     try:
+        database.init_database()
         yield SimpleNamespace(path=path, connect=database.get_connection, accesses=accesses,
                               connect_memory=connect_memory)
         assert accesses and all(access == path for access in accesses)
     finally:
+        for conn in connections:
+            conn.close()
         # Only the DB created by this fixture and its own SQLite sidecars.
         assert path.parent == tmp_path.resolve()
         for suffix in ("", "-journal", "-wal", "-shm"):

@@ -5,14 +5,12 @@ from datetime import date, timedelta
 import pytest
 from testing_helpers import authenticated_client
 
-import config
-import current_analysis
-import database
+from price_test_support import _isolated_price_db, phase8_test_scope
 
 
 @pytest.fixture
-def replay_db(tmp_path, monkeypatch):
-    path = tmp_path / "replay # test.db"
+def replay_db(tmp_path, monkeypatch, _protected_flask_state):
+    path = _scope.db.path
     days = []
     day = date(2026, 1, 1)
     while len(days) < 60:
@@ -58,7 +56,7 @@ def test_replay_boundary_rejects_writes(replay_db, statement):
 
 
 def test_replay_boundary_does_not_create_missing_database(tmp_path, monkeypatch):
-    path = tmp_path / "missing.db"
+    path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", path)
     with pytest.raises(sqlite3.OperationalError):
         current_analysis._get_replay_connection()
@@ -151,3 +149,30 @@ def test_replay_missing_or_nonpositive_baseline_has_no_result(replay_db, baselin
     assert row["future_performance_days"] == 0
     assert result["db_write"] is False
     assert path.read_bytes() == before
+
+
+@pytest.fixture
+def isolated_price_db(tmp_path, monkeypatch):
+    yield from _isolated_price_db(tmp_path, monkeypatch, 'replay # test.db')
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import current_analysis as analysis
+        module = sys.modules[__name__]
+        for name, value in {"config": scope.config, "database": scope.database,
+                            "current_analysis": analysis, "_scope": scope}.items():
+            monkeypatch.setattr(module, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        # The original tests create legacy-only schemas, or intentionally open
+        # an absent DB. Remove only the freshly initialized fixture-owned file.
+        scope.db.path.unlink()
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before

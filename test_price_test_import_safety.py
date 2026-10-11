@@ -42,6 +42,7 @@ for name in (
     'test_step6_history_snapshot_lifecycle_repository', 'test_step6_history_snapshot_retention_repository', 'test_step6_history_snapshot_referential_integrity',
     "test_step6_partial_evaluation_completion_contract", "test_step6_cleanup_candidate_repository",
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
+    "test_historical_reality_test", "test_historical_replay_read_only",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -441,6 +442,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_api_server",
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
+    "test_historical_reality_test", "test_historical_replay_read_only",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -479,7 +481,8 @@ def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name
                 def fail_query(*args, **kwargs):
                     raise RuntimeError("synthetic auth API failure")
                 if module_name in ("test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
-                                   "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract"):
+                                   "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
+                                   "test_historical_reality_test", "test_historical_replay_read_only"):
                     scope.patches.setattr(api_server, "get_current_analysis_data", fail_query)
                     route = "/api/historical-replay" if "historical" in module_name else "/api/ver11-analysis"
                     response = (client.post("/api/ver11-analysis/snapshots?date=2026-09-04&period=3m")
@@ -616,3 +619,79 @@ def test_partial_cleanup_scope_restores_after_failure(
     for conn in handles:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             conn.execute("SELECT 1")
+
+
+@pytest.mark.parametrize("filename", ["replay # test.db", "reality.db"])
+@pytest.mark.parametrize("failure", [None, "assertion", "sql"])
+def test_custom_isolated_filename_cleanup(tmp_path, filename, failure):
+    import sqlite3
+    from price_test_support import _isolated_price_db
+
+    with pytest.MonkeyPatch.context() as patches:
+        generator = _isolated_price_db(tmp_path, patches, filename)
+        db = next(generator)
+        try:
+            conn = sqlite3.connect(db.path.as_uri() + "?mode=ro", uri=True)
+            try:
+                with pytest.raises(sqlite3.OperationalError, match="readonly"):
+                    conn.execute("DELETE FROM etf_prices")
+            finally:
+                conn.close()
+            # Only synthetic sidecars belonging to this temporary DB.
+            for suffix in ("-journal", "-wal", "-shm"):
+                db.path.with_name(db.path.name + suffix).touch()
+            if failure == "assertion":
+                with pytest.raises(AssertionError, match="synthetic filename failure"):
+                    generator.throw(AssertionError("synthetic filename failure"))
+            elif failure == "sql":
+                with pytest.raises(sqlite3.OperationalError, match="synthetic filename SQL failure"):
+                    generator.throw(sqlite3.OperationalError("synthetic filename SQL failure"))
+        finally:
+            generator.close()
+    assert not db.path.exists()
+    assert all(not db.path.with_name(db.path.name + suffix).exists()
+               for suffix in ("-journal", "-wal", "-shm"))
+
+
+@pytest.mark.parametrize("filename", ["..", "../virtual-forbidden.db", "nested/virtual.db"])
+def test_isolated_filename_cannot_escape_tmp_path(tmp_path, filename):
+    from price_test_support import _isolated_price_db
+
+    with pytest.MonkeyPatch.context() as patches:
+        generator = _isolated_price_db(tmp_path, patches, filename)
+        try:
+            with pytest.raises(AssertionError, match="single leaf name"):
+                next(generator)
+        finally:
+            generator.close()
+
+
+def test_isolated_db_setup_sql_failure_closes_and_cleans(tmp_path):
+    import sqlite3
+    from price_test_support import _isolated_price_db
+
+    handles = []
+    with pytest.MonkeyPatch.context() as patches:
+        class SetupFailurePatches:
+            def setattr(self, obj, name, value, **kwargs):
+                patches.setattr(obj, name, value, **kwargs)
+                if getattr(obj, "__name__", None) == "database" and name == "DATABASE_PATH":
+                    def fail_init():
+                        # This hook is installed only after DB/network guards.
+                        conn = sqlite3.connect(value)
+                        handles.append(conn)
+                        conn.execute("CREATE TABLE synthetic_setup_table(x)")
+                        conn.execute("SELECT * FROM synthetic_missing_setup_table")
+                    patches.setattr(obj, "init_database", fail_init)
+        generator = _isolated_price_db(tmp_path, SetupFailurePatches())
+        try:
+            with pytest.raises(sqlite3.OperationalError, match="no such table"):
+                next(generator)
+        finally:
+            generator.close()
+    assert len(handles) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        handles[0].execute("SELECT 1")
+    path = tmp_path / "prices.db"
+    assert all(not path.with_name(path.name + suffix).exists()
+               for suffix in ("", "-journal", "-wal", "-shm"))
