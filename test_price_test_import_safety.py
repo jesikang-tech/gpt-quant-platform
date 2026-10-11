@@ -45,6 +45,7 @@ for name in (
     "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
     "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
     "test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
+    "test_price_quality_daily_ranking", "test_price_quality_overall", "test_price_quality_summary",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -447,6 +448,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
     "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
     "test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
+    "test_price_quality_daily_ranking", "test_price_quality_overall", "test_price_quality_summary",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -892,7 +894,8 @@ def test_readwrite_uri_is_opt_in_and_exact(tmp_path, enabled):
 
 @pytest.mark.parametrize("module_name,failure", [
     (name, failure)
-    for name in ("test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary")
+    for name in ("test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
+                 "test_price_quality_daily_ranking", "test_price_quality_overall", "test_price_quality_summary")
     for failure in (None, "assertion", "sql")
 ] + [("test_ohlcv_backfill", "init")])
 def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure):
@@ -918,6 +921,26 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
         original_state = (dict(scope.api.app.config), scope.api.AUTH_CONFIG_PATH,
                           scope.database.init_database, scope.repository.get_connection)
         original_class = (module.module.OHLCVBackfill if module_name == "test_ohlcv_backfill" else None)
+        summary_contracts = {
+            "test_price_quality_daily_ranking": ("rank_price_quality_dates", "test_rank_price_quality_dates"),
+            "test_price_quality_overall": ("summarize_price_quality_overall", "test_overall_price_quality_report"),
+            "test_price_quality_summary": ("summarize_price_quality_by_date", "test_daily_price_quality_summary"),
+        }
+        query_name = summary_contracts.get(module_name, ("check_price_quality", None))[0]
+        original_query = getattr(module, query_name, None)
+        readonly_handles = []
+        if module_name in summary_contracts:
+            guarded_connect = sqlite3.connect
+            def observe_connect(path, *args, **kwargs):
+                conn = guarded_connect(path, *args, **kwargs)
+                if str(path).startswith("file:"):
+                    assert str(path) == db.path.as_uri() + "?mode=ro"
+                    assert kwargs.get("uri") is True
+                    readonly_handles.append(conn)
+                    with pytest.raises(sqlite3.OperationalError, match="readonly"):
+                        conn.execute("DELETE FROM etf_prices")
+                return conn
+            scope.patches.setattr(sqlite3, "connect", observe_connect)
         try:
             def interrupt():
                 if failure == "assertion":
@@ -944,17 +967,19 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
                         module.test_no_initialization_on_import_or_missing_schema(tmp_path, scope.patches)
                 else:
                     if failure:
-                        real = module.check_price_quality
+                        real = getattr(module, query_name)
                         def check(*args, **kwargs):
                             result = real(*args, **kwargs)
                             interrupt()
                             return result
-                        scope.patches.setattr(module, "check_price_quality", check)
+                        scope.patches.setattr(module, query_name, check)
                     if module_name == "test_price_quality":
                         path = module.quality_db.__wrapped__(scope)
                         module.test_price_quality_status(path, "MATCH", "MATCH")
-                    else:
+                    elif module_name == "test_price_quality_boundary":
                         module.test_matching_prices_are_not_source_verified(tmp_path)
+                    else:
+                        getattr(module, summary_contracts[module_name][1])(tmp_path)
 
             if failure:
                 expected = AssertionError if failure == "assertion" else sqlite3.OperationalError
@@ -962,6 +987,8 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
                     run()
             else:
                 run()
+            if module_name in summary_contracts:
+                assert readonly_handles, "The actual summary/ranking read-only query must run"
             handles.extend(scope.handles)
             for suffix in ("-journal", "-wal", "-shm"):
                 db.path.with_name(db.path.name + suffix).touch()
@@ -974,6 +1001,8 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
                 scope.database.init_database, scope.repository.get_connection) == original_state
         if original_class is not None:
             assert module.module.OHLCVBackfill is original_class
+        if original_query is not None:
+            assert getattr(module, query_name) is original_query
     assert (sqlite3.connect, sqlite3.dbapi2.connect, socket.socket.connect) == originals
     assert all(getattr(obj, "DATABASE_PATH") == value for obj, value in path_originals.items())
     assert all(not db.path.with_name(db.path.name + suffix).exists()

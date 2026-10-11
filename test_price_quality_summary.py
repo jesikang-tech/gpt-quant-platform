@@ -1,11 +1,12 @@
 import sqlite3
 from contextlib import closing
+import pytest
 
-from price_quality import summarize_price_quality_by_date
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 def test_daily_price_quality_summary(tmp_path):
-    db = tmp_path / "daily_quality.db"
+    db = _scope.db.path
 
     with closing(sqlite3.connect(db)) as conn:
         conn.executescript("""
@@ -55,7 +56,7 @@ def test_daily_price_quality_summary(tmp_path):
 
 
 def test_daily_summary_null_and_missing_sources(tmp_path):
-    db = tmp_path / "summary_boundary.db"
+    db = _scope.db.path
 
     with closing(sqlite3.connect(db)) as conn:
         conn.executescript("""
@@ -97,7 +98,7 @@ def test_daily_summary_null_and_missing_sources(tmp_path):
 
 
 def test_daily_summary_missing_database_not_created(tmp_path):
-    db = tmp_path / "missing_summary.db"
+    db = _scope.db.path
 
     import pytest
 
@@ -105,3 +106,23 @@ def test_daily_summary_missing_database_not_created(tmp_path):
         summarize_price_quality_by_date(db, "2026-09-16")
 
     assert not db.exists()
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        from price_quality import summarize_price_quality_by_date
+        target = sys.modules[__name__]
+        for name, value in {"summarize_price_quality_by_date": summarize_price_quality_by_date, "_scope": scope}.items():
+            monkeypatch.setattr(target, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        # Preserve the original schemas and genuinely absent-DB error contracts.
+        scope.db.path.unlink()
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before
