@@ -37,6 +37,9 @@ FinanceDataReader.StockListing = deny
 for name in (
     "test_bulk_price_collector", "test_price_collector", "test_database",
     "test_provider", "test_collector", "test_insert_etf_info",
+    "test_dashboard_api", "test_dashboard_data", "test_dashboard_json",
+    "test_intelligence_summary", "test_intelligence_universe", "test_multi_ranking",
+    "test_ranking_prediction", "test_universe_ranking",
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
@@ -105,3 +108,34 @@ def test_network_entrypoints_are_blocked(isolated_price_db, entrypoint):
             socket.create_connection(("192.0.2.1", 443))
         else:
             socket.getaddrinfo("192.0.2.1", 443)
+
+
+
+def test_isolation_fixture_restores_paths_and_guards(tmp_path):
+    import config
+    import database
+    import socket
+    import sqlite3
+
+    original_paths = (config.DATABASE_PATH, database.DATABASE_PATH)
+    original_connections = (sqlite3.connect, sqlite3.dbapi2.connect)
+    original_network = (socket.socket.connect, socket.socket.connect_ex,
+                        socket.create_connection, socket.getaddrinfo)
+    generator = None
+    with pytest.MonkeyPatch.context() as patches:
+        try:
+            generator = isolated_price_db.__wrapped__(tmp_path, patches)
+            isolated = next(generator)
+            assert config.DATABASE_PATH == database.DATABASE_PATH == isolated.path
+            conn = database.get_connection()
+            try:
+                assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated.path
+            finally:
+                conn.close()
+        finally:
+            if generator is not None:
+                generator.close()
+    assert (config.DATABASE_PATH, database.DATABASE_PATH) == original_paths
+    assert (sqlite3.connect, sqlite3.dbapi2.connect) == original_connections
+    assert (socket.socket.connect, socket.socket.connect_ex,
+            socket.create_connection, socket.getaddrinfo) == original_network

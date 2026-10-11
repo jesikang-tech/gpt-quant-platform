@@ -91,3 +91,37 @@ def isolated_evaluation_api(isolated_price_db, monkeypatch):
 
     return SimpleNamespace(api=api_server, client=client, audit_count=audit_count,
                            assert_audit=assert_audit, db=isolated_price_db)
+
+
+@pytest.fixture
+def synthetic_ranking_db(isolated_price_db):
+    """Synthetic rising, stable, falling and history-free ETF observations."""
+    dates = ("2026-01-02", "2026-01-05", "2026-01-06")
+    scores = {"111111": (60, 75, 90), "222222": (70, 70, 70),
+              "333333": (80, 65, 50)}
+    ranks = {"111111": (3, 2, 1), "222222": (2, 2, 2), "333333": (1, 3, 4)}
+    conn = isolated_price_db.connect()
+    try:
+        with conn:
+            for ticker in scores:
+                conn.executemany(
+                    "INSERT INTO etf_ranking_history(ticker, rank, final_score, ranking_date) "
+                    "VALUES (?, ?, ?, ?)",
+                    [(ticker, rank, score, day) for rank, score, day in
+                     zip(ranks[ticker], scores[ticker], dates)],
+                )
+                conn.executemany(
+                    "INSERT INTO etf_scores(ticker, return_score, trend_score, slope_score, "
+                    "final_score, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    [(ticker, score / 2, score / 3, score / 6, score, day)
+                     for score, day in zip(scores[ticker], dates)],
+                )
+            conn.execute(
+                "INSERT INTO etf_scores(ticker, return_score, trend_score, slope_score, "
+                "final_score, created_at) VALUES ('444444', 15, 10, 5, 30, ?)", (dates[-1],)
+            )
+            conn.execute("INSERT INTO etf_prices VALUES ('111111', ?, 100)", (dates[-1],))
+        assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated_price_db.path
+    finally:
+        conn.close()
+    return SimpleNamespace(db=isolated_price_db, dates=dates, scores=scores, ranks=ranks)
