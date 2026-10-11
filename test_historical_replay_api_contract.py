@@ -1,11 +1,10 @@
-import api_server
-import current_analysis
+from price_test_support import isolated_price_db, phase8_test_scope
 import pytest
 from testing_helpers import authenticated_client
 
 
 @pytest.fixture(autouse=True)
-def isolated_market_date(monkeypatch):
+def isolated_market_date(monkeypatch, _protected_flask_state):
     # API contract tests must never depend on the production database.
     monkeypatch.setattr(current_analysis, "_get_latest_market_date", lambda: "2026-09-04")
     monkeypatch.setattr(current_analysis, "_is_trading_day", lambda value: True)
@@ -193,3 +192,21 @@ def test_historical_replay_api_response_field_contract(monkeypatch):
     assert row["final_score"] == 88.3
     assert row["future_performance"] == 2.17
     assert row["future_performance_days"] == 12
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        api = scope.api
+        import sys
+        import current_analysis as analysis
+        monkeypatch.setattr(sys.modules[__name__], "api_server", api, raising=False)
+        monkeypatch.setattr(sys.modules[__name__], "current_analysis", analysis, raising=False)
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before

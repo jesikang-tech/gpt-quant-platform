@@ -1,3 +1,7 @@
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
+
+
 def test_ver11_analysis_api_passes_date_period_and_limit(tmp_path, monkeypatch):
     import api_server
     from core.platform_auth import (
@@ -524,3 +528,17 @@ def test_ver11_point_in_time_explain_does_not_read_current_market_or_scores(
         == "aggressive"
     )
     assert data["point_in_time_explanation"]["portfolio"]["cash_weight"] == 5
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        api = scope.api
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before

@@ -38,6 +38,7 @@ for name in (
     "test_step6_10_i5_audit_persistence_design",
     "test_step6_10_i8_audit_event_table_design",
     "test_step6_10_i9_audit_migration_safety_contract",
+    "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
     "test_bulk_price_collector", "test_price_collector", "test_database",
     "test_provider", "test_collector", "test_insert_etf_info",
@@ -429,6 +430,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
 
 @pytest.mark.parametrize("module_name", [
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
+    "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -440,7 +442,8 @@ def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name
 
     module = importlib.import_module(module_name)
     original = (dict(api_server.app.config), api_server.AUTH_CONFIG_PATH,
-                api_server.get_ai_decision_history, api_server.get_ai_decision_outcome_history)
+                api_server.get_ai_decision_history, api_server.get_ai_decision_outcome_history,
+                api_server.get_current_analysis_data)
     with pytest.MonkeyPatch.context() as patches:
         generator = module._protected_flask_state.__wrapped__(isolated_price_db, patches)
         scope = next(generator)
@@ -459,15 +462,25 @@ def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name
             elif failure == "api":
                 def fail_query(*args, **kwargs):
                     raise RuntimeError("synthetic auth API failure")
-                scope.patches.setattr(api_server, "get_ai_decision_history", fail_query)
-                scope.patches.setattr(api_server.app, "testing", True)
-                with pytest.raises(RuntimeError, match="synthetic auth API failure") as caught:
-                    client.get("/api/ai-decision/adaptive-strategy")
-                with pytest.raises(RuntimeError, match="synthetic auth API failure"):
-                    generator.throw(caught.value)
+                if module_name in ("test_historical_replay_api_contract", "test_ver11_analysis_api_contract"):
+                    scope.patches.setattr(api_server, "get_current_analysis_data", fail_query)
+                    route = "/api/historical-replay" if "historical" in module_name else "/api/ver11-analysis"
+                    response = client.get(route + "?date=2026-09-04&period=3m")
+                    assert response.status_code == 500
+                    assert response.get_json()["message"] == "synthetic auth API failure"
+                    with pytest.raises(RuntimeError, match="synthetic auth API failure"):
+                        generator.throw(RuntimeError("synthetic auth API failure"))
+                else:
+                    scope.patches.setattr(api_server, "get_ai_decision_history", fail_query)
+                    scope.patches.setattr(api_server.app, "testing", True)
+                    with pytest.raises(RuntimeError, match="synthetic auth API failure") as caught:
+                        client.get("/api/ai-decision/adaptive-strategy")
+                    with pytest.raises(RuntimeError, match="synthetic auth API failure"):
+                        generator.throw(caught.value)
         finally:
             generator.close()
     assert (dict(api_server.app.config), api_server.AUTH_CONFIG_PATH,
-            api_server.get_ai_decision_history, api_server.get_ai_decision_outcome_history) == original
+            api_server.get_ai_decision_history, api_server.get_ai_decision_outcome_history,
+                api_server.get_current_analysis_data) == original
     with api_server.app.test_client() as client:
         assert client.get("/api/ranking").status_code == 401
