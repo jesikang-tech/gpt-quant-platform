@@ -57,6 +57,12 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_step6_10_i12_runtime_outcome_evaluation_audit_persistence",
+    "test_step6_10_i13_runtime_adaptive_strategy_audit_persistence",
+    "test_step6_10_i14_runtime_reassessment_audit_persistence",
+    "test_step6_10_i15_end_to_end_audit_lifecycle_persistence",
+    "test_step6_10_i16_runtime_reassessment_audit_persistence_contract",
+
     "test_phase8_6_a_runtime_evaluation_persistence",
     "test_phase8_6_b_runtime_evaluation_rollback",
     "test_phase8_6_c_runtime_evaluation_partial_audit",
@@ -229,3 +235,30 @@ def test_phase8_scope_restores_functions_and_closes_connections(isolated_price_d
             authenticated_client(scope.api.app)
             if interrupt:
                 raise RuntimeError("synthetic interruption")
+
+
+@pytest.mark.parametrize("interrupt", [False, True])
+def test_audit_scope_blocks_fallback_and_restores_after_failure(isolated_price_db, interrupt):
+    from contextlib import nullcontext
+    import sqlite3
+    from price_test_support import phase8_test_scope
+
+    expected = pytest.raises(RuntimeError, match="synthetic audit interruption") if interrupt else nullcontext()
+    with expected:
+        with phase8_test_scope(isolated_price_db) as scope:
+            for connect in (sqlite3.connect, sqlite3.dbapi2.connect):
+                with pytest.raises(AssertionError, match="outside the isolated"):
+                    connect(isolated_price_db.path.parent / "virtual-audit-forbidden.db")
+            scope.repository.save_ai_decision_audit_event(
+                "TEST_AUDIT", "2026-01-06T12:00:00+00:00", "synthetic_test",
+                status="GENERATED", outcome_history_id=1)
+            with pytest.raises(ValueError, match="event_time is required"):
+                scope.repository.save_ai_decision_audit_event("TEST_FAILURE", "", "synthetic_test")
+            conn = scope.database.get_connection()
+            assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated_price_db.path
+            assert conn.execute("SELECT COUNT(*) FROM audit_event").fetchone()[0] == 1
+            # Deliberately leave this handle open: the scope must close it on either exit.
+            scope.patches.setattr(scope.config, "DATABASE_PATH", isolated_price_db.path.parent / "virtual-config.db")
+            scope.patches.setattr(scope.database, "DATABASE_PATH", isolated_price_db.path.parent / "virtual-database.db")
+            if interrupt:
+                raise RuntimeError("synthetic audit interruption")

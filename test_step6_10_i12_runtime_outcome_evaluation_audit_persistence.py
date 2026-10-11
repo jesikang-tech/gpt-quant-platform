@@ -1,30 +1,12 @@
-﻿import os
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
-import repository
+"""Synthetic audit persistence contract; no execution during import."""
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
-def run_test():
-    fd, db_path = tempfile.mkstemp(
-        prefix="step6_10_i12_",
-        suffix=".db"
-    )
-    os.close(fd)
+def test_i12_audit_persistence(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        database, repository = scope.database, scope.repository
 
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
 
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        database.init_database()
 
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -112,7 +94,7 @@ def run_test():
         assert result["outcome_status"] == "EVALUATED"
         assert result["portfolio_return"] == 1.0
 
-        conn = sqlite3.connect(test_db_path)
+        conn = database.get_connection()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -184,21 +166,3 @@ def run_test():
         print("OVERALL RESULT: PASS")
 
         conn.close()
-
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-print("=" * 60)
-print(
-    "Step6-10-I-12 Runtime Outcome Evaluation Audit Persistence"
-)
-print("=" * 60)
-
-run_test()
