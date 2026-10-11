@@ -1,4 +1,5 @@
-from core.market_regime import analyze_market_regime
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 def test_market_regime_accepts_replay_scores_without_repository_read(monkeypatch):
@@ -347,3 +348,24 @@ def test_common_point_in_time_analysis_attaches_portfolio_and_explanation(monkey
         "BBB",
         "CCC",
     ]
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        api = scope.api
+        module = sys.modules[__name__]
+        monkeypatch.setattr(module, "_scope", scope, raising=False)
+        monkeypatch.setattr(module, "config", scope.config, raising=False)
+        monkeypatch.setattr(module, "database", scope.database, raising=False)
+        from core.market_regime import analyze_market_regime
+        monkeypatch.setattr(module, "analyze_market_regime", analyze_market_regime, raising=False)
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before

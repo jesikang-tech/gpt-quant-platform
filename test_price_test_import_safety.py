@@ -41,6 +41,7 @@ for name in (
     "test_etf_ohlcv_persistence", "test_incremental_price_updater_contract", "test_incremental_price_updater_db_contract", "test_incremental_price_updater_update_contract", "test_price_collection_date_safety", "test_price_collection_operational_safety",
     'test_step6_history_snapshot_lifecycle_repository', 'test_step6_history_snapshot_retention_repository', 'test_step6_history_snapshot_referential_integrity',
     "test_step6_partial_evaluation_completion_contract", "test_step6_cleanup_candidate_repository",
+    "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -439,8 +440,9 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_api_server",
+    "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
 ])
-@pytest.mark.parametrize("failure", [None, "assertion", "api"])
+@pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
     import importlib
     import sqlite3
@@ -467,13 +469,22 @@ def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name
             if failure == "assertion":
                 with pytest.raises(AssertionError, match="synthetic auth interruption"):
                     generator.throw(AssertionError("synthetic auth interruption"))
+            elif failure == "sql":
+                conn = scope.memory()
+                with pytest.raises(sqlite3.OperationalError, match="no such table") as caught:
+                    conn.execute("SELECT * FROM synthetic_missing_table")
+                with pytest.raises(sqlite3.OperationalError, match="no such table"):
+                    generator.throw(caught.value)
             elif failure == "api":
                 def fail_query(*args, **kwargs):
                     raise RuntimeError("synthetic auth API failure")
-                if module_name in ("test_historical_replay_api_contract", "test_ver11_analysis_api_contract"):
+                if module_name in ("test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
+                                   "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract"):
                     scope.patches.setattr(api_server, "get_current_analysis_data", fail_query)
                     route = "/api/historical-replay" if "historical" in module_name else "/api/ver11-analysis"
-                    response = client.get(route + "?date=2026-09-04&period=3m")
+                    response = (client.post("/api/ver11-analysis/snapshots?date=2026-09-04&period=3m")
+                                if module_name == "test_ver11_snapshot_contract"
+                                else client.get(route + "?date=2026-09-04&period=3m"))
                     assert response.status_code == 500
                     assert response.get_json()["message"] == "synthetic auth API failure"
                     with pytest.raises(RuntimeError, match="synthetic auth API failure"):

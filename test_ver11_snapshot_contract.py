@@ -4,13 +4,12 @@ from pathlib import Path
 
 import pytest
 
-import config
-import database
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 @pytest.fixture
-def isolated_db(tmp_path, monkeypatch):
-    path = tmp_path / "ver11_snapshot.db"
+def isolated_db(tmp_path, monkeypatch, _protected_flask_state):
+    path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", path)
     monkeypatch.setattr(database, "DATABASE_PATH", path)
     return path
@@ -174,7 +173,7 @@ def test_ver11_snapshot_api_recomputes_and_saves_point_in_time_result(
     import config
     import database
 
-    db_path = tmp_path / "ver11_snapshot_api.db"
+    db_path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", db_path)
     monkeypatch.setattr(database, "DATABASE_PATH", db_path)
     database.init_database()
@@ -292,7 +291,7 @@ def test_ver11_snapshot_history_and_detail_api(tmp_path, monkeypatch):
     import config
     import database
 
-    db_path = tmp_path / "ver11_snapshot_history_api.db"
+    db_path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", db_path)
     monkeypatch.setattr(database, "DATABASE_PATH", db_path)
     database.init_database()
@@ -363,7 +362,7 @@ def test_ver11_snapshot_detail_api_returns_404_for_missing_snapshot(
     import config
     import database
 
-    db_path = tmp_path / "ver11_snapshot_missing_api.db"
+    db_path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", db_path)
     monkeypatch.setattr(database, "DATABASE_PATH", db_path)
     database.init_database()
@@ -391,7 +390,7 @@ def test_ver11_snapshot_history_api_rejects_invalid_limit(
     import config
     import database
 
-    db_path = tmp_path / "ver11_snapshot_invalid_limit_api.db"
+    db_path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", db_path)
     monkeypatch.setattr(database, "DATABASE_PATH", db_path)
     database.init_database()
@@ -478,7 +477,7 @@ def test_ver11_snapshot_payload_recursively_excludes_future_only_fields():
 
 
 def test_api_server_direct_start_initializes_database_before_auth():
-    source = Path("api_server.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parent / "api_server.py").read_text(encoding="utf-8")
 
     assert "from database import init_database" in source
 
@@ -497,7 +496,7 @@ def test_ver11_snapshot_save_api_rejects_invalid_limit(
     import config
     import database
 
-    db_path = tmp_path / "ver11_snapshot_invalid_save_limit_api.db"
+    db_path = _scope.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", db_path)
     monkeypatch.setattr(database, "DATABASE_PATH", db_path)
     database.init_database()
@@ -522,3 +521,22 @@ def test_ver11_snapshot_save_api_rejects_invalid_limit(
         data = response.get_json()
 
         assert data["success"] is False
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        api = scope.api
+        module = sys.modules[__name__]
+        monkeypatch.setattr(module, "_scope", scope, raising=False)
+        monkeypatch.setattr(module, "config", scope.config, raising=False)
+        monkeypatch.setattr(module, "database", scope.database, raising=False)
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before
