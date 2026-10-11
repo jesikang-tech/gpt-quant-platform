@@ -57,6 +57,11 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_step6_10_i21_audit_lifecycle_read_api_boundary_contract",
+    "test_step6_10_i22_audit_read_api_input_validation_boundary",
+    "test_step6_10_i23_audit_lifecycle_read_api_response_schema_boundary",
+    "test_step6_10_i24_audit_read_api_query_filter_intersection_boundary",
+
     "test_step6_10_i17_audit_event_read_boundary_contract",
     "test_step6_10_i18_audit_lifecycle_timeline_projection_boundary",
     "test_step6_10_i19_audit_lifecycle_completeness_boundary",
@@ -175,6 +180,7 @@ def test_isolation_fixture_restores_paths_and_guards(tmp_path):
         finally:
             if generator is not None:
                 generator.close()
+    assert not isolated.path.exists()
     assert (config.DATABASE_PATH, database.DATABASE_PATH) == original_paths
     assert (sqlite3.connect, sqlite3.dbapi2.connect) == original_connections
     assert (socket.socket.connect, socket.socket.connect_ex,
@@ -267,3 +273,51 @@ def test_audit_scope_blocks_fallback_and_restores_after_failure(isolated_price_d
             scope.patches.setattr(scope.database, "DATABASE_PATH", isolated_price_db.path.parent / "virtual-database.db")
             if interrupt:
                 raise RuntimeError("synthetic audit interruption")
+
+
+@pytest.mark.parametrize("failure", [None, "assertion", "sql"])
+def test_audit_api_scope_restores_after_test_failure(isolated_price_db, failure):
+    import sqlite3
+    from contextlib import nullcontext
+    from price_test_support import phase8_test_scope
+    from testing_helpers import authenticated_client
+
+    expected = (pytest.raises(AssertionError, match="synthetic assertion") if failure == "assertion"
+                else pytest.raises(sqlite3.OperationalError, match="no such table") if failure == "sql"
+                else nullcontext())
+    with expected:
+        with phase8_test_scope(isolated_price_db) as scope:
+            original_auth = scope.api.AUTH_CONFIG_PATH
+            client = authenticated_client(scope.api.app)
+            count = len(scope.handles)
+            response = client.get("/api/ai-decision/audit-events")
+            assert response.status_code == 400
+            assert len(scope.handles) > count  # Invalid input still opens a guarded repository connection.
+            conn = sqlite3.connect(isolated_price_db.path)
+            assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated_price_db.path
+            with pytest.raises(AssertionError, match="outside the isolated"):
+                sqlite3.connect(isolated_price_db.path.parent / "virtual-api-forbidden.db")
+            if failure == "assertion":
+                raise AssertionError("synthetic assertion")
+            if failure == "sql":
+                conn.execute("SELECT * FROM synthetic_missing_table")
+    assert scope.api.AUTH_CONFIG_PATH == original_auth
+
+
+@pytest.mark.parametrize("interrupt", [False, True])
+def test_isolated_db_cleans_own_files_on_generator_exit(tmp_path, interrupt):
+    generator = None
+    with pytest.MonkeyPatch.context() as patches:
+        try:
+            generator = isolated_price_db.__wrapped__(tmp_path, patches)
+            db = next(generator)
+            assert db.path.exists()
+            if interrupt:
+                with pytest.raises(RuntimeError, match="synthetic fixture failure"):
+                    generator.throw(RuntimeError("synthetic fixture failure"))
+        finally:
+            if generator is not None:
+                generator.close()
+    assert not db.path.exists()
+    assert all(not db.path.with_name(db.path.name + suffix).exists()
+               for suffix in ("-journal", "-wal", "-shm"))

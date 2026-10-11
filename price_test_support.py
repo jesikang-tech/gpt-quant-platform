@@ -58,9 +58,15 @@ def isolated_price_db(tmp_path, monkeypatch):
                             if action == sqlite3.SQLITE_ATTACH else sqlite3.SQLITE_OK)
         return conn
 
-    yield SimpleNamespace(path=path, connect=database.get_connection, accesses=accesses,
-                          connect_memory=connect_memory)
-    assert accesses and all(access == path for access in accesses)
+    try:
+        yield SimpleNamespace(path=path, connect=database.get_connection, accesses=accesses,
+                              connect_memory=connect_memory)
+        assert accesses and all(access == path for access in accesses)
+    finally:
+        # Only the DB created by this fixture and its own SQLite sidecars.
+        assert path.parent == tmp_path.resolve()
+        for suffix in ("", "-journal", "-wal", "-shm"):
+            path.with_name(path.name + suffix).unlink(missing_ok=True)
 
 
 @pytest.fixture
