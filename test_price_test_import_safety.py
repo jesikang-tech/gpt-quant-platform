@@ -40,6 +40,7 @@ for name in (
     "test_step6_10_i9_audit_migration_safety_contract",
     "test_etf_ohlcv_persistence", "test_incremental_price_updater_contract", "test_incremental_price_updater_db_contract", "test_incremental_price_updater_update_contract", "test_price_collection_date_safety", "test_price_collection_operational_safety",
     'test_step6_history_snapshot_lifecycle_repository', 'test_step6_history_snapshot_retention_repository', 'test_step6_history_snapshot_referential_integrity',
+    "test_step6_partial_evaluation_completion_contract", "test_step6_cleanup_candidate_repository",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -559,3 +560,48 @@ def test_only_exact_isolated_readonly_uri_is_allowed(isolated_price_db):
             sqlite3.connect(forbidden, uri=True)
     with pytest.raises(AssertionError, match="outside the isolated"):
         sqlite3.connect(uri)
+
+
+@pytest.mark.parametrize("module_name,test_name,query_name", [
+    ("test_step6_partial_evaluation_completion_contract", "test_partial_evaluation_completion",
+     "evaluate_ai_decision_portfolio_snapshot"),
+    ("test_step6_cleanup_candidate_repository", "test_cleanup_candidate_repository",
+     "get_ai_decision_history_snapshot_cleanup_candidates"),
+])
+@pytest.mark.parametrize("failure", [None, "assertion", "sql"])
+def test_partial_cleanup_scope_restores_after_failure(
+        isolated_price_db, module_name, test_name, query_name, failure):
+    import importlib
+    import sqlite3
+    from contextlib import nullcontext
+    import repository
+
+    target = importlib.import_module(module_name)
+    original = (repository.get_connection, repository.get_ai_decision_history_snapshot_retention,
+                getattr(repository, query_name))
+    handles = []
+
+    def checked_query(*args, **kwargs):
+        with pytest.raises(AssertionError, match="outside the isolated"):
+            sqlite3.connect(isolated_price_db.path.parent / "virtual-partial-cleanup.db")
+        conn = sqlite3.connect(isolated_price_db.path)
+        handles.append(conn)
+        if failure == "assertion":
+            raise AssertionError("synthetic partial cleanup failure")
+        if failure == "sql":
+            conn.execute("SELECT * FROM synthetic_missing_table")
+        return original[2](*args, **kwargs)
+
+    expected = (pytest.raises(AssertionError, match="synthetic partial cleanup failure")
+                if failure == "assertion" else pytest.raises(sqlite3.OperationalError, match="no such table")
+                if failure == "sql" else nullcontext())
+    with pytest.MonkeyPatch.context() as patches:
+        patches.setattr(repository, query_name, checked_query)
+        with expected:
+            getattr(target, test_name)(isolated_price_db)
+    assert (repository.get_connection, repository.get_ai_decision_history_snapshot_retention,
+            getattr(repository, query_name)) == original
+    assert handles
+    for conn in handles:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            conn.execute("SELECT 1")
