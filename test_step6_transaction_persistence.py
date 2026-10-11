@@ -1,5 +1,6 @@
-﻿import sqlite3
-import repository
+import sqlite3
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 class _TestConnection:
@@ -21,8 +22,8 @@ class _TestConnection:
         return None
 
 
-def build_test_db():
-    raw_conn = sqlite3.connect(":memory:")
+def build_test_db(scope):
+    raw_conn = scope.memory()
 
     cursor = raw_conn.cursor()
 
@@ -170,242 +171,218 @@ def history_payload():
     }
 
 
-original_get_connection = repository.get_connection
-
-
-try:
-    print("=" * 60)
-    print(
-        "Step6 Production Transaction Persistence Regression"
-    )
-    print("=" * 60)
-
-    # --------------------------------------------------
-    # CASE 1 - SUCCESS
-    # --------------------------------------------------
-    print("")
-    print("CASE 1 SUCCESS")
-
-    raw_conn = build_test_db()
-    test_conn = _TestConnection(raw_conn)
-
-    repository.get_connection = (
-        lambda: test_conn
-    )
-
-    result = (
-        repository
-        .save_ai_decision_outcome_with_portfolio_transaction(
-            history_kwargs=history_payload(),
-            portfolio=[
-                {
-                    "ticker": "306950",
-                    "weight": 40.0,
-                    "reference_price": 67560.0,
-                    "reference_price_date": "2026-08-20",
-                },
-                {
-                    "ticker": "CASH",
-                    "weight": 60.0,
-                    "reference_price": None,
-                    "reference_price_date": None,
-                },
-            ],
-            created_at="2026-08-20T13:00:00+09:00",
-        )
-    )
-
-    print("result:", result)
-
-    cursor = raw_conn.cursor()
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM ai_decision_outcome_history"
-    )
-
-    history_count = cursor.fetchone()[0]
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
-    )
-
-    snapshot_count = cursor.fetchone()[0]
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM audit_event"
-    )
-
-    audit_count = cursor.fetchone()[0]
-
-    cursor.execute(
-        """
-        SELECT event_type, outcome_history_id, correlation_key
-        FROM audit_event
-        ORDER BY id
-        """
-    )
-
-    audit_rows = cursor.fetchall()
-
-    print("history_count:", history_count)
-    print("snapshot_count:", snapshot_count)
-    print("audit_count:", audit_count)
-    print("audit_rows:", audit_rows)
-
-    audit_event_types = {
-        row[0]
-        for row in audit_rows
-    }
-
-    assert result["history_id"] == 1
-    assert result["snapshot_count"] == 2
-    assert history_count == 1
-    assert snapshot_count == 2
-    assert audit_count == 2
-    assert audit_event_types == {
-        "OUTCOME_PERSISTED",
-        "SNAPSHOT_PERSISTED",
-    }
-    assert all(
-        row[1] == 1
-        and row[2] == "outcome:1"
-        for row in audit_rows
-    )
-
-    print("RESULT: PASS")
-
-    raw_conn.close()
-
-    # --------------------------------------------------
-    # CASE 2 - REAL PRODUCTION TRANSACTION ROLLBACK
-    # --------------------------------------------------
-    print("")
-    print("CASE 2 REAL PRODUCTION TRANSACTION -> ROLLBACK")
-
-    raw_conn = build_test_db()
-    test_conn = _TestConnection(raw_conn)
-
-    repository.get_connection = (
-        lambda: test_conn
-    )
-
-    created_at = "2026-08-20T13:00:01+09:00"
-
-    # Force the first audit INSERT inside the real
-    # production transaction to fail by occupying the
-    # exact UNIQUE audit_event_id it will generate.
-    cursor = raw_conn.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO audit_event
-        (
-            audit_event_id,
-            event_type,
-            event_time,
-            source,
-            status,
-            outcome_history_id,
-            correlation_key,
-            details
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            f"SNAPSHOT_PERSISTED:outcome:1:{created_at}",
-            "TEST_COLLISION",
-            created_at,
-            "test",
-            "TEST",
-            1,
-            "outcome:1",
-            "{}",
-        ),
-    )
-
-    raw_conn.commit()
-
-    try:
-        repository.save_ai_decision_outcome_with_portfolio_transaction(
-            history_kwargs=history_payload(),
-            portfolio=[
-                {
-                    "ticker": "306950",
-                    "weight": 90.0,
-                    "reference_price": 67560.0,
-                    "reference_price_date": "2026-08-20",
-                },
-                {
-                    "ticker": "CASH",
-                    "weight": 10.0,
-                },
-            ],
-            created_at=created_at,
-        )
-
-        raise AssertionError(
-            "Expected UNIQUE audit_event failure."
-        )
-
-    except Exception as exc:
+def test_transaction_persistence(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        repository = scope.repository
+        print("=" * 60)
         print(
-            "exception_type:",
-            type(exc).__name__
+            "Step6 Production Transaction Persistence Regression"
         )
-        print(
-            "exception:",
-            str(exc)
+        print("=" * 60)
+
+        # --------------------------------------------------
+        # CASE 1 - SUCCESS
+        # --------------------------------------------------
+        print("")
+        print("CASE 1 SUCCESS")
+
+        raw_conn = build_test_db(scope)
+        test_conn = _TestConnection(raw_conn)
+
+        scope.patches.setattr(repository, "get_connection", lambda: test_conn)
+
+        result = (
+            repository
+            .save_ai_decision_outcome_with_portfolio_transaction(
+                history_kwargs=history_payload(),
+                portfolio=[
+                    {
+                        "ticker": "306950",
+                        "weight": 40.0,
+                        "reference_price": 67560.0,
+                        "reference_price_date": "2026-08-20",
+                    },
+                    {
+                        "ticker": "CASH",
+                        "weight": 60.0,
+                        "reference_price": None,
+                        "reference_price_date": None,
+                    },
+                ],
+                created_at="2026-08-20T13:00:00+09:00",
+            )
         )
 
-    cursor = raw_conn.cursor()
+        print("result:", result)
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM ai_decision_outcome_history"
-    )
-    history_count = cursor.fetchone()[0]
+        cursor = raw_conn.cursor()
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
-    )
-    snapshot_count = cursor.fetchone()[0]
+        cursor.execute(
+            "SELECT COUNT(*) FROM ai_decision_outcome_history"
+        )
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM audit_event"
-    )
-    audit_count = cursor.fetchone()[0]
+        history_count = cursor.fetchone()[0]
 
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM audit_event
-        WHERE audit_event_id = ?
-        """,
-        (
-            f"SNAPSHOT_PERSISTED:outcome:1:{created_at}",
-        ),
-    )
-    collision_count = cursor.fetchone()[0]
+        cursor.execute(
+            "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
+        )
 
-    print("history_count:", history_count)
-    print("snapshot_count:", snapshot_count)
-    print("audit_count:", audit_count)
-    print("collision_count:", collision_count)
+        snapshot_count = cursor.fetchone()[0]
 
-    assert history_count == 0
-    assert snapshot_count == 0
-    assert audit_count == 1
-    assert collision_count == 1
+        cursor.execute(
+            "SELECT COUNT(*) FROM audit_event"
+        )
 
-    print("RESULT: PASS")
+        audit_count = cursor.fetchone()[0]
 
-    raw_conn.close()
+        cursor.execute(
+            """
+            SELECT event_type, outcome_history_id, correlation_key
+            FROM audit_event
+            ORDER BY id
+            """
+        )
 
-    print("")
-    print("=" * 60)
-    print("OVERALL RESULT: PASS")
-    print("=" * 60)
+        audit_rows = cursor.fetchall()
 
-finally:
-    repository.get_connection = (
-        original_get_connection
-    )
+        print("history_count:", history_count)
+        print("snapshot_count:", snapshot_count)
+        print("audit_count:", audit_count)
+        print("audit_rows:", audit_rows)
+
+        audit_event_types = {
+            row[0]
+            for row in audit_rows
+        }
+
+        assert result["history_id"] == 1
+        assert result["snapshot_count"] == 2
+        assert history_count == 1
+        assert snapshot_count == 2
+        assert audit_count == 2
+        assert audit_event_types == {
+            "OUTCOME_PERSISTED",
+            "SNAPSHOT_PERSISTED",
+        }
+        assert all(
+            row[1] == 1
+            and row[2] == "outcome:1"
+            for row in audit_rows
+        )
+
+        print("RESULT: PASS")
+
+        raw_conn.close()
+
+        # --------------------------------------------------
+        # CASE 2 - REAL PRODUCTION TRANSACTION ROLLBACK
+        # --------------------------------------------------
+        print("")
+        print("CASE 2 REAL PRODUCTION TRANSACTION -> ROLLBACK")
+
+        raw_conn = build_test_db(scope)
+        test_conn = _TestConnection(raw_conn)
+
+        scope.patches.setattr(repository, "get_connection", lambda: test_conn)
+
+        created_at = "2026-08-20T13:00:01+09:00"
+
+        # Force the first audit INSERT inside the real
+        # production transaction to fail by occupying the
+        # exact UNIQUE audit_event_id it will generate.
+        cursor = raw_conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO audit_event
+            (
+                audit_event_id,
+                event_type,
+                event_time,
+                source,
+                status,
+                outcome_history_id,
+                correlation_key,
+                details
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"SNAPSHOT_PERSISTED:outcome:1:{created_at}",
+                "TEST_COLLISION",
+                created_at,
+                "test",
+                "TEST",
+                1,
+                "outcome:1",
+                "{}",
+            ),
+        )
+
+        raw_conn.commit()
+
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint failed: audit_event.audit_event_id"):
+            repository.save_ai_decision_outcome_with_portfolio_transaction(
+                history_kwargs=history_payload(),
+                portfolio=[
+                    {
+                        "ticker": "306950",
+                        "weight": 90.0,
+                        "reference_price": 67560.0,
+                        "reference_price_date": "2026-08-20",
+                    },
+                    {
+                        "ticker": "CASH",
+                        "weight": 10.0,
+                    },
+                ],
+                created_at=created_at,
+            )
+
+        cursor = raw_conn.cursor()
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM ai_decision_outcome_history"
+        )
+        history_count = cursor.fetchone()[0]
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
+        )
+        snapshot_count = cursor.fetchone()[0]
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM audit_event"
+        )
+        audit_count = cursor.fetchone()[0]
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM audit_event
+            WHERE audit_event_id = ?
+            """,
+            (
+                f"SNAPSHOT_PERSISTED:outcome:1:{created_at}",
+            ),
+        )
+        collision_count = cursor.fetchone()[0]
+
+        print("history_count:", history_count)
+        print("snapshot_count:", snapshot_count)
+        print("audit_count:", audit_count)
+        print("collision_count:", collision_count)
+
+        assert history_count == 0
+        assert snapshot_count == 0
+        assert audit_count == 1
+        assert collision_count == 1
+
+        print("RESULT: PASS")
+
+        raw_conn.close()
+
+        print("")
+        print("=" * 60)
+        print("OVERALL RESULT: PASS")
+        print("=" * 60)

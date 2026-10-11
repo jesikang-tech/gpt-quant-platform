@@ -57,6 +57,7 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_step6_transaction_persistence", "test_step6_snapshot_validation_persistence",
     "test_database_summary", "test_score_history", "test_ranking_snapshot", "test_score_detail",
     "test_step6_10_i33_audit_lifecycle_completeness_api_value_projection_boundary",
     "test_step6_10_i34_audit_events_api_value_projection_boundary",
@@ -336,3 +337,38 @@ def test_isolated_db_cleans_own_files_on_generator_exit(tmp_path, interrupt):
     assert not db.path.exists()
     assert all(not db.path.with_name(db.path.name + suffix).exists()
                for suffix in ("-journal", "-wal", "-shm"))
+
+
+@pytest.mark.parametrize("module_name,builder_name,test_name", [
+    ("test_step6_transaction_persistence", "build_test_db", "test_transaction_persistence"),
+    ("test_step6_snapshot_validation_persistence", "build_db", "test_snapshot_validation_persistence"),
+])
+@pytest.mark.parametrize("failure", ["assertion", "sql"])
+def test_persistence_scope_closes_memory_on_failure(
+        isolated_price_db, monkeypatch, module_name, builder_name, test_name, failure):
+    import importlib
+    import sqlite3
+    import repository
+
+    module = importlib.import_module(module_name)
+    original_connection = repository.get_connection
+    original_builder = getattr(module, builder_name)
+    handles = []
+
+    def fail_after_build(scope):
+        conn = original_builder(scope)
+        handles.append(conn)
+        scope.patches.setattr(repository, "get_connection", lambda: conn)
+        if failure == "assertion":
+            raise AssertionError("synthetic persistence interruption")
+        conn.execute("SELECT * FROM synthetic_missing_table")
+
+    monkeypatch.setattr(module, builder_name, fail_after_build)
+    error = AssertionError if failure == "assertion" else sqlite3.OperationalError
+    message = "synthetic persistence interruption" if failure == "assertion" else "no such table"
+    with pytest.raises(error, match=message):
+        getattr(module, test_name)(isolated_price_db)
+    assert repository.get_connection is original_connection
+    assert len(handles) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        handles[0].execute("SELECT 1")

@@ -1,5 +1,6 @@
 import sqlite3
-import repository
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 class _TestConnection:
@@ -19,8 +20,8 @@ class _TestConnection:
         return None
 
 
-def build_db():
-    conn = sqlite3.connect(":memory:")
+def build_db(scope):
+    conn = scope.memory()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -151,152 +152,113 @@ def history_payload():
     }
 
 
-original_get_connection = repository.get_connection
-
-try:
-    print("=" * 60)
-    print(
-        "Production Hardening - Snapshot Validation "
-        "Persistence Regression"
-    )
-    print("=" * 60)
-
-    valid_portfolio = [
-        {
-            "ticker": "306950",
-            "weight": 40,
-            "reference_price": 67560,
-            "reference_price_date": "2026-08-20",
-        },
-        {
-            "ticker": "365040",
-            "weight": 30,
-            "reference_price": 33540,
-            "reference_price_date": "2026-08-20",
-        },
-        {
-            "ticker": "475720",
-            "weight": 20,
-            "reference_price": 11730,
-            "reference_price_date": "2026-08-20",
-        },
-        {
-            "ticker": "CASH",
-            "weight": 10,
-        },
-    ]
-
-    invalid_cases = [
-        (
-            "EMPTY",
-            [],
-            "EMPTY_PORTFOLIO",
-        ),
-        (
-            "BAD_WEIGHT",
-            [
-                {
-                    "ticker": "306950",
-                    "weight": 90,
-                    "reference_price": 67560,
-                    "reference_price_date": "2026-08-20",
-                },
-                {
-                    "ticker": "CASH",
-                    "weight": 5,
-                },
-            ],
-            "INVALID_TOTAL_WEIGHT",
-        ),
-        (
-            "DUPLICATE",
-            [
-                {
-                    "ticker": "306950",
-                    "weight": 40,
-                    "reference_price": 67560,
-                    "reference_price_date": "2026-08-20",
-                },
-                {
-                    "ticker": "306950",
-                    "weight": 50,
-                    "reference_price": 67560,
-                    "reference_price_date": "2026-08-20",
-                },
-                {
-                    "ticker": "CASH",
-                    "weight": 10,
-                },
-            ],
-            "DUPLICATE_TICKER",
-        ),
-        (
-            "MISSING_REFERENCE",
-            [
-                {
-                    "ticker": "306950",
-                    "weight": 90,
-                },
-                {
-                    "ticker": "CASH",
-                    "weight": 10,
-                },
-            ],
-            "MISSING_REFERENCE_PRICE",
-        ),
-    ]
-
-    raw_conn = build_db()
-    test_conn = _TestConnection(raw_conn)
-    repository.get_connection = lambda: test_conn
-
-    result = (
-        repository
-        .save_ai_decision_outcome_with_portfolio_transaction(
-            history_kwargs=history_payload(),
-            portfolio=valid_portfolio,
-            created_at="2026-08-20T14:00:00+09:00",
+def test_snapshot_validation_persistence(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        repository = scope.repository
+        print("=" * 60)
+        print(
+            "Production Hardening - Snapshot Validation "
+            "Persistence Regression"
         )
-    )
+        print("=" * 60)
 
-    cursor = raw_conn.cursor()
+        valid_portfolio = [
+            {
+                "ticker": "306950",
+                "weight": 40,
+                "reference_price": 67560,
+                "reference_price_date": "2026-08-20",
+            },
+            {
+                "ticker": "365040",
+                "weight": 30,
+                "reference_price": 33540,
+                "reference_price_date": "2026-08-20",
+            },
+            {
+                "ticker": "475720",
+                "weight": 20,
+                "reference_price": 11730,
+                "reference_price_date": "2026-08-20",
+            },
+            {
+                "ticker": "CASH",
+                "weight": 10,
+            },
+        ]
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM ai_decision_outcome_history"
-    )
-    history_count = cursor.fetchone()[0]
+        invalid_cases = [
+            (
+                "EMPTY",
+                [],
+                "EMPTY_PORTFOLIO",
+            ),
+            (
+                "BAD_WEIGHT",
+                [
+                    {
+                        "ticker": "306950",
+                        "weight": 90,
+                        "reference_price": 67560,
+                        "reference_price_date": "2026-08-20",
+                    },
+                    {
+                        "ticker": "CASH",
+                        "weight": 5,
+                    },
+                ],
+                "INVALID_TOTAL_WEIGHT",
+            ),
+            (
+                "DUPLICATE",
+                [
+                    {
+                        "ticker": "306950",
+                        "weight": 40,
+                        "reference_price": 67560,
+                        "reference_price_date": "2026-08-20",
+                    },
+                    {
+                        "ticker": "306950",
+                        "weight": 50,
+                        "reference_price": 67560,
+                        "reference_price_date": "2026-08-20",
+                    },
+                    {
+                        "ticker": "CASH",
+                        "weight": 10,
+                    },
+                ],
+                "DUPLICATE_TICKER",
+            ),
+            (
+                "MISSING_REFERENCE",
+                [
+                    {
+                        "ticker": "306950",
+                        "weight": 90,
+                    },
+                    {
+                        "ticker": "CASH",
+                        "weight": 10,
+                    },
+                ],
+                "MISSING_REFERENCE_PRICE",
+            ),
+        ]
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
-    )
-    snapshot_count = cursor.fetchone()[0]
-
-    assert result["history_id"] == 1
-    assert history_count == 1
-    assert snapshot_count == 4
-
-    print("CASE 1 VALID PERSISTENCE: PASS")
-
-    raw_conn.close()
-
-    for name, portfolio, expected_reason in invalid_cases:
-        raw_conn = build_db()
+        raw_conn = build_db(scope)
         test_conn = _TestConnection(raw_conn)
-        repository.get_connection = lambda: test_conn
+        scope.patches.setattr(repository, "get_connection", lambda: test_conn)
 
-        try:
-            repository.save_ai_decision_outcome_with_portfolio_transaction(
+        result = (
+            repository
+            .save_ai_decision_outcome_with_portfolio_transaction(
                 history_kwargs=history_payload(),
-                portfolio=portfolio,
+                portfolio=valid_portfolio,
                 created_at="2026-08-20T14:00:00+09:00",
             )
-
-            raise AssertionError(
-                f"Expected {expected_reason}"
-            )
-
-        except ValueError as exc:
-            assert str(exc) == expected_reason
+        )
 
         cursor = raw_conn.cursor()
 
@@ -310,20 +272,56 @@ try:
         )
         snapshot_count = cursor.fetchone()[0]
 
-        assert history_count == 0
-        assert snapshot_count == 0
+        assert result["history_id"] == 1
+        assert history_count == 1
+        assert snapshot_count == 4
 
-        print(
-            f"CASE {name} REJECTION: PASS | "
-            f"reason={expected_reason}"
-        )
+        print("CASE 1 VALID PERSISTENCE: PASS")
 
         raw_conn.close()
 
-    print("")
-    print("=" * 60)
-    print("OVERALL RESULT: PASS")
-    print("=" * 60)
+        for name, portfolio, expected_reason in invalid_cases:
+            raw_conn = build_db(scope)
+            test_conn = _TestConnection(raw_conn)
+            scope.patches.setattr(repository, "get_connection", lambda: test_conn)
 
-finally:
-    repository.get_connection = original_get_connection
+            try:
+                repository.save_ai_decision_outcome_with_portfolio_transaction(
+                    history_kwargs=history_payload(),
+                    portfolio=portfolio,
+                    created_at="2026-08-20T14:00:00+09:00",
+                )
+
+                raise AssertionError(
+                    f"Expected {expected_reason}"
+                )
+
+            except ValueError as exc:
+                assert str(exc) == expected_reason
+
+            cursor = raw_conn.cursor()
+
+            cursor.execute(
+                "SELECT COUNT(*) FROM ai_decision_outcome_history"
+            )
+            history_count = cursor.fetchone()[0]
+
+            cursor.execute(
+                "SELECT COUNT(*) FROM ai_decision_portfolio_snapshot"
+            )
+            snapshot_count = cursor.fetchone()[0]
+
+            assert history_count == 0
+            assert snapshot_count == 0
+
+            print(
+                f"CASE {name} REJECTION: PASS | "
+                f"reason={expected_reason}"
+            )
+
+            raw_conn.close()
+
+        print("")
+        print("=" * 60)
+        print("OVERALL RESULT: PASS")
+        print("=" * 60)
