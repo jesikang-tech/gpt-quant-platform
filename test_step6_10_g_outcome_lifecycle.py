@@ -1,9 +1,5 @@
-import api_server
-from api_server import app
-from testing_helpers import authenticated_client
-
-
-client = authenticated_client(app)
+"""Isolated evaluation API semantic regression; no import-time execution."""
+from price_test_support import isolated_evaluation_api, isolated_price_db
 
 
 def fake_history_reader(history_id):
@@ -20,6 +16,7 @@ def fake_history_reader(history_id):
 
 
 def run_case(
+    isolated_evaluation_api,
     name,
     portfolio_return,
     expected_score,
@@ -31,6 +28,10 @@ def run_case(
     expected_reassessment,
     expected_reassessment_status,
 ):
+    api_server = isolated_evaluation_api.api
+    client = isolated_evaluation_api.client
+    audit_before = isolated_evaluation_api.audit_count()
+
     captured = {}
 
     def fake_portfolio_evaluation(
@@ -81,6 +82,7 @@ def run_case(
         )
 
         data = response.get_json()
+        isolated_evaluation_api.assert_audit(audit_before, expected_signal)
 
         assert response.status_code == 200
         assert data["success"] is True
@@ -179,42 +181,45 @@ def run_case(
         )
 
 
-print("=" * 60)
-print(
-    "Step6-10-G Outcome Lifecycle Regression Test"
-)
-print("=" * 60)
+def test_outcome_lifecycle(isolated_evaluation_api):
+    print("=" * 60)
+    print(
+        "Step6-10-G Outcome Lifecycle Regression Test"
+    )
+    print("=" * 60)
 
 
-run_case(
-    "CASE 1 POSITIVE",
-    10.0,
-    100.0,
-    "A",
-    "POSITIVE",
-    "LEARNING_AVAILABLE",
-    "LEARNING_AVAILABLE",
-    False,
-    False,
-    "NOT_REQUIRED",
-)
+    run_case(
+        isolated_evaluation_api,
+        "CASE 1 POSITIVE",
+        10.0,
+        100.0,
+        "A",
+        "POSITIVE",
+        "LEARNING_AVAILABLE",
+        "LEARNING_AVAILABLE",
+        False,
+        False,
+        "NOT_REQUIRED",
+    )
 
 
-run_case(
-    "CASE 2 NEGATIVE",
-    -10.0,
-    0.0,
-    "F",
-    "NEGATIVE",
-    "ADAPTIVE_LEARNING_REQUIRED",
-    "ADAPTIVE_LEARNING",
-    True,
-    True,
-    "REASSESSMENT_REQUIRED",
-)
+    run_case(
+        isolated_evaluation_api,
+        "CASE 2 NEGATIVE",
+        -10.0,
+        0.0,
+        "F",
+        "NEGATIVE",
+        "ADAPTIVE_LEARNING_REQUIRED",
+        "ADAPTIVE_LEARNING",
+        True,
+        True,
+        "REASSESSMENT_REQUIRED",
+    )
 
 
-print("")
-print("=" * 60)
-print("OVERALL RESULT: PASS")
-print("=" * 60)
+    print("")
+    print("=" * 60)
+    print("OVERALL RESULT: PASS")
+    print("=" * 60)

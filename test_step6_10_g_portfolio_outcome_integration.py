@@ -1,9 +1,5 @@
-import api_server
-from api_server import app
-from testing_helpers import authenticated_client
-
-
-client = authenticated_client(app)
+"""Isolated evaluation API semantic regression; no import-time execution."""
+from price_test_support import isolated_evaluation_api, isolated_price_db
 
 
 def make_history_row():
@@ -20,6 +16,7 @@ def make_history_row():
 
 
 def run_case(
+    isolated_evaluation_api,
     name,
     portfolio_return,
     expected_signal,
@@ -28,6 +25,10 @@ def run_case(
     expected_adaptive,
     expected_reassessment,
 ):
+    api_server = isolated_evaluation_api.api
+    client = isolated_evaluation_api.client
+    audit_before = isolated_evaluation_api.audit_count()
+
     original_evaluator = (
         api_server.evaluate_ai_decision_portfolio_snapshot
     )
@@ -71,6 +72,7 @@ def run_case(
         )
 
         data = response.get_json()
+        isolated_evaluation_api.assert_audit(audit_before, expected_signal)
 
         assert response.status_code == 200
         assert data["success"] is True
@@ -151,48 +153,52 @@ def run_case(
         )
 
 
-print("=" * 60)
-print(
-    "Step6-10-G Portfolio Outcome Integration "
-    "Semantic Regression Test"
-)
-print("=" * 60)
+def test_portfolio_outcome_integration(isolated_evaluation_api):
+    print("=" * 60)
+    print(
+        "Step6-10-G Portfolio Outcome Integration "
+        "Semantic Regression Test"
+    )
+    print("=" * 60)
 
 
-run_case(
-    "CASE 1 POSITIVE",
-    10.0,
-    "POSITIVE",
-    "LEARNING_AVAILABLE",
-    "LEARNING_AVAILABLE",
-    False,
-    False,
-)
+    run_case(
+        isolated_evaluation_api,
+        "CASE 1 POSITIVE",
+        10.0,
+        "POSITIVE",
+        "LEARNING_AVAILABLE",
+        "LEARNING_AVAILABLE",
+        False,
+        False,
+    )
 
 
-run_case(
-    "CASE 2 NEGATIVE",
-    0.0,
-    "NEGATIVE",
-    "ADAPTIVE_LEARNING_REQUIRED",
-    "ADAPTIVE_LEARNING",
-    True,
-    True,
-)
+    run_case(
+        isolated_evaluation_api,
+        "CASE 2 NEGATIVE",
+        0.0,
+        "NEGATIVE",
+        "ADAPTIVE_LEARNING_REQUIRED",
+        "ADAPTIVE_LEARNING",
+        True,
+        True,
+    )
 
 
-run_case(
-    "CASE 3 STABLE",
-    5.0,
-    "STABLE",
-    "LEARNING_AVAILABLE",
-    "LEARNING_AVAILABLE",
-    False,
-    False,
-)
+    run_case(
+        isolated_evaluation_api,
+        "CASE 3 STABLE",
+        5.0,
+        "STABLE",
+        "LEARNING_AVAILABLE",
+        "LEARNING_AVAILABLE",
+        False,
+        False,
+    )
 
 
-print("")
-print("=" * 60)
-print("OVERALL RESULT: PASS")
-print("=" * 60)
+    print("")
+    print("=" * 60)
+    print("OVERALL RESULT: PASS")
+    print("=" * 60)

@@ -1,9 +1,5 @@
-import api_server
-from api_server import app
-from testing_helpers import authenticated_client
-
-
-client = authenticated_client(app)
+"""Operational readiness with isolated DB and real audit persistence."""
+from price_test_support import isolated_evaluation_api, isolated_price_db
 
 
 def fake_portfolio_evaluation(
@@ -22,7 +18,6 @@ def fake_portfolio_evaluation(
         "positions": [],
     }
 
-
 def fake_history_reader(history_id):
     row = [None] * 37
 
@@ -35,120 +30,124 @@ def fake_history_reader(history_id):
 
     return tuple(row)
 
-
-captured = {}
-
-
-def fake_update_history(**kwargs):
-    captured.update(kwargs)
-    return 1
+def test_operational_lifecycle_readiness(isolated_evaluation_api):
+    api_server = isolated_evaluation_api.api
+    client = isolated_evaluation_api.client
+    audit_before = isolated_evaluation_api.audit_count()
+    captured = {}
 
 
-original_evaluator = (
-    api_server.evaluate_ai_decision_portfolio_snapshot
-)
-original_history_reader = (
-    api_server.get_ai_decision_outcome_history_by_id
-)
-original_history_updater = (
-    api_server.update_ai_decision_outcome_history
-)
+    def fake_update_history(**kwargs):
+        captured.update(kwargs)
+        return 1
 
 
-try:
-    api_server.evaluate_ai_decision_portfolio_snapshot = (
-        fake_portfolio_evaluation
+    original_evaluator = (
+        api_server.evaluate_ai_decision_portfolio_snapshot
+    )
+    original_history_reader = (
+        api_server.get_ai_decision_outcome_history_by_id
+    )
+    original_history_updater = (
+        api_server.update_ai_decision_outcome_history
     )
 
-    api_server.get_ai_decision_outcome_history_by_id = (
-        fake_history_reader
-    )
 
-    api_server.update_ai_decision_outcome_history = (
-        fake_update_history
-    )
+    try:
+        api_server.evaluate_ai_decision_portfolio_snapshot = (
+            fake_portfolio_evaluation
+        )
 
-    response = client.get(
-        "/api/ai-decision/portfolio-snapshot/12/evaluate"
-    )
+        api_server.get_ai_decision_outcome_history_by_id = (
+            fake_history_reader
+        )
 
-    data = response.get_json()
+        api_server.update_ai_decision_outcome_history = (
+            fake_update_history
+        )
 
-    assert response.status_code == 200
-    assert data["success"] is True
+        response = client.get(
+            "/api/ai-decision/portfolio-snapshot/12/evaluate"
+        )
 
-    evaluation = data["outcome_evaluation"]
-    intelligence = data["outcome_intelligence"]
+        data = response.get_json()
+        isolated_evaluation_api.assert_audit(audit_before, "STABLE")
 
-    assert evaluation["outcome_status"] == "EVALUATED"
-    assert evaluation["outcome_score"] == 75.0
-    assert evaluation["outcome_grade"] == "C"
-    assert evaluation["learning_signal"] == "STABLE"
+        assert response.status_code == 200
+        assert data["success"] is True
 
-    assert (
-        intelligence["learning_status"]
-        == "LEARNING_AVAILABLE"
-    )
+        evaluation = data["outcome_evaluation"]
+        intelligence = data["outcome_intelligence"]
 
-    assert (
-        intelligence["feedback_state"]
-        == "LEARNING_AVAILABLE"
-    )
+        assert evaluation["outcome_status"] == "EVALUATED"
+        assert evaluation["outcome_score"] == 75.0
+        assert evaluation["outcome_grade"] == "C"
+        assert evaluation["learning_signal"] == "STABLE"
 
-    assert (
-        intelligence["adaptive_learning_required"]
-        is False
-    )
+        assert (
+            intelligence["learning_status"]
+            == "LEARNING_AVAILABLE"
+        )
 
-    assert (
-        intelligence["reassessment_required"]
-        is False
-    )
+        assert (
+            intelligence["feedback_state"]
+            == "LEARNING_AVAILABLE"
+        )
 
-    assert captured["history_id"] == 12
-    assert captured["outcome_status"] == "EVALUATED"
-    assert captured["outcome_score"] == 75.0
-    assert captured["outcome_grade"] == "C"
-    assert (
-        captured["learning_status"]
-        == "LEARNING_AVAILABLE"
-    )
-    assert (
-        captured["feedback_state"]
-        == "LEARNING_AVAILABLE"
-    )
-    assert (
-        captured["adaptive_learning_required"]
-        == 0
-    )
-    assert captured["reassessment_required"] == 0
-    assert (
-        captured["reassessment_status"]
-        == "NOT_REQUIRED"
-    )
+        assert (
+            intelligence["adaptive_learning_required"]
+            is False
+        )
 
-    print("=" * 60)
-    print(
-        "Step6 Operational Lifecycle Readiness Regression"
-    )
-    print("=" * 60)
-    print("CASE 1 PENDING -> EVALUATED: PASS")
-    print("CASE 2 STABLE LEARNING: PASS")
-    print("CASE 3 HISTORY UPDATE: PASS")
-    print("")
-    print("=" * 60)
-    print("OVERALL RESULT: PASS")
-    print("=" * 60)
+        assert (
+            intelligence["reassessment_required"]
+            is False
+        )
 
-finally:
-    api_server.evaluate_ai_decision_portfolio_snapshot = (
-        original_evaluator
-    )
+        assert captured["history_id"] == 12
+        assert captured["outcome_status"] == "EVALUATED"
+        assert captured["outcome_score"] == 75.0
+        assert captured["outcome_grade"] == "C"
+        assert (
+            captured["learning_status"]
+            == "LEARNING_AVAILABLE"
+        )
+        assert (
+            captured["feedback_state"]
+            == "LEARNING_AVAILABLE"
+        )
+        assert (
+            captured["adaptive_learning_required"]
+            == 0
+        )
+        assert captured["reassessment_required"] == 0
+        assert (
+            captured["reassessment_status"]
+            == "NOT_REQUIRED"
+        )
 
-    api_server.get_ai_decision_outcome_history_by_id = (
-        original_history_reader
-    )
+        print("=" * 60)
+        print(
+            "Step6 Operational Lifecycle Readiness Regression"
+        )
+        print("=" * 60)
+        print("CASE 1 PENDING -> EVALUATED: PASS")
+        print("CASE 2 STABLE LEARNING: PASS")
+        print("CASE 3 HISTORY UPDATE: PASS")
+        print("")
+        print("=" * 60)
+        print("OVERALL RESULT: PASS")
+        print("=" * 60)
 
-    api_server.update_ai_decision_outcome_history = (
-        original_history_updater
-    )
+    finally:
+        api_server.evaluate_ai_decision_portfolio_snapshot = (
+            original_evaluator
+        )
+
+        api_server.get_ai_decision_outcome_history_by_id = (
+            original_history_reader
+        )
+
+        api_server.update_ai_decision_outcome_history = (
+            original_history_updater
+        )

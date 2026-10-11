@@ -1,12 +1,9 @@
-import api_server
-from api_server import app
-from testing_helpers import authenticated_client
-
-
-client = authenticated_client(app)
+"""Isolated evaluation API semantic regression; no import-time execution."""
+from price_test_support import isolated_evaluation_api, isolated_price_db
 
 
 def run_case(
+    isolated_evaluation_api,
     name,
     evaluation_date,
     portfolio_return,
@@ -14,6 +11,10 @@ def run_case(
     expected_grade,
     expected_signal,
 ):
+    api_server = isolated_evaluation_api.api
+    client = isolated_evaluation_api.client
+    audit_before = isolated_evaluation_api.audit_count()
+
     captured = {}
 
     def fake_portfolio_evaluation(
@@ -80,6 +81,7 @@ def run_case(
         )
 
         data = response.get_json()
+        isolated_evaluation_api.assert_audit(audit_before, expected_signal)
 
         assert response.status_code == 200
         assert data["success"] is True
@@ -148,61 +150,65 @@ def run_case(
         )
 
 
-print("=" * 60)
-print(
-    "Production Hardening - Same-Date Evaluation "
-    "Idempotency Regression"
-)
-print("=" * 60)
+def test_same_date_result_idempotency(isolated_evaluation_api):
+    print("=" * 60)
+    print(
+        "Production Hardening - Same-Date Evaluation "
+        "Idempotency Regression"
+    )
+    print("=" * 60)
 
 
-first = run_case(
-    "CASE 1 FIRST EVALUATION",
-    "2026-08-21",
-    5.0,
-    75.0,
-    "C",
-    "STABLE",
-)
+    first = run_case(
+        isolated_evaluation_api,
+        "CASE 1 FIRST EVALUATION",
+        "2026-08-21",
+        5.0,
+        75.0,
+        "C",
+        "STABLE",
+    )
 
 
-second = run_case(
-    "CASE 2 SAME-DATE RE-EVALUATION",
-    "2026-08-21",
-    5.0,
-    75.0,
-    "C",
-    "STABLE",
-)
+    second = run_case(
+        isolated_evaluation_api,
+        "CASE 2 SAME-DATE RE-EVALUATION",
+        "2026-08-21",
+        5.0,
+        75.0,
+        "C",
+        "STABLE",
+    )
 
 
-assert first == second
+    assert first == second
 
-print(
-    "CASE 3 SAME-DATE RESULT STABILITY: PASS"
-)
-
-
-third = run_case(
-    "CASE 4 NEXT-DATE RE-EVALUATION",
-    "2026-08-22",
-    8.0,
-    90.0,
-    "A",
-    "POSITIVE",
-)
+    print(
+        "CASE 3 SAME-DATE RESULT STABILITY: PASS"
+    )
 
 
-assert third["outcome_score"] != first["outcome_score"]
-assert third["outcome_grade"] != first["outcome_grade"]
-assert third["learning_signal"] != first["learning_signal"]
+    third = run_case(
+        isolated_evaluation_api,
+        "CASE 4 NEXT-DATE RE-EVALUATION",
+        "2026-08-22",
+        8.0,
+        90.0,
+        "A",
+        "POSITIVE",
+    )
 
-print(
-    "CASE 5 NEXT-DATE RE-EVALUATION ALLOWED: PASS"
-)
+
+    assert third["outcome_score"] != first["outcome_score"]
+    assert third["outcome_grade"] != first["outcome_grade"]
+    assert third["learning_signal"] != first["learning_signal"]
+
+    print(
+        "CASE 5 NEXT-DATE RE-EVALUATION ALLOWED: PASS"
+    )
 
 
-print("")
-print("=" * 60)
-print("OVERALL RESULT: PASS")
-print("=" * 60)
+    print("")
+    print("=" * 60)
+    print("OVERALL RESULT: PASS")
+    print("=" * 60)

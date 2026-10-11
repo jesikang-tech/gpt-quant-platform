@@ -37,6 +37,9 @@ FinanceDataReader.StockListing = deny
 for name in (
     "test_bulk_price_collector", "test_price_collector", "test_database",
     "test_provider", "test_collector", "test_insert_etf_info",
+    "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
+    "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
+    "test_phase8_6_g_runtime_learning_readback_contract",
     "collector.bulk_price_collector", "collector.price_collector",
     "collector.etf_collector", "repository", "database", "providers.fdr_provider",
 ):
