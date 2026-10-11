@@ -1,30 +1,15 @@
-import os
+"""Synthetic audit value contract with guarded pytest-only execution."""
 import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
-import api_server
+from price_test_support import isolated_price_db, phase8_test_scope
 from testing_helpers import authenticated_client
 
 
-def run_test():
-    fd, db_path = tempfile.mkstemp(
-        prefix="step6_10_i34_",
-        suffix=".db"
-    )
-    os.close(fd)
+def test_i34_audit_value_contract(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        database = scope.database
+        test_db_path = scope.db.path
+        api_server = scope.api
 
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-        database.init_database()
 
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -340,15 +325,3 @@ def run_test():
         print("=" * 60)
         print("OVERALL RESULT: PASS")
         print("=" * 60)
-
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-run_test()
