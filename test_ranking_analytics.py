@@ -1,106 +1,34 @@
-from ranking_analyzer import analyze_ranking_trend
+"""Trend, grade and stability contracts using synthetic rank histories."""
+import pytest
+from price_test_support import isolated_price_db, synthetic_ranking_db
 
 
-print("==============================")
-print("Ranking Analytics Test")
-print("==============================")
+@pytest.mark.parametrize("ticker,direction,grade", [("111111", "RISING", "A"),
+    ("222222", "STABLE", "B"), ("333333", "FALLING", "C")])
+def test_ranking_analytics(synthetic_ranking_db, ticker, direction, grade):
+    import ranking_analyzer as analyzer
+    ranks = synthetic_ranking_db.ranks[ticker]
+    scores = synthetic_ranking_db.scores[ticker]
+    trend = analyzer.analyze_ranking_trend(ticker)
+    assert trend["current_rank"] == ranks[-1]
+    assert trend["previous_rank"] == ranks[-2]
+    assert trend["rank_change"] == ranks[-2] - ranks[-1]
+    analytics = analyzer.get_ranking_analytics(ticker)
+    assert analytics["current_score"] == scores[-1]
+    assert analytics["score_change"] == scores[-1] - scores[0]
+    assert analyzer.calculate_rank_direction(ticker) == direction
+    assert analyzer.calculate_analytics_grade(ticker) == grade
+    assessment = analyzer.generate_ranking_assessment(ticker)
+    assert assessment["direction"] == direction and assessment["grade"] == grade
+    stability = analyzer.get_stability_analytics(ticker)
+    assert stability["history_count"] == len(ranks)
+    assert stability["average_rank_change"] == sum(abs(b-a) for a,b in zip(ranks, ranks[1:])) / (len(ranks)-1)
+    assert stability["stability_score"] == analyzer.calculate_stability_score(ticker)
+    assert assessment["stability_grade"] == stability["stability_grade"]
 
 
-result = analyze_ranking_trend("069500")
-
-
-print(result)
-
-
-from ranking_analyzer import calculate_rank_direction
-
-
-print("\n==============================")
-print("Ranking Direction Test")
-print("==============================")
-
-
-direction = calculate_rank_direction("069500")
-
-
-print("Direction :", direction)
-
-
-from ranking_analyzer import get_ranking_analytics
-
-
-print("\n==============================")
-print("Full Ranking Analytics Test")
-print("==============================")
-
-
-analytics = get_ranking_analytics("069500")
-
-
-print(analytics)
-
-
-
-from ranking_analyzer import calculate_analytics_grade
-
-
-print("\n==============================")
-print("Analytics Grade Test")
-print("==============================")
-
-
-grade = calculate_analytics_grade("069500")
-
-
-print("Grade :", grade)
-
-
-from ranking_analyzer import generate_ranking_assessment
-
-
-print("\n==============================")
-print("Ranking Assessment Test")
-print("==============================")
-
-
-assessment = generate_ranking_assessment(
-    "069500"
-)
-
-
-print(assessment)
-
-
-from ranking_analyzer import calculate_stability_score
-
-
-print("\n==============================")
-print("Ranking Stability Test")
-print("==============================")
-
-
-stability = calculate_stability_score(
-    "069500"
-)
-
-
-print(
-    "Stability Score :",
-    stability
-)
-
-
-from ranking_analyzer import get_stability_analytics
-
-
-print("\n==============================")
-print("Stability Analytics Test")
-print("==============================")
-
-
-stability = get_stability_analytics(
-    "069500"
-)
-
-
-print(stability)
+def test_ranking_analytics_empty(isolated_price_db):
+    import ranking_analyzer as analyzer
+    assert analyzer.get_ranking_analytics("missing")["message"] == "No ranking history"
+    assert analyzer.calculate_rank_direction("missing") == "UNKNOWN"
+    assert analyzer.calculate_stability_score("missing") == 0

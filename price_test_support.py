@@ -125,3 +125,41 @@ def synthetic_ranking_db(isolated_price_db):
     finally:
         conn.close()
     return SimpleNamespace(db=isolated_price_db, dates=dates, scores=scores, ranks=ranks)
+
+
+@pytest.fixture
+def synthetic_snapshot_db(isolated_price_db):
+    """Lifecycle and retention states built only in the guarded temporary DB."""
+    from datetime import datetime, timedelta, timezone
+    from repository import save_ai_decision_portfolio_snapshot
+
+    now = datetime.now(timezone.utc)
+    cases = [
+        ("PENDING", 1, 1, "ACTIVE_OUTCOME_TRACKING", "PROTECTED"),
+        ("PENDING", 1, 120, "ACTIVE_OUTCOME_TRACKING", "PROTECTED"),
+        ("EVALUATED", 1, 45, "COMPLETED", "RETAIN_LONG_TERM"),
+        ("EVALUATED", 0, 5, "LEGACY_EVALUATED_CANDIDATE", "RETAIN"),
+        ("EVALUATED", 0, 30, "LEGACY_EVALUATED_CANDIDATE", "REVIEW_REQUIRED"),
+        ("PENDING", 0, 6, "LEGACY_ORPHAN_CANDIDATE", "RETAIN"),
+        ("PENDING", 0, 90, "LEGACY_ORPHAN_CANDIDATE", "REVIEW_REQUIRED"),
+        ("UNKNOWN", 0, 10, "UNKNOWN", "UNKNOWN"),
+    ]
+    expected = {}
+    for status, count, age, lifecycle, retention in cases:
+        created = (now - timedelta(days=age)).isoformat()
+        conn = isolated_price_db.connect()
+        try:
+            with conn:
+                cursor = conn.execute(
+                    "INSERT INTO ai_decision_outcome_history(outcome_status, created_at) VALUES (?, ?)",
+                    (status, created),
+                )
+                history_id = cursor.lastrowid
+        finally:
+            conn.close()
+        if count:
+            assert save_ai_decision_portfolio_snapshot(
+                history_id, [{"ticker": "CASH", "weight": 100}], created
+            ) == count
+        expected[history_id] = (lifecycle, retention, count)
+    return SimpleNamespace(db=isolated_price_db, expected=expected)
