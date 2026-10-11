@@ -1,8 +1,9 @@
-﻿import sqlite3
+import sqlite3
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
-def build_db():
-    conn = sqlite3.connect(":memory:")
+def build_db(scope):
+    conn = scope.memory()
 
     cursor = conn.cursor()
 
@@ -48,8 +49,8 @@ def build_db():
     return conn
 
 
-def atomic_success():
-    conn = build_db()
+def atomic_success(scope):
+    conn = build_db(scope)
 
     cursor = conn.cursor()
 
@@ -159,8 +160,8 @@ def atomic_success():
         conn.close()
 
 
-def atomic_failure():
-    conn = build_db()
+def atomic_failure(scope):
+    conn = build_db(scope)
 
     cursor = conn.cursor()
 
@@ -232,62 +233,64 @@ def atomic_failure():
         )
 
 
-print("=" * 60)
-print(
-    "Step6-10-I-5 Audit Event Persistence Design Contract"
-)
-print("=" * 60)
+def test_i5_audit_persistence_design(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        print("=" * 60)
+        print(
+            "Step6-10-I-5 Audit Event Persistence Design Contract"
+        )
+        print("=" * 60)
 
-history_count, snapshot_count, audit_count = (
-    atomic_success()
-)
+        history_count, snapshot_count, audit_count = (
+            atomic_success(scope)
+        )
 
-assert history_count == 1
-assert snapshot_count == 2
-assert audit_count == 1
+        assert history_count == 1
+        assert snapshot_count == 2
+        assert audit_count == 1
 
-print(
-    "CASE 1 ATOMIC SUCCESS: PASS | "
-    f"history={history_count} | "
-    f"snapshot={snapshot_count} | "
-    f"audit={audit_count}"
-)
+        print(
+            "CASE 1 ATOMIC SUCCESS: PASS | "
+            f"history={history_count} | "
+            f"snapshot={snapshot_count} | "
+            f"audit={audit_count}"
+        )
 
-history_count, snapshot_count, audit_count = (
-    atomic_failure()
-)
+        history_count, snapshot_count, audit_count = (
+            atomic_failure(scope)
+        )
 
-assert history_count == 0
-assert snapshot_count == 0
-assert audit_count == 0
+        assert history_count == 0
+        assert snapshot_count == 0
+        assert audit_count == 0
 
-print(
-    "CASE 2 AUDIT FAILURE ROLLBACK: PASS | "
-    f"history={history_count} | "
-    f"snapshot={snapshot_count} | "
-    f"audit={audit_count}"
-)
+        print(
+            "CASE 2 AUDIT FAILURE ROLLBACK: PASS | "
+            f"history={history_count} | "
+            f"snapshot={snapshot_count} | "
+            f"audit={audit_count}"
+        )
 
-print("")
-print("--- DESIGN INVARIANTS ---")
+        print("")
+        print("--- DESIGN INVARIANTS ---")
 
-assert (
-    audit_count == 0
-)
+        assert (
+            audit_count == 0
+        )
 
-print(
-    "INVARIANT 1: AUDIT FAILURE CANNOT LEAVE PARTIAL DATA: PASS"
-)
+        print(
+            "INVARIANT 1: AUDIT FAILURE CANNOT LEAVE PARTIAL DATA: PASS"
+        )
 
-print(
-    "INVARIANT 2: AUDIT EVENT SAVES INSIDE SAME TRANSACTION: PASS"
-)
+        print(
+            "INVARIANT 2: AUDIT EVENT SAVES INSIDE SAME TRANSACTION: PASS"
+        )
 
-print(
-    "INVARIANT 3: NO AUTO-COMMIT AUDIT SIDE EFFECT: PASS"
-)
+        print(
+            "INVARIANT 3: NO AUTO-COMMIT AUDIT SIDE EFFECT: PASS"
+        )
 
-print("")
-print("=" * 60)
-print("OVERALL RESULT: PASS")
-print("=" * 60)
+        print("")
+        print("=" * 60)
+        print("OVERALL RESULT: PASS")
+        print("=" * 60)

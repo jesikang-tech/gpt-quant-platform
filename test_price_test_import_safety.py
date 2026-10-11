@@ -35,6 +35,9 @@ assert FinanceDataReader.__file__, "Real FinanceDataReader was not imported"
 FinanceDataReader.DataReader = deny
 FinanceDataReader.StockListing = deny
 for name in (
+    "test_step6_10_i5_audit_persistence_design",
+    "test_step6_10_i8_audit_event_table_design",
+    "test_step6_10_i9_audit_migration_safety_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
     "test_bulk_price_collector", "test_price_collector", "test_database",
     "test_provider", "test_collector", "test_insert_etf_info",
@@ -343,6 +346,9 @@ def test_isolated_db_cleans_own_files_on_generator_exit(tmp_path, interrupt):
 
 @pytest.mark.parametrize("module_name,builder_name,test_name", [
     ("test_step6_transaction_persistence", "build_test_db", "test_transaction_persistence"),
+    ('test_step6_10_i5_audit_persistence_design', 'build_db', 'test_i5_audit_persistence_design'),
+    ('test_step6_10_i8_audit_event_table_design', 'build_db', 'test_i8_audit_event_table_design'),
+    ('test_step6_10_i9_audit_migration_safety_contract', 'build_existing_db', 'test_i9_audit_migration_safety_contract'),
     ("test_step6_snapshot_validation_persistence", "build_db", "test_snapshot_validation_persistence"),
 ])
 @pytest.mark.parametrize("failure", ["assertion", "sql"])
