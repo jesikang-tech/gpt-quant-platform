@@ -5,9 +5,7 @@ from contextlib import closing
 import pandas as pd
 import pytest
 
-import config
-import database
-import collector.ohlcv_backfill as module
+from price_test_support import _isolated_price_db, phase8_test_scope
 
 
 class FakeProvider:
@@ -28,8 +26,8 @@ def frame(days, **values):
 
 
 @pytest.fixture
-def setup(tmp_path, monkeypatch):
-    path = tmp_path / "backfill.db"
+def setup(tmp_path, monkeypatch, _protected_flask_state):
+    path = _protected_flask_state.db.path
     monkeypatch.setattr(config, "DATABASE_PATH", path)
     monkeypatch.setattr(database, "DATABASE_PATH", path)
     database.init_database()
@@ -176,13 +174,15 @@ def test_no_initialization_on_import_or_missing_schema(tmp_path, monkeypatch):
     with monkeypatch.context() as patch:
         patch.setattr(database, "init_database", forbidden)
         patch.setattr(sqlite3, "connect", forbidden)
+        patch.setattr(module, "OHLCVBackfill", module.OHLCVBackfill)
         importlib.reload(module)
         module.OHLCVBackfill(tmp_path / "missing.db", FakeProvider())
-    missing = tmp_path / "missing.db"
+    missing = _scope.db.path
+    missing.unlink()
     service = module.OHLCVBackfill(missing, FakeProvider())
     assert service.backfill_ticker("A")["status"] == "FAILED"
     assert not missing.exists()
-    path = tmp_path / "legacy.db"
+    path = _scope.db.path
     with closing(sqlite3.connect(path)) as conn:
         conn.executescript("CREATE TABLE etf_prices(ticker TEXT,date TEXT,close_price REAL);"
                            "INSERT INTO etf_prices VALUES ('A','2026-01-02',100);")
@@ -191,3 +191,27 @@ def test_no_initialization_on_import_or_missing_schema(tmp_path, monkeypatch):
     assert module.OHLCVBackfill(path, provider).backfill_ticker("A")["status"] == "FAILED"
     assert provider.calls == []
     assert path.read_bytes() == before
+
+
+@pytest.fixture
+def isolated_price_db(tmp_path, monkeypatch):
+    yield from _isolated_price_db(tmp_path, monkeypatch, "backfill.db", allow_readwrite_uri=True)
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        import collector.ohlcv_backfill as backfill
+        target = sys.modules[__name__]
+        for name, value in {"config": scope.config, "database": scope.database,
+                            "module": backfill, "_scope": scope}.items():
+            monkeypatch.setattr(target, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before

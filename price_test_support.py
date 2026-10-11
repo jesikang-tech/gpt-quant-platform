@@ -17,7 +17,7 @@ def isolated_price_db(tmp_path, monkeypatch):
     yield from _isolated_price_db(tmp_path, monkeypatch)
 
 
-def _isolated_price_db(tmp_path, monkeypatch, filename="prices.db"):
+def _isolated_price_db(tmp_path, monkeypatch, filename="prices.db", *, allow_readwrite_uri=False):
     # Keep custom test filenames (including URI-escaped characters) inside tmp_path.
     if Path(filename).name != filename or filename in ("", ".", ".."):
         raise AssertionError("Isolated DB filename must be a single leaf name")
@@ -28,8 +28,12 @@ def _isolated_price_db(tmp_path, monkeypatch, filename="prices.db"):
     connections = []
 
     def guarded_connect(database, *args, **kwargs):
-        readonly_uri = str(database) == path.as_uri() + "?mode=ro" and kwargs.get("uri") is True
-        if not readonly_uri and (str(database).startswith("file:") or Path(database).resolve() != path):
+        # Read/write URI access is opt-in, and only for this exact fixture-owned file.
+        modes = ("ro", "rw") if allow_readwrite_uri else ("ro",)
+        allowed_uri = kwargs.get("uri") is True and str(database) in (
+            path.as_uri() + "?mode=" + mode for mode in modes
+        )
+        if not allowed_uri and (str(database).startswith("file:") or Path(database).resolve() != path):
             raise AssertionError("SQLite access outside the isolated test DB")
         accesses.append(path)
         conn = original_connect(database, *args, **kwargs)

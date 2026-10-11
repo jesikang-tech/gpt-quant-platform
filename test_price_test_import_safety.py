@@ -44,6 +44,7 @@ for name in (
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
     "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
     "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
+    "test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -445,6 +446,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
     "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
     "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
+    "test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -668,7 +670,8 @@ def test_isolated_filename_cannot_escape_tmp_path(tmp_path, filename):
             generator.close()
 
 
-def test_isolated_db_setup_sql_failure_closes_and_cleans(tmp_path):
+@pytest.mark.parametrize("allow_readwrite_uri", [False, True])
+def test_isolated_db_setup_sql_failure_closes_and_cleans(tmp_path, allow_readwrite_uri):
     import sqlite3
     from price_test_support import _isolated_price_db
 
@@ -685,7 +688,7 @@ def test_isolated_db_setup_sql_failure_closes_and_cleans(tmp_path):
                         conn.execute("CREATE TABLE synthetic_setup_table(x)")
                         conn.execute("SELECT * FROM synthetic_missing_setup_table")
                     patches.setattr(obj, "init_database", fail_init)
-        generator = _isolated_price_db(tmp_path, SetupFailurePatches())
+        generator = _isolated_price_db(tmp_path, SetupFailurePatches(), allow_readwrite_uri=allow_readwrite_uri)
         try:
             with pytest.raises(sqlite3.OperationalError, match="no such table"):
                 next(generator)
@@ -842,6 +845,140 @@ def test_sort_close_only_scope_blocks_fallback_and_restores(isolated_price_db, m
     assert tuple(getattr(analysis, name) for name in names) == functions
     assert (config.DATABASE_PATH, database.DATABASE_PATH, dict(api_server.app.config),
             api_server.AUTH_CONFIG_PATH) == original
+    for conn in handles:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            conn.execute("SELECT 1")
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_readwrite_uri_is_opt_in_and_exact(tmp_path, enabled):
+    import sqlite3
+    from price_test_support import _isolated_price_db
+
+    with pytest.MonkeyPatch.context() as patches:
+        generator = _isolated_price_db(tmp_path, patches, allow_readwrite_uri=enabled)
+        db = next(generator)
+        try:
+            uri = db.path.as_uri() + "?mode=rw"
+            for connect in (sqlite3.connect, sqlite3.dbapi2.connect):
+                if enabled:
+                    conn = connect(uri, uri=True)
+                    try:
+                        conn.execute("INSERT OR REPLACE INTO etf_prices VALUES ('TEST', '2026-01-01', 100)")
+                        conn.commit()
+                        with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
+                            conn.execute("ATTACH DATABASE ':memory:' AS forbidden")
+                    finally:
+                        conn.close()
+                else:
+                    with pytest.raises(AssertionError, match="outside the isolated"):
+                        connect(uri, uri=True)
+                for forbidden in (db.path.as_uri() + "?mode=rwc", uri + "&cache=shared",
+                                  (tmp_path / "virtual-production.db").as_uri() + "?mode=rw"):
+                    with pytest.raises(AssertionError, match="outside the isolated"):
+                        connect(forbidden, uri=True)
+                with pytest.raises(AssertionError, match="outside the isolated"):
+                    connect(uri, uri=False)
+            conn = sqlite3.connect(db.path.as_uri() + "?mode=ro", uri=True)
+            try:
+                with pytest.raises(sqlite3.OperationalError, match="readonly"):
+                    conn.execute("DELETE FROM etf_prices")
+            finally:
+                conn.close()
+        finally:
+            generator.close()
+    assert not db.path.exists()
+
+
+@pytest.mark.parametrize("module_name,failure", [
+    (name, failure)
+    for name in ("test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary")
+    for failure in (None, "assertion", "sql")
+] + [("test_ohlcv_backfill", "init")])
+def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure):
+    import importlib
+    import sqlite3
+    import socket
+
+    module = importlib.import_module(module_name)  # Only inert test declarations.
+    originals = (sqlite3.connect, sqlite3.dbapi2.connect, socket.socket.connect)
+    path_originals = {}
+    handles = []
+    with pytest.MonkeyPatch.context() as patches:
+        class PathTrackingPatches:
+            def setattr(self, obj, name, value, **kwargs):
+                if name == "DATABASE_PATH":
+                    path_originals.setdefault(obj, getattr(obj, name))
+                patches.setattr(obj, name, value, **kwargs)
+
+        db_generator = module.isolated_price_db.__wrapped__(tmp_path, PathTrackingPatches())
+        db = next(db_generator)
+        scope_generator = module._protected_flask_state.__wrapped__(db, patches)
+        scope = next(scope_generator)
+        original_state = (dict(scope.api.app.config), scope.api.AUTH_CONFIG_PATH,
+                          scope.database.init_database, scope.repository.get_connection)
+        original_class = (module.module.OHLCVBackfill if module_name == "test_ohlcv_backfill" else None)
+        try:
+            def interrupt():
+                if failure == "assertion":
+                    raise AssertionError("synthetic quality interruption")
+                conn = sqlite3.connect(db.path)
+                handles.append(conn)
+                conn.execute("CREATE TABLE IF NOT EXISTS synthetic_interruption(x)")
+                conn.execute("SELECT * FROM synthetic_missing_table")
+
+            def run():
+                if module_name == "test_ohlcv_backfill":
+                    if failure == "init":
+                        scope.patches.setattr(scope.database, "init_database", interrupt)
+                    data = module.setup.__wrapped__(tmp_path, patches, scope)
+                    if failure in ("assertion", "sql"):
+                        real = data[2].get_targets
+                        def get_targets():
+                            result = real()
+                            interrupt()
+                            return result
+                        scope.patches.setattr(data[2], "get_targets", get_targets)
+                    module.test_targets_ranges_and_legacy_preservation(data)
+                    if failure is None:
+                        module.test_no_initialization_on_import_or_missing_schema(tmp_path, scope.patches)
+                else:
+                    if failure:
+                        real = module.check_price_quality
+                        def check(*args, **kwargs):
+                            result = real(*args, **kwargs)
+                            interrupt()
+                            return result
+                        scope.patches.setattr(module, "check_price_quality", check)
+                    if module_name == "test_price_quality":
+                        path = module.quality_db.__wrapped__(scope)
+                        module.test_price_quality_status(path, "MATCH", "MATCH")
+                    else:
+                        module.test_matching_prices_are_not_source_verified(tmp_path)
+
+            if failure:
+                expected = AssertionError if failure == "assertion" else sqlite3.OperationalError
+                with pytest.raises(expected, match="synthetic quality interruption|no such table"):
+                    run()
+            else:
+                run()
+            handles.extend(scope.handles)
+            for suffix in ("-journal", "-wal", "-shm"):
+                db.path.with_name(db.path.name + suffix).touch()
+        finally:
+            try:
+                scope_generator.close()
+            finally:
+                db_generator.close()
+        assert (dict(scope.api.app.config), scope.api.AUTH_CONFIG_PATH,
+                scope.database.init_database, scope.repository.get_connection) == original_state
+        if original_class is not None:
+            assert module.module.OHLCVBackfill is original_class
+    assert (sqlite3.connect, sqlite3.dbapi2.connect, socket.socket.connect) == originals
+    assert all(getattr(obj, "DATABASE_PATH") == value for obj, value in path_originals.items())
+    assert all(not db.path.with_name(db.path.name + suffix).exists()
+               for suffix in ("", "-journal", "-wal", "-shm"))
+    assert handles
     for conn in handles:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             conn.execute("SELECT 1")
