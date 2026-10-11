@@ -2,8 +2,8 @@
 
 import sqlite3
 from contextlib import closing
-from pathlib import Path
-from tempfile import TemporaryDirectory
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 SAMPLE_PRICES = [
@@ -18,11 +18,10 @@ SAMPLE_PRICES = [
 
 
 def test_sample_price_insertion():
-    with TemporaryDirectory() as directory:
-        db_path = Path(directory) / "sample_prices.db"
+    db_path = _scope.db.path
 
-        with closing(sqlite3.connect(db_path)) as conn:
-            conn.execute(
+    with closing(sqlite3.connect(db_path)) as conn:
+        conn.execute(
                 """
                 CREATE TABLE etf_prices (
                     ticker TEXT NOT NULL,
@@ -31,35 +30,51 @@ def test_sample_price_insertion():
                     PRIMARY KEY (ticker, date)
                 )
                 """
-            )
+        )
 
-            rows = [
-                ("069500", f"2026-07-{20 + i}", price)
-                for i, price in enumerate(SAMPLE_PRICES)
-            ]
+        rows = [
+            ("069500", f"2026-07-{20 + i}", price)
+            for i, price in enumerate(SAMPLE_PRICES)
+        ]
 
-            conn.executemany(
+        conn.executemany(
                 """
                 INSERT INTO etf_prices
                     (ticker, date, close_price)
                 VALUES (?, ?, ?)
                 """,
-                rows,
-            )
+            rows,
+        )
 
-            actual = conn.execute(
+        actual = conn.execute(
                 """
                 SELECT close_price
                 FROM etf_prices
                 WHERE ticker = ?
                 ORDER BY date
                 """,
-                ("069500",),
-            ).fetchall()
+            ("069500",),
+        ).fetchall()
 
-        assert [row[0] for row in actual] == SAMPLE_PRICES
+    assert [row[0] for row in actual] == SAMPLE_PRICES
+
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        monkeypatch.setattr(sys.modules[__name__], "_scope", scope, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
+        # Preserve the original custom etf_prices schema.
+        scope.db.path.unlink()
+        try:
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before
 
 
 if __name__ == "__main__":
-    test_sample_price_insertion()
-    print("Sample price insertion test: PASS")
+    raise SystemExit("Run this protected contract with pytest.")

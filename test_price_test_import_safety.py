@@ -46,6 +46,7 @@ for name in (
     "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
     "test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
     "test_price_quality_daily_ranking", "test_price_quality_overall", "test_price_quality_summary",
+    "test_etf_analyzer", "test_insert_price",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -449,6 +450,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_ver11_analysis_sort_contract", "test_close_only_reality_test",
     "test_ohlcv_backfill", "test_price_quality", "test_price_quality_boundary",
     "test_price_quality_daily_ranking", "test_price_quality_overall", "test_price_quality_summary",
+    "test_etf_analyzer", "test_insert_price",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -1008,6 +1010,110 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
     assert all(not db.path.with_name(db.path.name + suffix).exists()
                for suffix in ("", "-journal", "-wal", "-shm"))
     assert handles
+    for conn in handles:
+        with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+            conn.execute("SELECT 1")
+
+
+@pytest.mark.parametrize("module_name,failure", [
+    (name, failure)
+    for name in ("test_etf_analyzer", "test_insert_price")
+    for failure in (None, "assertion", "sql")
+] + [("test_etf_analyzer", "patch_setup")])
+def test_analyzer_insert_cleanup_and_patch_restoration(tmp_path, module_name, failure):
+    import importlib
+    import sqlite3
+    import socket
+
+    target = importlib.import_module(module_name)  # Inert test declarations only.
+    original_guards = (sqlite3.connect, sqlite3.dbapi2.connect, socket.socket.connect,
+                       pytest.MonkeyPatch.setattr)
+    original_paths = {}
+    handles = []
+    with pytest.MonkeyPatch.context() as patches:
+        class PathTrackingPatches:
+            def setattr(self, obj, name, value, **kwargs):
+                if name == "DATABASE_PATH":
+                    original_paths.setdefault(obj, getattr(obj, name))
+                patches.setattr(obj, name, value, **kwargs)
+
+        db_generator = target.isolated_price_db.__wrapped__(tmp_path, PathTrackingPatches())
+        db = next(db_generator)
+        generator = target._protected_flask_state.__wrapped__(db, patches)
+        scope = next(generator)
+        original_state = (dict(scope.api.app.config), scope.api.AUTH_CONFIG_PATH,
+                          scope.repository.get_connection)
+        analyzer = target.analyzer if module_name == "test_etf_analyzer" else None
+        functions = ((analyzer.save_or_update_etf_score, analyzer.save_score_history,
+                      analyzer.calculate_return) if analyzer is not None else None)
+        try:
+            def interrupt():
+                if failure == "assertion":
+                    raise AssertionError("synthetic analyzer interruption")
+                conn = sqlite3.connect(db.path)
+                handles.append(conn)
+                conn.execute("SELECT * FROM synthetic_missing_table")
+
+            if analyzer is not None and failure in ("assertion", "sql"):
+                real = analyzer.calculate_return
+                def calculate(*args):
+                    result = real(*args)
+                    interrupt()
+                    return result
+                scope.patches.setattr(analyzer, "calculate_return", calculate)
+            elif analyzer is not None and failure == "patch_setup":
+                real_setattr = pytest.MonkeyPatch.setattr
+                def fail_second_patch(self, obj, name, value, *args, **kwargs):
+                    if obj is analyzer and name == "save_score_history":
+                        raise RuntimeError("synthetic save patch setup failure")
+                    return real_setattr(self, obj, name, value, *args, **kwargs)
+                scope.patches.setattr(pytest.MonkeyPatch, "setattr", fail_second_patch)
+            elif failure:
+                guarded_connect = sqlite3.connect
+                def fail_connect(*args, **kwargs):
+                    conn = guarded_connect(*args, **kwargs)
+                    handles.append(conn)
+                    if failure == "assertion":
+                        raise AssertionError("synthetic analyzer interruption")
+                    conn.execute("SELECT * FROM synthetic_missing_table")
+                    return conn
+                scope.patches.setattr(sqlite3, "connect", fail_connect)
+
+            def run():
+                if analyzer is not None:
+                    target.test_etf_analysis_and_save_contract()
+                    target.test_etf_analyzer_rejects_original_short_history()
+                else:
+                    target.test_sample_price_insertion()
+
+            if failure:
+                expected = (RuntimeError if failure == "patch_setup" else
+                            AssertionError if failure == "assertion" else sqlite3.OperationalError)
+                with pytest.raises(expected, match="synthetic analyzer interruption|no such table|synthetic save patch setup failure"):
+                    run()
+            else:
+                run()
+            if analyzer is not None:
+                # Even a failure while installing the second save patch restores the first.
+                assert (analyzer.save_or_update_etf_score, analyzer.save_score_history) == functions[:2]
+            handles.extend(scope.handles)
+            for suffix in ("-journal", "-wal", "-shm"):
+                db.path.with_name(db.path.name + suffix).touch()
+        finally:
+            try:
+                generator.close()
+            finally:
+                db_generator.close()
+        assert (dict(scope.api.app.config), scope.api.AUTH_CONFIG_PATH,
+                scope.repository.get_connection) == original_state
+        if analyzer is not None:
+            assert (analyzer.save_or_update_etf_score, analyzer.save_score_history,
+                    analyzer.calculate_return) == functions
+    assert (sqlite3.connect, sqlite3.dbapi2.connect, socket.socket.connect,
+            pytest.MonkeyPatch.setattr) == original_guards
+    assert all(getattr(obj, "DATABASE_PATH") == value for obj, value in original_paths.items())
+    assert all(not db.path.with_name(db.path.name + suffix).exists()
+               for suffix in ("", "-journal", "-wal", "-shm"))
     for conn in handles:
         with pytest.raises(sqlite3.ProgrammingError, match="closed"):
             conn.execute("SELECT 1")
