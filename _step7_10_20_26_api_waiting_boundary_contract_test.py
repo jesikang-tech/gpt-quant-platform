@@ -1,13 +1,5 @@
-from pathlib import Path
-import sqlite3
-
-import api_server
-from testing_helpers import authenticated_client
-import repository
-
-
-TEST_DB = Path(r".\database\g7_10_18_integration_test.db")
-HISTORY_ID = None
+"""API waiting preserves pending history and never fabricates future prices."""
+from price_test_support import isolated_price_db, isolated_evaluation_api, synthetic_waiting_portfolio
 
 
 def assert_equal(actual, expected, label):
@@ -25,29 +17,8 @@ def assert_true(value, label):
         )
     print(f"{label}: PASS")
 
-
-print("=" * 82)
-print("PHASE 7-10-20-26")
-print("API WAITING BOUNDARY")
-print("PORTFOLIO OUTCOME EVALUATION -> OUTCOME LOOP")
-print("SOURCE-VERIFIED / TEST-DB / NO FABRICATED OUTCOME")
-print("=" * 82)
-
-
-original_get_connection = repository.get_connection
-
-
-def _test_db_connection():
-    return sqlite3.connect(
-        TEST_DB,
-        timeout=30
-    )
-
-
-repository.get_connection = _test_db_connection
-
-try:
-    conn = sqlite3.connect(TEST_DB)
+def test_api_waiting(synthetic_waiting_portfolio, isolated_evaluation_api):
+    conn = synthetic_waiting_portfolio.db.connect()
 
     try:
         history_row = conn.execute(
@@ -116,7 +87,7 @@ try:
         print("CASE: API WAITING EVALUATION")
         print("=" * 82)
 
-        client = authenticated_client(api_server.app)
+        client = isolated_evaluation_api.client
 
         response = client.get(
             f"/api/ai-decision/portfolio-snapshot/{HISTORY_ID}/evaluate"
@@ -289,6 +260,3 @@ try:
 
     finally:
         conn.close()
-
-finally:
-    repository.get_connection = original_get_connection

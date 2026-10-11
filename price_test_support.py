@@ -165,3 +165,53 @@ def synthetic_snapshot_db(isolated_price_db):
             ) == count
         expected[history_id] = (lifecycle, retention, count)
     return SimpleNamespace(db=isolated_price_db, expected=expected)
+
+
+@pytest.fixture
+def synthetic_ready_api(synthetic_ranking_db, isolated_evaluation_api):
+    """Strong stable synthetic history; all readiness engines remain real."""
+    conn = isolated_evaluation_api.db.connect()
+    try:
+        with conn:
+            conn.execute("UPDATE etf_scores SET return_score=95, trend_score=95, slope_score=95, final_score=95")
+            conn.execute("UPDATE etf_ranking_history SET final_score=95, rank=CASE ticker WHEN '111111' THEN 1 WHEN '222222' THEN 2 ELSE 3 END")
+            conn.executemany("INSERT INTO ai_decision_history(decision, action, decision_score, grade, "
+                             "market_view, recommended_mode, top_etf, created_at) "
+                             "VALUES ('MAINTAIN', 'PROCEED', ?, 'A', 'BULLISH', 'aggressive', '111111', ?)",
+                             [(90 + day, f"2026-01-{day:02d}T10:00:00+00:00") for day in range(1, 11)])
+            conn.execute("INSERT INTO ai_decision_outcome_history(outcome_status, outcome_score, "
+                         "outcome_grade, learning_status, feedback_state, adaptive_learning_required, "
+                         "reassessment_required, reassessment_status) VALUES "
+                         "('EVALUATED', 95, 'A', 'LEARNING_AVAILABLE', 'COLLECTING', 0, 0, 'NOT_REQUIRED')")
+    finally:
+        conn.close()
+    return isolated_evaluation_api
+
+
+@pytest.fixture
+def synthetic_waiting_portfolio(isolated_price_db):
+    """Three ETF reference prices, deliberately no later evaluation prices."""
+    from repository import save_ai_decision_outcome_with_portfolio_transaction
+
+    reference_date = "2026-01-02"
+    conn = isolated_price_db.connect()
+    try:
+        with conn:
+            conn.executemany("INSERT INTO etf_prices VALUES (?, ?, ?)",
+                             [(ticker, reference_date, price) for ticker, price in
+                              (("111111", 100), ("222222", 200), ("333333", 300))])
+    finally:
+        conn.close()
+    result = save_ai_decision_outcome_with_portfolio_transaction(
+        history_kwargs={"decision": "MAINTAIN", "action": "PROCEED", "strategy": "MAINTAIN",
+                        "outcome_status": "PENDING", "snapshot_status": "COLLECTED",
+                        "snapshot_purpose": "FUTURE_OUTCOME_EVALUATION",
+                        "learning_status": "WAITING_FOR_OUTCOME", "feedback_state": "COLLECTING",
+                        "adaptive_learning_required": 0, "reassessment_required": 0,
+                        "reassessment_status": "NOT_REQUIRED"},
+        portfolio=[{"ticker": ticker, "weight": weight} for ticker, weight in
+                   (("111111", 40), ("222222", 30), ("333333", 20), ("CASH", 10))],
+        created_at=reference_date + "T12:00:00+00:00",
+    )
+    assert result["snapshot_count"] == 4
+    return SimpleNamespace(db=isolated_price_db, history_id=result["history_id"])
