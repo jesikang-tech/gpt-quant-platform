@@ -1,11 +1,5 @@
-import os
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
-import repository
+"""Transaction success and audit-collision rollback in isolated memory DBs."""
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 class _TestConnection:
@@ -26,8 +20,8 @@ class _TestConnection:
         return None
 
 
-def build_test_db():
-    raw_conn = sqlite3.connect(":memory:")
+def build_test_db(scope):
+    raw_conn = scope.memory()
     cursor = raw_conn.cursor()
 
     cursor.execute(
@@ -110,253 +104,250 @@ def build_test_db():
     return raw_conn
 
 
-original_get_connection = repository.get_connection
 
+def test_runtime_b(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        repository = scope.repository
+        print("=" * 60)
+        print("Phase8-6-B Runtime Evaluation Transaction Rollback")
+        print("=" * 60)
 
-try:
-    print("=" * 60)
-    print("Phase8-6-B Runtime Evaluation Transaction Rollback")
-    print("=" * 60)
+        # --------------------------------------------------
+        # CASE 1 - EVALUATION TRANSACTION SUCCESS
+        # --------------------------------------------------
+        print("")
+        print("CASE 1 SUCCESS")
 
-    # --------------------------------------------------
-    # CASE 1 - EVALUATION TRANSACTION SUCCESS
-    # --------------------------------------------------
-    print("")
-    print("CASE 1 SUCCESS")
+        raw_conn = build_test_db(scope)
+        test_conn = _TestConnection(raw_conn)
+        scope.patches.setattr(repository, "get_connection", lambda: test_conn)
 
-    raw_conn = build_test_db()
-    test_conn = _TestConnection(raw_conn)
-    repository.get_connection = lambda: test_conn
+        cursor = raw_conn.cursor()
 
-    cursor = raw_conn.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO ai_decision_outcome_history
-        (
-            decision,
-            action,
-            strategy,
-            confidence_score,
-            intelligence_score,
-            outcome_status,
-            snapshot_status,
-            snapshot_purpose,
-            created_at
+        cursor.execute(
+            """
+            INSERT INTO ai_decision_outcome_history
+            (
+                decision,
+                action,
+                strategy,
+                confidence_score,
+                intelligence_score,
+                outcome_status,
+                snapshot_status,
+                snapshot_purpose,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "MAINTAIN",
+                "PROCEED",
+                "MAINTAIN",
+                93.2,
+                89.6,
+                "PENDING",
+                "COLLECTED",
+                "FUTURE_OUTCOME_EVALUATION",
+                "2026-08-20T13:00:00+09:00",
+            ),
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            "MAINTAIN",
-            "PROCEED",
-            "MAINTAIN",
-            93.2,
-            89.6,
-            "PENDING",
-            "COLLECTED",
-            "FUTURE_OUTCOME_EVALUATION",
-            "2026-08-20T13:00:00+09:00",
-        ),
-    )
 
-    history_id = cursor.lastrowid
-    raw_conn.commit()
+        history_id = cursor.lastrowid
+        raw_conn.commit()
 
-    result = repository.save_ai_decision_portfolio_evaluation_transaction(
-        history_id=history_id,
-        portfolio_return=1.25,
-        portfolio_evaluation_date="2026-08-21",
-        event_time="2026-08-21T15:00:00+09:00",
-        evaluated_weight=100.0,
-        pending_positions=0,
-    )
-
-    cursor.execute(
-        """
-        SELECT outcome_status, portfolio_return, portfolio_evaluation_date
-        FROM ai_decision_outcome_history
-        WHERE id = ?
-        """,
-        (history_id,),
-    )
-
-    state = cursor.fetchone()
-
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM audit_event
-        WHERE event_type = 'OUTCOME_EVALUATED'
-          AND outcome_history_id = ?
-        """,
-        (history_id,),
-    )
-
-    audit_count = cursor.fetchone()[0]
-
-    assert result["outcome_status"] == "EVALUATED"
-    assert state == ("EVALUATED", 1.25, "2026-08-21")
-    assert audit_count == 1
-
-    print(
-        "CASE 1 SUCCESS: PASS | "
-        f"history={history_id} | "
-        f"status={state[0]} | "
-        f"return={state[1]}"
-    )
-
-    raw_conn.close()
-
-    # --------------------------------------------------
-    # CASE 2 - FORCE OUTCOME_EVALUATED AUDIT COLLISION
-    # --------------------------------------------------
-    print("")
-    print("CASE 2 FORCED AUDIT COLLISION -> ROLLBACK")
-
-    raw_conn = build_test_db()
-    test_conn = _TestConnection(raw_conn)
-    repository.get_connection = lambda: test_conn
-
-    cursor = raw_conn.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO ai_decision_outcome_history
-        (
-            decision,
-            action,
-            strategy,
-            confidence_score,
-            intelligence_score,
-            outcome_status,
-            snapshot_status,
-            snapshot_purpose,
-            created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            "MAINTAIN",
-            "PROCEED",
-            "MAINTAIN",
-            93.2,
-            89.6,
-            "PENDING",
-            "COLLECTED",
-            "FUTURE_OUTCOME_EVALUATION",
-            "2026-08-20T13:00:00+09:00",
-        ),
-    )
-
-    history_id = cursor.lastrowid
-    event_time = "2026-08-21T15:00:01+09:00"
-
-    cursor.execute(
-        """
-        INSERT INTO audit_event
-        (
-            audit_event_id,
-            event_type,
-            event_time,
-            source,
-            status,
-            outcome_history_id,
-            correlation_key,
-            details
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            f"OUTCOME_EVALUATED:outcome:{history_id}:{event_time}",
-            "TEST_COLLISION",
-            event_time,
-            "test",
-            "TEST",
-            history_id,
-            f"outcome:{history_id}",
-            "{}",
-        ),
-    )
-
-    raw_conn.commit()
-
-    try:
-        repository.save_ai_decision_portfolio_evaluation_transaction(
+        result = repository.save_ai_decision_portfolio_evaluation_transaction(
             history_id=history_id,
-            portfolio_return=2.50,
+            portfolio_return=1.25,
             portfolio_evaluation_date="2026-08-21",
-            event_time=event_time,
+            event_time="2026-08-21T15:00:00+09:00",
             evaluated_weight=100.0,
             pending_positions=0,
         )
-    except Exception as exc:
+
+        cursor.execute(
+            """
+            SELECT outcome_status, portfolio_return, portfolio_evaluation_date
+            FROM ai_decision_outcome_history
+            WHERE id = ?
+            """,
+            (history_id,),
+        )
+
+        state = cursor.fetchone()
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM audit_event
+            WHERE event_type = 'OUTCOME_EVALUATED'
+              AND outcome_history_id = ?
+            """,
+            (history_id,),
+        )
+
+        audit_count = cursor.fetchone()[0]
+
+        assert result["outcome_status"] == "EVALUATED"
+        assert state == ("EVALUATED", 1.25, "2026-08-21")
+        assert audit_count == 1
+
         print(
-            "CASE 2 EXCEPTION: PASS | "
-            f"type={type(exc).__name__} | "
-            f"message={exc}"
-        )
-    else:
-        raise AssertionError(
-            "Expected forced audit collision."
+            "CASE 1 SUCCESS: PASS | "
+            f"history={history_id} | "
+            f"status={state[0]} | "
+            f"return={state[1]}"
         )
 
-    cursor = raw_conn.cursor()
+        raw_conn.close()
 
-    cursor.execute(
-        """
-        SELECT
-            outcome_status,
-            portfolio_return,
-            portfolio_evaluation_date
-        FROM ai_decision_outcome_history
-        WHERE id = ?
-        """,
-        (history_id,),
-    )
+        # --------------------------------------------------
+        # CASE 2 - FORCE OUTCOME_EVALUATED AUDIT COLLISION
+        # --------------------------------------------------
+        print("")
+        print("CASE 2 FORCED AUDIT COLLISION -> ROLLBACK")
 
-    state = cursor.fetchone()
+        raw_conn = build_test_db(scope)
+        test_conn = _TestConnection(raw_conn)
+        scope.patches.setattr(repository, "get_connection", lambda: test_conn)
 
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM audit_event
-        WHERE outcome_history_id = ?
-        """,
-        (history_id,),
-    )
+        cursor = raw_conn.cursor()
 
-    audit_count = cursor.fetchone()[0]
+        cursor.execute(
+            """
+            INSERT INTO ai_decision_outcome_history
+            (
+                decision,
+                action,
+                strategy,
+                confidence_score,
+                intelligence_score,
+                outcome_status,
+                snapshot_status,
+                snapshot_purpose,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "MAINTAIN",
+                "PROCEED",
+                "MAINTAIN",
+                93.2,
+                89.6,
+                "PENDING",
+                "COLLECTED",
+                "FUTURE_OUTCOME_EVALUATION",
+                "2026-08-20T13:00:00+09:00",
+            ),
+        )
 
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM audit_event
-        WHERE audit_event_id = ?
-        """,
-        (
-            f"OUTCOME_EVALUATED:outcome:{history_id}:{event_time}",
-        ),
-    )
+        history_id = cursor.lastrowid
+        event_time = "2026-08-21T15:00:01+09:00"
 
-    collision_count = cursor.fetchone()[0]
+        cursor.execute(
+            """
+            INSERT INTO audit_event
+            (
+                audit_event_id,
+                event_type,
+                event_time,
+                source,
+                status,
+                outcome_history_id,
+                correlation_key,
+                details
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"OUTCOME_EVALUATED:outcome:{history_id}:{event_time}",
+                "TEST_COLLISION",
+                event_time,
+                "test",
+                "TEST",
+                history_id,
+                f"outcome:{history_id}",
+                "{}",
+            ),
+        )
 
-    print("persisted_state:", state)
-    print("audit_count:", audit_count)
-    print("collision_count:", collision_count)
+        raw_conn.commit()
 
-    assert state == ("PENDING", None, None)
-    assert audit_count == 1
-    assert collision_count == 1
+        try:
+            repository.save_ai_decision_portfolio_evaluation_transaction(
+                history_id=history_id,
+                portfolio_return=2.50,
+                portfolio_evaluation_date="2026-08-21",
+                event_time=event_time,
+                evaluated_weight=100.0,
+                pending_positions=0,
+            )
+        except Exception as exc:
+            print(
+                "CASE 2 EXCEPTION: PASS | "
+                f"type={type(exc).__name__} | "
+                f"message={exc}"
+            )
+        else:
+            raise AssertionError(
+                "Expected forced audit collision."
+            )
 
-    print(
-        "CASE 2 ROLLBACK INVARIANT: PASS | "
-        "business state remained PENDING"
-    )
+        cursor = raw_conn.cursor()
 
-    print("")
-    print("=" * 60)
-    print("OVERALL RESULT: PASS")
-    print("=" * 60)
+        cursor.execute(
+            """
+            SELECT
+                outcome_status,
+                portfolio_return,
+                portfolio_evaluation_date
+            FROM ai_decision_outcome_history
+            WHERE id = ?
+            """,
+            (history_id,),
+        )
 
-finally:
-    repository.get_connection = original_get_connection
+        state = cursor.fetchone()
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM audit_event
+            WHERE outcome_history_id = ?
+            """,
+            (history_id,),
+        )
+
+        audit_count = cursor.fetchone()[0]
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM audit_event
+            WHERE audit_event_id = ?
+            """,
+            (
+                f"OUTCOME_EVALUATED:outcome:{history_id}:{event_time}",
+            ),
+        )
+
+        collision_count = cursor.fetchone()[0]
+
+        print("persisted_state:", state)
+        print("audit_count:", audit_count)
+        print("collision_count:", collision_count)
+
+        assert state == ("PENDING", None, None)
+        assert audit_count == 1
+        assert collision_count == 1
+
+        print(
+            "CASE 2 ROLLBACK INVARIANT: PASS | "
+            "business state remained PENDING"
+        )
+
+        print("")
+        print("=" * 60)
+        print("OVERALL RESULT: PASS")
+        print("=" * 60)

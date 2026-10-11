@@ -57,6 +57,13 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_phase8_6_a_runtime_evaluation_persistence",
+    "test_phase8_6_b_runtime_evaluation_rollback",
+    "test_phase8_6_c_runtime_evaluation_partial_audit",
+    "test_phase8_6_d_runtime_evaluation_learning_propagation",
+    "test_phase8_6_e_runtime_evaluation_idempotency",
+    "test_phase8_6_f_runtime_readback_contract",
+
     "collector.bulk_price_collector", "collector.price_collector",
     "collector.etf_collector", "repository", "database", "providers.fdr_provider",
 ):
@@ -195,3 +202,30 @@ def test_portfolio_auth_and_helper_restore_shared_state(isolated_price_db, tmp_p
         generator.close()
     assert (api_server.app.secret_key, api_server.AUTH_CONFIG_PATH,
             config.DATABASE_PATH, database.DATABASE_PATH, repository.get_connection) == original
+
+
+@pytest.mark.parametrize("interrupt", [False, True])
+def test_phase8_scope_restores_functions_and_closes_connections(isolated_price_db, interrupt):
+    import sqlite3
+    from contextlib import nullcontext
+    from price_test_support import phase8_test_scope
+    from testing_helpers import authenticated_client
+
+    expected = pytest.raises(RuntimeError, match="synthetic interruption") if interrupt else nullcontext()
+    with expected:
+        with phase8_test_scope(isolated_price_db) as scope:
+            from contextlib import closing
+            with closing(scope.database.get_connection()) as conn:
+                assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated_price_db.path
+            memory_conn = scope.memory()
+            assert memory_conn.execute("PRAGMA database_list").fetchone()[2] == ""
+            with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
+                memory_conn.execute("ATTACH DATABASE ? AS forbidden", (str(isolated_price_db.path.parent / "virtual-phase8.db"),))
+            scope.patches.setattr(scope.config, "DATABASE_PATH", isolated_price_db.path.parent / "virtual-config.db")
+            scope.patches.setattr(scope.database, "DATABASE_PATH", isolated_price_db.path.parent / "virtual-database.db")
+            scope.patches.setattr(scope.repository, "get_connection", lambda: None)
+            scope.patches.setattr(scope.repository, "save_ai_decision_portfolio_evaluation_transaction", lambda: None)
+            scope.patches.setattr(scope.api, "evaluate_ai_decision_portfolio_snapshot", lambda: None)
+            authenticated_client(scope.api.app)
+            if interrupt:
+                raise RuntimeError("synthetic interruption")

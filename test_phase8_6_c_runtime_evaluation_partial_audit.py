@@ -1,29 +1,11 @@
-﻿import os
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
-import repository
+"""Phase 8-6 contract; execution is guarded and deferred to pytest."""
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
-def run_test():
-    fd, db_path = tempfile.mkstemp(
-        prefix="phase8_6_c_",
-        suffix=".db"
-    )
-    os.close(fd)
+def test_runtime_c(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        database, repository = scope.database, scope.repository
 
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-        database.init_database()
 
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -104,19 +86,13 @@ def run_test():
         conn.commit()
         conn.close()
 
-        original_final_transaction = (
-            repository
-            .save_ai_decision_portfolio_evaluation_transaction
-        )
 
         def forced_failure(*args, **kwargs):
             raise RuntimeError(
                 "FORCED_FINAL_EVALUATION_FAILURE"
             )
 
-        repository.save_ai_decision_portfolio_evaluation_transaction = (
-            forced_failure
-        )
+        scope.patches.setattr(repository, "save_ai_decision_portfolio_evaluation_transaction", forced_failure)
 
         print("=" * 60)
         print(
@@ -147,7 +123,7 @@ def run_test():
                 f"type={type(exc).__name__}"
             )
 
-        conn = sqlite3.connect(test_db_path)
+        conn = database.get_connection()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -265,22 +241,3 @@ def run_test():
         print("=" * 60)
         print("OVERALL RESULT: PASS")
         print("=" * 60)
-
-    finally:
-        repository.save_ai_decision_portfolio_evaluation_transaction = (
-            original_final_transaction
-            if "original_final_transaction" in locals()
-            else repository
-            .save_ai_decision_portfolio_evaluation_transaction
-        )
-
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-run_test()

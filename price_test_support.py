@@ -4,6 +4,7 @@ Direct sqlite3.Connection construction and previously cached connect aliases are
 not intercepted by this fixture. Connections returned here deny SQL ATTACH;
 callers can remove that authorizer, so only trusted test code should use them.
 """
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 import sqlite3
@@ -50,7 +51,15 @@ def isolated_price_db(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATABASE_PATH", path)
     monkeypatch.setattr(database, "DATABASE_PATH", path)
     database.init_database()
-    yield SimpleNamespace(path=path, connect=database.get_connection, accesses=accesses)
+    def connect_memory():
+        # Fixed memory target only; no arbitrary path or URI is accepted.
+        conn = original_connect(":memory:")
+        conn.set_authorizer(lambda action, *unused: sqlite3.SQLITE_DENY
+                            if action == sqlite3.SQLITE_ATTACH else sqlite3.SQLITE_OK)
+        return conn
+
+    yield SimpleNamespace(path=path, connect=database.get_connection, accesses=accesses,
+                          connect_memory=connect_memory)
     assert accesses and all(access == path for access in accesses)
 
 
@@ -262,3 +271,46 @@ def isolated_portfolio_api(synthetic_portfolio_db, tmp_path):
                                   data=synthetic_portfolio_db, auth_path=auth_path)
     finally:
         assert (api.app.secret_key, api.AUTH_CONFIG_PATH) == original
+
+
+@contextmanager
+def phase8_test_scope(isolated_price_db):
+    """Close Phase 8 handles and restore function/Flask patches on every exit."""
+    import config
+    import database
+    import repository
+    import api_server
+
+    original = (config.DATABASE_PATH, database.DATABASE_PATH, repository.get_connection,
+                repository.save_ai_decision_portfolio_evaluation_transaction,
+                api_server.evaluate_ai_decision_portfolio_snapshot, api_server.app.secret_key)
+    handles = []
+    guarded_connect = sqlite3.connect
+
+    def track_connect(*args, **kwargs):
+        conn = guarded_connect(*args, **kwargs)
+        handles.append(conn)
+        return conn
+
+    def memory():
+        conn = isolated_price_db.connect_memory()
+        handles.append(conn)
+        return conn
+
+    try:
+        with pytest.MonkeyPatch.context() as patches:
+            patches.setattr(sqlite3, "connect", track_connect)
+            patches.setattr(sqlite3.dbapi2, "connect", track_connect)
+            patches.setattr(api_server.app, "secret_key", api_server.app.secret_key)
+            yield SimpleNamespace(db=isolated_price_db, patches=patches, memory=memory,
+                                  config=config, database=database, repository=repository,
+                                  api=api_server, handles=handles)
+    finally:
+        for conn in handles:
+            conn.close()
+        assert (config.DATABASE_PATH, database.DATABASE_PATH, repository.get_connection,
+                repository.save_ai_decision_portfolio_evaluation_transaction,
+                api_server.evaluate_ai_decision_portfolio_snapshot, api_server.app.secret_key) == original
+        for conn in handles:
+            with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+                conn.execute("SELECT 1")

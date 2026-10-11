@@ -1,34 +1,13 @@
-import os
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
-import repository
-import api_server
+"""Phase 8-6 contract; execution is guarded and deferred to pytest."""
+from price_test_support import isolated_price_db, phase8_test_scope
 from testing_helpers import authenticated_client
 
 
-def run_test():
-    fd, db_path = tempfile.mkstemp(
-        prefix="phase8_6_d_",
-        suffix=".db"
-    )
-    os.close(fd)
+def test_runtime_d(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        database, repository = scope.database, scope.repository
+        api_server = scope.api
 
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-    original_evaluator = (
-        api_server.evaluate_ai_decision_portfolio_snapshot
-    )
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-        database.init_database()
 
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -99,9 +78,7 @@ def run_test():
                 "portfolio_evaluation_date": "2026-08-21",
             }
 
-        api_server.evaluate_ai_decision_portfolio_snapshot = (
-            forced_evaluated
-        )
+        scope.patches.setattr(api_server, "evaluate_ai_decision_portfolio_snapshot", forced_evaluated)
 
         print("=" * 60)
         print(
@@ -185,7 +162,7 @@ def run_test():
             f"reassessment={expected_reassessment}"
         )
 
-        conn = sqlite3.connect(test_db_path)
+        conn = database.get_connection()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -311,19 +288,3 @@ def run_test():
         print("=" * 60)
         print("OVERALL RESULT: PASS")
         print("=" * 60)
-
-    finally:
-        api_server.evaluate_ai_decision_portfolio_snapshot = (
-            original_evaluator
-        )
-
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-run_test()
