@@ -1,10 +1,8 @@
-import requests
+import pytest
+from price_test_support import isolated_price_db, synthetic_ranking_db, phase8_test_scope
 
 
-BASE_URL = "http://127.0.0.1:5000"
-
-
-def run_api_server_test():
+def run_api_server_test(client):
     print("=" * 50)
     print("GPT Quant Platform API Test")
     print("=" * 50)
@@ -12,10 +10,7 @@ def run_api_server_test():
     print()
     print("===== Root API Test =====")
 
-    response = requests.get(
-        BASE_URL + "/",
-        timeout=10,
-    )
+    response = client.get("/")
 
     print(
         "Status Code :",
@@ -33,10 +28,7 @@ def run_api_server_test():
     print()
     print("===== Ranking API Test =====")
 
-    response = requests.get(
-        BASE_URL + "/api/ranking",
-        timeout=10,
-    )
+    response = client.get("/api/ranking")
 
     print(
         "Status Code :",
@@ -45,7 +37,7 @@ def run_api_server_test():
 
     assert response.status_code == 200
 
-    data = response.json()
+    data = response.get_json()
 
     print(
         data
@@ -68,5 +60,26 @@ def run_api_server_test():
     print("=" * 50)
 
 
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    with phase8_test_scope(isolated_price_db) as scope:
+        api = scope.api
+        config_before = dict(api.app.config)
+        auth_path_before = api.AUTH_CONFIG_PATH
+        try:
+            yield scope
+        finally:
+            api.app.config.clear()
+            api.app.config.update(config_before)
+            api.AUTH_CONFIG_PATH = auth_path_before
+
+
+def test_api_server_contract(synthetic_ranking_db, _protected_flask_state):
+    from testing_helpers import authenticated_client
+
+    client = authenticated_client(_protected_flask_state.api.app)
+    run_api_server_test(client)
+
+
 if __name__ == "__main__":
-    run_api_server_test()
+    raise SystemExit("Run this isolated contract with pytest; direct server HTTP tests are disabled.")
