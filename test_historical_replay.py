@@ -1,14 +1,7 @@
-﻿import os
-import tempfile
+from contextlib import closing
 from datetime import datetime
-from pathlib import Path
-
-import config
-import database
-import repository
-
-from core.period_analysis import get_period_analysis
-from historical_replay import HistoricalReplayEngine
+import pytest
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 def make_prices(start, daily_change, count=60):
@@ -109,24 +102,7 @@ def test_historical_replay_engine_price_boundary_helpers():
 
 
 def test_historical_replay_respects_analysis_date_and_is_deterministic():
-    fd, db_path = tempfile.mkstemp(
-        prefix="historical_replay_",
-        suffix=".db"
-    )
-    os.close(fd)
-
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        database.init_database()
-
-        conn = database.get_connection()
+    with closing(database.get_connection()) as conn:
         cursor = conn.cursor()
 
         ticker = "TEST_REPLAY"
@@ -243,34 +219,10 @@ def test_historical_replay_respects_analysis_date_and_is_deterministic():
         assert result_a["analysis_date"] == analysis_date
         assert result_a["periods"]["60"]["status"] == "ANALYZED"
 
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
 
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
 
 def test_historical_replay_engine_ignores_future_prices():
-    fd, db_path = tempfile.mkstemp(
-        prefix="historical_replay_engine_",
-        suffix=".db"
-    )
-    os.close(fd)
-
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        database.init_database()
-
-        conn = database.get_connection()
+    with closing(database.get_connection()) as conn:
         cursor = conn.cursor()
 
         ticker = "TEST_ENGINE_REPLAY"
@@ -367,11 +319,25 @@ def test_historical_replay_engine_ignores_future_prices():
         assert results[0]["analysis_date"] == analysis_date
         assert results[0]["return_rate"] < 1000
 
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
 
+
+@pytest.fixture(autouse=True)
+def _protected_flask_state(isolated_price_db, monkeypatch):
+    # Import analysis modules only after DB/network guards are installed.
+    with phase8_test_scope(isolated_price_db) as scope:
+        import sys
+        from core.period_analysis import get_period_analysis
+        from historical_replay import HistoricalReplayEngine
+        module = sys.modules[__name__]
+        for name, value in {"database": scope.database, "repository": scope.repository,
+                            "get_period_analysis": get_period_analysis,
+                            "HistoricalReplayEngine": HistoricalReplayEngine}.items():
+            monkeypatch.setattr(module, name, value, raising=False)
+        config_before = dict(scope.api.app.config)
+        auth_path_before = scope.api.AUTH_CONFIG_PATH
         try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
+            yield scope
+        finally:
+            scope.api.app.config.clear()
+            scope.api.app.config.update(config_before)
+            scope.api.AUTH_CONFIG_PATH = auth_path_before

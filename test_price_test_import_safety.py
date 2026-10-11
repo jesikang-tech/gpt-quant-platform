@@ -42,7 +42,7 @@ for name in (
     'test_step6_history_snapshot_lifecycle_repository', 'test_step6_history_snapshot_retention_repository', 'test_step6_history_snapshot_referential_integrity',
     "test_step6_partial_evaluation_completion_contract", "test_step6_cleanup_candidate_repository",
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
-    "test_historical_reality_test", "test_historical_replay_read_only",
+    "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
     "test_api_server",
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_platform_auth", "test_step6_10_g_canonical_signal_bridge_regression",
@@ -442,7 +442,7 @@ def test_readiness_projection_restores_state(isolated_price_db, monkeypatch, fai
     "test_historical_replay_api_contract", "test_ver11_analysis_api_contract",
     "test_api_server",
     "test_ver11_snapshot_contract", "test_historical_replay_portfolio_contract",
-    "test_historical_reality_test", "test_historical_replay_read_only",
+    "test_historical_reality_test", "test_historical_replay_read_only", "test_historical_replay",
 ])
 @pytest.mark.parametrize("failure", [None, "assertion", "api", "sql"])
 def test_auth_module_fixture_restores_flask_state(isolated_price_db, module_name, failure):
@@ -695,3 +695,72 @@ def test_isolated_db_setup_sql_failure_closes_and_cleans(tmp_path):
     path = tmp_path / "prices.db"
     assert all(not path.with_name(path.name + suffix).exists()
                for suffix in ("", "-journal", "-wal", "-shm"))
+
+
+@pytest.mark.parametrize("test_name", [
+    "test_historical_replay_respects_analysis_date_and_is_deterministic",
+    "test_historical_replay_engine_ignores_future_prices",
+])
+@pytest.mark.parametrize("failure", [None, "assertion", "sql"])
+def test_replay_connections_restore_after_failure(isolated_price_db, test_name, failure):
+    import sqlite3
+    import config
+    import database
+    import repository
+    import api_server
+    import test_historical_replay as target
+
+    original = (config.DATABASE_PATH, database.DATABASE_PATH, database.get_connection,
+                repository.get_connection, dict(api_server.app.config), api_server.AUTH_CONFIG_PATH)
+    handles = []
+    with pytest.MonkeyPatch.context() as patches:
+        generator = target._protected_flask_state.__wrapped__(isolated_price_db, patches)
+        scope = next(generator)
+        real_connect = database.get_connection
+
+        class Cursor:
+            def __init__(self, cursor):
+                self.cursor = cursor
+
+            def executemany(self, *args, **kwargs):
+                self.cursor.executemany(*args, **kwargs)
+                if failure == "assertion":
+                    raise AssertionError("synthetic replay interruption")
+                if failure == "sql":
+                    self.cursor.execute("SELECT * FROM synthetic_missing_table")
+
+        class Connection:
+            def __init__(self, connection):
+                self.connection = connection
+
+            def cursor(self):
+                return Cursor(self.connection.cursor())
+
+            def commit(self):
+                return self.connection.commit()
+
+            def close(self):
+                return self.connection.close()
+
+        def connect():
+            conn = real_connect()
+            handles.append(conn)
+            return Connection(conn) if failure else conn
+
+        scope.patches.setattr(database, "get_connection", connect)
+        try:
+            if failure:
+                expected = AssertionError if failure == "assertion" else sqlite3.OperationalError
+                with pytest.raises(expected, match="synthetic replay interruption|no such table"):
+                    getattr(target, test_name)()
+            else:
+                getattr(target, test_name)()
+            # Explicit closing must work before the scope's final cleanup.
+            assert handles
+            for conn in handles:
+                with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+                    conn.execute("SELECT 1")
+        finally:
+            generator.close()
+    assert (config.DATABASE_PATH, database.DATABASE_PATH, database.get_connection,
+            repository.get_connection, dict(api_server.app.config), api_server.AUTH_CONFIG_PATH) == original
