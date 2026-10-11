@@ -4,25 +4,11 @@ AI Portfolio Explainability API Test
 """
 
 
-def test_portfolio_explainability_api(tmp_path, monkeypatch):
-    import api_server
-    from core.platform_auth import (
-        configure_flask_auth,
-        create_password_hash,
-        save_auth_config,
-    )
+from price_test_support import isolated_price_db, synthetic_portfolio_db, isolated_portfolio_api
 
-    config_path = tmp_path / "platform_auth.json"
-    save_auth_config(
-        create_password_hash("1234"),
-        create_password_hash("1234567", admin=True),
-        config_path,
-    )
 
-    configure_flask_auth(api_server.app, config_path)
-    monkeypatch.setattr(api_server, "AUTH_CONFIG_PATH", config_path)
-
-    client = api_server.app.test_client()
+def test_portfolio_explainability_api(isolated_portfolio_api):
+    client = isolated_portfolio_api.client
 
     login_response = client.post(
         "/api/auth/login",
@@ -44,3 +30,14 @@ def test_portfolio_explainability_api(tmp_path, monkeypatch):
     assert "factor_analysis" in explanation
     assert "allocation_reason" in explanation
     assert "risk_analysis" in explanation
+
+    assert result["strategy"] == "Balanced"
+    data = isolated_portfolio_api.data
+    allocations = explanation["allocation_reason"]
+    assert [(item["ticker"], item["weight"]) for item in allocations] == list(zip(data.factors, (40, 30, 20)))
+    assert all(item["reason"] for item in allocations)
+    assert explanation["risk_analysis"]["cash_weight"] == 10
+    assert explanation["market_analysis"]["regime"] == "BULLISH"
+    assert explanation["market_analysis"]["impact"] == "positive"
+    assert isolated_portfolio_api.data.db.accesses
+    assert all(path == isolated_portfolio_api.data.db.path for path in isolated_portfolio_api.data.db.accesses)

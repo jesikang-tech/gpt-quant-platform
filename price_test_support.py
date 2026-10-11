@@ -215,3 +215,50 @@ def synthetic_waiting_portfolio(isolated_price_db):
     )
     assert result["snapshot_count"] == 4
     return SimpleNamespace(db=isolated_price_db, history_id=result["history_id"])
+
+
+@pytest.fixture
+def synthetic_portfolio_db(isolated_price_db):
+    """Original portfolio tickers with independent synthetic factor evidence."""
+    factors = {"365040": (95, 90, 85), "306950": (80, 75, 70),
+               "292160": (65, 60, 55)}
+    scores = {"365040": 90.7, "306950": 90.4, "292160": 90.1}
+    day = "2026-01-06"
+    conn = isolated_price_db.connect()
+    try:
+        with conn:
+            for rank, (ticker, values) in enumerate(factors.items(), 1):
+                conn.execute("INSERT INTO etf_scores(ticker, return_score, trend_score, "
+                             "slope_score, final_score, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                             (ticker, *values, scores[ticker], day))
+                conn.execute("INSERT INTO etf_ranking_history(ticker, rank, final_score, "
+                             "ranking_date) VALUES (?, ?, ?, ?)",
+                             (ticker, rank, scores[ticker], day))
+                conn.execute("INSERT INTO etf_prices VALUES (?, ?, ?)", (ticker, day, 100))
+            assert Path(conn.execute("PRAGMA database_list").fetchone()[2]).resolve() == isolated_price_db.path
+    finally:
+        conn.close()
+    return SimpleNamespace(db=isolated_price_db, factors=factors, scores=scores, day=day)
+
+
+@pytest.fixture
+def isolated_portfolio_api(synthetic_portfolio_db, tmp_path):
+    """Real authentication and API; restore shared Flask state even on failure."""
+    import api_server
+    from core.platform_auth import configure_flask_auth, create_password_hash, save_auth_config
+
+    api = api_server
+    original = (api.app.secret_key, api.AUTH_CONFIG_PATH)
+    auth_path = tmp_path / "platform_auth.json"
+    save_auth_config(create_password_hash("1234"),
+                     create_password_hash("1234567", admin=True), auth_path)
+    try:
+        with pytest.MonkeyPatch.context() as patches:
+            # Register the original value before configure_flask_auth mutates it.
+            patches.setattr(api.app, "secret_key", api.app.secret_key)
+            patches.setattr(api, "AUTH_CONFIG_PATH", auth_path)
+            configure_flask_auth(api.app, auth_path)
+            yield SimpleNamespace(api=api, client=api.app.test_client(),
+                                  data=synthetic_portfolio_db, auth_path=auth_path)
+    finally:
+        assert (api.app.secret_key, api.AUTH_CONFIG_PATH) == original

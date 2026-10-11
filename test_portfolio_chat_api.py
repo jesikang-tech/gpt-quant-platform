@@ -4,25 +4,11 @@ AI Portfolio Conversational Analyst API Test
 """
 
 
-def test_portfolio_chat(tmp_path, monkeypatch):
-    import api_server
-    from core.platform_auth import (
-        configure_flask_auth,
-        create_password_hash,
-        save_auth_config,
-    )
+from price_test_support import isolated_price_db, synthetic_portfolio_db, isolated_portfolio_api
 
-    config_path = tmp_path / "platform_auth.json"
-    save_auth_config(
-        create_password_hash("1234"),
-        create_password_hash("1234567", admin=True),
-        config_path,
-    )
 
-    configure_flask_auth(api_server.app, config_path)
-    monkeypatch.setattr(api_server, "AUTH_CONFIG_PATH", config_path)
-
-    client = api_server.app.test_client()
+def test_portfolio_chat(isolated_portfolio_api):
+    client = isolated_portfolio_api.client
 
     login_response = client.post(
         "/api/auth/login",
@@ -52,3 +38,15 @@ def test_portfolio_chat(tmp_path, monkeypatch):
     assert "reason" in response_data
     assert "recommendation" in response_data
     assert "confidence" in response_data
+
+    assert response_data["question"] == payload["question"]
+    assert response_data["question_type"] == "ALLOCATION"
+    assert response_data["answer"]
+    assert response_data["reason"]
+    assert response_data["recommendation"]
+    assert response_data["confidence"] == "HIGH"
+    assert response_data["portfolio_context"] == {
+        "top_ticker": "365040", "top_score": 90.7, "top_weight": 40, "asset_count": 4}
+    assert any("BULLISH" in reason for reason in response_data["reason"])
+    assert isolated_portfolio_api.data.db.accesses
+    assert all(path == isolated_portfolio_api.data.db.path for path in isolated_portfolio_api.data.db.accesses)

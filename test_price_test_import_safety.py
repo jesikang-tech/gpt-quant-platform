@@ -37,6 +37,7 @@ FinanceDataReader.StockListing = deny
 for name in (
     "test_bulk_price_collector", "test_price_collector", "test_database",
     "test_provider", "test_collector", "test_insert_etf_info",
+    "test_portfolio_optimization", "test_portfolio_explainability_api", "test_portfolio_chat_api",
     "test_dashboard_api", "test_dashboard_data", "test_dashboard_json",
     "test_intelligence_summary", "test_intelligence_universe", "test_multi_ranking",
     "test_ranking_prediction", "test_universe_ranking",
@@ -166,3 +167,31 @@ def test_isolation_fixture_restores_paths_and_guards(tmp_path):
             api_server.save_ai_decision_outcome_with_portfolio_transaction,
             api_server.update_ai_decision_outcome_history,
             api_server.save_ai_decision_audit_event) == api_functions
+
+
+@pytest.mark.parametrize("interrupt", [False, True])
+def test_portfolio_auth_and_helper_restore_shared_state(isolated_price_db, tmp_path, interrupt):
+    import api_server
+    import config
+    import database
+    import repository
+    from price_test_support import synthetic_portfolio_db, isolated_portfolio_api
+    from testing_helpers import authenticated_client
+
+    original = (api_server.app.secret_key, api_server.AUTH_CONFIG_PATH,
+                config.DATABASE_PATH, database.DATABASE_PATH, repository.get_connection)
+    data = synthetic_portfolio_db.__wrapped__(isolated_price_db)
+    generator = isolated_portfolio_api.__wrapped__(data, tmp_path)
+    try:
+        context = next(generator)
+        assert context.api.AUTH_CONFIG_PATH == context.auth_path
+        assert context.auth_path.parent == tmp_path
+        authenticated_client(context.api.app)
+        assert context.api.app.secret_key == "test-auth-session-secret-key"
+        if interrupt:
+            with pytest.raises(RuntimeError, match="synthetic interruption"):
+                generator.throw(RuntimeError("synthetic interruption"))
+    finally:
+        generator.close()
+    assert (api_server.app.secret_key, api_server.AUTH_CONFIG_PATH,
+            config.DATABASE_PATH, database.DATABASE_PATH, repository.get_connection) == original
