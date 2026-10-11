@@ -1,39 +1,14 @@
-import os
-import shutil
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
+"""Synthetic isolated API contract; no source database copy or import-time execution."""
+from contextlib import ExitStack, closing
+from price_test_support import (isolated_price_db, isolated_evaluation_api,
+                                synthetic_ranking_db, synthetic_ready_api)
 
 
-def run_test():
-    source_db = Path(r".\database\g7_10_18_integration_test.db")
+def test_decision_intelligence_get_read_only(synthetic_ready_api):
+    client = synthetic_ready_api.client
+    with ExitStack() as stack:
 
-    fd, db_path = tempfile.mkstemp(
-        prefix="decision_intelligence_read_only_",
-        suffix=".db"
-    )
-    os.close(fd)
-
-    shutil.copy2(source_db, db_path)
-
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        import api_server
-        from testing_helpers import authenticated_client
-
-        client = authenticated_client(api_server.app)
-
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
         cursor = conn.cursor()
 
         cursor.execute(
@@ -48,6 +23,7 @@ def run_test():
 
         conn.close()
 
+        before_bytes = synthetic_ready_api.db.path.read_bytes()
         response_1 = client.get(
             "/api/portfolio/decision-intelligence"
         )
@@ -55,7 +31,7 @@ def run_test():
         assert response_1.status_code == 200
         assert response_1.is_json
 
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
         cursor = conn.cursor()
 
         cursor.execute(
@@ -77,7 +53,7 @@ def run_test():
         assert response_2.status_code == 200
         assert response_2.is_json
 
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
         cursor = conn.cursor()
 
         cursor.execute(
@@ -108,6 +84,8 @@ def run_test():
             "Repeated GET must not create Portfolio Snapshot"
         )
 
+        assert synthetic_ready_api.db.path.read_bytes() == before_bytes
+
         print("CASE 1 FIRST GET HISTORY: PASS")
         print("CASE 2 FIRST GET SNAPSHOT: PASS")
         print("CASE 3 SECOND GET HISTORY: PASS")
@@ -115,14 +93,15 @@ def run_test():
         print("")
         print("OVERALL RESULT: PASS")
 
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
 
 
-run_test()
+def test_temporary_connection_closes_on_exception(synthetic_ready_api):
+    import sqlite3
+    import pytest
+
+    with pytest.raises(RuntimeError, match="synthetic failure"):
+        with ExitStack() as stack:
+            conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
+            raise RuntimeError("synthetic failure")
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        conn.execute("SELECT 1")

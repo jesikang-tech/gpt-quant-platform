@@ -1,39 +1,21 @@
-import os
-import shutil
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
+"""Synthetic isolated API contract; no source database copy or import-time execution."""
+from contextlib import ExitStack, closing
+from price_test_support import (isolated_price_db, isolated_evaluation_api,
+                                synthetic_ranking_db, synthetic_ready_api)
 
 
-def test_portfolio_history_persistence_contract():
-    source_db = Path(r".\database\g7_10_18_integration_test.db")
+def test_portfolio_history_persistence_contract(synthetic_ready_api):
+    client = synthetic_ready_api.client
+    with ExitStack() as stack:
 
-    fd, db_path = tempfile.mkstemp(
-        prefix="portfolio_history_contract_",
-        suffix=".db"
-    )
-    os.close(fd)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
 
-    shutil.copy2(source_db, db_path)
-
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        import api_server
-        from testing_helpers import authenticated_client
-
-        client = authenticated_client(api_server.app)
-
-        conn = sqlite3.connect(test_db_path)
+        # The persistence contract uses metadata columns absent from init_database.
+        # Build that schema only in this guarded synthetic DB.
+        with conn:
+            conn.execute("ALTER TABLE portfolio_history ADD COLUMN health_score REAL")
+            conn.execute("ALTER TABLE portfolio_history ADD COLUMN confidence TEXT")
+            conn.execute("ALTER TABLE portfolio_history ADD COLUMN market_condition TEXT")
 
         before = conn.execute(
             "SELECT COUNT(*) FROM portfolio_history"
@@ -48,7 +30,7 @@ def test_portfolio_history_persistence_contract():
         assert response.status_code == 200
         assert response.is_json
 
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
 
         after = conn.execute(
             "SELECT COUNT(*) FROM portfolio_history"
@@ -101,12 +83,3 @@ def test_portfolio_history_persistence_contract():
         assert len({row[5] for row in rows}) == 1
         assert len({row[6] for row in rows}) == 1
         assert len({row[7] for row in rows}) == 1
-
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass

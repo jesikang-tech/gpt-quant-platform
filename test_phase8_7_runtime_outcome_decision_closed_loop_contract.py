@@ -1,40 +1,20 @@
-import os
-import shutil
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
+"""Synthetic isolated API contract; no source database copy or import-time execution."""
+from contextlib import ExitStack, closing
+from price_test_support import (isolated_price_db, isolated_evaluation_api,
+                                synthetic_ranking_db, synthetic_ready_api)
 
 
-def run_contract():
-    source_db = Path(r".\database\g7_10_18_integration_test.db")
+def test_runtime_outcome_closed_loop(synthetic_ready_api):
+    client = synthetic_ready_api.client
+    with ExitStack() as stack:
 
-    fd, db_path = tempfile.mkstemp(
-        prefix="phase8_7_runtime_closed_loop_contract_",
-        suffix=".db",
-    )
-    os.close(fd)
-
-    shutil.copy2(source_db, db_path)
-
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        import api_server
-        from testing_helpers import authenticated_client
-
-        client = authenticated_client(api_server.app)
-
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
         cursor = conn.cursor()
+        entry_price, evaluation_price = 100.0, 88.0
+        expected_return = round((evaluation_price - entry_price) / entry_price * 100, 4)
+        assert expected_return < 0
+        cursor.executemany("INSERT INTO etf_prices VALUES ('111111', ?, ?)",
+                           [("2026-07-27", entry_price), ("2026-07-28", evaluation_price)])
 
         created_at = "2026-07-27T15:30:00+09:00"
 
@@ -84,9 +64,9 @@ def run_contract():
             """,
             (
                 history_id,
-                "069500",
+                "111111",
                 100.0,
-                107513.0,
+                entry_price,
                 created_at,
                 "2026-07-27",
             ),
@@ -116,7 +96,7 @@ def run_contract():
             outcome_evaluation["adaptive_learning_required"],
         )
 
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
 
         audit_before = conn.execute(
             "SELECT COUNT(*) FROM audit_event"
@@ -144,7 +124,7 @@ def run_contract():
             else None
         )
 
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
 
         audit_after = conn.execute(
             "SELECT COUNT(*) FROM audit_event"
@@ -168,7 +148,7 @@ def run_contract():
 
         assert evaluation["evaluation_status"] == "EVALUATED"
         assert evaluation["outcome_status"] == "EVALUATED"
-        assert evaluation["portfolio_return"] == -11.1903
+        assert evaluation["portfolio_return"] == expected_return
 
         assert outcome_evaluation["learning_signal"] == "NEGATIVE"
         assert (
@@ -248,15 +228,3 @@ def run_contract():
             "ADAPTIVE DELTA    :",
             adaptive_after - adaptive_before,
         )
-
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-run_contract()

@@ -1,40 +1,19 @@
-import os
-import shutil
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
+"""Synthetic isolated API contract; no source database copy or import-time execution."""
+from contextlib import ExitStack, closing
+from price_test_support import (isolated_price_db, isolated_evaluation_api,
+                                synthetic_ranking_db, synthetic_ready_api)
 
 
-def run_test():
-    source_db = Path(r".\database\g7_10_18_integration_test.db")
+def test_decision_intelligence_post_persistence(synthetic_ready_api):
+    client = synthetic_ready_api.client
+    with ExitStack() as stack:
 
-    fd, db_path = tempfile.mkstemp(
-        prefix="decision_intelligence_read_only_",
-        suffix=".db"
-    )
-    os.close(fd)
-
-    shutil.copy2(source_db, db_path)
-
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
-
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        import api_server
-        from testing_helpers import authenticated_client
-
-        client = authenticated_client(api_server.app)
-
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
         cursor = conn.cursor()
+        # Every non-cash synthetic constituent has an explicit reference price.
+        with conn:
+            conn.executemany("INSERT INTO etf_prices VALUES (?, '2026-01-06', ?)",
+                             [("222222", 200), ("333333", 300)])
 
         cursor.execute(
             "SELECT COUNT(*) FROM ai_decision_outcome_history"
@@ -55,7 +34,7 @@ def run_test():
         assert response_1.status_code == 200
         assert response_1.is_json
 
-        conn = sqlite3.connect(test_db_path)
+        conn = stack.enter_context(closing(synthetic_ready_api.db.connect()))
         cursor = conn.cursor()
 
         cursor.execute(
@@ -71,7 +50,7 @@ def run_test():
         conn.close()
 
 
-        cursor = sqlite3.connect(test_db_path).cursor()
+        cursor = stack.enter_context(closing(synthetic_ready_api.db.connect())).cursor()
 
         cursor.execute(
             """
@@ -133,15 +112,3 @@ def run_test():
         print("CASE 8 POST OUTCOME PERSISTENCE: PASS")
         print("")
         print("OVERALL RESULT: PASS")
-
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-run_test()
