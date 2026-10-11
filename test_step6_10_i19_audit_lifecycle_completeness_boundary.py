@@ -1,11 +1,5 @@
-﻿import os
-import sqlite3
-import tempfile
-from pathlib import Path
-
-import config
-import database
-import repository
+"""Synthetic audit read contract; execution is deferred to guarded pytest tests."""
+from price_test_support import isolated_price_db, phase8_test_scope
 
 
 EXPECTED_LIFECYCLE = [
@@ -17,23 +11,11 @@ EXPECTED_LIFECYCLE = [
 ]
 
 
-def run_test():
-    fd, db_path = tempfile.mkstemp(
-        prefix="step6_10_i19_",
-        suffix=".db"
-    )
-    os.close(fd)
+def test_i19_audit_read_contract(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        database, repository = scope.database, scope.repository
 
-    original_config_path = config.DATABASE_PATH
-    original_database_path = database.DATABASE_PATH
 
-    try:
-        test_db_path = Path(db_path)
-
-        config.DATABASE_PATH = test_db_path
-        database.DATABASE_PATH = test_db_path
-
-        database.init_database()
 
         conn = database.get_connection()
         cursor = conn.cursor()
@@ -219,7 +201,7 @@ def run_test():
         print("")
         print("CASE 7 READ-ONLY BUSINESS STATE")
 
-        conn = sqlite3.connect(test_db_path)
+        conn = database.get_connection()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -267,7 +249,7 @@ def run_test():
             outcome_history_id=501
         )
 
-        conn = sqlite3.connect(test_db_path)
+        conn = database.get_connection()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -293,15 +275,3 @@ def run_test():
         print("=" * 60)
         print("OVERALL RESULT: PASS")
         print("=" * 60)
-
-    finally:
-        config.DATABASE_PATH = original_config_path
-        database.DATABASE_PATH = original_database_path
-
-        try:
-            os.remove(db_path)
-        except FileNotFoundError:
-            pass
-
-
-run_test()

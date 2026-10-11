@@ -57,6 +57,11 @@ for name in (
     "test_step6_10_g_outcome_lifecycle", "test_step6_10_g_portfolio_outcome_integration",
     "test_step6_operational_lifecycle_readiness", "test_step6_same_date_evaluation_idempotency",
     "test_phase8_6_g_runtime_learning_readback_contract",
+    "test_step6_10_i17_audit_event_read_boundary_contract",
+    "test_step6_10_i18_audit_lifecycle_timeline_projection_boundary",
+    "test_step6_10_i19_audit_lifecycle_completeness_boundary",
+    "test_step6_10_i20_audit_lifecycle_completeness_boundary",
+
     "test_step6_10_i12_runtime_outcome_evaluation_audit_persistence",
     "test_step6_10_i13_runtime_adaptive_strategy_audit_persistence",
     "test_step6_10_i14_runtime_reassessment_audit_persistence",
