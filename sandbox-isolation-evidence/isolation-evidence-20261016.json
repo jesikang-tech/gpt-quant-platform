@@ -1,0 +1,27 @@
+{
+    "schema":  "gptquant.isolation.evidence.v1",
+    "recorded_date":  "2026-10-16",
+    "evidence":  {
+                     "sandbox_configuration":  "PASS",
+                     "virtual_machine_identity":  "PASS",
+                     "network_isolation":  "UNVERIFIED",
+                     "readonly_mapping":  "PASS",
+                     "host_filesystem_isolation":  "UNVERIFIED",
+                     "dependency_review":  "UNVERIFIED"
+                 },
+    "observations":  {
+                         "sandbox_configuration":  "COMMAND 180: nine configuration checks passed",
+                         "virtual_machine_identity":  "V3 guest diagnostic: virtual machine identified",
+                         "network_isolation":  "No active network adapters observed; full isolation not proven",
+                         "readonly_mapping":  "COMMAND 179: readonly enforcement PASS observed in guest",
+                         "host_filesystem_isolation":  "COMMAND 181: configured exposure checked; runtime isolation unverified",
+                         "dependency_review":  "34 third-party wheels remain on hold"
+                     },
+    "decision":  {
+                     "evidence_complete":  false,
+                     "execution_authorized":  false,
+                     "os_boundary":  "NOT_VERIFIED",
+                     "platform_test_execution":  "DENIED",
+                     "operating_db_access":  "PROHIBITED"
+                 }
+}
