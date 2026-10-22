@@ -26,6 +26,7 @@ jobs:
           sparse-checkout: |
             naver-decimal-validation
             api_server.py
+            current_analysis.py
             static/dashboard.js
           sparse-checkout-cone-mode: true
 
@@ -42,6 +43,7 @@ jobs:
           cp -R naver-decimal-validation/. /tmp/naver-decimal-check/
           mkdir -p /tmp/naver-decimal-check/integration_sources
           cp api_server.py /tmp/naver-decimal-check/integration_sources/api_server.py
+          cp current_analysis.py /tmp/naver-decimal-check/integration_sources/current_analysis.py
           cp static/dashboard.js /tmp/naver-decimal-check/integration_sources/dashboard.js
 
       - name: Install pytest
@@ -60,4 +62,4 @@ jobs:
         run: |
           python -m pytest -q -p no:cacheprovider \
             test_naver_decimal_price_pipeline.py \
-            test_naver_raw_observation.py test_naver_analysis_boundary.py test_naver_analysis_response.py test_naver_actual_integration.py
+            test_naver_raw_observation.py test_naver_analysis_boundary.py test_naver_analysis_response.py test_naver_actual_integration.py test_price_provenance_integration.py
