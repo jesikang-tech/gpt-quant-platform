@@ -1423,6 +1423,65 @@ function renderVer11AnalysisError(error) {
     resultPanel.hidden = false;
 }
 
+async function renderNaverValidationStatus() {
+    const resultPanel =
+        document.getElementById("ver11-analysis-result");
+
+    if (!resultPanel) {
+        return;
+    }
+
+    let notice = document.getElementById(
+        "naver-validation-status-notice"
+    );
+
+    if (!notice) {
+        notice = document.createElement("div");
+        notice.id = "naver-validation-status-notice";
+        notice.setAttribute("role", "status");
+        notice.style.marginBottom = "12px";
+        notice.style.padding = "10px";
+        notice.style.border = "1px solid currentColor";
+        resultPanel.prepend(notice);
+    }
+
+    notice.textContent =
+        "NAVER 데이터 검증 상태 확인 중 — 분석 사용 승인되지 않음.";
+
+    try {
+        const response = await fetch(
+            "/api/naver-validation-status",
+            { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+            throw new Error("NAVER_STATUS_HTTP_ERROR");
+        }
+
+        const status = await response.json();
+
+        if (
+            status.provider !== "NAVER" ||
+            status.status !== "BLOCKED" ||
+            status.reason !==
+                "UNVERIFIED_ADJUSTMENT_AND_PROVENANCE" ||
+            status.analysis_authorized !== false ||
+            status.dashboard_authorized !== false ||
+            status.persistence_authorized !== false
+        ) {
+            throw new Error("NAVER_STATUS_CONTRACT_INVALID");
+        }
+
+        notice.textContent =
+            "NAVER 가격 데이터: 출처·조정 여부 미검증. " +
+            "투자 분석·대시보드 데이터 사용·운영 저장이 차단되어 있습니다.";
+    } catch (error) {
+        notice.textContent =
+            "NAVER 가격 데이터 검증 상태를 확인할 수 없습니다. " +
+            "검증 완료로 간주하지 마십시오.";
+    }
+}
+
 function renderVer11AnalysisResult(data) {
     const resultPanel =
         document.getElementById("ver11-analysis-result");
@@ -1782,6 +1841,7 @@ async function runVer11Analysis() {
         throw new Error(data.message || "Ver.1.1 analysis failed.");
     }
 
+    renderNaverValidationStatus();
     latestVer11AnalysisData = data;
 
     const snapshotSaveButton =

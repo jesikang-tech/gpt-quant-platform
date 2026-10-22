@@ -323,6 +323,18 @@ def historical_replay_api():
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
+@app.route("/api/naver-validation-status", methods=["GET"])
+def naver_validation_status_api():
+    """Expose the unverified NAVER boundary without reading prices."""
+    return jsonify({
+        "provider": "NAVER",
+        "status": "BLOCKED",
+        "reason": "UNVERIFIED_ADJUSTMENT_AND_PROVENANCE",
+        "analysis_authorized": False,
+        "dashboard_authorized": False,
+        "persistence_authorized": False,
+    })
+
 @app.route("/api/ver11-analysis")
 def ver11_analysis_api():
     analysis_date = request.args.get("date")
