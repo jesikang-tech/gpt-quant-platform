@@ -1,0 +1,36 @@
+{
+    "schema":  "price-evidence-acquisition-design-v1",
+    "status":  "DESIGN_ONLY_EXECUTION_DENIED",
+    "purpose":  "Determine the root cause of historical price mismatches",
+    "source_database":  "database\\etf.db",
+    "scope":  {
+                  "primary_ticker":  "0008S0",
+                  "primary_date":  "2026-09-16",
+                  "tables":  [
+                                 "etf_prices",
+                                 "etf_ohlcv_prices"
+                             ],
+                  "fields":  [
+                                 "ticker",
+                                 "date",
+                                 "close_price"
+                             ],
+                  "history_expansion_requires_review":  true
+              },
+    "prerequisites":  [
+                          "Independent source protection review",
+                          "SQLite WAL consistency review",
+                          "Synthetic-only validation",
+                          "Verified execution isolation where applicable",
+                          "Separate explicit operating database access approval"
+                      ],
+    "permissions":  {
+                        "design_approved":  true,
+                        "source_database_read":  false,
+                        "source_database_copy":  false,
+                        "source_database_write":  false,
+                        "snapshot_execution":  false,
+                        "host_python_execution":  false
+                    },
+    "root_cause_confirmed":  false
+}
