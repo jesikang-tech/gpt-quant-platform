@@ -55,4 +55,4 @@ jobs:
         run: |
           python -m pytest -q -p no:cacheprovider \
             test_naver_decimal_price_pipeline.py \
-            test_naver_raw_observation.py test_naver_analysis_boundary.py
+            test_naver_raw_observation.py test_naver_analysis_boundary.py test_naver_analysis_response.py
