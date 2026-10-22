@@ -72,3 +72,52 @@ def test_existing_analysis_endpoint_remains():
     api = source(API)
     assert '@app.route("/api/ver11-analysis")' in api
     assert "data = _attach_point_in_time_portfolio(data)" in api
+
+def test_naver_status_is_awaited_before_analysis_render():
+    dashboard = source(DASHBOARD)
+    start = dashboard.index("async function runVer11Analysis()")
+    end = dashboard.index(
+        "class DashboardAuthenticationRequiredError",
+        start,
+    )
+    block = dashboard[start:end]
+
+    status_pos = block.index("await renderNaverValidationStatus();")
+    cache_pos = block.index("latestVer11AnalysisData = data;")
+    render_pos = block.index("renderVer11AnalysisResult(data);")
+
+    assert status_pos < cache_pos < render_pos
+    assert "    renderNaverValidationStatus();" not in block
+
+
+def test_naver_status_failure_remains_unverified():
+    dashboard = source(DASHBOARD)
+    start = dashboard.index(
+        "async function renderNaverValidationStatus()"
+    )
+    end = dashboard.index(
+        "function renderVer11AnalysisResult(data)",
+        start,
+    )
+    block = dashboard[start:end]
+
+    assert "catch (error)" in block
+    assert "NAVER 가격 데이터 검증 상태를 확인할 수 없습니다." in block
+    assert "검증 완료로 간주하지 마십시오." in block
+
+
+def test_naver_status_does_not_authorize_analysis():
+    dashboard = source(DASHBOARD)
+    start = dashboard.index(
+        "async function renderNaverValidationStatus()"
+    )
+    end = dashboard.index(
+        "function renderVer11AnalysisResult(data)",
+        start,
+    )
+    block = dashboard[start:end]
+
+    assert "status.analysis_authorized !== false" in block
+    assert "status.dashboard_authorized !== false" in block
+    assert "status.persistence_authorized !== false" in block
+    assert "status.status !== \"BLOCKED\"" in block

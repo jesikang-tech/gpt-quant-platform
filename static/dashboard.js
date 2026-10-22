@@ -1841,7 +1841,7 @@ async function runVer11Analysis() {
         throw new Error(data.message || "Ver.1.1 analysis failed.");
     }
 
-    renderNaverValidationStatus();
+    await renderNaverValidationStatus();
     latestVer11AnalysisData = data;
 
     const snapshotSaveButton =
