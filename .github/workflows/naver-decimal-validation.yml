@@ -27,6 +27,7 @@ jobs:
             naver-decimal-validation
             core/price_provenance_gate.py
             core/naver_persistence_entry.py
+            collector/price_collector.py
             price_quality.py
             api_server.py
             current_analysis.py
@@ -46,8 +47,9 @@ jobs:
           cp -R naver-decimal-validation/. /tmp/naver-decimal-check/
           cp core/price_provenance_gate.py /tmp/naver-decimal-check/core/price_provenance_gate.py
           cp core/naver_persistence_entry.py /tmp/naver-decimal-check/core/naver_persistence_entry.py
-          cp price_quality.py /tmp/naver-decimal-check/price_quality.py
           mkdir -p /tmp/naver-decimal-check/integration_sources
+          cp collector/price_collector.py /tmp/naver-decimal-check/integration_sources/price_collector.py
+          cp price_quality.py /tmp/naver-decimal-check/price_quality.py
           cp api_server.py /tmp/naver-decimal-check/integration_sources/api_server_original.py
           cp current_analysis.py /tmp/naver-decimal-check/integration_sources/current_analysis.py
           cp static/dashboard.js /tmp/naver-decimal-check/integration_sources/dashboard.js
@@ -56,7 +58,7 @@ jobs:
         shell: bash
         working-directory: /tmp/naver-decimal-check
         run: |
-          python -m pip install pytest==8.3.5 Flask==3.1.1
+          python -m pip install pytest==8.3.5 Flask==3.1.1 pandas==2.3.3
 
       - name: Run NAVER Decimal tests
         shell: bash
@@ -69,7 +71,7 @@ jobs:
           python -m pytest -q -p no:cacheprovider \
             test_naver_decimal_price_pipeline.py \
             test_naver_raw_observation.py test_real_evidence_verifier.py test_price_rebuild_preflight.py test_naver_http_response_validation.py test_naver_observed_row_regression.py test_naver_analysis_boundary.py test_naver_analysis_response.py test_naver_analysis_execution_boundary.py test_naver_api_entry_gate.py test_naver_api_route_execution.py test_naver_api_http_contract.py test_naver_real_api_execution.py test_naver_actual_integration.py test_price_provenance_integration.py \
-            test_price_provenance_gate.py test_naver_persistence_entry.py test_naver_persistence_bypass.py test_naver_provenance_boundary.py test_naver_source_evidence.py test_naver_trust_anchor.py test_trading_session_eligibility.py test_price_integrity_decision.py test_price_quality_decision_adapter.py test_price_quality_integration.py
+            test_price_provenance_gate.py test_naver_persistence_entry.py test_naver_persistence_bypass.py test_naver_provenance_boundary.py test_naver_source_evidence.py test_naver_trust_anchor.py test_trading_session_eligibility.py test_price_integrity_decision.py test_price_quality_decision_adapter.py test_price_quality_integration.py test_naver_collector_boundary.py
       - name: Run isolated rebuild adapter tests
         if: success()
         shell: bash
