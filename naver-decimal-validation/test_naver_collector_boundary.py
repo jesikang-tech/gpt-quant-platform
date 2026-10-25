@@ -74,3 +74,73 @@ def test_naver_provider_cannot_reach_legacy_price_writers(monkeypatch):
             collector.collect("111111", "2026-01-01", "2026-01-05")
 
     assert calls == []
+
+
+@pytest.mark.parametrize("provider_name", ["OTHER", None])
+def test_disguised_unverified_provider_cannot_write(monkeypatch, provider_name):
+    """An unverified source must not gain write access by changing its label."""
+    calls = []
+
+    def forbidden_write(*args, **kwargs):
+        calls.append((args, kwargs))
+        raise AssertionError("Unverified source reached legacy writer")
+
+    fake_fdr = types.ModuleType("providers.fdr_provider")
+
+    class FakeFDRProvider:
+        def get_price(self, *args, **kwargs):
+            raise AssertionError("Real FDR provider must not execute")
+
+    fake_fdr.FDRProvider = FakeFDRProvider
+
+    fake_repository = types.ModuleType("repository")
+    fake_repository.save_etf_price = forbidden_write
+    fake_repository.save_etf_ohlcv_price = forbidden_write
+
+    fake_providers = types.ModuleType("providers")
+    fake_providers.__path__ = []
+
+    with monkeypatch.context() as patch:
+        patch.setitem(sys.modules, "providers", fake_providers)
+        patch.setitem(sys.modules, "providers.fdr_provider", fake_fdr)
+        patch.setitem(sys.modules, "repository", fake_repository)
+
+        source = (
+            Path(__file__).resolve().parent
+            / "integration_sources"
+            / "price_collector.py"
+        )
+
+        spec = importlib.util.spec_from_file_location(
+            "_isolated_disguised_price_collector", source
+        )
+        assert spec is not None and spec.loader is not None
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        class UnverifiedProvider:
+            def get_price(self, ticker, start_date, end_date):
+                return pd.DataFrame(
+                    {
+                        "Open": [99],
+                        "High": [105],
+                        "Low": [98],
+                        "Close": [100],
+                        "Volume": [10],
+                    },
+                    index=pd.to_datetime(["2026-01-02"]),
+                )
+
+        provider = UnverifiedProvider()
+
+        if provider_name is not None:
+            provider.provider = provider_name
+
+        collector = module.PriceCollector()
+        collector.provider = provider
+
+        with pytest.raises(PriceProvenanceRejected):
+            collector.collect("111111", "2026-01-01", "2026-01-05")
+
+    assert calls == []
