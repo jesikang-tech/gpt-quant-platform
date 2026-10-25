@@ -4,6 +4,7 @@ Transport success and content hashes provide integrity checks only.  They do
 not authenticate NAVER provenance, adjustment status, or persistence safety.
 """
 
+from dataclasses import dataclass, field
 from hashlib import sha256
 from hmac import compare_digest
 from xml.etree import ElementTree
@@ -13,6 +14,46 @@ from core.naver_raw_observation import prepare_naver_raw_observation
 
 class NaverHttpResponseRejected(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class NaverZeroOhlcSpecialRow:
+    """Immutable evidence for NAVER's non-trading zero-OHLC row shape."""
+
+    observation: object
+    classification: str = field(
+        default="ZERO_OHLC_NON_TRADING_EVIDENCE", init=False,
+    )
+    analysis_authorized: bool = field(default=False, init=False)
+    persistence_authorized: bool = field(default=False, init=False)
+
+    @property
+    def ticker(self):
+        return self.observation.ticker
+
+    @property
+    def observation_date(self):
+        return self.observation.observation_date
+
+    @property
+    def raw_row(self):
+        return self.observation.raw_row
+
+    @property
+    def values(self):
+        return self.observation.values
+
+    @property
+    def provider(self):
+        return self.observation.provider
+
+    @property
+    def adjustment(self):
+        return self.observation.adjustment
+
+    @property
+    def provenance_verified(self):
+        return self.observation.provenance_verified
 
 
 def _local_name(element):
@@ -80,17 +121,32 @@ def validate_naver_http_response(raw_response, expected_sha256, ticker):
     except (TypeError, ValueError) as exc:
         raise NaverHttpResponseRejected("Invalid NAVER OHLCV row") from exc
 
+    classified_observations = []
     for observation in observations:
         try:
             opening, high, low, close, volume = map(int, observation.values)
         except ValueError as exc:
             raise NaverHttpResponseRejected("Invalid NAVER OHLCV values") from exc
-        if (
-            min(opening, high, low, close) <= 0
-            or volume < 0
-            or high < max(opening, close)
-            or low > min(opening, close)
-        ):
+
+        is_special_row = (
+            opening == 0
+            and high == 0
+            and low == 0
+            and close > 0
+            and volume == 0
+        )
+        is_normal_row = (
+            min(opening, high, low, close) > 0
+            and volume >= 0
+            and high >= max(opening, close)
+            and low <= min(opening, close)
+        )
+
+        if is_special_row:
+            classified_observations.append(NaverZeroOhlcSpecialRow(observation))
+        elif is_normal_row:
+            classified_observations.append(observation)
+        else:
             raise NaverHttpResponseRejected("Invalid NAVER OHLCV values")
 
     dates = tuple(observation.observation_date for observation in observations)
@@ -99,4 +155,4 @@ def validate_naver_http_response(raw_response, expected_sha256, ticker):
     if any(earlier >= later for earlier, later in zip(dates, dates[1:])):
         raise NaverHttpResponseRejected("Unordered NAVER observation dates")
 
-    return observations
+    return tuple(classified_observations)

@@ -7,6 +7,7 @@ import pytest
 
 from core.naver_http_response_validation import (
     NaverHttpResponseRejected,
+    NaverZeroOhlcSpecialRow,
     validate_naver_http_response,
 )
 
@@ -35,6 +36,31 @@ def test_valid_response_preserves_raw_text_and_returns_immutable_observations():
     assert observations[0].persistence_authorized is False
     with pytest.raises(FrozenInstanceError):
         observations[0].ticker = "changed"
+
+
+def test_exact_zero_ohlc_special_row_is_classified_as_immutable_evidence():
+    raw_row = "20180430|0|0|0|53000|0"
+    special_row, = _validate(_response(raw_row))
+
+    assert isinstance(special_row, NaverZeroOhlcSpecialRow)
+    assert special_row.raw_row == raw_row
+    assert special_row.values == ("0", "0", "0", "53000", "0")
+    assert special_row.classification == "ZERO_OHLC_NON_TRADING_EVIDENCE"
+    assert special_row.provenance_verified is False
+    assert special_row.analysis_authorized is False
+    assert special_row.persistence_authorized is False
+    with pytest.raises(FrozenInstanceError):
+        special_row.persistence_authorized = True
+
+
+def test_mixed_normal_and_special_rows_preserve_their_distinct_types():
+    normal = "20180427|52000|54000|51000|53000|1000"
+    special = "20180502|0|0|0|53000|0"
+    observations = _validate(_response(normal, special))
+
+    assert not isinstance(observations[0], NaverZeroOhlcSpecialRow)
+    assert isinstance(observations[1], NaverZeroOhlcSpecialRow)
+    assert tuple(item.raw_row for item in observations) == (normal, special)
 
 
 def test_hash_is_over_original_bytes_and_mismatch_is_rejected():
@@ -89,6 +115,21 @@ def test_invalid_ohlcv_is_rejected(row):
     ],
 )
 def test_invalid_ohlcv_value_relationships_are_rejected(row):
+    with pytest.raises(NaverHttpResponseRejected, match="Invalid NAVER OHLCV"):
+        _validate(_response(row))
+
+
+@pytest.mark.parametrize(
+    "row",
+    [
+        "20180503|0|0|0|0|0",
+        "20180503|0|0|0|53000|1",
+        "20180503|0|0|1|53000|0",
+        "20180503|0|1|0|53000|0",
+        "20180503|1|0|0|53000|0",
+    ],
+)
+def test_other_zero_value_combinations_are_not_special_rows(row):
     with pytest.raises(NaverHttpResponseRejected, match="Invalid NAVER OHLCV"):
         _validate(_response(row))
 
