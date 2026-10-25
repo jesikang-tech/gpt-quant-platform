@@ -63,4 +63,4 @@ jobs:
           python -m pytest -q -p no:cacheprovider \
             test_naver_decimal_price_pipeline.py \
             test_naver_raw_observation.py test_naver_analysis_boundary.py test_naver_analysis_response.py test_naver_actual_integration.py test_price_provenance_integration.py \
-            test_price_provenance_gate.py test_naver_provenance_boundary.py
+            test_price_provenance_gate.py test_naver_provenance_boundary.py test_naver_source_evidence.py test_naver_trust_anchor.py
