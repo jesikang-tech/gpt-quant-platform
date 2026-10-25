@@ -77,3 +77,8 @@ def reject_unverified_rebuild(preflight):
         "UNVERIFIED_NAVER_REBUILD_DENIED: "
         "trusted provenance and adjustment basis are required"
     )
+
+def prepare_real_rebuild_rows(preflight):
+    """Fail closed for real NAVER observations until trust is verified."""
+
+    reject_unverified_rebuild(preflight)

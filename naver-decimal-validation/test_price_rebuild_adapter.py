@@ -7,6 +7,7 @@ import pytest
 
 from price_rebuild_adapter import (
     prepare_synthetic_rebuild_rows,
+    prepare_real_rebuild_rows,
     reject_unverified_rebuild,
 )
 from price_rebuild_preflight import RebuildPreflight
@@ -106,3 +107,20 @@ def test_result_is_immutable():
 
     with pytest.raises(FrozenInstanceError):
         result.persistence_authorized = True
+
+def test_real_rebuild_entrypoint_denies_unverified_preflight():
+    preflight = RebuildPreflight(
+        ticker="005930",
+        total_rows=1,
+        normal_rows=1,
+        zero_ohlc_rows=0,
+        high_below_close_rows=0,
+        price_candidates=1,
+        ohlcv_candidates=1,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="UNVERIFIED_NAVER_REBUILD_DENIED",
+    ):
+        prepare_real_rebuild_rows(preflight)
