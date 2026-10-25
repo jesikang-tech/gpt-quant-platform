@@ -41,6 +41,7 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/naver-decimal-check
           cp -R naver-decimal-validation/. /tmp/naver-decimal-check/
+          cp core/price_provenance_gate.py /tmp/naver-decimal-check/core/price_provenance_gate.py
           mkdir -p /tmp/naver-decimal-check/integration_sources
           cp api_server.py /tmp/naver-decimal-check/integration_sources/api_server_original.py
           cp current_analysis.py /tmp/naver-decimal-check/integration_sources/current_analysis.py
