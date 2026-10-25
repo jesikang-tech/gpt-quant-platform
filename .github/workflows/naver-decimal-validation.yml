@@ -62,5 +62,16 @@ jobs:
         run: |
           python -m pytest -q -p no:cacheprovider \
             test_naver_decimal_price_pipeline.py \
-            test_naver_raw_observation.py test_real_evidence_verifier.py test_price_rebuild_preflight.py test_price_rebuild_adapter.py test_naver_http_response_validation.py test_naver_observed_row_regression.py test_naver_analysis_boundary.py test_naver_analysis_response.py test_naver_actual_integration.py test_price_provenance_integration.py \
+            test_naver_raw_observation.py test_real_evidence_verifier.py test_price_rebuild_preflight.py test_naver_http_response_validation.py test_naver_observed_row_regression.py test_naver_analysis_boundary.py test_naver_analysis_response.py test_naver_actual_integration.py test_price_provenance_integration.py \
             test_price_provenance_gate.py test_naver_provenance_boundary.py test_naver_source_evidence.py test_naver_trust_anchor.py
+      - name: Run isolated rebuild adapter tests
+        if: success()
+        shell: bash
+        working-directory: /tmp/naver-decimal-check
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+          PYTHONPATH: /tmp/naver-decimal-check
+        run: |
+          python -m pytest -q -p no:cacheprovider -ra \
+            test_price_rebuild_adapter.py
