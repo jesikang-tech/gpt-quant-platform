@@ -42,7 +42,7 @@ def test_price_ohlcv_identity_and_decimal_precision():
     assert result.price_row[0:2] == result.ohlcv_row[0:2]
     assert result.price_row[2] == result.ohlcv_row[5]
     assert result.price_row[2] == Decimal("105.375")
-    assert result.ohlcv_row[2] == Decimal("110.500")
+    assert result.ohlcv_row[3] == Decimal("110.500")
     assert result.verification_status == "SYNTHETIC_ONLY"
     assert result.persistence_authorized is False
 
