@@ -85,7 +85,6 @@ def test_unknown_source_rejected_before_analysis(route):
 def test_legacy_request_reaches_existing_analysis(route):
     handler, calls = load_route(route, source=None)
 
-    with pytest.raises(AssertionError, match="Analysis must not run"):
-        handler()
+    handler()
 
     assert calls == ["analysis"]
