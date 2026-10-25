@@ -72,11 +72,26 @@ def prepare_naver_analysis_rows(
 ):
     """Deny unverified integration with legacy analysis consumers."""
 
-    raise RuntimeError(
-        "UNVERIFIED_ANALYSIS_COMPATIBILITY_DENIED: "
-        "legacy analysis numeric and trading-day contracts "
-        "have not been verified"
+    from core.price_provenance_gate import (
+        PriceProvenanceRejected,
+        assess_price_provenance,
+        require_analysis_authorization,
     )
+
+    decision = assess_price_provenance(
+        provider="NAVER", adjustment=adjustment,
+    )
+    try:
+        require_analysis_authorization(decision)
+    except PriceProvenanceRejected as exc:
+        raise RuntimeError(
+            "UNVERIFIED_ANALYSIS_COMPATIBILITY_DENIED: "
+            "legacy analysis numeric and trading-day contracts "
+            "have not been verified"
+        ) from exc
+
+    # No verified legacy numeric/trading-day adapter exists yet.
+    raise RuntimeError("UNVERIFIED_ANALYSIS_COMPATIBILITY_DENIED")
 
 
 def parse_naver_raw_ohlcv_row(raw_row):

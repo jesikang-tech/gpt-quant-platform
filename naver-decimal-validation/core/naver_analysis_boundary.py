@@ -6,6 +6,7 @@ Pure in-memory contract. No operational analysis or persistence.
 from dataclasses import dataclass
 
 from core.naver_raw_observation import NaverRawObservation
+from core.price_provenance_gate import assess_price_provenance
 
 
 @dataclass(frozen=True)
@@ -32,13 +33,16 @@ def assess_naver_analysis_observation(observation):
     ):
         raise ValueError("UNEXPECTED_NAVER_TRUST_STATE")
 
+    provenance = assess_price_provenance(
+        provider=observation.provider, adjustment=observation.adjustment,
+    )
     return NaverAnalysisDecision(
         provider="NAVER",
         ticker=observation.ticker,
         observation_date=observation.observation_date,
-        status="BLOCKED",
+        status=provenance.status,
         reason="UNVERIFIED_ADJUSTMENT_AND_PROVENANCE",
-        analysis_authorized=False,
-        dashboard_authorized=False,
-        persistence_authorized=False,
+        analysis_authorized=provenance.analysis_authorized,
+        dashboard_authorized=provenance.dashboard_authorized,
+        persistence_authorized=provenance.persistence_authorized,
     )
