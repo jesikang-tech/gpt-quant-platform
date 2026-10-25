@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from core.trading_session_eligibility import assess_trading_session
 from core.naver_raw_observation import NaverRawObservation
 from core.naver_http_response_validation import (
     NaverHighBelowCloseByOneRow,
@@ -56,6 +57,19 @@ def assess_rebuild_candidates(ticker, observations):
             raise ValueError("Persistence escalation prohibited")
 
         if type(observation) is NaverRawObservation:
+            opening, high, low, close, volume = observation.values
+            decision = assess_trading_session(
+                close, (opening, high, low, close, volume)
+            )
+            if decision.status != "CANDIDATE":
+                raise ValueError(
+                    "Normal observation is not a trading-day candidate"
+                )
+            if (
+                decision.analysis_authorized is not False
+                or decision.persistence_authorized is not False
+            ):
+                raise ValueError("Trading-session authorization escalation")
             normal += 1
         elif type(observation) is NaverZeroOhlcSpecialRow:
             if observation.analysis_authorized is not False:
