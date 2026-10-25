@@ -81,3 +81,64 @@ def test_decision_is_immutable():
     decision = PriceProvenanceDecision()
     with pytest.raises(FrozenInstanceError):
         decision.status = "APPROVED"
+
+
+def test_persistence_authorization_rejected_for_unverified_source():
+    from core.price_provenance_gate import (
+        assess_price_provenance,
+        require_persistence_authorization,
+        PriceProvenanceRejected,
+    )
+
+    decision = assess_price_provenance(
+        provider="NAVER",
+        adjustment="UNKNOWN",
+    )
+
+    assert decision.persistence_authorized is False
+
+    with pytest.raises(PriceProvenanceRejected):
+        require_persistence_authorization(decision)
+
+
+@pytest.mark.parametrize("decision", [
+    None,
+    object(),
+    {"persistence_authorized": True},
+])
+def test_persistence_authorization_rejected_for_invalid_decision(decision):
+    from core.price_provenance_gate import (
+        require_persistence_authorization,
+        PriceProvenanceRejected,
+    )
+
+    with pytest.raises(PriceProvenanceRejected):
+        require_persistence_authorization(decision)
+
+
+def test_naver_persistence_entry_rejects_before_callback():
+    from core.price_provenance_gate import (
+        invoke_naver_persistence,
+        PriceProvenanceRejected,
+    )
+
+    calls = []
+
+    def forbidden_write():
+        calls.append("write")
+        raise AssertionError("Persistence callback must not execute")
+
+    with pytest.raises(PriceProvenanceRejected):
+        invoke_naver_persistence(forbidden_write)
+
+    assert calls == []
+
+
+def test_naver_persistence_entry_rejects_invalid_callback():
+    from core.price_provenance_gate import (
+        invoke_naver_persistence,
+        PriceProvenanceRejected,
+    )
+
+    with pytest.raises(PriceProvenanceRejected):
+        invoke_naver_persistence(None)

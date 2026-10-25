@@ -36,3 +36,27 @@ def require_analysis_authorization(decision):
     raise PriceProvenanceRejected(
         "Price provenance is unverified; analysis is prohibited"
     )
+
+
+def require_persistence_authorization(decision):
+    """Reject persistence until independently verified trust exists."""
+    if type(decision) is not PriceProvenanceDecision:
+        raise PriceProvenanceRejected("Invalid provenance decision")
+
+    raise PriceProvenanceRejected(
+        "Price provenance is unverified; persistence is prohibited"
+    )
+
+
+def invoke_naver_persistence(persist_callback):
+    """Deny new NAVER persistence before invoking any write callback."""
+    if not callable(persist_callback):
+        raise PriceProvenanceRejected("Invalid persistence callback")
+
+    decision = assess_price_provenance(
+        provider="NAVER",
+        adjustment="UNKNOWN",
+    )
+    require_persistence_authorization(decision)
+
+    return persist_callback()
