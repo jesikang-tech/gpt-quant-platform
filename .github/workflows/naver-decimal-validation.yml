@@ -7,6 +7,7 @@ on:
       - validation/naver-observation-isolated
     paths:
       - 'naver-decimal-validation/**'
+      - 'collector/price_collector.py'
       - '.github/workflows/naver-decimal-validation.yml'
 
 permissions:
