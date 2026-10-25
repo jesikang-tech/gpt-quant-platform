@@ -1,0 +1,3381 @@
+from current_analysis import get_current_analysis_data
+from database import init_database
+from datetime import datetime
+
+from core.platform_auth import (
+    DEFAULT_AUTH_CONFIG_PATH,
+    authenticate_password,
+    configure_flask_auth,
+    update_user_password,
+)
+
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    session
+)
+
+from ranking_analyzer import (
+    get_dashboard_api_data,
+    get_ranking_history,
+    get_etf_detail,
+    get_dashboard_intelligence_summary,
+    generate_ai_recommendation
+)
+
+from core.portfolio_advisor import (
+    generate_portfolio,
+    generate_portfolio_insight,
+    analyze_portfolio_health,
+    analyze_market_condition,
+    optimize_portfolio_weight
+)
+
+from core.market_regime import analyze_market_regime
+
+from core.point_in_time_analysis import attach_point_in_time_portfolio as _attach_point_in_time_portfolio
+
+from core.market_strategy import generate_market_strategy
+
+from core.portfolio_explainability import (
+    PortfolioExplainabilityEngine
+)
+
+from core.portfolio_conversational import (
+    PortfolioConversationalAnalyst
+)
+
+from core.ai_decision_engine import (
+    generate_ai_decision,
+    calculate_decision_score,
+    get_decision_grade,
+    generate_decision_intelligence
+)
+
+from core.ai_decision_explainability import (
+    AIDecisionExplainability
+)
+
+from core.ai_decision_trend import (
+    AIDecisionTrend
+)
+
+from core.ai_decision_adaptive_strategy import (
+    AIDecisionAdaptiveStrategy
+)
+
+from core.portfolio_conversational import (
+    PortfolioConversationalAnalyst
+)
+
+from core.portfolio_decision_intelligence import (
+    PortfolioDecisionIntelligence
+)
+from core.portfolio_intelligence_score import (
+    PortfolioIntelligenceScore
+)
+
+from core.decision_confidence_intelligence import (
+    DecisionConfidenceIntelligence
+)
+
+from core.decision_confidence_explainability import (
+    DecisionConfidenceExplainability
+)
+
+from core.decision_confidence_assessment import (
+    DecisionConfidenceAssessment
+)
+
+from core.decision_confidence_recommendation import (
+    DecisionConfidenceRecommendation
+)
+
+from core.ai_decision_validation import (
+    AIDecisionValidation
+)
+
+from core.ai_decision_validation_explainability import (
+    AIDecisionValidationExplainability
+)
+
+from core.ai_decision_validation_action import (
+    AIDecisionValidationAction
+)
+
+from core.ai_final_decision_integration import (
+    AIFinalDecisionIntegration
+)
+
+from core.ai_final_decision_governance import (
+    AIFinalDecisionGovernance
+)
+
+from core.ai_final_decision_execution_control import (
+    AIFinalDecisionExecutionControl
+)
+
+from core.ai_final_decision_execution_assurance import (
+    AIFinalDecisionExecutionAssurance
+)
+
+from core.ai_final_decision_execution_monitoring import (
+    AIFinalDecisionExecutionMonitoring
+)
+
+from core.ai_final_decision_execution_feedback import (
+    AIFinalDecisionExecutionFeedback
+)
+
+from core.ai_final_decision_reassessment import (
+    AIFinalDecisionReassessment
+)
+
+from core.ai_final_decision_lifecycle_intelligence import (
+    AIFinalDecisionLifecycleIntelligence
+)
+
+from core.ai_final_decision_lifecycle_governance_control import (
+    AIFinalDecisionLifecycleGovernanceControl
+)
+
+from core.ai_final_decision_operational_intelligence import (
+    AIFinalDecisionOperationalIntelligence
+)
+
+from core.ai_final_decision_integrated_intelligence import (
+    AIFinalDecisionIntegratedIntelligence
+)
+
+from core.ai_final_decision_orchestration import (
+    AIFinalDecisionOrchestration
+)
+
+from core.ai_final_execution_decision import (
+    AIFinalExecutionDecision
+)
+
+from core.ai_final_decision_certification import (
+    AIFinalDecisionCertification
+)
+
+from core.ai_final_decision_master_control import (
+    AIFinalDecisionMasterControl
+)
+
+from core.ai_decision_outcome_intelligence import (
+    AIDecisionOutcomeIntelligence
+)
+
+from core.ai_decision_outcome_collector import (
+    AIDecisionOutcomeDataCollector
+)
+
+from core.ai_decision_outcome_evaluation import (
+    AIDecisionOutcomeEvaluation
+)
+
+from repository import (
+    save_ver11_analysis_snapshot,
+    get_ver11_analysis_snapshot,
+    get_ver11_analysis_snapshot_history,
+    save_portfolio_history,
+    get_portfolio_history,
+    get_portfolio_analytics,
+    save_ai_decision_history,
+    get_ai_decision_history,
+    get_ai_decision_summary,
+    get_ai_decision_quality,
+    get_ai_decision_chart_data,
+    get_ai_decision_trend,
+    get_ai_decision_statistics,
+    get_ai_decision_performance,
+    get_ai_decision_reliability,
+    get_ai_adaptive_strategy,
+    get_ai_rebalance_recommendation,
+    get_ai_portfolio_optimization,
+    save_ai_decision_outcome_history,
+    save_ai_decision_audit_event,
+    save_ai_decision_outcome_with_portfolio_transaction,
+    get_ai_decision_outcome_history,
+    get_ai_decision_outcome_learning_summary,
+    get_ai_decision_outcome_history_by_id,
+    update_ai_decision_outcome_history,
+    save_ai_decision_portfolio_snapshot,
+    get_ai_decision_portfolio_snapshot,
+    evaluate_ai_decision_portfolio_snapshot,
+    get_ai_decision_audit_events,
+    get_ai_decision_audit_lifecycle_timeline,
+    get_ai_decision_audit_lifecycle_completeness
+)
+
+app = Flask(__name__)
+
+AUTH_CONFIG_PATH = DEFAULT_AUTH_CONFIG_PATH
+
+PUBLIC_AUTH_ENDPOINTS = {"auth_login_api", "auth_admin_login_api", "auth_status_api"}
+
+@app.before_request
+def require_platform_authentication():
+    if request.endpoint in PUBLIC_AUTH_ENDPOINTS or request.endpoint == "static":
+        return None
+
+    if request.path.startswith("/api/") and session.get("authenticated") is not True:
+        return jsonify({"success": False}), 401
+
+    return None
+
+@app.route("/api/auth/login", methods=["POST"])
+def auth_login_api():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+
+    if not authenticate_password(password, path=AUTH_CONFIG_PATH):
+        return jsonify({"success": False}), 401
+
+    session["authenticated"] = True
+    session["role"] = "user"
+    return jsonify({"success": True})
+
+
+
+@app.route("/api/auth/admin-login", methods=["POST"])
+def auth_admin_login_api():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+
+    if not authenticate_password(password, admin=True, path=AUTH_CONFIG_PATH):
+        return jsonify({"success": False}), 401
+
+    session["authenticated"] = True
+    session["role"] = "admin"
+    return jsonify({"success": True})
+
+@app.route("/api/auth/logout", methods=["POST"])
+def auth_logout_api():
+    session.clear()
+    return jsonify({"success": True})
+
+@app.route("/api/auth/status", methods=["GET"])
+def auth_status_api():
+    return jsonify({"authenticated": session.get("authenticated", False), "role": session.get("role")})
+
+@app.route("/api/auth/user-password", methods=["POST"])
+def auth_user_password_api():
+    if session.get("authenticated") is not True or session.get("role") != "admin":
+        return jsonify({"success": False}), 403
+
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "")
+
+    try:
+        update_user_password(password, AUTH_CONFIG_PATH)
+    except ValueError:
+        return jsonify({"success": False}), 400
+
+    return jsonify({"success": True})
+
+def _build_ver11_snapshot_payload(data):
+    forbidden_future_fields = {
+        "price",
+        "future_performance",
+        "future_performance_days",
+        "reality_test",
+    }
+
+    def sanitize(value):
+        if isinstance(value, dict):
+            return {
+                key: sanitize(child)
+                for key, child in value.items()
+                if key not in forbidden_future_fields
+            }
+
+        if isinstance(value, list):
+            return [sanitize(child) for child in value]
+
+        return value
+
+    return sanitize(data)
+
+@app.route("/api/historical-replay")
+def historical_replay_api():
+    source = request.args.get("source")
+    if source is not None:
+        try:
+            from core.naver_api_entry_gate import invoke_new_source_analysis
+            invoke_new_source_analysis(source, lambda: None)
+        except ValueError as exc:
+            return jsonify({
+                "success": False,
+                "message": str(exc),
+            }), 400
+    analysis_date = request.args.get("date")
+    period = request.args.get("period", "3m")
+
+
+    try:
+        data = get_current_analysis_data(
+            limit=10,
+            analysis_date=analysis_date,
+            period=period
+        )
+        data = _attach_point_in_time_portfolio(data)
+
+        return jsonify(data)
+
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@app.route("/api/naver-validation-status", methods=["GET"])
+def naver_validation_status_api():
+    """Expose the unverified NAVER boundary without reading prices."""
+    return jsonify({
+        "provider": "NAVER",
+        "status": "BLOCKED",
+        "reason": "UNVERIFIED_ADJUSTMENT_AND_PROVENANCE",
+        "analysis_authorized": False,
+        "dashboard_authorized": False,
+        "persistence_authorized": False,
+    })
+
+@app.route("/api/ver11-analysis")
+def ver11_analysis_api():
+    source = request.args.get("source")
+    if source is not None:
+        try:
+            from core.naver_api_entry_gate import invoke_new_source_analysis
+            invoke_new_source_analysis(source, lambda: None)
+        except ValueError as exc:
+            return jsonify({
+                "success": False,
+                "message": str(exc),
+            }), 400
+    analysis_date = request.args.get("date")
+    period = request.args.get("period", "3m")
+    sort_by = request.args.get("sort", "final_score")
+
+    try:
+        limit = int(request.args.get("limit", "10"))
+    except ValueError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit."
+        }), 400
+
+    try:
+        data = get_current_analysis_data(
+            limit=limit,
+            analysis_date=analysis_date,
+            period=period,
+            sort_by=sort_by,
+        )
+        data = _attach_point_in_time_portfolio(data)
+
+        return jsonify(data)
+
+    except ValueError as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 400
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ver11-analysis/snapshots", methods=["POST"])
+def save_ver11_analysis_snapshot_api():
+    body = request.get_json(silent=True) or {}
+    source = body.get("source")
+    if source is not None:
+        try:
+            from core.naver_api_entry_gate import invoke_new_source_analysis
+            invoke_new_source_analysis(source, lambda: None)
+        except ValueError as exc:
+            return jsonify({
+                "success": False,
+                "message": str(exc),
+            }), 400
+
+    analysis_date = body.get("date")
+    period = body.get("period", "3m")
+    sort_by = body.get("sort", "final_score")
+
+    try:
+        limit = int(body.get("limit", 10))
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit.",
+        }), 400
+
+    try:
+        data = get_current_analysis_data(
+            limit=limit,
+            analysis_date=analysis_date,
+            period=period,
+            sort_by=sort_by,
+        )
+        data = _attach_point_in_time_portfolio(data)
+        snapshot_payload = _build_ver11_snapshot_payload(data)
+
+        snapshot_id = save_ver11_analysis_snapshot(
+            analysis_date=data.get("analysis_date"),
+            period=data.get("period"),
+            sort_by=sort_by,
+            display_limit=limit,
+            snapshot_payload=snapshot_payload,
+        )
+
+        return jsonify({
+            "success": True,
+            "snapshot_id": snapshot_id,
+            "analysis_date": data.get("analysis_date"),
+            "period": data.get("period"),
+            "sort": sort_by,
+            "limit": limit,
+        }), 201
+
+    except ValueError as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 400
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ver11-analysis/snapshots", methods=["GET"])
+def get_ver11_analysis_snapshot_history_api():
+    try:
+        limit = int(request.args.get("limit", "50"))
+    except ValueError:
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit.",
+        }), 400
+
+    if limit < 1:
+        return jsonify({
+            "success": False,
+            "message": "Invalid limit.",
+        }), 400
+
+    try:
+        snapshots = get_ver11_analysis_snapshot_history(limit=limit)
+
+        return jsonify({
+            "success": True,
+            "count": len(snapshots),
+            "snapshots": snapshots,
+        })
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ver11-analysis/snapshots/<int:snapshot_id>", methods=["GET"])
+def get_ver11_analysis_snapshot_api(snapshot_id):
+    try:
+        snapshot = get_ver11_analysis_snapshot(snapshot_id)
+
+        if snapshot is None:
+            return jsonify({
+                "success": False,
+                "message": "Snapshot not found.",
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "snapshot": snapshot,
+        })
+
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": str(exc),
+        }), 500
+
+
+@app.route("/api/ranking")
+def ranking_api():
+
+    data = get_dashboard_api_data()
+    return jsonify(
+        data
+    )
+
+
+
+@app.route("/api/intelligence")
+def intelligence_api():
+
+    data = get_dashboard_intelligence_summary()
+
+    return jsonify(
+        data
+    )
+
+
+
+@app.route("/api/recommendation/<ticker>")
+def recommendation_api(ticker):
+
+    data = generate_ai_recommendation(
+        ticker
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "ticker": ticker,
+            "recommendation": data
+        }
+    )
+
+
+@app.route("/api/market-regime")
+def market_regime_api():
+
+    data = analyze_market_regime()
+
+    return jsonify(
+        data
+    )
+
+
+@app.route("/api/market-strategy")
+def market_strategy_api():
+
+    market_regime = analyze_market_regime()
+
+
+    strategy = generate_market_strategy(
+        market_regime
+    )
+
+
+    return jsonify(
+        strategy
+    )
+
+
+
+@app.route("/api/ai-decision")
+def ai_decision_api():
+
+    market_regime = analyze_market_regime()
+
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+
+    ranking_data = get_dashboard_api_data()
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+
+    top_etf = {
+
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+
+    }
+
+
+    decision = generate_ai_decision(
+
+        market_regime,
+
+        market_strategy,
+
+        portfolio_health,
+
+        top_etf
+
+    )
+
+
+    decision["decision_score"] = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+
+    decision["grade"] = get_decision_grade(
+        decision["decision_score"]
+    )
+
+
+
+    intelligence = generate_decision_intelligence(
+        decision,
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+
+    return jsonify(
+
+        {
+            "success": True,
+            "decision": decision,
+            "intelligence": intelligence
+        }
+
+    )
+
+
+
+@app.route("/api/ai-decision/explain")
+def ai_decision_explain_api():
+
+    market_regime = analyze_market_regime()
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+    top_etf = {
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+    }
+
+    decision = generate_ai_decision(
+        market_regime,
+        market_strategy,
+        portfolio_health,
+        top_etf
+    )
+
+    decision["decision_score"] = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+    decision["grade"] = get_decision_grade(
+        decision["decision_score"]
+    )
+
+    explainability = AIDecisionExplainability()
+
+    explanation = explainability.generate_explanation(
+        decision,
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "explanation": explanation
+        }
+    )
+
+
+
+@app.route("/api/portfolio")
+def portfolio_api():
+
+    ranking_data = get_dashboard_api_data()
+
+    mode = request.args.get(
+        "mode",
+        "balanced"
+    )
+
+
+    save_history = request.args.get(
+        "save",
+        "false"
+    )
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        mode
+    )
+
+
+    if save_history == "true":
+
+        from datetime import datetime
+
+
+        created_at = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+
+        intelligence = analyze_portfolio_health(
+            portfolio
+        )
+
+
+        market_condition = analyze_market_condition(
+            ranking_data["data"]
+        )
+
+
+        for item in portfolio:
+
+            save_portfolio_history(
+                mode,
+                item["ticker"],
+                item.get("weight", 0),
+                item.get("score", 0),
+                item.get("reason", ""),
+                created_at,
+                intelligence.get("health_score"),
+                intelligence.get("confidence"),
+                market_condition.get("market")
+            )
+
+
+    insight = generate_portfolio_insight(
+        portfolio
+    )
+
+    intelligence = analyze_portfolio_health(
+        portfolio
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "strategy": mode.capitalize(),
+            "portfolio": portfolio,
+            "insight": insight,
+            "intelligence": intelligence
+        }
+    )
+
+
+
+@app.route("/api/portfolio/explain")
+def portfolio_explain_api():
+
+    ranking_data = get_dashboard_api_data()
+
+
+    mode = request.args.get(
+        "mode",
+        "balanced"
+    )
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        mode
+    )
+
+
+    market_info = analyze_market_regime()
+
+
+    engine = PortfolioExplainabilityEngine()
+
+
+    explanation = engine.generate_explanation(
+        {
+            "allocation": {
+                item["ticker"]: item.get("weight", 0)
+                for item in portfolio
+            },
+
+            "cash_weight":
+                sum(
+                    item.get("weight", 0)
+                    for item in portfolio
+                    if item.get("ticker") == "CASH"
+                )
+        },
+
+        market_info
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "strategy": mode.capitalize(),
+            "explanation": explanation
+        }
+    )
+
+
+
+@app.route(
+    "/api/portfolio/chat",
+    methods=["POST"]
+)
+def portfolio_chat_api():
+
+
+    data = request.json
+
+
+    question = data.get(
+        "question",
+        ""
+    )
+
+
+    ranking_data = get_dashboard_api_data()
+
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+
+    market_info = analyze_market_regime()
+
+
+    engine = PortfolioConversationalAnalyst()
+
+
+    result = engine.analyze(
+        question,
+        portfolio,
+        market_info
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "response": result
+        }
+    )
+
+
+
+
+@app.route("/api/portfolio/market-condition")
+def portfolio_market_condition_api():
+
+    ranking_data = get_dashboard_api_data()
+
+
+    condition = analyze_market_condition(
+        ranking_data["data"]
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "market_condition": condition
+        }
+    )
+
+
+
+@app.route("/api/portfolio/history")
+def portfolio_history_api():
+
+    history = get_portfolio_history()
+
+    data = []
+
+    for item in history:
+
+        data.append(
+            {
+                "mode": item[0],
+                "ticker": item[1],
+                "weight": item[2],
+                "score": item[3],
+                "reason": item[4],
+                "created_at": item[5],
+                "health_score": item[6],
+                "confidence": item[7],
+                "market_condition": item[8]
+            }
+        )
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
+
+
+@app.route(
+    "/api/ai-decision/history"
+)
+def ai_decision_history_api():
+
+    history = get_ai_decision_history()
+
+
+    data = []
+
+
+    for item in history:
+
+        data.append(
+            {
+                "decision": item[0],
+                "action": item[1],
+                "decision_score": item[2],
+                "grade": item[3],
+                "market_view": item[4],
+                "recommended_mode": item[5],
+                "top_etf": item[6],
+                "reason": item[7],
+                "summary": item[8],
+                "created_at": item[9]
+            }
+        )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
+
+
+@app.route("/api/ai-decision/outcome-history")
+def ai_decision_outcome_history_api():
+
+    history = get_ai_decision_outcome_history()
+
+    data = []
+
+    for item in history:
+
+        data.append(
+            {
+                "id": item[0],
+                "decision": item[1],
+                "action": item[2],
+                "strategy": item[3],
+                "confidence_score": item[4],
+                "intelligence_score": item[5],
+                "validation_score": item[6],
+                "governance_score": item[7],
+                "execution_score": item[8],
+                "lifecycle_score": item[9],
+                "operational_score": item[10],
+                "orchestration_score": item[11],
+                "integrated_score": item[12],
+                "market_view": item[13],
+                "risk_level": item[14],
+                "outcome_status": item[15],
+                "snapshot_status": item[16],
+                "snapshot_purpose": item[17],
+                "outcome_score": item[18],
+                "outcome_grade": item[19],
+                "decision_effectiveness": item[20],
+                "strategy_effectiveness": item[21],
+                "market_response": item[22],
+                "portfolio_response": item[23],
+                "learning_status": item[24],
+                "feedback_state": item[25],
+                "adaptive_learning_required": bool(item[26]),
+                "reassessment_required": bool(item[27]),
+                "reassessment_status": item[28],
+                "created_at": item[29],
+                "portfolio_return": item[30],
+                "portfolio_evaluation_date": item[31],
+                "execution_status": item[32],
+                "execution_authorization": item[33],
+                "execution_readiness": item[34],
+                "certification_status": item[35],
+                "monitoring_status": item[36],
+                "feedback_status": item[37]
+            }
+        )
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
+@app.route("/api/ai-decision/outcome-learning-summary")
+def ai_decision_outcome_learning_summary_api():
+
+    summary = (
+        get_ai_decision_outcome_learning_summary()
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "summary": summary
+        }
+    )
+
+
+@app.route(
+    "/api/ai-decision/portfolio-snapshot/<int:history_id>/evaluate"
+)
+def ai_decision_portfolio_snapshot_evaluate_api(
+    history_id
+):
+
+    evaluation_date = request.args.get(
+        "evaluation_date"
+    )
+
+    portfolio_evaluation = (
+        evaluate_ai_decision_portfolio_snapshot(
+            history_id=history_id,
+            evaluation_date=evaluation_date
+        )
+    )
+
+    # --------------------------------
+    # AI Decision Outcome Re-Evaluation
+    # Phase 6
+    # Step6-10-E
+    # Step6-10-F-5 Integration
+    # --------------------------------
+
+    outcome_evaluation = None
+    outcome_intelligence = None
+
+    if (
+        portfolio_evaluation.get(
+            "evaluation_status"
+        ) == "EVALUATED"
+        and
+        portfolio_evaluation.get(
+            "portfolio_return"
+        ) is not None
+    ):
+
+        decision_outcome_evaluation_engine = (
+            AIDecisionOutcomeEvaluation()
+        )
+
+        history_row = get_ai_decision_outcome_history_by_id(
+            history_id
+        )
+
+        decision_snapshot = {
+            "snapshot_status": "EVALUATED",
+            "snapshot_purpose":
+                "FUTURE_OUTCOME_EVALUATION"
+        }
+
+        if history_row is not None:
+            decision_snapshot.update(
+                {
+                    "decision": history_row[1],
+                    "action": history_row[2],
+                    "strategy": history_row[3]
+                }
+            )
+
+        outcome_evaluation = (
+            decision_outcome_evaluation_engine.evaluate(
+                outcome_snapshot=decision_snapshot,
+                actual_outcome={
+                    "portfolio_return":
+                        portfolio_evaluation.get(
+                            "portfolio_return"
+                        ),
+                    "market_response":
+                        "EVALUATED",
+                    "portfolio_response":
+                        "EVALUATED"
+                }
+            )
+        )
+
+        learning_signal = outcome_evaluation.get(
+            "learning_signal",
+            "NONE"
+        )
+
+        learning_signal_strength = outcome_evaluation.get(
+            "learning_signal_strength",
+            0.0
+        )
+
+        adaptive_learning_required = (
+            learning_signal == "NEGATIVE"
+        )
+
+        reassessment_required = (
+            learning_signal == "NEGATIVE"
+        )
+
+        if reassessment_required:
+            reassessment_status = (
+                "REASSESSMENT_REQUIRED"
+            )
+        else:
+            reassessment_status = (
+                "NOT_REQUIRED"
+            )
+
+        # --------------------------------
+        # AI Decision Outcome Intelligence
+        # Phase 6
+        # Step6-10-F-5
+        # --------------------------------
+
+        outcome_intelligence_engine = (
+            AIDecisionOutcomeIntelligence()
+        )
+
+        outcome_intelligence = (
+            outcome_intelligence_engine.analyze(
+                final_decision={
+                    "decision":
+                        decision_snapshot.get(
+                            "decision",
+                            "UNKNOWN"
+                        ),
+                    "action":
+                        decision_snapshot.get(
+                            "action",
+                            "REVIEW"
+                        ),
+                    "strategy":
+                        decision_snapshot.get(
+                            "strategy",
+                            "UNKNOWN"
+                        )
+                },
+                final_decision_execution_reassessment={
+                    "reassessment_required":
+                        reassessment_required,
+                    "reassessment_status":
+                        reassessment_status
+                },
+                intelligence={},
+                intelligence_score={
+                    "intelligence_score":
+                        (
+                            history_row[5]
+                            if history_row is not None
+                            else None
+                        )
+                },
+                decision_confidence={
+                    "confidence_score":
+                        (
+                            history_row[4]
+                            if history_row is not None
+                            else None
+                        )
+                },
+                outcome_evaluation=outcome_evaluation
+            )
+        )
+
+        # --------------------------------
+        # AI Decision Outcome History Update
+        # --------------------------------
+
+        update_ai_decision_outcome_history(
+            history_id=history_id,
+            outcome_status=outcome_evaluation.get(
+                "outcome_status",
+                "EVALUATED"
+            ),
+            outcome_score=outcome_evaluation.get(
+                "outcome_score",
+                0.0
+            ),
+            outcome_grade=outcome_evaluation.get(
+                "outcome_grade",
+                "N/A"
+            ),
+            decision_effectiveness=outcome_evaluation.get(
+                "decision_effectiveness",
+                "PENDING"
+            ),
+            strategy_effectiveness=outcome_evaluation.get(
+                "strategy_effectiveness",
+                "PENDING"
+            ),
+            market_response=outcome_evaluation.get(
+                "market_response",
+                "EVALUATED"
+            ),
+            portfolio_response=outcome_evaluation.get(
+                "portfolio_response",
+                "EVALUATED"
+            ),
+            learning_status=outcome_intelligence.get(
+                "learning_status",
+                outcome_evaluation.get(
+                    "learning_status",
+                    "LEARNING_AVAILABLE"
+                )
+            ),
+            feedback_state=outcome_intelligence.get(
+                "feedback_state",
+                "EVALUATED"
+            ),
+            adaptive_learning_required=int(
+                adaptive_learning_required
+            ),
+            reassessment_required=int(
+                reassessment_required
+            ),
+            reassessment_status=reassessment_status
+        )
+
+        outcome_evaluation[
+            "learning_signal_strength"
+        ] = learning_signal_strength
+        # --------------------------------
+        # AI Decision Learning Signal Audit
+        # Phase 6
+        # Step6-10-I
+        # --------------------------------
+
+        save_ai_decision_audit_event(
+            event_type="LEARNING_SIGNAL_GENERATED",
+            event_time=datetime.now().astimezone().isoformat(),
+            source="portfolio_outcome_evaluation",
+            status="GENERATED",
+            outcome_history_id=history_id,
+            correlation_key=f"outcome:{history_id}",
+            details={
+                "learning_signal": learning_signal,
+                "learning_signal_strength": learning_signal_strength,
+                "adaptive_learning_required": bool(
+                    adaptive_learning_required
+                ),
+                "reassessment_required": bool(
+                    reassessment_required
+                ),
+                "reassessment_status": reassessment_status,
+            },
+        )
+
+
+        outcome_evaluation[
+            "adaptive_learning_required"
+        ] = adaptive_learning_required
+
+        outcome_evaluation[
+            "reassessment_required"
+        ] = reassessment_required
+
+        outcome_evaluation[
+            "reassessment_status"
+        ] = reassessment_status
+
+    return jsonify(
+        {
+            "success": True,
+            "evaluation": portfolio_evaluation,
+            "outcome_evaluation": outcome_evaluation,
+            "outcome_intelligence": outcome_intelligence
+        }
+    )
+
+@app.route(
+    "/api/ai-decision/outcome-history/<int:history_id>"
+)
+def ai_decision_outcome_history_by_id_api(
+    history_id
+):
+
+    row = get_ai_decision_outcome_history_by_id(
+        history_id
+    )
+
+    if row is None:
+        return jsonify(
+            {
+                "success": False,
+                "history_id": history_id,
+                "error": "AI decision outcome history not found"
+            }
+        ), 404
+
+    data = {
+        "id": row[0],
+        "decision": row[1],
+        "action": row[2],
+        "strategy": row[3],
+        "confidence_score": row[4],
+        "intelligence_score": row[5],
+        "validation_score": row[6],
+        "governance_score": row[7],
+        "execution_score": row[8],
+        "lifecycle_score": row[9],
+        "operational_score": row[10],
+        "orchestration_score": row[11],
+        "integrated_score": row[12],
+        "market_view": row[13],
+        "risk_level": row[14],
+        "outcome_status": row[15],
+        "snapshot_status": row[16],
+        "snapshot_purpose": row[17],
+        "outcome_score": row[18],
+        "outcome_grade": row[19],
+        "decision_effectiveness": row[20],
+        "strategy_effectiveness": row[21],
+        "market_response": row[22],
+        "portfolio_response": row[23],
+        "learning_status": row[24],
+        "feedback_state": row[25],
+        "adaptive_learning_required": bool(row[26]),
+        "reassessment_required": bool(row[27]),
+        "reassessment_status": row[28],
+        "created_at": row[29],
+        "portfolio_return": row[30],
+        "portfolio_evaluation_date": row[31],
+        "execution_status": row[32],
+        "execution_authorization": row[33],
+        "execution_readiness": row[34],
+        "certification_status": row[35],
+        "monitoring_status": row[36],
+        "feedback_status": row[37]
+    }
+
+    return jsonify(
+        {
+            "success": True,
+            "history": data
+        }
+    )
+
+@app.route("/api/ai-decision/audit-events")
+def ai_decision_audit_events_api():
+
+    outcome_history_id = request.args.get("outcome_history_id", type=int)
+    correlation_key = request.args.get("correlation_key")
+    limit = request.args.get("limit", default=50)
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "limit must be an integer"
+                }
+            ), 400
+
+    try:
+        events = get_ai_decision_audit_events(
+            outcome_history_id=outcome_history_id,
+            correlation_key=correlation_key,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "success": False,
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "outcome_history_id": outcome_history_id,
+            "correlation_key": correlation_key,
+            "events": [
+                {
+                    "id": row[0],
+                    "audit_event_id": row[1],
+                    "event_type": row[2],
+                    "event_time": row[3],
+                    "source": row[4],
+                    "status": row[5],
+                    "outcome_history_id": row[6],
+                    "correlation_key": row[7],
+                    "details": row[8]
+                }
+                for row in events
+            ]
+        }
+    )
+
+
+@app.route("/api/ai-decision/audit-lifecycle/timeline")
+def ai_decision_audit_lifecycle_timeline_api():
+
+    outcome_history_id = request.args.get("outcome_history_id", type=int)
+    correlation_key = request.args.get("correlation_key")
+    limit = request.args.get("limit", default=100)
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "limit must be an integer"
+                }
+            ), 400
+
+    try:
+        timeline = get_ai_decision_audit_lifecycle_timeline(
+            outcome_history_id=outcome_history_id,
+            correlation_key=correlation_key,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "success": False,
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "outcome_history_id": outcome_history_id,
+            "correlation_key": correlation_key,
+            "timeline": timeline
+        }
+    )
+
+
+@app.route("/api/ai-decision/audit-lifecycle/completeness")
+def ai_decision_audit_lifecycle_completeness_api():
+
+    outcome_history_id = request.args.get("outcome_history_id", type=int)
+    correlation_key = request.args.get("correlation_key")
+    limit = request.args.get("limit", default=100)
+    if limit is not None:
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "limit must be an integer"
+                }
+            ), 400
+
+    try:
+        completeness = get_ai_decision_audit_lifecycle_completeness(
+            outcome_history_id=outcome_history_id,
+            correlation_key=correlation_key,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify(
+            {
+                "success": False,
+                "error": str(exc)
+            }
+        ), 400
+
+    return jsonify(
+        {
+            "success": True,
+            "completeness": completeness
+        }
+    )
+
+
+@app.route("/api/ai-decision/summary")
+def ai_decision_summary_api():
+
+    summary = get_ai_decision_summary()
+
+
+    return jsonify(
+        {
+            "success": True,
+            "summary": summary
+        }
+    )
+
+
+@app.route("/api/ai-decision/quality")
+def ai_decision_quality_api():
+
+    quality = get_ai_decision_quality()
+
+    return jsonify(
+        {
+            "success": True,
+            "quality": quality
+        }
+    )
+
+
+@app.route("/api/ai-decision/trend")
+def ai_decision_trend_api():
+
+    history = get_ai_decision_history(
+        limit=10
+    )
+
+    trend_engine = AIDecisionTrend()
+
+    trend = trend_engine.analyze(
+        [
+            {
+                "decision_score": item[2],
+                "grade": item[3],
+                "decision": item[0],
+                "created_at": item[9]
+            }
+            for item in history
+        ]
+    )
+
+    # Backward compatibility
+    trend["trend"] = {
+        "UP": "Improving",
+        "DOWN": "Declining",
+        "STABLE": "Stable"
+    }.get(
+        trend.get("direction"),
+        "UNKNOWN"
+    )
+
+    trend["average_change"] = (
+        trend.get("score_change", 0)
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "trend": trend
+        }
+    )
+
+
+
+@app.route("/api/ai-decision/adaptive-strategy")
+def ai_decision_adaptive_strategy_api():
+
+    history = get_ai_decision_history(
+        limit=10
+    )
+
+    trend_engine = AIDecisionTrend()
+
+    trend = trend_engine.analyze(
+        [
+            {
+                "decision_score": item[2],
+                "grade": item[3],
+                "decision": item[0],
+                "created_at": item[9]
+            }
+            for item in history
+        ]
+    )
+
+    # --------------------------------
+    # Step6-10-F-12
+    # Bridge Outcome Intelligence
+    # into Adaptive Strategy API
+    # --------------------------------
+
+    outcome_intelligence = {}
+
+    outcome_history = get_ai_decision_outcome_history(
+        limit=50
+    )
+
+    for outcome_row in outcome_history:
+
+        if outcome_row[15] != "EVALUATED":
+            continue
+
+        outcome_score = outcome_row[18]
+
+        outcome_learning_required = bool(
+            outcome_row[26]
+        )
+
+        if outcome_score is None:
+            outcome_learning_signal = "NONE"
+            outcome_learning_signal_strength = 0.0
+        else:
+            outcome_learning_signal = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal(
+                    float(outcome_score)
+                )
+            )
+
+            outcome_learning_signal_strength = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal_strength(
+                    float(outcome_score)
+                )
+            )
+
+        effective_adaptive_required = (
+            outcome_learning_required
+            or bool(outcome_row[27])
+            or outcome_learning_signal == "NEGATIVE"
+        )
+
+        outcome_intelligence = {
+            "outcome_status": outcome_row[15],
+            "outcome_score": outcome_score,
+            "outcome_grade": outcome_row[19],
+            "outcome_learning_status": outcome_row[24],
+            "feedback_state": outcome_row[25],
+            "adaptive_learning_required":
+                effective_adaptive_required,
+            "reassessment_required": bool(outcome_row[27]),
+            "reassessment_status": outcome_row[28],
+            "outcome_learning_signal":
+                outcome_learning_signal,
+            "outcome_learning_signal_strength":
+                outcome_learning_signal_strength,
+            "source_history_id": outcome_row[0]
+        }
+
+        break
+
+    strategy_engine = AIDecisionAdaptiveStrategy()
+
+    strategy = strategy_engine.analyze(
+        trend,
+        outcome_intelligence
+    )
+
+    return jsonify(
+        {
+            "success": True,
+            "strategy": strategy,
+            "outcome_intelligence": outcome_intelligence
+        }
+    )
+
+
+
+@app.route("/api/ai-decision/chart")
+def ai_decision_chart_api():
+
+    chart = get_ai_decision_chart_data()
+
+    return jsonify(
+        {
+            "success": True,
+            "chart": chart
+        }
+    )
+
+
+@app.route("/api/ai-decision/statistics")
+def ai_decision_statistics_api():
+
+    statistics = get_ai_decision_statistics()
+
+    return jsonify(
+        {
+            "success": True,
+            "statistics": statistics
+        }
+    )
+
+
+@app.route("/api/ai-decision/performance")
+def ai_decision_performance_api():
+
+    performance = (
+        get_ai_decision_performance()
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "performance": performance
+        }
+    )
+
+
+@app.route("/api/ai-decision/reliability")
+def ai_decision_reliability_api():
+
+    reliability = (
+        get_ai_decision_reliability()
+    )
+
+
+    return jsonify(
+        {
+            "success": True,
+            "reliability": reliability
+        }
+    )
+
+
+
+
+@app.route("/api/portfolio/ai-rebalance")
+def ai_rebalance_api():
+
+    market_regime = analyze_market_regime()
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+    top_etf = {
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+    }
+
+    ai_decision = generate_ai_decision(
+        market_regime,
+        market_strategy,
+        portfolio_health,
+        top_etf
+    )
+
+    current_decision_score = calculate_decision_score(
+        market_regime,
+        portfolio_health,
+        top_etf
+    )
+
+    current_market_view = market_regime.get(
+        "regime",
+        "UNKNOWN"
+    )
+
+    current_mode = market_strategy.get(
+        "portfolio_mode",
+        "balanced"
+    )
+
+    current_top_etf = top_etf.get(
+        "ticker"
+    )
+
+    rebalance_action = "HOLD"
+    rebalance_changes = []
+
+    if current_decision_score >= 85:
+
+        if current_market_view == "BULLISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Strong market condition and high AI confidence"
+                }
+            )
+
+        elif current_market_view == "BEARISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": "CASH",
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Risk reduction based on market weakness"
+                }
+            )
+
+        else:
+
+            rebalance_action = "MAINTAIN"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "KEEP_WEIGHT",
+                    "reason":
+                    "Balanced market condition"
+                }
+            )
+
+    else:
+
+        rebalance_action = "REDUCE_RISK"
+
+        rebalance_changes.append(
+            {
+                "ticker": "CASH",
+                "action": "INCREASE_WEIGHT",
+                "reason":
+                "AI confidence below optimal level"
+            }
+        )
+
+    recommendation = {
+        "rebalance_action":
+            rebalance_action,
+
+        "confidence":
+            current_decision_score,
+
+        "rebalance_score":
+            current_decision_score,
+
+        "market_view":
+            current_market_view,
+
+        "recommended_mode":
+            current_mode,
+
+        "changes":
+            rebalance_changes,
+
+        "message":
+            "AI portfolio allocation recommendation generated"
+    }
+
+    return jsonify(
+        {
+            "success": True,
+            "recommendation": recommendation
+        }
+    )
+
+
+
+@app.route("/api/portfolio/ai-optimization")
+def ai_portfolio_optimization_api():
+
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    optimized_allocation = []
+
+    for item in portfolio:
+
+        ticker = item.get(
+            "ticker"
+        )
+
+        current_weight = float(
+            item.get("weight", 0)
+        )
+
+        target_weight = current_weight
+
+        optimized_allocation.append(
+            {
+                "ticker": ticker,
+                "current_weight": current_weight,
+                "target_weight": target_weight
+            }
+        )
+
+    optimization_score = 0
+
+    if optimized_allocation:
+
+        optimization_score = 100
+
+        changed = any(
+            item["current_weight"]
+            != item["target_weight"]
+            for item in optimized_allocation
+        )
+
+        if not changed:
+            optimization_score = 80
+
+    optimization = {
+        "optimization_status":
+            "COMPLETED",
+
+        "optimization_score":
+            optimization_score,
+
+        "optimized_allocation":
+            optimized_allocation,
+
+        "message":
+            "AI portfolio optimization completed"
+    }
+
+    return jsonify(
+        {
+            "success": True,
+            "optimization": optimization
+        }
+    )
+
+
+@app.route("/api/portfolio/analytics")
+def portfolio_analytics_api():
+
+    analytics = get_portfolio_analytics()
+
+    return jsonify(
+        {
+            "success": True,
+            "analytics": analytics
+        }
+    )
+
+
+
+@app.route("/api/portfolio/decision-intelligence", methods=["GET", "POST"])
+def portfolio_decision_intelligence_api():
+
+    # -----------------------------
+    # AI Decision
+    # -----------------------------
+
+    market_regime = analyze_market_regime()
+
+    market_strategy = generate_market_strategy(
+        market_regime
+    )
+
+    ranking_data = get_dashboard_api_data()
+
+    portfolio = optimize_portfolio_weight(
+        ranking_data["data"],
+        "balanced"
+    )
+
+    portfolio_health = analyze_portfolio_health(
+        portfolio
+    )
+
+    top_etf = {
+        "ticker":
+            ranking_data["data"][0]["ticker"],
+
+        "score":
+            ranking_data["data"][0]["score"]
+    }
+
+    ai_decision = generate_ai_decision(
+        market_regime,
+        market_strategy,
+        portfolio_health,
+        top_etf
+    )
+
+    ai_decision["decision_score"] = (
+        calculate_decision_score(
+            market_regime,
+            portfolio_health,
+            top_etf
+        )
+    )
+
+    ai_decision["grade"] = get_decision_grade(
+        ai_decision["decision_score"]
+    )
+
+
+    # -----------------------------
+    # Decision Quality
+    # -----------------------------
+
+    decision_quality = (
+        get_ai_decision_quality()
+    )
+
+
+    # -----------------------------
+    # Reliability
+    # -----------------------------
+
+    reliability = (
+        get_ai_decision_reliability()
+    )
+
+
+    # -----------------------------
+    # Adaptive Strategy
+    # -----------------------------
+
+    adaptive_history = get_ai_decision_history(
+        limit=10
+    )
+
+    adaptive_trend_engine = AIDecisionTrend()
+
+    adaptive_trend = adaptive_trend_engine.analyze(
+        [
+            {
+                "decision_score": item[2],
+                "grade": item[3],
+                "decision": item[0],
+                "created_at": item[9]
+            }
+            for item in adaptive_history
+        ]
+    )
+
+    # --------------------------------
+    # Step6-10-F-14
+    # Bridge Outcome Intelligence
+    # into Portfolio Adaptive Strategy
+    # --------------------------------
+
+    outcome_intelligence = {}
+
+    outcome_history = get_ai_decision_outcome_history(
+        limit=50
+    )
+
+    for outcome_row in outcome_history:
+
+        if outcome_row[15] != "EVALUATED":
+            continue
+
+        outcome_score = outcome_row[18]
+
+        outcome_learning_required = bool(
+            outcome_row[26]
+        )
+
+        if outcome_score is None:
+            outcome_learning_signal = "NONE"
+            outcome_learning_signal_strength = 0.0
+        else:
+            outcome_learning_signal = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal(
+                    float(outcome_score)
+                )
+            )
+
+            outcome_learning_signal_strength = (
+                AIDecisionOutcomeEvaluation
+                .canonical_learning_signal_strength(
+                    float(outcome_score)
+                )
+            )
+
+        effective_adaptive_required = (
+            outcome_learning_required
+            or bool(outcome_row[27])
+            or outcome_learning_signal == "NEGATIVE"
+        )
+
+        outcome_intelligence = {
+            "outcome_status": outcome_row[15],
+            "outcome_score": outcome_score,
+            "outcome_grade": outcome_row[19],
+            "outcome_learning_status": outcome_row[24],
+            "feedback_state": outcome_row[25],
+            "adaptive_learning_required":
+                effective_adaptive_required,
+            "reassessment_required": bool(
+                outcome_row[27]
+            ),
+            "reassessment_status": outcome_row[28],
+            "outcome_learning_signal":
+                outcome_learning_signal,
+            "outcome_learning_signal_strength":
+                outcome_learning_signal_strength,
+            "source_history_id": outcome_row[0]
+        }
+        break
+
+    adaptive_strategy_engine = (
+        AIDecisionAdaptiveStrategy()
+    )
+
+    adaptive_strategy = adaptive_strategy_engine.analyze(
+        adaptive_trend,
+        outcome_intelligence
+    )
+
+    # -----------------------------
+    # --------------------------------
+    # Step6-10-I-13
+    # Persist Adaptive Strategy Audit Event
+    # --------------------------------
+
+    adaptive_source_history_id = (
+        outcome_intelligence.get(
+            "source_history_id"
+        )
+    )
+
+    if (
+        request.method == "POST"
+        and adaptive_source_history_id is not None
+    ):
+        save_ai_decision_audit_event(
+            event_type="ADAPTIVE_STRATEGY_GENERATED",
+            event_time=datetime.now().astimezone().isoformat(),
+            source="adaptive_strategy",
+            status="GENERATED",
+            outcome_history_id=adaptive_source_history_id,
+            correlation_key=(
+                f"outcome:{adaptive_source_history_id}"
+            ),
+            details={
+                "strategy":
+                    adaptive_strategy.get(
+                        "strategy",
+                        "UNKNOWN"
+                    ),
+                "action":
+                    adaptive_strategy.get(
+                        "action",
+                        "UNKNOWN"
+                    ),
+                "outcome_learning_signal":
+                    adaptive_strategy.get(
+                        "outcome_learning_signal",
+                        "NONE"
+                    ),
+                "outcome_learning_signal_strength":
+                    adaptive_strategy.get(
+                        "outcome_learning_signal_strength",
+                        0.0
+                    ),
+                "adaptive_learning_required":
+                    bool(
+                        adaptive_strategy.get(
+                            "adaptive_learning_required",
+                            False
+                        )
+                    ),
+            },
+        )
+    # Rebalance
+    # -----------------------------
+    # Use the current AI Decision and market state.
+
+    current_decision_score = ai_decision.get(
+        "decision_score",
+        0
+    )
+
+    current_market_view = market_regime.get(
+        "regime",
+        "UNKNOWN"
+    )
+
+    current_mode = market_strategy.get(
+        "portfolio_mode",
+        "balanced"
+    )
+
+    current_top_etf = top_etf.get(
+        "ticker"
+    )
+
+    rebalance_action = "HOLD"
+
+    rebalance_changes = []
+
+    if current_decision_score >= 85:
+
+        if current_market_view == "BULLISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Strong market condition and high AI confidence"
+                }
+            )
+
+        elif current_market_view == "BEARISH":
+
+            rebalance_action = "ADJUST"
+
+            rebalance_changes.append(
+                {
+                    "ticker": "CASH",
+                    "action": "INCREASE_WEIGHT",
+                    "reason":
+                    "Risk reduction based on market weakness"
+                }
+            )
+
+        else:
+
+            rebalance_action = "MAINTAIN"
+
+            rebalance_changes.append(
+                {
+                    "ticker": current_top_etf,
+                    "action": "KEEP_WEIGHT",
+                    "reason":
+                    "Balanced market condition"
+                }
+            )
+
+    else:
+
+        rebalance_action = "REDUCE_RISK"
+
+        rebalance_changes.append(
+            {
+                "ticker": "CASH",
+                "action": "INCREASE_WEIGHT",
+                "reason":
+                "AI confidence below optimal level"
+            }
+        )
+
+    rebalance = {
+        "rebalance_action":
+            rebalance_action,
+
+        "confidence":
+            current_decision_score,
+
+        "rebalance_score":
+            current_decision_score,
+
+        "market_view":
+            current_market_view,
+
+        "recommended_mode":
+            current_mode,
+
+        "changes":
+            rebalance_changes,
+
+        "message":
+            "AI portfolio allocation recommendation generated"
+    }
+
+
+    # -----------------------------
+    # Portfolio Optimization
+    # -----------------------------
+    # Use the current in-memory portfolio.
+
+    optimized_allocation = []
+
+    for item in portfolio:
+
+        ticker = item.get(
+            "ticker"
+        )
+
+        weight = item.get(
+            "weight",
+            0
+        )
+
+        current_weight = weight
+
+        target_weight = weight
+
+        optimized_allocation.append(
+            {
+                "ticker": ticker,
+                "current_weight": current_weight,
+                "target_weight": target_weight
+            }
+        )
+
+    optimization_score = 0
+
+    if optimized_allocation:
+
+        optimization_score = 100
+
+        changed = any(
+            item["current_weight"]
+            != item["target_weight"]
+            for item in optimized_allocation
+        )
+
+        if not changed:
+            optimization_score = 80
+
+    optimization = {
+        "optimization_status":
+            "COMPLETED",
+
+        "optimization_score":
+            optimization_score,
+
+        "optimized_allocation":
+            optimized_allocation,
+
+        "message":
+            "AI portfolio optimization completed"
+    }
+
+
+    # -----------------------------
+    # Explainability
+    # -----------------------------
+
+    explainability_engine = (
+        PortfolioExplainabilityEngine()
+    )
+
+    explainability = (
+        explainability_engine.generate_explanation(
+            portfolio,
+            market_regime
+        )
+    )
+
+
+
+    # -----------------------------
+    # Final Decision Intelligence
+    # -----------------------------
+
+    engine = (
+        PortfolioDecisionIntelligence()
+    )
+
+    intelligence = engine.generate(
+        ai_decision,
+        decision_quality,
+        reliability,
+        adaptive_strategy,
+        rebalance,
+        optimization,
+        explainability
+    )
+
+
+    # -----------------------------
+    # Portfolio Intelligence Score
+    # -----------------------------
+
+    intelligence_engine = (
+        PortfolioIntelligenceScore()
+    )
+
+    intelligence_score = (
+        intelligence_engine.calculate(
+            ai_decision.get(
+                "decision_score",
+                0
+            ),
+            decision_quality,
+            reliability,
+            adaptive_strategy,
+            intelligence.get(
+                "decision_consistency_score",
+                0
+            ),
+            rebalance,
+            optimization
+        )
+    )
+
+
+    # -----------------------------
+    # Decision Confidence Intelligence
+    # Step5-3-80
+    # -----------------------------
+
+    confidence_engine = (
+        DecisionConfidenceIntelligence()
+    )
+
+    decision_confidence = (
+        confidence_engine.calculate(
+            decision_quality,
+            reliability,
+            adaptive_strategy,
+            intelligence.get(
+                "decision_consistency_score",
+                0
+            ),
+            rebalance,
+            optimization
+        )
+    )
+
+    # -----------------------------
+    # Decision Confidence Explainability
+    # Step5-3-81
+    # -----------------------------
+
+    confidence_explainability_engine = (
+        DecisionConfidenceExplainability()
+    )
+
+    decision_confidence_explainability = (
+        confidence_explainability_engine.explain(
+            decision_confidence
+        )
+    )
+
+
+    # -----------------------------
+    # Decision Confidence Assessment
+    # Step5-3-82
+    # -----------------------------
+
+    confidence_assessment_engine = (
+        DecisionConfidenceAssessment()
+    )
+
+    decision_confidence_assessment = (
+        confidence_assessment_engine.assess(
+            decision_confidence_explainability
+        )
+    )
+
+
+    # -----------------------------
+    # Decision Confidence Recommendation
+    # Step5-3-83
+    # -----------------------------
+
+    confidence_recommendation_engine = (
+        DecisionConfidenceRecommendation()
+    )
+
+    decision_confidence_recommendation = (
+        confidence_recommendation_engine.recommend(
+            decision_confidence_assessment,
+            intelligence
+        )
+    )
+
+    # -----------------------------
+    # AI Decision Validation
+    # Step5-3-84
+    # -----------------------------
+
+    decision_validation_engine = (
+        AIDecisionValidation()
+    )
+
+    ai_decision_validation = (
+        decision_validation_engine.validate(
+            intelligence,
+            decision_confidence,
+            decision_confidence_assessment,
+            decision_confidence_recommendation
+        )
+    )
+
+    # -----------------------------
+    # AI Decision Validation Explainability
+    # Step5-3-85
+    # -----------------------------
+
+    validation_explainability_engine = (
+        AIDecisionValidationExplainability()
+    )
+
+    ai_decision_validation_explainability = (
+        validation_explainability_engine.explain(
+            ai_decision_validation,
+            decision_confidence,
+            decision_confidence_assessment,
+            decision_confidence_recommendation
+        )
+    )
+
+    # -----------------------------
+    # AI Decision Validation Action
+    # Step5-3-86
+    # -----------------------------
+
+    validation_action_engine = (
+    AIDecisionValidationAction()
+)
+
+    ai_decision_validation_action = (
+        validation_action_engine.decide(
+            ai_decision_validation,
+            decision_confidence,
+            decision_confidence_assessment,
+            decision_confidence_recommendation
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Integration
+    # Step5-3-87
+    # -----------------------------
+
+    final_decision_engine = (
+        AIFinalDecisionIntegration()
+    )
+
+    final_decision = (
+        final_decision_engine.integrate(
+            intelligence,
+            intelligence_score,
+            decision_confidence,
+            decision_confidence_assessment,
+            decision_confidence_recommendation,
+            ai_decision_validation,
+            ai_decision_validation_explainability,
+            ai_decision_validation_action
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Governance
+    # Step5-3-88
+    # -----------------------------
+
+    final_decision_governance_engine = (
+        AIFinalDecisionGovernance()
+    )
+
+    final_decision_governance = (
+        final_decision_governance_engine.govern(
+            final_decision,
+            intelligence,
+            intelligence_score,
+            decision_confidence,
+            ai_decision_validation,
+            ai_decision_validation_action
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Execution Control
+    # Step5-3-89
+    # -----------------------------
+
+    final_decision_execution_control_engine = (
+        AIFinalDecisionExecutionControl()
+    )
+
+    final_decision_execution_control = (
+        final_decision_execution_control_engine.control(
+            final_decision,
+            final_decision_governance
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Execution Assurance
+    # Step5-3-90
+    # -----------------------------
+
+    final_decision_execution_assurance_engine = (
+        AIFinalDecisionExecutionAssurance()
+    )
+
+    final_decision_execution_assurance = (
+        final_decision_execution_assurance_engine.assure(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Execution Monitoring
+    # Step5-3-91
+    # -----------------------------
+
+    final_decision_execution_monitoring_engine = (
+        AIFinalDecisionExecutionMonitoring()
+    )
+
+    final_decision_execution_monitoring = (
+        final_decision_execution_monitoring_engine.monitor(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance
+        )
+    )
+
+
+    # -----------------------------
+    # AI Final Decision Execution Feedback Intelligence
+    # Step5-3-92
+    # -----------------------------
+
+    final_decision_execution_feedback_engine = (
+        AIFinalDecisionExecutionFeedback()
+    )
+
+    final_decision_execution_feedback = (
+        final_decision_execution_feedback_engine.feedback(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_monitoring
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Reassessment Intelligence
+    # Step5-3-93
+    # -----------------------------
+
+    final_decision_execution_reassessment_engine = (
+        AIFinalDecisionReassessment()
+    )
+
+    final_decision_execution_reassessment = (
+        final_decision_execution_reassessment_engine.reassess(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_feedback,
+            final_decision_execution_monitoring
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Lifecycle Intelligence
+    # Step5-3-94
+    # -----------------------------
+
+    final_decision_lifecycle_engine = (
+        AIFinalDecisionLifecycleIntelligence()
+    )
+
+    final_decision_lifecycle = (
+        final_decision_lifecycle_engine.analyze(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_monitoring,
+            final_decision_execution_feedback,
+            final_decision_execution_reassessment
+        )
+    )
+
+
+    # -----------------------------
+    # AI Final Decision Lifecycle Governance & Control
+    # Step5-3-95
+    # -----------------------------
+
+    final_decision_lifecycle_governance_control_engine = (
+        AIFinalDecisionLifecycleGovernanceControl()
+    )
+
+    final_decision_lifecycle_governance_control = (
+        final_decision_lifecycle_governance_control_engine.govern(
+            final_decision,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_monitoring,
+            final_decision_execution_feedback,
+            final_decision_execution_reassessment,
+            final_decision_lifecycle,
+            decision_confidence,
+            ai_decision_validation
+        )
+    )
+
+
+    # -----------------------------
+    # AI Final Decision Operational Intelligence
+    # Step5-3-96
+    # -----------------------------
+
+    final_decision_operational_intelligence_engine = (
+        AIFinalDecisionOperationalIntelligence()
+    )
+
+    final_decision_operational_intelligence = (
+        final_decision_operational_intelligence_engine.analyze(
+            final_decision,
+            final_decision_lifecycle_governance_control
+        )
+    )
+
+    # -----------------------------
+    # AI Final Decision Integrated Intelligence
+    # Step5-3-97
+    # -----------------------------
+
+    final_decision_integrated_intelligence_engine = (
+        AIFinalDecisionIntegratedIntelligence()
+    )
+
+    final_decision_integrated_intelligence = (
+        final_decision_integrated_intelligence_engine.analyze(
+            final_decision,
+            ai_decision_validation,
+            final_decision_governance,
+            final_decision_execution_control,
+            final_decision_execution_assurance,
+            final_decision_execution_monitoring,
+            final_decision_execution_feedback,
+            final_decision_execution_reassessment,
+            final_decision_lifecycle,
+            final_decision_lifecycle_governance_control,
+            final_decision_operational_intelligence
+        )
+    )
+
+
+    # -----------------------------
+    # AI Final Decision Orchestration
+    # Step5-3-98
+    # -----------------------------
+
+    final_decision_orchestration_engine = (
+        AIFinalDecisionOrchestration()
+    )
+
+    final_decision_orchestration = (
+        final_decision_orchestration_engine.analyze(
+            final_decision,
+            final_decision_integrated_intelligence,
+            final_decision_lifecycle_governance_control,
+            final_decision_operational_intelligence
+        )
+    )
+
+
+    # -----------------------------
+    # AI Final Execution Decision
+    # Step5-3-99
+    # -----------------------------
+
+    final_execution_decision_engine = (
+        AIFinalExecutionDecision()
+    )
+
+    final_execution_decision = (
+        final_execution_decision_engine.analyze(
+            final_decision,
+            final_decision_orchestration,
+            final_decision_integrated_intelligence,
+            final_decision_lifecycle_governance_control,
+            final_decision_operational_intelligence
+        )
+    )
+
+
+    # -----------------------------
+    # AI Final Decision Certification
+    # Step5-3-100
+    # -----------------------------
+
+    final_decision_certification_engine = (
+        AIFinalDecisionCertification()
+    )
+
+    final_decision_certification = (
+        final_decision_certification_engine.analyze(
+            final_decision,
+            ai_decision_validation,
+            final_decision_governance,
+            final_decision_lifecycle,
+            final_decision_operational_intelligence,
+            final_decision_integrated_intelligence,
+            final_decision_orchestration,
+            final_execution_decision
+        )
+    )
+
+
+
+    # -----------------------------
+    # AI Final Decision Master Control
+    # Step5-3-101
+    # -----------------------------
+
+    final_decision_master_control_engine = (
+        AIFinalDecisionMasterControl()
+    )
+
+    final_decision_master_control = (
+        final_decision_master_control_engine.analyze(
+            final_decision,
+            final_decision_certification,
+            final_execution_decision,
+            final_decision_governance,
+            final_decision_lifecycle,
+            final_decision_operational_intelligence,
+            final_decision_orchestration,
+            final_decision_integrated_intelligence,
+            ai_decision_validation
+        )
+    )
+
+
+
+    # -----------------------------
+    # AI Decision Outcome Data Collector
+    # Phase 6
+    # Step6-2
+    # -----------------------------
+
+    decision_outcome_collector_engine = (
+        AIDecisionOutcomeDataCollector()
+    )
+
+    decision_outcome_snapshot = (
+        decision_outcome_collector_engine.collect(
+            final_decision,
+            final_decision_master_control,
+            final_decision_certification,
+            final_execution_decision,
+            final_decision_execution_feedback,
+            final_decision_execution_monitoring,
+            final_decision_execution_reassessment,
+            final_decision_governance,
+            final_decision_lifecycle,
+            final_decision_operational_intelligence,
+            final_decision_orchestration,
+            final_decision_integrated_intelligence,
+            intelligence,
+            intelligence_score,
+            decision_confidence
+        )
+    )
+
+    # -----------------------------
+    # AI Decision Outcome Evaluation
+    # Phase 6
+    # Step6-4
+    # -----------------------------
+
+    decision_outcome_evaluation_engine = (
+        AIDecisionOutcomeEvaluation()
+    )
+
+    decision_outcome_evaluation = (
+        decision_outcome_evaluation_engine.evaluate(
+            outcome_snapshot=decision_outcome_snapshot,
+            actual_outcome={}
+        )
+    )
+
+
+    # -----------------------------
+    # AI Decision Outcome Intelligence
+    # Phase 6
+    # Step6-1
+    # Step6-5 Integration
+    # -----------------------------
+
+    decision_outcome_engine = (
+        AIDecisionOutcomeIntelligence()
+    )
+
+    decision_outcome_intelligence = (
+        decision_outcome_engine.analyze(
+            final_decision,
+            final_decision_master_control,
+            final_decision_certification,
+            final_execution_decision,
+            final_decision_execution_feedback,
+            final_decision_execution_monitoring,
+            final_decision_execution_reassessment,
+            intelligence,
+            intelligence_score,
+            decision_confidence,
+            decision_outcome_evaluation
+        )
+    )
+
+
+
+    # -----------------------------
+    # AI Decision Outcome History
+    # Phase 6
+    # Step6-3
+    # -----------------------------
+
+    # -----------------------------
+    # AI Decision Outcome + Portfolio Snapshot
+    # Production Hardening
+    # Atomic persistence
+    # -----------------------------
+
+    outcome_history_kwargs = {
+        "decision": decision_outcome_snapshot.get(
+            "decision",
+            "UNKNOWN"
+        ),
+        "action": decision_outcome_snapshot.get(
+            "action",
+            "REVIEW"
+        ),
+        "strategy": decision_outcome_snapshot.get(
+            "strategy",
+            "UNKNOWN"
+        ),
+        "confidence_score": decision_outcome_snapshot.get(
+            "confidence_score"
+        ),
+        "intelligence_score": decision_outcome_snapshot.get(
+            "intelligence_score"
+        ),
+        "validation_score": decision_outcome_snapshot.get(
+            "validation_score"
+        ),
+        "governance_score": decision_outcome_snapshot.get(
+            "governance_score"
+        ),
+        "execution_score": decision_outcome_snapshot.get(
+            "execution_score"
+        ),
+        "lifecycle_score": decision_outcome_snapshot.get(
+            "lifecycle_score"
+        ),
+        "operational_score": decision_outcome_snapshot.get(
+            "operational_score"
+        ),
+        "orchestration_score": decision_outcome_snapshot.get(
+            "orchestration_score"
+        ),
+        "integrated_score": decision_outcome_snapshot.get(
+            "integrated_score"
+        ),
+        "market_view": decision_outcome_snapshot.get(
+            "market_view",
+            "UNKNOWN"
+        ),
+        "risk_level": decision_outcome_snapshot.get(
+            "risk_level",
+            "UNKNOWN"
+        ),
+        "outcome_status": decision_outcome_evaluation.get(
+            "outcome_status",
+            "PENDING"
+        ),
+        "snapshot_status": decision_outcome_snapshot.get(
+            "snapshot_status",
+            "COLLECTED"
+        ),
+        "snapshot_purpose": decision_outcome_snapshot.get(
+            "snapshot_purpose",
+            "FUTURE_OUTCOME_EVALUATION"
+        ),
+        "outcome_score": decision_outcome_evaluation.get(
+            "outcome_score",
+            0.0
+        ),
+        "outcome_grade": decision_outcome_evaluation.get(
+            "outcome_grade",
+            "N/A"
+        ),
+        "decision_effectiveness": decision_outcome_evaluation.get(
+            "decision_effectiveness",
+            "PENDING"
+        ),
+        "strategy_effectiveness": decision_outcome_evaluation.get(
+            "strategy_effectiveness",
+            "PENDING"
+        ),
+        "market_response": decision_outcome_evaluation.get(
+            "market_response",
+            "PENDING"
+        ),
+        "portfolio_response": decision_outcome_evaluation.get(
+            "portfolio_response",
+            "PENDING"
+        ),
+        "learning_status": decision_outcome_intelligence.get(
+            "learning_status",
+            "WAITING_FOR_OUTCOME"
+        ),
+        "feedback_state": decision_outcome_intelligence.get(
+            "feedback_state",
+            "COLLECTING"
+        ),
+        "adaptive_learning_required": int(
+            bool(
+                decision_outcome_intelligence.get(
+                    "adaptive_learning_required",
+                    False
+                )
+            )
+        ),
+        "reassessment_required": int(
+            bool(
+                decision_outcome_snapshot.get(
+                    "reassessment_required",
+                    False
+                )
+            )
+        ),
+        "reassessment_status": decision_outcome_snapshot.get(
+            "reassessment_status",
+            "NOT_REQUIRED"
+        ),
+        "created_at": datetime.now().astimezone().isoformat(),
+        "execution_status": decision_outcome_snapshot.get(
+            "execution_status",
+            "UNKNOWN"
+        ),
+        "execution_authorization": decision_outcome_snapshot.get(
+            "execution_authorization",
+            "UNKNOWN"
+        ),
+        "execution_readiness": decision_outcome_intelligence.get(
+            "execution_readiness",
+            "NOT_READY"
+        ),
+        "certification_status": decision_outcome_snapshot.get(
+            "certification_status",
+            "UNKNOWN"
+        ),
+        "monitoring_status": decision_outcome_snapshot.get(
+            "monitoring_status",
+            "UNKNOWN"
+        ),
+        "feedback_status": decision_outcome_snapshot.get(
+            "feedback_status",
+            "UNKNOWN"
+        ),
+    }
+
+    history_id = None
+
+    if request.method == "POST":
+        portfolio_snapshot_created_at = (
+            datetime.now().astimezone().isoformat()
+        )
+
+        persistence_result = (
+            save_ai_decision_outcome_with_portfolio_transaction(
+                history_kwargs=outcome_history_kwargs,
+                portfolio=portfolio,
+                created_at=portfolio_snapshot_created_at,
+            )
+        )
+
+        history_id = persistence_result["history_id"]
+
+
+        # AI Decision Outcome History Update
+        # Phase 6
+        # Step6-4
+        # -----------------------------
+
+        update_ai_decision_outcome_history(
+            history_id=history_id,
+            outcome_status=decision_outcome_evaluation.get(
+                "outcome_status",
+                "PENDING"
+            ),
+            outcome_score=decision_outcome_evaluation.get(
+                "outcome_score",
+                0.0
+            ),
+            outcome_grade=decision_outcome_evaluation.get(
+                "outcome_grade",
+                "N/A"
+            ),
+            decision_effectiveness=decision_outcome_evaluation.get(
+                "decision_effectiveness",
+                "PENDING"
+            ),
+            strategy_effectiveness=decision_outcome_evaluation.get(
+                "strategy_effectiveness",
+                "PENDING"
+            ),
+            market_response=decision_outcome_evaluation.get(
+                "market_response",
+                "PENDING"
+            ),
+            portfolio_response=decision_outcome_evaluation.get(
+                "portfolio_response",
+                "PENDING"
+            ),
+            learning_status=decision_outcome_intelligence.get(
+                "learning_status",
+                "WAITING_FOR_OUTCOME"
+            ),
+            feedback_state=decision_outcome_intelligence.get(
+                "feedback_state",
+                "COLLECTING"
+            ),
+            adaptive_learning_required=int(
+                bool(
+                    decision_outcome_intelligence.get(
+                        "adaptive_learning_required",
+                        False
+                    )
+                )
+            ),
+            reassessment_required=int(
+                bool(
+                    decision_outcome_snapshot.get(
+                        "reassessment_required",
+                        False
+                    )
+                )
+            ),
+            reassessment_status=decision_outcome_snapshot.get(
+                "reassessment_status",
+                "NOT_REQUIRED"
+            )
+        )
+
+
+        # -----------------------------
+        # Step6-10-I-16
+        # Persist Runtime Reassessment Audit Event
+        # -----------------------------
+
+        reassessment_source_history_id = (
+            history_id
+        )
+
+        if (
+            reassessment_source_history_id is not None
+            and final_decision_execution_reassessment.get(
+                "reassessment_required",
+                False
+            )
+        ):
+            save_ai_decision_audit_event(
+                event_type="REASSESSMENT_REQUIRED",
+                event_time=datetime.now().astimezone().isoformat(),
+                source="portfolio_reassessment",
+                status="REQUIRED",
+                outcome_history_id=(
+                    reassessment_source_history_id
+                ),
+                correlation_key=(
+                    f"outcome:{reassessment_source_history_id}"
+                ),
+                details={
+                    "reassessment_required":
+                        bool(
+                            final_decision_execution_reassessment.get(
+                                "reassessment_required",
+                                False
+                            )
+                        ),
+                    "reassessment_status":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_status",
+                            "UNKNOWN"
+                        ),
+                    "reassessment_action":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_action",
+                            "UNKNOWN"
+                        ),
+                    "reassessment_risk":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_risk",
+                            "UNKNOWN"
+                        ),
+                    "reassessment_score":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_score",
+                            0.0
+                        ),
+                    "reassessment_reason":
+                        final_decision_execution_reassessment.get(
+                            "reassessment_reason",
+                            "UNKNOWN"
+                        ),
+                },
+            )
+
+    return jsonify(
+
+        {
+            "success": True,
+            "intelligence": intelligence,
+            "intelligence_score": intelligence_score,
+            "decision_confidence": decision_confidence,
+            "decision_confidence_explainability": decision_confidence_explainability,
+            "decision_confidence_assessment": decision_confidence_assessment,
+            "decision_confidence_recommendation": decision_confidence_recommendation,
+            "ai_decision_validation": ai_decision_validation,
+            "ai_decision_validation_explainability":
+                ai_decision_validation_explainability,
+            "ai_decision_validation_action":
+                ai_decision_validation_action,
+            "final_decision":
+                final_decision,
+            "final_decision_governance":
+                final_decision_governance,
+            "final_decision_execution_control":
+                final_decision_execution_control,
+            "final_decision_execution_assurance":
+                final_decision_execution_assurance,
+            "final_decision_execution_monitoring":
+                final_decision_execution_monitoring,
+            "final_decision_execution_feedback":
+                final_decision_execution_feedback,
+            "final_decision_execution_reassessment":
+                final_decision_execution_reassessment,
+            "final_decision_lifecycle":
+                final_decision_lifecycle,
+            "final_decision_lifecycle_governance_control":
+                final_decision_lifecycle_governance_control,
+            "final_decision_operational_intelligence":
+                final_decision_operational_intelligence,
+            "final_decision_integrated_intelligence":
+                final_decision_integrated_intelligence,
+            "final_decision_orchestration":
+                final_decision_orchestration,
+            "final_execution_decision":
+                final_execution_decision,
+            "final_decision_certification":
+                final_decision_certification,
+            "ai_decision_outcome_intelligence":
+                decision_outcome_intelligence,
+            "ai_decision_outcome_snapshot":
+                decision_outcome_snapshot,
+            "ai_decision_outcome_evaluation":
+                decision_outcome_evaluation,
+            "final_decision_master_control":
+                final_decision_master_control
+        }
+    )
+
+
+@app.route("/api/history/<ticker>")
+def history_api(ticker):
+
+
+    history = get_ranking_history(
+        ticker
+    )
+
+
+    data = []
+
+
+    for item in history:
+
+        data.append(
+            {
+                "date": item[3],
+                "rank": item[1],
+                "score": item[2]
+            }
+        )
+
+
+    return jsonify(
+        {
+            "ticker": ticker,
+            "history": data
+        }
+    )
+
+
+
+@app.route("/api/detail/<ticker>")
+def detail_api(ticker):
+
+
+    data = get_etf_detail(
+        ticker
+    )
+
+
+    return jsonify(
+        data
+    )
+
+
+
+@app.route("/")
+def home():
+
+    return render_template(
+        "index.html"
+    )
+
+
+
+if __name__ == "__main__":
+
+    init_database()
+    configure_flask_auth(app)
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=False,
+        use_reloader=False
+    )
