@@ -2,6 +2,8 @@ from providers.fdr_provider import FDRProvider
 from repository import save_etf_price, save_etf_ohlcv_price
 import pandas as pd
 
+from core.price_provenance_gate import PriceProvenanceRejected
+
 
 class PriceCollector:
 
@@ -18,6 +20,11 @@ class PriceCollector:
         """
         ETF 가격 데이터 수집 및 저장
         """
+
+        if getattr(self.provider, "provider", None) == "NAVER":
+            raise PriceProvenanceRejected(
+                "Unverified NAVER provider cannot use legacy price writers"
+            )
 
         df = self.provider.get_price(
             ticker,
