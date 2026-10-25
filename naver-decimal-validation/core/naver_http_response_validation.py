@@ -56,6 +56,46 @@ class NaverZeroOhlcSpecialRow:
         return self.observation.provenance_verified
 
 
+@dataclass(frozen=True)
+class NaverHighBelowCloseByOneRow:
+    """Immutable evidence for an exact one-unit high/close violation."""
+
+    observation: object
+    classification: str = field(
+        default="HIGH_BELOW_CLOSE_BY_ONE_UNVERIFIED", init=False,
+    )
+    analysis_authorized: bool = field(default=False, init=False)
+    persistence_authorized: bool = field(default=False, init=False)
+
+    @property
+    def ticker(self):
+        return self.observation.ticker
+
+    @property
+    def observation_date(self):
+        return self.observation.observation_date
+
+    @property
+    def raw_row(self):
+        return self.observation.raw_row
+
+    @property
+    def values(self):
+        return self.observation.values
+
+    @property
+    def provider(self):
+        return self.observation.provider
+
+    @property
+    def adjustment(self):
+        return self.observation.adjustment
+
+    @property
+    def provenance_verified(self):
+        return self.observation.provenance_verified
+
+
 def _local_name(element):
     return element.tag.rsplit("}", 1)[-1]
 
@@ -141,11 +181,22 @@ def validate_naver_http_response(raw_response, expected_sha256, ticker):
             and high >= max(opening, close)
             and low <= min(opening, close)
         )
+        is_high_below_close_by_one_row = (
+            min(opening, high, low, close) > 0
+            and volume >= 0
+            and close == high + 1
+            and opening <= high
+            and low <= min(opening, close)
+        )
 
         if is_special_row:
             classified_observations.append(NaverZeroOhlcSpecialRow(observation))
         elif is_normal_row:
             classified_observations.append(observation)
+        elif is_high_below_close_by_one_row:
+            classified_observations.append(
+                NaverHighBelowCloseByOneRow(observation)
+            )
         else:
             raise NaverHttpResponseRejected("Invalid NAVER OHLCV values")
 
