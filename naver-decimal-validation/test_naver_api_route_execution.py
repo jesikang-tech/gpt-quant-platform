@@ -18,8 +18,8 @@ ROUTES = (
 )
 
 
-def load_route(name, *, source):
-    tree = ast.parse(API.read_text(encoding="utf-8"))
+def load_route(name, *, source, api_path=API):
+    tree = ast.parse(api_path.read_text(encoding="utf-8"))
     functions = [
         node for node in tree.body
         if isinstance(node, ast.FunctionDef) and node.name == name
@@ -56,7 +56,7 @@ def load_route(name, *, source):
     module = ast.Module(body=[function], type_ignores=[])
     ast.fix_missing_locations(module)
 
-    exec(compile(module, str(API), "exec"), namespace)
+    exec(compile(module, str(api_path), "exec"), namespace)
 
     return namespace[name], calls
 

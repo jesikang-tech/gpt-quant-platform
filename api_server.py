@@ -302,6 +302,16 @@ def _build_ver11_snapshot_payload(data):
 
 @app.route("/api/historical-replay")
 def historical_replay_api():
+    source = request.args.get("source")
+    if source is not None:
+        try:
+            from core.naver_api_entry_gate import invoke_new_source_analysis
+            invoke_new_source_analysis(source, lambda: None)
+        except ValueError as exc:
+            return jsonify({
+                "success": False,
+                "message": str(exc),
+            }), 400
     analysis_date = request.args.get("date")
     period = request.args.get("period", "3m")
 
@@ -337,6 +347,16 @@ def naver_validation_status_api():
 
 @app.route("/api/ver11-analysis")
 def ver11_analysis_api():
+    source = request.args.get("source")
+    if source is not None:
+        try:
+            from core.naver_api_entry_gate import invoke_new_source_analysis
+            invoke_new_source_analysis(source, lambda: None)
+        except ValueError as exc:
+            return jsonify({
+                "success": False,
+                "message": str(exc),
+            }), 400
     analysis_date = request.args.get("date")
     period = request.args.get("period", "3m")
     sort_by = request.args.get("sort", "final_score")
@@ -376,6 +396,16 @@ def ver11_analysis_api():
 @app.route("/api/ver11-analysis/snapshots", methods=["POST"])
 def save_ver11_analysis_snapshot_api():
     body = request.get_json(silent=True) or {}
+    source = body.get("source")
+    if source is not None:
+        try:
+            from core.naver_api_entry_gate import invoke_new_source_analysis
+            invoke_new_source_analysis(source, lambda: None)
+        except ValueError as exc:
+            return jsonify({
+                "success": False,
+                "message": str(exc),
+            }), 400
 
     analysis_date = body.get("date")
     period = body.get("period", "3m")
