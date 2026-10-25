@@ -9,6 +9,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
+from price_rebuild_preflight import assess_rebuild_candidates
 from core.naver_raw_observation import NaverRawObservation
 from core.naver_http_response_validation import (
     NaverHighBelowCloseByOneRow,
@@ -89,6 +90,20 @@ def verify_evidence_directory(directory):
                 raise ValueError(
                     f"Unexpected special-row authority: {ticker}"
                 )
+
+        preflight = assess_rebuild_candidates(ticker, observations)
+
+        if (
+            preflight.total_rows != len(observations)
+            or preflight.normal_rows != normal
+            or preflight.zero_ohlc_rows != zero
+            or preflight.high_below_close_rows != one_unit
+            or preflight.price_candidates != normal
+            or preflight.ohlcv_candidates != normal
+            or preflight.verification_status != "UNVERIFIED"
+            or preflight.persistence_authorized is not False
+        ):
+            raise ValueError(f"Rebuild preflight mismatch: {ticker}")
 
         summaries.append({
             "ticker": ticker,
