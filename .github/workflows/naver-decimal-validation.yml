@@ -425,7 +425,7 @@ jobs:
           print("Decimal Green: all six named regression cases passed.")
           PY
 
-      - name: Diagnose isolated Decimal query boundary Red (expected failure)
+      - name: Verify isolated Decimal query boundary Green regressions
         if: ${{ !cancelled() }}
         shell: bash
         env:
@@ -434,7 +434,7 @@ jobs:
           BASELINE_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
-          query_dir=$(mktemp -d /tmp/period-decimal-query-red.XXXXXX)
+          query_dir=$(mktemp -d /tmp/period-decimal-query-green.XXXXXX)
           mkdir -p "$query_dir/core"
           cp core/period_analysis.py "$query_dir/core/period_analysis.py"
           cp naver-decimal-validation/test_period_analysis_decimal_compatibility.py "$query_dir/"
@@ -450,12 +450,11 @@ jobs:
           python - <<'PY'
           import os
           from pathlib import Path
-          import re
           import sys
           import xml.etree.ElementTree as ET
 
-          red = "test_query_boundary_preserves_decimal_prices_and_period_results"
-          controls = {
+          expected = {
+              "test_query_boundary_preserves_decimal_prices_and_period_results",
               "test_query_boundary_preserves_legacy_numeric_results[integer_rows]",
               "test_query_boundary_preserves_legacy_numeric_results[float_rows]",
           }
@@ -464,54 +463,34 @@ jobs:
               root = ET.parse("results.xml").getroot()
               cases = root.findall(".//testcase")
               by_name = {case.get("name"): case for case in cases}
-              if len(cases) != 3 or set(by_name) != controls | {red}:
+              if len(cases) != 3 or set(by_name) != expected:
                   problems.append("Expected exactly the three named query-boundary cases")
               for case in cases:
-                  if case.find("error") is not None or case.find("skipped") is not None:
-                      problems.append(f"Error or skip: {case.get('name')}")
-              for name in controls:
-                  case = by_name.get(name)
-                  if case is None or case.find("failure") is not None:
-                      problems.append(f"Legacy compatibility control did not pass: {name}")
-              case = by_name.get(red)
-              failures = case.findall("failure") if case is not None else []
-              failure_details = (
-                  failures[0].get("message", "") + "\n" + (failures[0].text or "")
-                  if len(failures) == 1 else ""
-              )
-              if (
-                  len(failures) != 1
-                  or re.search(
-                      r"\bassert\s+<class ['\"]float['\"]>\s+is\s+"
-                      r"(?:Decimal\b|<class ['\"]decimal\.Decimal['\"]>)",
-                      failure_details,
-                  ) is None
-              ):
-                  problems.append("Decimal query case must fail with its precision assertion")
+                  if any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
+                      problems.append(f"Query-boundary case did not pass: {case.get('name')}")
               suites = list(root.iter("testsuite"))
-              totals = {"tests": 3, "failures": 1, "errors": 0, "skipped": 0}
+              totals = {"tests": 3, "failures": 0, "errors": 0, "skipped": 0}
               if len(suites) != 1 or any(
                   int(suites[0].get(key, "-1")) != value for key, value in totals.items()
               ):
-                  problems.append("Expected 2 passes, 1 failure, 0 errors, 0 skips")
+                  problems.append("Expected 3 passes, 0 failures, 0 errors, 0 skips")
           except (OSError, ET.ParseError, ValueError) as exc:
               problems.append(f"Missing or malformed query-boundary report: {exc}")
-          if os.environ["DECIMAL_QUERY_PYTEST_EXIT"] != "1":
-              problems.append("Expected pytest exit 1 for the isolated Red assertion")
+          if os.environ["DECIMAL_QUERY_PYTEST_EXIT"] != "0":
+              problems.append("Expected pytest exit 0 for the isolated query Green regressions")
 
-          outcome = "ANOMALY" if problems else "EXPECTED_RED_REPRODUCED"
+          outcome = "FAIL" if problems else "GREEN"
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
-              summary.write("## Isolated Decimal query-boundary Red diagnostic\n\n")
+              summary.write("## Isolated Decimal query-boundary Green verification\n\n")
               summary.write(f"Existing stages, including calculation Green: {os.environ['BASELINE_STATUS']}\n\n")
-              summary.write(f"Query diagnostic: **{outcome}**\n\n")
-              summary.write("Expected: Decimal query assertion fails; integer and float controls pass.\n\n")
-              summary.write("Expected Red remains a failed step/job and never overrides earlier CI failures.\n")
+              summary.write(f"Query Green verification: **{outcome}**\n\n")
+              summary.write("Required: all three named Decimal, integer and float query cases pass.\n\n")
+              summary.write("Query Green does not override earlier CI failures.\n")
               for problem in problems:
                   summary.write(f"\n- {problem}\n")
           if problems:
               for problem in problems:
-                  print(f"::error title=Decimal query Red anomaly::{problem}")
-              sys.exit(2)
-          print("::warning title=Expected Decimal query Red reproduced::Integer/float controls passed; query precision defect remains. Job remains failed.")
-          sys.exit(1)
+                  print(f"::error title=Decimal query Green failure::{problem}")
+              sys.exit(1)
+          print("Decimal query Green: all three named regression cases passed.")
           PY

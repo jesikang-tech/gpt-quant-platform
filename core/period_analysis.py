@@ -173,7 +173,7 @@ def get_period_analysis(ticker, analysis_date=None, thresholds=None):
     )
 
     prices = [
-        float(row[1])
+        row[1] if isinstance(row[1], Decimal) else float(row[1])
         for row in rows
     ]
 
