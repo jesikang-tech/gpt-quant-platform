@@ -1,0 +1,218 @@
+name: Historical Replay Read Only Regression
+
+on:
+  push:
+    branches:
+      - validation/naver-observation-isolated
+    paths:
+      - '.github/workflows/historical-replay-read-only.yml'
+      - 'test_historical_replay_read_only.py'
+      - 'testing_helpers.py'
+      - 'price_test_support.py'
+      - 'api_server.py'
+      - 'current_analysis.py'
+      - 'factor_engine.py'
+      - 'database.py'
+      - 'config.py'
+      - 'repository.py'
+      - 'ranking_analyzer.py'
+      - 'core/**'
+      - 'collector/etf_collector.py'
+      - 'providers/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  historical-replay-read-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout isolated validation branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            api_server.py
+            collector/etf_collector.py
+            collector/ohlcv_backfill.py
+            config.py
+            core/ai_decision_adaptive_strategy.py
+            core/ai_decision_engine.py
+            core/ai_decision_explainability.py
+            core/ai_decision_outcome_collector.py
+            core/ai_decision_outcome_evaluation.py
+            core/ai_decision_outcome_intelligence.py
+            core/ai_decision_trend.py
+            core/ai_decision_validation.py
+            core/ai_decision_validation_action.py
+            core/ai_decision_validation_explainability.py
+            core/ai_final_decision_certification.py
+            core/ai_final_decision_execution_assurance.py
+            core/ai_final_decision_execution_control.py
+            core/ai_final_decision_execution_feedback.py
+            core/ai_final_decision_execution_monitoring.py
+            core/ai_final_decision_governance.py
+            core/ai_final_decision_integrated_intelligence.py
+            core/ai_final_decision_integration.py
+            core/ai_final_decision_lifecycle_governance_control.py
+            core/ai_final_decision_lifecycle_intelligence.py
+            core/ai_final_decision_master_control.py
+            core/ai_final_decision_operational_intelligence.py
+            core/ai_final_decision_orchestration.py
+            core/ai_final_decision_reassessment.py
+            core/ai_final_execution_decision.py
+            core/decision_confidence_assessment.py
+            core/decision_confidence_explainability.py
+            core/decision_confidence_intelligence.py
+            core/decision_confidence_recommendation.py
+            core/market_regime.py
+            core/market_strategy.py
+            core/optimization_scoring.py
+            core/platform_auth.py
+            core/point_in_time_analysis.py
+            core/portfolio_advisor.py
+            core/portfolio_conversational.py
+            core/portfolio_decision_intelligence.py
+            core/portfolio_explainability.py
+            core/portfolio_intelligence_score.py
+            core/price_provenance_gate.py
+            current_analysis.py
+            database.py
+            factor_engine.py
+            price_test_support.py
+            providers/base_provider.py
+            providers/fdr_provider.py
+            ranking_analyzer.py
+            repository.py
+            test_historical_replay_read_only.py
+            test_ohlcv_backfill.py
+            test_price_test_import_safety.py
+            testing_helpers.py
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned test dependencies
+        run: |
+          python -m pip install pytest==8.3.5 Flask==3.1.3 pandas==2.3.3 finance-datareader==0.9.202
+
+      - name: Run isolated Historical Replay read-only regression
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: |
+          set -euo pipefail
+          replay_dir=$(mktemp -d /tmp/historical-replay-read-only.XXXXXX)
+          mkdir -p "$replay_dir"
+          cp "api_server.py" "$replay_dir/api_server.py"
+          mkdir -p "$replay_dir/collector"
+          cp "collector/etf_collector.py" "$replay_dir/collector/etf_collector.py"
+          mkdir -p "$replay_dir/collector"
+          cp "collector/ohlcv_backfill.py" "$replay_dir/collector/ohlcv_backfill.py"
+          cp "config.py" "$replay_dir/config.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_adaptive_strategy.py" "$replay_dir/core/ai_decision_adaptive_strategy.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_engine.py" "$replay_dir/core/ai_decision_engine.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_explainability.py" "$replay_dir/core/ai_decision_explainability.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_outcome_collector.py" "$replay_dir/core/ai_decision_outcome_collector.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_outcome_evaluation.py" "$replay_dir/core/ai_decision_outcome_evaluation.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_outcome_intelligence.py" "$replay_dir/core/ai_decision_outcome_intelligence.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_trend.py" "$replay_dir/core/ai_decision_trend.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_validation.py" "$replay_dir/core/ai_decision_validation.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_validation_action.py" "$replay_dir/core/ai_decision_validation_action.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_decision_validation_explainability.py" "$replay_dir/core/ai_decision_validation_explainability.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_certification.py" "$replay_dir/core/ai_final_decision_certification.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_execution_assurance.py" "$replay_dir/core/ai_final_decision_execution_assurance.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_execution_control.py" "$replay_dir/core/ai_final_decision_execution_control.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_execution_feedback.py" "$replay_dir/core/ai_final_decision_execution_feedback.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_execution_monitoring.py" "$replay_dir/core/ai_final_decision_execution_monitoring.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_governance.py" "$replay_dir/core/ai_final_decision_governance.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_integrated_intelligence.py" "$replay_dir/core/ai_final_decision_integrated_intelligence.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_integration.py" "$replay_dir/core/ai_final_decision_integration.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_lifecycle_governance_control.py" "$replay_dir/core/ai_final_decision_lifecycle_governance_control.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_lifecycle_intelligence.py" "$replay_dir/core/ai_final_decision_lifecycle_intelligence.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_master_control.py" "$replay_dir/core/ai_final_decision_master_control.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_operational_intelligence.py" "$replay_dir/core/ai_final_decision_operational_intelligence.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_orchestration.py" "$replay_dir/core/ai_final_decision_orchestration.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_decision_reassessment.py" "$replay_dir/core/ai_final_decision_reassessment.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/ai_final_execution_decision.py" "$replay_dir/core/ai_final_execution_decision.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/decision_confidence_assessment.py" "$replay_dir/core/decision_confidence_assessment.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/decision_confidence_explainability.py" "$replay_dir/core/decision_confidence_explainability.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/decision_confidence_intelligence.py" "$replay_dir/core/decision_confidence_intelligence.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/decision_confidence_recommendation.py" "$replay_dir/core/decision_confidence_recommendation.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/market_regime.py" "$replay_dir/core/market_regime.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/market_strategy.py" "$replay_dir/core/market_strategy.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/optimization_scoring.py" "$replay_dir/core/optimization_scoring.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/platform_auth.py" "$replay_dir/core/platform_auth.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/point_in_time_analysis.py" "$replay_dir/core/point_in_time_analysis.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/portfolio_advisor.py" "$replay_dir/core/portfolio_advisor.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/portfolio_conversational.py" "$replay_dir/core/portfolio_conversational.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/portfolio_decision_intelligence.py" "$replay_dir/core/portfolio_decision_intelligence.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/portfolio_explainability.py" "$replay_dir/core/portfolio_explainability.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/portfolio_intelligence_score.py" "$replay_dir/core/portfolio_intelligence_score.py"
+          mkdir -p "$replay_dir/core"
+          cp "core/price_provenance_gate.py" "$replay_dir/core/price_provenance_gate.py"
+          cp "current_analysis.py" "$replay_dir/current_analysis.py"
+          cp "database.py" "$replay_dir/database.py"
+          cp "factor_engine.py" "$replay_dir/factor_engine.py"
+          cp "price_test_support.py" "$replay_dir/price_test_support.py"
+          mkdir -p "$replay_dir/providers"
+          cp "providers/base_provider.py" "$replay_dir/providers/base_provider.py"
+          mkdir -p "$replay_dir/providers"
+          cp "providers/fdr_provider.py" "$replay_dir/providers/fdr_provider.py"
+          cp "ranking_analyzer.py" "$replay_dir/ranking_analyzer.py"
+          cp "repository.py" "$replay_dir/repository.py"
+          cp "test_historical_replay_read_only.py" "$replay_dir/test_historical_replay_read_only.py"
+          cp "test_ohlcv_backfill.py" "$replay_dir/test_ohlcv_backfill.py"
+          cp "test_price_test_import_safety.py" "$replay_dir/test_price_test_import_safety.py"
+          cp "testing_helpers.py" "$replay_dir/testing_helpers.py"
+          cd "$replay_dir"
+          export PYTHONPATH="$replay_dir"
+          export TMPDIR="$replay_dir"
+          python -m pytest -q -p no:cacheprovider \
+            --basetemp="$replay_dir/pytest-tmp" \
+            test_historical_replay_read_only.py
