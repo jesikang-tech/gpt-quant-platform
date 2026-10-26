@@ -398,3 +398,69 @@ def test_rebuild_integration_success_cannot_authorize_real_persistence():
         assert (_rows(conn, "synthetic_decimal_prices"), _rows(conn, "synthetic_decimal_ohlcv")) == before
     finally:
         conn.close()
+
+
+def test_rebuild_integration_retry_after_success_preserves_exact_rows():
+    requests = _integration_requests()
+    expected_keys = _integration_keys(requests)
+    tables = ("synthetic_decimal_prices", "synthetic_decimal_ohlcv")
+    conn = _database()
+    try:
+        insert_synthetic_rebuild_batch(
+            conn, requests, expected_keys=expected_keys, synthetic_fixture=True,
+        )
+        before = tuple(
+            tuple(tuple(value.encode("utf-8") for value in row) for row in _rows(conn, table))
+            for table in tables
+        )
+        assert all(len(rows) == 2 for rows in before)
+        assert not conn.in_transaction
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint failed"):
+            insert_synthetic_rebuild_batch(
+                conn, requests, expected_keys=expected_keys, synthetic_fixture=True,
+            )
+        after = tuple(
+            tuple(tuple(value.encode("utf-8") for value in row) for row in _rows(conn, table))
+            for table in tables
+        )
+        assert after == before
+        assert not conn.in_transaction
+    finally:
+        conn.close()
+
+
+def test_rebuild_integration_retry_after_collision_removal_stores_complete_batch():
+    requests = _integration_requests()
+    expected_keys = _integration_keys(requests)
+    later_key = sorted(expected_keys)[-1]
+    conn = _database()
+    try:
+        conn.execute("INSERT INTO synthetic_decimal_ohlcv VALUES (?, ?, ?, ?, ?, ?, ?)",
+                     (*later_key, "10", "11", "9", "10", "100"))
+        conn.commit()
+        before = _rows(conn, "synthetic_decimal_ohlcv")
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint failed"):
+            insert_synthetic_rebuild_batch(
+                conn, requests, expected_keys=expected_keys, synthetic_fixture=True,
+            )
+        assert _rows(conn, "synthetic_decimal_prices") == []
+        assert _rows(conn, "synthetic_decimal_ohlcv") == before
+        assert not conn.in_transaction
+
+        conn.execute("DELETE FROM synthetic_decimal_ohlcv WHERE ticker = ? AND date = ?", later_key)
+        conn.commit()
+        assert _rows(conn, "synthetic_decimal_ohlcv") == []
+        insert_synthetic_rebuild_batch(
+            conn, requests, expected_keys=expected_keys, synthetic_fixture=True,
+        )
+        assert _rows(conn, "synthetic_decimal_prices") == [
+            (ticker, day, "105000000000000000001") for ticker, day in sorted(expected_keys)
+        ]
+        assert _rows(conn, "synthetic_decimal_ohlcv") == [
+            (ticker, day, "100000000000000000000", "110000000000000000000",
+             "90000000000000000000", "105000000000000000001", "1000")
+            for ticker, day in sorted(expected_keys)
+        ]
+        assert not conn.in_transaction
+    finally:
+        conn.close()
