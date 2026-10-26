@@ -217,6 +217,38 @@ def insert_synthetic_decimal_pair(conn, pair):
     except BaseException:
         conn.rollback()
         raise
+
+
+def insert_synthetic_rebuild_batch(conn, requests, *, expected_keys, synthetic_fixture):
+    """Store a fully prepared synthetic batch in caller-owned memory storage.
+
+    Return its evidence-bound result only after the atomic insert commits.
+    Evidence and revisions remain in that result, not in the SQLite tables.
+    This grants no real-data persistence or operational rebuild authority.
+    """
+    if synthetic_fixture is not True:
+        raise ValueError("Explicit synthetic fixture declaration required")
+
+    from price_rebuild_adapter import prepare_synthetic_rebuild_batch
+    from core.naver_decimal_price_pipeline import prepare_naver_decimal_price_pair
+
+    batch = prepare_synthetic_rebuild_batch(
+        requests, expected_keys=expected_keys, synthetic_fixture=synthetic_fixture,
+    )
+    pairs = tuple(
+        prepare_naver_decimal_price_pair(
+            bound.observation.ticker,
+            bound.observation.observation_date,
+            dict(zip(("Open", "High", "Low", "Close", "Volume"),
+                     bound.rows.ohlcv_row[2:])),
+            adjustment=bound.adjustment,
+        )
+        for bound in batch.pairs
+    )
+    insert_synthetic_decimal_batch(conn, pairs)
+    return batch
+
+
 def insert_synthetic_decimal_batch(conn, pairs):
     """Atomically insert a complete synthetic Decimal price batch.
 
