@@ -41,12 +41,16 @@ substitute for independent evidence.
 
 ## 4. Existing storage routes
 
-Legacy FDR collection and backfill routes remain unchanged.
+Legacy collection and backfill routes must be assessed against
+their current fail-closed provenance enforcement. In particular,
+the tracked OHLCV backfill implementation calls the shared
+provenance assessment before its protected processing paths.
 
-Their continued existence does not authorize NAVER observations
-to enter those routes.
+The full behavior of all legacy FDR routes has not been
+established by this document review.
 
-No NAVER-to-operational-repository connection is approved.
+No existing route authorizes unverified NAVER observations,
+and no NAVER-to-operational-repository connection is approved.
 
 ## 5. Required future integration tests
 
@@ -57,7 +61,7 @@ Before operational integration, verify:
 - Failure occurs before opening a database connection.
 - Both PRICE and OHLCV paths reject unauthorized input.
 - Partial write failures cannot leave inconsistent price pairs.
-- Legacy FDR behavior remains unchanged.
+- Current legacy collection and backfill provenance enforcement is preserved and covered by focused regressions.
 - Isolated CI and full regression pass.
 
 ## 6. Current decision
