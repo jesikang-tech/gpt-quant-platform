@@ -923,6 +923,8 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
         original_state = (dict(scope.api.app.config), scope.api.AUTH_CONFIG_PATH,
                           scope.database.init_database, scope.repository.get_connection)
         original_class = (module.module.OHLCVBackfill if module_name == "test_ohlcv_backfill" else None)
+        original_enforcement = (module.module.require_persistence_authorization
+                                if module_name == "test_ohlcv_backfill" else None)
         summary_contracts = {
             "test_price_quality_daily_ranking": ("rank_price_quality_dates", "test_rank_price_quality_dates"),
             "test_price_quality_overall": ("summarize_price_quality_overall", "test_overall_price_quality_report"),
@@ -964,7 +966,10 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
                             interrupt()
                             return result
                         scope.patches.setattr(data[2], "get_targets", get_targets)
-                    module.test_targets_ranges_and_legacy_preservation(data)
+                    with module.legacy_algorithm_context(module.module):
+                        module.test_targets_ranges_and_legacy_preservation(
+                            data, legacy_algorithm=None,
+                        )
                     if failure is None:
                         module.test_no_initialization_on_import_or_missing_schema(tmp_path, scope.patches)
                 else:
@@ -1003,6 +1008,7 @@ def test_quality_backfill_full_cleanup_on_failure(tmp_path, module_name, failure
                 scope.database.init_database, scope.repository.get_connection) == original_state
         if original_class is not None:
             assert module.module.OHLCVBackfill is original_class
+            assert module.module.require_persistence_authorization is original_enforcement
         if original_query is not None:
             assert getattr(module, query_name) is original_query
     assert (sqlite3.connect, sqlite3.dbapi2.connect, socket.socket.connect) == originals

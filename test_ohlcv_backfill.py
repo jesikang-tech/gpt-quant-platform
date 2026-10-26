@@ -1,6 +1,6 @@
 import importlib
 import sqlite3
-from contextlib import closing
+from contextlib import closing, contextmanager
 
 import pandas as pd
 import pytest
@@ -23,6 +23,31 @@ class FakeProvider:
 
 def frame(days, **values):
     return pd.DataFrame(values, index=pd.to_datetime(days))
+
+
+@contextmanager
+def legacy_algorithm_context(backfill_module):
+    """Temporarily replace only this module's enforcement alias for tests."""
+    original = backfill_module.require_persistence_authorization
+
+    def algorithm_only_authorization(decision):
+        # This test double is not provenance evidence or production permission.
+        return None
+
+    try:
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(backfill_module, "require_persistence_authorization",
+                          algorithm_only_authorization)
+            yield
+    finally:
+        assert backfill_module.require_persistence_authorization is original
+
+
+@pytest.fixture
+def legacy_algorithm(_protected_flask_state):
+    """Opt in to downstream mechanics only, using the isolated synthetic DB."""
+    with legacy_algorithm_context(module):
+        yield
 
 
 @pytest.fixture
@@ -61,7 +86,7 @@ def ohlcv(path):
         return conn.execute("SELECT * FROM etf_ohlcv_prices ORDER BY ticker,date").fetchall()
 
 
-def test_targets_ranges_and_legacy_preservation(setup):
+def test_targets_ranges_and_legacy_preservation(setup, legacy_algorithm):
     path, provider, service = setup
     before = snapshot(path)
     assert service.get_targets() == [("A", "2026-01-02", "2026-01-05"),
@@ -75,7 +100,7 @@ def test_targets_ranges_and_legacy_preservation(setup):
     assert ohlcv(path)[-1][3] is None  # Close 202 must not become High.
 
 
-def test_single_ticker_clips_provider_output_and_skips_unknown(setup):
+def test_single_ticker_clips_provider_output_and_skips_unknown(setup, legacy_algorithm):
     path, provider, service = setup
     provider.responses["A"] = frame(["2026-01-01", "2026-01-02", "2026-01-06"], Close=[9, 100, 999])
     result = service.backfill_ticker("A")
@@ -86,7 +111,7 @@ def test_single_ticker_clips_provider_output_and_skips_unknown(setup):
     assert provider.calls == [("A", "2026-01-02", "2026-01-05")]
 
 
-def test_in_range_date_requires_exact_ticker_legacy_row(setup):
+def test_in_range_date_requires_exact_ticker_legacy_row(setup, legacy_algorithm):
     path, provider, service = setup
     # The gap exists for another ticker, but must not become a date for A.
     with closing(sqlite3.connect(path)) as conn:
@@ -110,7 +135,7 @@ def test_in_range_date_requires_exact_ticker_legacy_row(setup):
 
 
 @pytest.mark.parametrize("missing", [None, float("nan"), pd.NA, "absent"])
-def test_rerun_preserves_nonnull_fields_without_duplicates(setup, missing):
+def test_rerun_preserves_nonnull_fields_without_duplicates(setup, missing, legacy_algorithm):
     path, provider, service = setup
     service.backfill_ticker("A")
     values = {"Close": [105, 106]}
@@ -124,7 +149,7 @@ def test_rerun_preserves_nonnull_fields_without_duplicates(setup, missing):
     assert rows[1][3] == 111
 
 
-def test_failure_isolated_and_partial_population_resumes(setup):
+def test_failure_isolated_and_partial_population_resumes(setup, legacy_algorithm):
     path, provider, service = setup
     provider.responses["A"] = provider.responses["A"].iloc[:1]
     assert service.backfill_ticker("A")["rows_written"] == 1
@@ -140,7 +165,7 @@ def test_failure_isolated_and_partial_population_resumes(setup):
     assert len(ohlcv(path)) == 3
 
 
-def test_ticker_transaction_rolls_back_on_write_failure(setup):
+def test_ticker_transaction_rolls_back_on_write_failure(setup, legacy_algorithm):
     path, _, service = setup
     with closing(sqlite3.connect(path)) as conn:
         conn.execute("CREATE TRIGGER reject_second BEFORE INSERT ON etf_ohlcv_prices "
@@ -169,18 +194,45 @@ def test_connection_denies_non_ohlcv_mutations(setup, sql):
 
 
 def test_no_initialization_on_import_or_missing_schema(tmp_path, monkeypatch):
+    from core.price_provenance_gate import (
+        PriceProvenanceRejected, require_persistence_authorization,
+    )
+
     def forbidden(*args, **kwargs):
         pytest.fail("Unexpected database initialization/connection")
     with monkeypatch.context() as patch:
         patch.setattr(database, "init_database", forbidden)
         patch.setattr(sqlite3, "connect", forbidden)
         patch.setattr(module, "OHLCVBackfill", module.OHLCVBackfill)
-        importlib.reload(module)
+        # reload rebinds both names on the same module object; restore both.
+        patch.setattr(module, "require_persistence_authorization",
+                      module.require_persistence_authorization)
+        assert importlib.reload(module) is module
         module.OHLCVBackfill(tmp_path / "missing.db", FakeProvider())
+        assert module.require_persistence_authorization is require_persistence_authorization
+        provider = FakeProvider()
+        service = module.OHLCVBackfill(tmp_path / "missing.db", provider)
+        result = service.backfill_ticker("A")
+        assert result["status"] == "FAILED"
+        assert result["rows_written"] == 0
+        assert result["error"].startswith("PriceProvenanceRejected:")
+        assert "persistence is prohibited" in result["error"]
+        with pytest.raises(PriceProvenanceRejected, match="persistence is prohibited"):
+            service.backfill()
+        assert provider.calls == []
+        assert not (tmp_path / "missing.db").exists()
+
+
+def test_downstream_missing_file_or_schema(legacy_algorithm):
     missing = _scope.db.path
     missing.unlink()
-    service = module.OHLCVBackfill(missing, FakeProvider())
-    assert service.backfill_ticker("A")["status"] == "FAILED"
+    provider = FakeProvider()
+    service = module.OHLCVBackfill(missing, provider)
+    result = service.backfill_ticker("A")
+    assert result["status"] == "FAILED"
+    assert result["rows_written"] == 0
+    assert result["error"].startswith("OperationalError:")
+    assert provider.calls == []
     assert not missing.exists()
     path = _scope.db.path
     with closing(sqlite3.connect(path)) as conn:
@@ -188,7 +240,11 @@ def test_no_initialization_on_import_or_missing_schema(tmp_path, monkeypatch):
                            "INSERT INTO etf_prices VALUES ('A','2026-01-02',100);")
     provider = FakeProvider()
     before = path.read_bytes()
-    assert module.OHLCVBackfill(path, provider).backfill_ticker("A")["status"] == "FAILED"
+    result = module.OHLCVBackfill(path, provider).backfill_ticker("A")
+    assert result["status"] == "FAILED"
+    assert result["rows_written"] == 0
+    assert result["error"].startswith("OperationalError:")
+    assert "no such table: etf_ohlcv_prices" in result["error"]
     assert provider.calls == []
     assert path.read_bytes() == before
 
