@@ -601,3 +601,62 @@ def test_original_and_copied_batches_rejected_before_persistence_adapter(
     assert database_calls == []
     _assert_batch_remains_synthetic(batch)
     _assert_batch_remains_synthetic(original)
+
+def test_synthetic_replay_row_contract():
+    from decimal import Decimal
+    import pytest
+
+    from price_rebuild_adapter import (
+        SyntheticRebuildRows,
+        prepare_synthetic_replay_price_row,
+    )
+
+    rows = SyntheticRebuildRows(
+        ticker="069500",
+        price_row=("069500", "2026-07-20", Decimal("10000.25")),
+        ohlcv_row=(
+            "069500",
+            "2026-07-20",
+            Decimal("9900.00"),
+            Decimal("10100.00"),
+            Decimal("9800.00"),
+            Decimal("10000.25"),
+            Decimal("12345"),
+        ),
+    )
+
+    result = prepare_synthetic_replay_price_row(rows)
+
+    assert result == ("2026-07-20", Decimal("10000.25"))
+    assert type(result[1]) is Decimal
+    assert rows.persistence_authorized is False
+    assert rows.verification_status == "SYNTHETIC_ONLY"
+
+    with pytest.raises(ValueError):
+        prepare_synthetic_replay_price_row(None)
+
+    with pytest.raises(ValueError):
+        prepare_synthetic_replay_price_row(
+            SyntheticRebuildRows(
+                ticker="069500",
+                price_row=("069500", "2026-07-20", Decimal("10000.25")),
+                ohlcv_row=(
+                    "069500",
+                    "2026-07-20",
+                    Decimal("9900.00"),
+                    Decimal("10100.00"),
+                    Decimal("9800.00"),
+                    Decimal("10000.26"),
+                    Decimal("12345"),
+                ),
+            )
+        )
+
+    with pytest.raises(ValueError):
+        prepare_synthetic_replay_price_row(
+            SyntheticRebuildRows(
+                ticker="069500",
+                price_row=("069500", "2026-07-20", 10000.25),
+                ohlcv_row=rows.ohlcv_row,
+            )
+        )

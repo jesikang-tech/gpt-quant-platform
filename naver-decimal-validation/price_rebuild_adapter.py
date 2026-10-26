@@ -275,3 +275,39 @@ def prepare_real_rebuild_rows(preflight):
     """Fail closed for real NAVER observations until trust is verified."""
 
     reject_unverified_rebuild(preflight)
+
+def prepare_synthetic_replay_price_row(rows):
+    """Return a synthetic-only replay-shaped price row.
+
+    This is data preparation, not authorization to run analysis.
+    No database, provider, or persistence operation is performed.
+    """
+    if type(rows) is not SyntheticRebuildRows:
+        raise ValueError("SyntheticRebuildRows required")
+
+    if (rows.verification_status != "SYNTHETIC_ONLY"
+            or rows.persistence_authorized is not False):
+        raise ValueError("Synthetic-only boundary required")
+
+    price = rows.price_row
+    ohlcv = rows.ohlcv_row
+
+    if type(price) is not tuple or len(price) != 3:
+        raise ValueError("Invalid PRICE row")
+
+    if type(ohlcv) is not tuple or len(ohlcv) != 7:
+        raise ValueError("Invalid OHLCV row")
+
+    if price[0] != rows.ticker or ohlcv[0] != rows.ticker:
+        raise ValueError("Ticker mismatch")
+
+    if price[:2] != ohlcv[:2]:
+        raise ValueError("PRICE/OHLCV identity mismatch")
+
+    if type(price[2]) is not Decimal:
+        raise ValueError("Decimal close required")
+
+    if type(ohlcv[5]) is not Decimal or price[2] != ohlcv[5]:
+        raise ValueError("PRICE/OHLCV close mismatch")
+
+    return (price[1], price[2])
