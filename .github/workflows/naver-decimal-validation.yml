@@ -450,6 +450,7 @@ jobs:
           python - <<'PY'
           import os
           from pathlib import Path
+          import re
           import sys
           import xml.etree.ElementTree as ET
 
@@ -474,11 +475,17 @@ jobs:
                       problems.append(f"Legacy compatibility control did not pass: {name}")
               case = by_name.get(red)
               failures = case.findall("failure") if case is not None else []
-              message = failures[0].get("message", "") if len(failures) == 1 else ""
+              failure_details = (
+                  failures[0].get("message", "") + "\n" + (failures[0].text or "")
+                  if len(failures) == 1 else ""
+              )
               if (
                   len(failures) != 1
-                  or not message.startswith("assert <class 'float'> is ")
-                  or "Decimal" not in message
+                  or re.search(
+                      r"\bassert\s+<class ['\"]float['\"]>\s+is\s+"
+                      r"(?:Decimal\b|<class ['\"]decimal\.Decimal['\"]>)",
+                      failure_details,
+                  ) is None
               ):
                   problems.append("Decimal query case must fail with its precision assertion")
               suites = list(root.iter("testsuite"))
