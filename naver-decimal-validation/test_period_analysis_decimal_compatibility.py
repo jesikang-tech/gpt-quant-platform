@@ -158,3 +158,92 @@ def test_query_boundary_preserves_legacy_numeric_results(period_analysis, monkey
         assert period["return_rate"] == 25.0
         assert period["uptrend_ratio"] == (1 / (days - 1)) * 100.0
         assert period["threshold_pass"] is True
+
+
+@pytest.fixture
+def flask_json_app():
+    # Import only Flask, never the operational application or its dependencies.
+    from importlib.metadata import version
+    from flask import Flask
+
+    assert version("Flask") == "3.1.3", "This contract requires Flask 3.1.3"
+    return Flask("synthetic_period_json_contract")
+
+
+def test_jsonify_decimal_analysis_preserves_strings_and_source(
+    period_analysis, monkeypatch, flask_json_app,
+):
+    from copy import deepcopy
+    from flask import jsonify
+
+    prices = [Decimal("1")] * 59 + [Decimal("1.00000000000000000001")]
+    thresholds = {days: Decimal("1E-21") for days in (20, 40, 60)}
+    with localcontext(Context(prec=50)):
+        result = _query_synthetic_prices(period_analysis, monkeypatch, prices, thresholds)
+    payload = {"analyses": [result], "metadata": {"optional": None, "flags": [True, False]}}
+    original = deepcopy(payload)
+    original_returns = {days: result["periods"][str(days)]["return_rate"]
+                        for days in (20, 40, 60)}
+    with flask_json_app.app_context():
+        response = jsonify(payload)
+        decoded = response.get_json()
+
+    assert response.status_code == 200
+    assert response.mimetype == "application/json"
+    assert decoded["metadata"]["optional"] is None
+    assert decoded["metadata"]["flags"][0] is True
+    assert decoded["metadata"]["flags"][1] is False
+    for days in (20, 40, 60):
+        source = result["periods"][str(days)]
+        encoded = decoded["analyses"][0]["periods"][str(days)]
+        for field in ("return_rate", "threshold"):
+            assert type(source[field]) is Decimal
+            assert type(encoded[field]) is str
+            assert encoded[field] == str(source[field])
+            assert Decimal(encoded[field]) == source[field]
+        assert Decimal(encoded["return_rate"]) == Decimal("1E-18")
+        assert encoded["threshold_pass"] is True
+        assert type(encoded["uptrend_ratio"]) is float
+        assert encoded["uptrend_ratio"] == source["uptrend_ratio"]
+        assert source["return_rate"] is original_returns[days]
+    assert payload == original
+
+
+@pytest.mark.parametrize("numeric_type", [int, float], ids=["integer_rows", "float_rows"])
+def test_jsonify_legacy_analysis_preserves_json_numbers(
+    period_analysis, monkeypatch, flask_json_app, numeric_type,
+):
+    from flask import jsonify
+
+    prices = [numeric_type(100)] * 59 + [numeric_type(125)]
+    thresholds = {20: 0.05, 40: 0.10, 60: 0.15}
+    result = _query_synthetic_prices(period_analysis, monkeypatch, prices, thresholds)
+    with flask_json_app.app_context():
+        decoded = jsonify(result).get_json()
+
+    assert decoded == result
+    for days in (20, 40, 60):
+        period = decoded["periods"][str(days)]
+        assert type(period["return_rate"]) is float
+        assert period["return_rate"] == 25.0
+        assert type(period["threshold"]) is float
+        assert period["threshold"] == thresholds[days] * 100.0
+        assert type(period["period_days"]) is int
+        assert period["period_days"] == days
+        assert period["threshold_pass"] is True
+
+
+def test_jsonify_distinguishes_close_decimal_strings(flask_json_app):
+    from flask import jsonify
+
+    values = [Decimal("1.00000000000000000001"), Decimal("1.00000000000000000002")]
+    assert values[0] != values[1]
+    assert float(values[0]) == float(values[1])
+    with flask_json_app.app_context():
+        decoded = jsonify({"nested": {"values": values}}).get_json()
+
+    encoded = decoded["nested"]["values"]
+    assert all(type(value) is str for value in encoded)
+    assert encoded == ["1.00000000000000000001", "1.00000000000000000002"]
+    assert encoded[0] != encoded[1]
+    assert [Decimal(value) for value in encoded] == values

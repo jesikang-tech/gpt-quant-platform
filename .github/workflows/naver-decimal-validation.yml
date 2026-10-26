@@ -494,3 +494,78 @@ jobs:
               sys.exit(1)
           print("Decimal query Green: all three named regression cases passed.")
           PY
+
+      - name: Verify isolated Decimal JSON contracts with Flask 3.1.3
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+          BASELINE_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          json_dir=$(mktemp -d /tmp/period-decimal-json.XXXXXX)
+          mkdir -p "$json_dir/core"
+          cp core/period_analysis.py "$json_dir/core/period_analysis.py"
+          cp naver-decimal-validation/test_period_analysis_decimal_compatibility.py "$json_dir/"
+          cd "$json_dir"
+          export PYTHONPATH="$json_dir" TMPDIR="$json_dir"
+          python -m venv "$json_dir/venv"
+          "$json_dir/venv/bin/python" -m pip install pytest==8.3.5 Flask==3.1.3
+          pytest_exit=0
+          "$json_dir/venv/bin/python" -m pytest -q -p no:cacheprovider \
+            --basetemp="$json_dir/pytest-tmp" --junitxml="$json_dir/results.xml" \
+            test_period_analysis_decimal_compatibility.py::test_jsonify_decimal_analysis_preserves_strings_and_source \
+            'test_period_analysis_decimal_compatibility.py::test_jsonify_legacy_analysis_preserves_json_numbers[integer_rows]' \
+            'test_period_analysis_decimal_compatibility.py::test_jsonify_legacy_analysis_preserves_json_numbers[float_rows]' \
+            test_period_analysis_decimal_compatibility.py::test_jsonify_distinguishes_close_decimal_strings || pytest_exit=$?
+          export DECIMAL_JSON_PYTEST_EXIT="$pytest_exit"
+          "$json_dir/venv/bin/python" - <<'PY'
+          from importlib.metadata import version
+          import os
+          from pathlib import Path
+          import sys
+          import xml.etree.ElementTree as ET
+
+          expected = {
+              "test_jsonify_decimal_analysis_preserves_strings_and_source",
+              "test_jsonify_legacy_analysis_preserves_json_numbers[integer_rows]",
+              "test_jsonify_legacy_analysis_preserves_json_numbers[float_rows]",
+              "test_jsonify_distinguishes_close_decimal_strings",
+          }
+          problems = []
+          if version("Flask") != "3.1.3":
+              problems.append("Expected Flask 3.1.3 in the isolated JSON environment")
+          try:
+              root = ET.parse("results.xml").getroot()
+              cases = root.findall(".//testcase")
+              if len(cases) != 4 or {case.get("name") for case in cases} != expected:
+                  problems.append("Expected exactly the four named JSON serialization cases")
+              for case in cases:
+                  if any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
+                      problems.append(f"JSON serialization case did not pass: {case.get('name')}")
+              suites = list(root.iter("testsuite"))
+              totals = {"tests": 4, "failures": 0, "errors": 0, "skipped": 0}
+              if len(suites) != 1 or any(
+                  int(suites[0].get(key, "-1")) != value for key, value in totals.items()
+              ):
+                  problems.append("Expected 4 passes, 0 failures, 0 errors, 0 skips")
+          except (OSError, ET.ParseError, ValueError) as exc:
+              problems.append(f"Missing or malformed JSON serialization report: {exc}")
+          if os.environ["DECIMAL_JSON_PYTEST_EXIT"] != "0":
+              problems.append("Expected pytest exit 0 for JSON serialization contracts")
+
+          outcome = "FAIL" if problems else "GREEN"
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+              summary.write("## Isolated Decimal JSON contracts (Flask 3.1.3)\n\n")
+              summary.write(f"Earlier stages, including the nine Green cases: {os.environ['BASELINE_STATUS']}\n\n")
+              summary.write(f"JSON verification: **{outcome}**; requires four named passes and pytest exit 0.\n\n")
+              summary.write("This result does not override earlier CI failures.\n")
+              for problem in problems:
+                  summary.write(f"\n- {problem}\n")
+          if problems:
+              for problem in problems:
+                  print(f"::error title=Decimal JSON contract failure::{problem}")
+              sys.exit(1)
+          print("Decimal JSON Green: all four named cases passed with Flask 3.1.3.")
+          PY
