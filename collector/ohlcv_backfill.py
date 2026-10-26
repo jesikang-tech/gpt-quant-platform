@@ -1,6 +1,7 @@
 """Explicitly invoked OHLCV-only backfill; no default database or provider."""
 
 import sqlite3
+from core.price_provenance_gate import assess_price_provenance, require_persistence_authorization
 from contextlib import closing
 from math import isfinite
 from pathlib import Path
@@ -47,6 +48,8 @@ class OHLCVBackfill:
         result = {"ticker": ticker, "status": "SKIPPED", "rows_written": 0,
                   "rows_skipped": 0, "error": None}
         try:
+            decision = assess_price_provenance()
+            require_persistence_authorization(decision)
             with closing(self._connection()) as conn:
                 start, end = conn.execute(
                     "SELECT MIN(date), MAX(date) FROM etf_prices WHERE ticker = ?",
