@@ -3,6 +3,8 @@
 from dataclasses import FrozenInstanceError, replace
 from decimal import Decimal
 from hashlib import sha256
+from copy import copy, deepcopy
+import sqlite3
 
 import pytest
 
@@ -21,6 +23,8 @@ from core.naver_source_evidence import (
     AcquisitionContext, ClaimedProvider, EvidenceReference,
     NaverSourceEvidence, ObservationIdentity,
 )
+from core.naver_persistence_entry import persist_naver_observation
+from core.price_provenance_gate import PriceProvenanceRejected
 
 
 VALUES = {
@@ -504,3 +508,96 @@ def test_batch_authority_and_status_are_fixed_and_non_overridable(name):
         setattr(result, name, value)
     with pytest.raises(TypeError):
         replace(result, **{name: value})
+
+
+@pytest.fixture
+def batch_without_database(monkeypatch):
+    database_calls = []
+
+    def forbidden_connection(*args, **kwargs):
+        database_calls.append((args, kwargs))
+        raise AssertionError("Synthetic batch denial must not open a database")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(sqlite3, "connect", forbidden_connection)
+        patch.setattr(sqlite3.dbapi2, "connect", forbidden_connection)
+        patch.setattr(sqlite3, "Connection", forbidden_connection)
+        requests = _batch_requests()
+        batch = prepare_synthetic_rebuild_batch(
+            requests, expected_keys=_request_keys(requests), synthetic_fixture=True,
+        )
+        assert database_calls == []
+        yield batch, database_calls
+
+
+def _assert_batch_remains_synthetic(batch):
+    assert batch.verification_status == "SYNTHETIC_ONLY"
+    assert batch.coverage.status == "COMPLETE_UNVERIFIED"
+    for result in (batch, batch.coverage, *batch.pairs):
+        for name in (
+            "provenance_verified", "analysis_authorized", "persistence_authorized",
+            "rebuild_authorized", "execution_authorized",
+        ):
+            assert getattr(result, name) is False
+
+
+@pytest.mark.parametrize("copier", [copy, deepcopy], ids=["shallow", "deep"])
+def test_ordinary_batch_copy_preserves_synthetic_invariants(batch_without_database, copier):
+    original, database_calls = batch_without_database
+    copied = copier(original)
+    assert copied is not original
+    assert copied == original
+    assert copied.coverage == original.coverage
+    assert type(copied.pairs) is tuple
+    for before, after in zip(original.pairs, copied.pairs):
+        assert after.observation == before.observation
+        assert after.evidence == before.evidence
+        assert after.source_sha256 == before.source_sha256
+        assert after.provider == before.provider
+        assert after.adjustment == before.adjustment
+        assert after.revision_id == before.revision_id
+        assert after.rows.price_row == before.rows.price_row
+        assert after.rows.ohlcv_row == before.rows.ohlcv_row
+    _assert_batch_remains_synthetic(original)
+    _assert_batch_remains_synthetic(copied)
+    assert database_calls == []
+
+
+@pytest.mark.parametrize("variant", ["original", "shallow", "deep"])
+def test_original_and_copied_batches_cannot_enter_real_rebuild(batch_without_database, variant):
+    original, database_calls = batch_without_database
+    batch = copy(original) if variant == "shallow" else deepcopy(original) if variant == "deep" else original
+    not_returned = object()
+    result = not_returned
+    # This API accepts only RebuildPreflight, not a synthetic batch certificate.
+    with pytest.raises(ValueError, match="^RebuildPreflight required$"):
+        result = prepare_real_rebuild_rows(batch)
+    assert result is not_returned
+    _assert_batch_remains_synthetic(batch)
+    _assert_batch_remains_synthetic(original)
+    assert database_calls == []
+
+
+@pytest.mark.parametrize("variant", ["original", "shallow", "deep"])
+def test_original_and_copied_batches_rejected_before_persistence_adapter(
+    batch_without_database, variant,
+):
+    original, database_calls = batch_without_database
+    batch = copy(original) if variant == "shallow" else deepcopy(original) if variant == "deep" else original
+    adapter_calls = []
+
+    def forbidden_adapter(observation):
+        adapter_calls.append(observation)
+        raise AssertionError("Persistence adapter must not execute")
+
+    not_returned = object()
+    result = not_returned
+    # The public persistence boundary accepts an observation object and adapter;
+    # supplying a batch does not make it a supported operational data format.
+    with pytest.raises(PriceProvenanceRejected, match="persistence is prohibited"):
+        result = persist_naver_observation(batch, forbidden_adapter)
+    assert result is not_returned
+    assert adapter_calls == []
+    assert database_calls == []
+    _assert_batch_remains_synthetic(batch)
+    _assert_batch_remains_synthetic(original)
