@@ -1,6 +1,7 @@
 """Pure NAVER price rebuild preflight; never authorizes persistence."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import date
 
 from core.trading_session_eligibility import assess_trading_session
 from core.naver_raw_observation import NaverRawObservation
@@ -21,6 +22,70 @@ class RebuildPreflight:
     ohlcv_candidates: int
     verification_status: str = "UNVERIFIED"
     persistence_authorized: bool = False
+
+
+@dataclass(frozen=True)
+class RebuildKeyCoverage:
+    status: str
+    expected_count: int
+    observed_count: int
+    missing_keys: tuple
+    unexpected_keys: tuple
+    provenance_verified: bool = field(default=False, init=False)
+    analysis_authorized: bool = field(default=False, init=False)
+    persistence_authorized: bool = field(default=False, init=False)
+    rebuild_authorized: bool = field(default=False, init=False)
+    execution_authorized: bool = field(default=False, init=False)
+
+
+def _inventory_keys(inventory, name):
+    if type(inventory) not in (tuple, list):
+        raise ValueError(f"{name} inventory must be a tuple or list")
+    keys = set()
+    for key in inventory:
+        if type(key) not in (tuple, list) or len(key) != 2:
+            raise ValueError(f"Malformed {name} key")
+        ticker, day = key
+        # Same canonical ticker/date conventions as raw observation and
+        # Decimal source preparation; no numeric observation is manufactured.
+        if type(ticker) is not str or not ticker or ticker != ticker.strip():
+            raise ValueError(f"Invalid {name} ticker")
+        if type(day) is not str:
+            raise ValueError(f"Invalid {name} date")
+        try:
+            parsed = date.fromisoformat(day)
+        except ValueError as exc:
+            raise ValueError(f"Invalid {name} date") from exc
+        if parsed.isoformat() != day:
+            raise ValueError(f"Noncanonical {name} date")
+        normalized = (ticker, day)
+        if normalized in keys:
+            raise ValueError(f"Duplicate {name} key")
+        keys.add(normalized)
+    return keys
+
+
+def assess_rebuild_key_coverage(*, expected_keys, observed_keys):
+    """Compare explicitly supplied keys without inferring trading sessions.
+
+    Compare like scopes only: source-observation inventories may include
+    classified special rows; prepared-pair inventories contain preparation-
+    eligible observations only. Callers must supply both sides for the same
+    scope. This key-only API cannot infer scope and never filters special rows
+    or silently converts one scope to another. Completeness is not provenance
+    verification or permission to execute, rebuild, analyze, or persist.
+    """
+    expected = _inventory_keys(expected_keys, "expected")
+    if not expected:
+        raise ValueError("Expected inventory must be nonempty")
+    observed = _inventory_keys(observed_keys, "observed")
+    missing = tuple(sorted(expected - observed))
+    unexpected = tuple(sorted(observed - expected))
+    return RebuildKeyCoverage(
+        status="BLOCKED" if missing or unexpected else "COMPLETE_UNVERIFIED",
+        expected_count=len(expected), observed_count=len(observed),
+        missing_keys=missing, unexpected_keys=unexpected,
+    )
 
 
 def assess_rebuild_candidates(ticker, observations):

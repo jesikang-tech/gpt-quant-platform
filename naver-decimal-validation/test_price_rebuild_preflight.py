@@ -5,7 +5,11 @@ from dataclasses import FrozenInstanceError, replace
 import pytest
 
 from core.naver_http_response_validation import validate_naver_http_response
-from price_rebuild_preflight import assess_rebuild_candidates
+from price_rebuild_preflight import (
+    RebuildKeyCoverage,
+    assess_rebuild_candidates,
+    assess_rebuild_key_coverage,
+)
 
 
 TICKER = "005930"
@@ -144,3 +148,132 @@ def test_result_is_immutable():
 
     with pytest.raises(FrozenInstanceError):
         result.persistence_authorized = True
+
+
+KEY_A = ("005930", "2026-01-02")
+KEY_B = ("005930", "2026-01-05")
+KEY_C = ("000660", "2026-01-02")
+AUTHORITY_FIELDS = (
+    "provenance_verified", "analysis_authorized", "persistence_authorized",
+    "rebuild_authorized", "execution_authorized",
+)
+
+
+@pytest.mark.parametrize("inventory_type", [tuple, list])
+def test_key_coverage_exact_is_complete_but_unauthorized(inventory_type):
+    expected = inventory_type((KEY_B, KEY_A))
+    observed = inventory_type((KEY_A, KEY_B))
+    result = assess_rebuild_key_coverage(expected_keys=expected, observed_keys=observed)
+    assert result.status == "COMPLETE_UNVERIFIED"
+    assert result.expected_count == result.observed_count == 2
+    assert result.missing_keys == result.unexpected_keys == ()
+    assert all(getattr(result, name) is False for name in AUTHORITY_FIELDS)
+    assert list(expected) == [KEY_B, KEY_A]
+    assert list(observed) == [KEY_A, KEY_B]
+
+
+@pytest.mark.parametrize(
+    "expected,observed,missing,unexpected",
+    [((KEY_A, KEY_B), (KEY_A,), (KEY_B,), ()),
+     ((KEY_A,), (KEY_A, KEY_C), (), (KEY_C,)),
+     ((KEY_A, KEY_B), (KEY_A, KEY_C), (KEY_B,), (KEY_C,)),
+     ((KEY_A,), (), (KEY_A,), ())],
+    ids=["missing", "unexpected", "both", "empty_observed"],
+)
+def test_key_coverage_differences_are_blocked(expected, observed, missing, unexpected):
+    result = assess_rebuild_key_coverage(expected_keys=expected, observed_keys=observed)
+    assert result.status == "BLOCKED"
+    assert result.expected_count == len(expected)
+    assert result.observed_count == len(observed)
+    assert result.missing_keys == missing
+    assert result.unexpected_keys == unexpected
+    assert all(getattr(result, name) is False for name in AUTHORITY_FIELDS)
+
+
+@pytest.mark.parametrize("side", ["expected", "observed"])
+def test_key_coverage_duplicate_inventory_rejected(side):
+    arguments = {"expected_keys": [KEY_A], "observed_keys": [KEY_A]}
+    arguments[f"{side}_keys"] = [KEY_A, KEY_B, list(KEY_A)]
+    with pytest.raises(ValueError, match=f"Duplicate {side} key"):
+        assess_rebuild_key_coverage(**arguments)
+
+
+@pytest.mark.parametrize("empty", [(), []])
+def test_key_coverage_empty_expected_rejected(empty):
+    with pytest.raises(ValueError, match="nonempty"):
+        assess_rebuild_key_coverage(expected_keys=empty, observed_keys=[])
+
+
+@pytest.mark.parametrize("side", ["expected", "observed"])
+@pytest.mark.parametrize("inventory", [None, {}, "invalid", {KEY_A}])
+def test_key_coverage_malformed_inventory_rejected(side, inventory):
+    arguments = {"expected_keys": [KEY_A], "observed_keys": [KEY_A]}
+    arguments[f"{side}_keys"] = inventory
+    with pytest.raises(ValueError, match="inventory"):
+        assess_rebuild_key_coverage(**arguments)
+
+
+@pytest.mark.parametrize("side", ["expected", "observed"])
+@pytest.mark.parametrize("key", [
+    None, "005930", (), ("005930",), ("005930", "2026-01-02", "extra"),
+    ("", "2026-01-02"), (" ", "2026-01-02"), (" 005930", "2026-01-02"),
+    ("005930 ", "2026-01-02"), (5930, "2026-01-02"),
+    ("005930", None), ("005930", "2026-02-30"),
+    ("005930", "20260102"), ("005930", "2026-1-2"),
+])
+def test_key_coverage_invalid_ticker_date_or_key_rejected(side, key):
+    arguments = {"expected_keys": [KEY_A], "observed_keys": [KEY_A]}
+    arguments[f"{side}_keys"] = [key]
+    with pytest.raises(ValueError):
+        assess_rebuild_key_coverage(**arguments)
+
+
+def test_key_coverage_differences_have_deterministic_order():
+    extra = ("ZZZ", "2026-01-03")
+    result = assess_rebuild_key_coverage(
+        expected_keys=[KEY_B, KEY_A], observed_keys=[extra, KEY_C],
+    )
+    reverse = assess_rebuild_key_coverage(
+        expected_keys=[KEY_A, KEY_B], observed_keys=[KEY_C, extra],
+    )
+    assert result == reverse
+    assert result.missing_keys == (KEY_A, KEY_B)
+    assert result.unexpected_keys == (KEY_C, extra)
+
+
+def test_key_coverage_result_is_immutable():
+    result = assess_rebuild_key_coverage(expected_keys=[KEY_A], observed_keys=[KEY_A])
+    for name, value in (("status", "APPROVED"), ("missing_keys", (KEY_B,))):
+        with pytest.raises(FrozenInstanceError):
+            setattr(result, name, value)
+
+
+@pytest.mark.parametrize("name", AUTHORITY_FIELDS)
+def test_key_coverage_authority_cannot_be_forged(name):
+    result = assess_rebuild_key_coverage(expected_keys=[KEY_A], observed_keys=[KEY_A])
+    with pytest.raises(TypeError):
+        RebuildKeyCoverage(
+            status="COMPLETE_UNVERIFIED", expected_count=1, observed_count=1,
+            missing_keys=(), unexpected_keys=(), **{name: True},
+        )
+    with pytest.raises(FrozenInstanceError):
+        setattr(result, name, True)
+    with pytest.raises(ValueError):
+        replace(result, **{name: True})
+
+
+def test_key_coverage_inventory_scopes_are_not_silently_filtered():
+    observations = _observations()
+    source_keys = [(item.ticker, item.observation_date) for item in observations]
+    # Existing fixture: four normal rows, followed by two classified special rows.
+    prepared_keys = source_keys[:4]
+    assert assess_rebuild_key_coverage(
+        expected_keys=source_keys, observed_keys=source_keys,
+    ).status == "COMPLETE_UNVERIFIED"
+    assert assess_rebuild_key_coverage(
+        expected_keys=prepared_keys, observed_keys=prepared_keys,
+    ).status == "COMPLETE_UNVERIFIED"
+    mixed = assess_rebuild_key_coverage(expected_keys=source_keys, observed_keys=prepared_keys)
+    assert mixed.status == "BLOCKED"
+    assert mixed.missing_keys == tuple(source_keys[4:])
+    assert mixed.unexpected_keys == ()
