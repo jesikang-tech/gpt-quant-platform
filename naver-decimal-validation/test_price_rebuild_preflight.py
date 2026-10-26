@@ -57,6 +57,50 @@ def test_empty_collection_remains_denied():
     assert result.persistence_authorized is False
 
 
+@pytest.mark.parametrize("index", [0, 4, 5], ids=["normal", "zero_ohlc", "one_unit"])
+@pytest.mark.parametrize("collection_type", [tuple, list])
+def test_assembled_duplicate_observations_rejected(index, collection_type):
+    observation = _observations()[index]
+    assembled = collection_type((observation, observation))
+    with pytest.raises(ValueError, match="Duplicate NAVER observation date"):
+        assess_rebuild_candidates(TICKER, assembled)
+
+
+def test_nonadjacent_assembled_duplicate_rejected():
+    observations = _observations()
+    with pytest.raises(ValueError, match="Duplicate NAVER observation date"):
+        assess_rebuild_candidates(TICKER, (*observations, observations[0]))
+
+
+def test_conflicting_observations_with_same_key_rejected():
+    # Each response is valid alone; combining responses must not duplicate a key.
+    first = _observations((ROWS[0],))[0]
+    conflicting = _observations(("20260102|100|110|90|106|1000",))[0]
+    with pytest.raises(ValueError, match="Duplicate NAVER observation date"):
+        assess_rebuild_candidates(TICKER, (first, conflicting))
+
+
+@pytest.mark.parametrize("collection_type", [tuple, list])
+def test_assembled_unordered_observations_rejected(collection_type):
+    observations = _observations()
+    assembled = collection_type((observations[1], observations[0]))
+    with pytest.raises(ValueError, match="Unordered NAVER observation dates"):
+        assess_rebuild_candidates(TICKER, assembled)
+
+
+def test_increasing_dates_with_gaps_preserve_counts_and_denial():
+    # No weekday/holiday inference: only supplied ordering and identity matter.
+    observations = _observations()
+    result = assess_rebuild_candidates(
+        TICKER, [observations[0], observations[3], observations[4], observations[5]],
+    )
+    assert result.total_rows == 4
+    assert result.normal_rows == result.price_candidates == result.ohlcv_candidates == 2
+    assert result.zero_ohlc_rows == result.high_below_close_rows == 1
+    assert result.verification_status == "UNVERIFIED"
+    assert result.persistence_authorized is False
+
+
 def test_ticker_mismatch_rejected():
     with pytest.raises(ValueError, match="ticker mismatch"):
         assess_rebuild_candidates("000660", _observations())

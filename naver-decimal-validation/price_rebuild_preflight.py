@@ -24,7 +24,10 @@ class RebuildPreflight:
 
 
 def assess_rebuild_candidates(ticker, observations):
-    """Count candidate rows without generating or writing database records."""
+    """Count validated rows in strictly increasing, unique observation-date order.
+
+    Uses the same ordering contract as HTTP validation; never writes records.
+    """
 
     if not isinstance(ticker, str) or not ticker:
         raise ValueError("Valid ticker required")
@@ -35,6 +38,7 @@ def assess_rebuild_candidates(ticker, observations):
     normal = 0
     zero = 0
     high_below_close = 0
+    dates = []
 
     for observation in observations:
         if type(observation) not in (
@@ -46,6 +50,8 @@ def assess_rebuild_candidates(ticker, observations):
 
         if observation.ticker != ticker:
             raise ValueError("Observation ticker mismatch")
+
+        dates.append(observation.observation_date)
 
         if observation.provenance_verified is not False:
             raise ValueError("Unverified provenance required")
@@ -81,6 +87,11 @@ def assess_rebuild_candidates(ticker, observations):
             high_below_close += 1
         else:
             raise ValueError("Unsupported observation type")
+
+    if len(set(dates)) != len(dates):
+        raise ValueError("Duplicate NAVER observation date")
+    if any(earlier >= later for earlier, later in zip(dates, dates[1:])):
+        raise ValueError("Unordered NAVER observation dates")
 
     total = normal + zero + high_below_close
 

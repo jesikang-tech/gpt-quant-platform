@@ -167,6 +167,52 @@ def test_naver_atomic_decimal_duplicate_preserves_existing_rows():
         assert ohlcv_count == 1
 
 
+def test_naver_atomic_decimal_second_insert_failure_rolls_back_price():
+    import sqlite3
+    from contextlib import closing
+
+    from core.synthetic_decimal_atomic_repository import (
+        create_synthetic_decimal_schema,
+        insert_synthetic_decimal_pair,
+    )
+
+    pair = prepare_naver_decimal_price_pair(
+        "SYNTHETIC", "2026-01-02", valid_values(), adjustment="UNADJUSTED",
+    )
+    with closing(sqlite3.connect(":memory:")) as conn:
+        create_synthetic_decimal_schema(conn)
+        # A pre-existing OHLCV-only key forces the second insert to fail without
+        # changing the strict schema, adding triggers, or replacing storage code.
+        conn.execute(
+            "INSERT INTO synthetic_decimal_ohlcv VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (pair.ticker, pair.observation_date, "1", "2", "1", "2", "3"),
+        )
+        conn.commit()
+        before = conn.execute("SELECT * FROM synthetic_decimal_ohlcv").fetchall()
+        price_before_second_insert = []
+
+        def observe_second_insert(statement):
+            if statement.lstrip().upper().startswith("INSERT INTO SYNTHETIC_DECIMAL_OHLCV"):
+                price_before_second_insert.append(conn.execute(
+                    "SELECT * FROM synthetic_decimal_prices",
+                ).fetchall())
+
+        conn.set_trace_callback(observe_second_insert)
+        try:
+            with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint failed"):
+                insert_synthetic_decimal_pair(conn, pair)
+        finally:
+            conn.set_trace_callback(None)
+
+        # Prove PRICE succeeded inside the transaction before the OHLCV failure.
+        assert price_before_second_insert == [[
+            (pair.ticker, pair.observation_date, str(pair.close_price)),
+        ]]
+        assert conn.in_transaction is False
+        assert conn.execute("SELECT * FROM synthetic_decimal_prices").fetchall() == []
+        assert conn.execute("SELECT * FROM synthetic_decimal_ohlcv").fetchall() == before
+
+
 def test_naver_rejects_unverified_adjustment_contract():
     from core.naver_decimal_price_pipeline import (
         prepare_naver_decimal_price_pair,
