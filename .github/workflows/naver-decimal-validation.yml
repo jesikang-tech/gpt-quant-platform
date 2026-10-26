@@ -29,6 +29,7 @@ jobs:
             core/price_provenance_gate.py
             core/naver_persistence_entry.py
             collector/price_collector.py
+            collector/ohlcv_backfill.py
             price_quality.py
             api_server.py
             current_analysis.py
