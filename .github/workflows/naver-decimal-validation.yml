@@ -50,6 +50,7 @@ jobs:
             test_fdr_provider_price_provenance_gate.py
             core/price_provenance_gate.py
             core/naver_persistence_entry.py
+            core/period_analysis.py
             collector/price_collector.py
             collector/bulk_price_collector.py
             collector/incremental_price_updater.py
@@ -346,3 +347,87 @@ jobs:
             'test_price_test_import_safety.py::test_quality_backfill_full_cleanup_on_failure[test_ohlcv_backfill-assertion]' \
             'test_price_test_import_safety.py::test_quality_backfill_full_cleanup_on_failure[test_ohlcv_backfill-sql]' \
             'test_price_test_import_safety.py::test_quality_backfill_full_cleanup_on_failure[test_ohlcv_backfill-init]'
+
+      - name: Diagnose isolated period-analysis Decimal Red (expected failure)
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+          BASELINE_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          red_dir=$(mktemp -d /tmp/period-decimal-red.XXXXXX)
+          mkdir -p "$red_dir/core"
+          cp core/period_analysis.py "$red_dir/core/period_analysis.py"
+          cp naver-decimal-validation/test_period_analysis_decimal_compatibility.py "$red_dir/"
+          cd "$red_dir"
+          export PYTHONPATH="$red_dir" TMPDIR="$red_dir"
+          pytest_exit=0
+          python -m pytest -q -p no:cacheprovider \
+            --basetemp="$red_dir/pytest-tmp" --junitxml="$red_dir/results.xml" \
+            test_period_analysis_decimal_compatibility.py || pytest_exit=$?
+          export DECIMAL_RED_PYTEST_EXIT="$pytest_exit"
+          # Runner-only result inspection: exact case outcomes, not an xfail mask.
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import sys
+          import xml.etree.ElementTree as ET
+
+          expected = {
+              "test_decimal_sub_float_increment_counts_as_up_day": "AssertionError",
+              "test_decimal_sub_float_increment_preserves_positive_return": "AssertionError",
+              "test_decimal_threshold_uses_exact_pass_fail_boundary[exact_threshold]": "TypeError",
+              "test_decimal_threshold_uses_exact_pass_fail_boundary[strictly_below_threshold]": "TypeError",
+              "test_legacy_float_threshold_does_not_round_decimal_shortfall_into_pass": "AssertionError",
+          }
+          control = "test_integer_price_inputs_preserve_existing_results"
+          problems = []
+          try:
+              root = ET.parse("results.xml").getroot()
+              cases = root.findall(".//testcase")
+              by_name = {case.get("name"): case for case in cases}
+              if len(cases) != 6 or set(by_name) != set(expected) | {control}:
+                  problems.append("Expected exactly the six named Decimal/control cases")
+              for name, failure_type in expected.items():
+                  case = by_name.get(name)
+                  if case is None:
+                      continue
+                  failures = case.findall("failure")
+                  message = failures[0].get("message", "") if len(failures) == 1 else ""
+                  # Pytest JUnit failures need not have a 'type' attribute.
+                  expected_exception = (
+                      message.startswith("TypeError:") if failure_type == "TypeError"
+                      else message.startswith(("assert ", "AssertionError"))
+                  )
+                  if (case.find("error") is not None or case.find("skipped") is not None
+                          or len(failures) != 1
+                          or not expected_exception):
+                      problems.append(f"Unexpected Red outcome or exception type: {name}")
+              case = by_name.get(control)
+              if case is None or any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
+                  problems.append("Integer compatibility control did not pass")
+              if any(int(suite.get("errors", "0")) for suite in root.iter("testsuite")):
+                  problems.append("Collection/setup/teardown error in isolated Red run")
+          except (OSError, ET.ParseError, ValueError) as exc:
+              problems.append(f"Missing or malformed pytest report: {exc}")
+          if os.environ["DECIMAL_RED_PYTEST_EXIT"] != "1":
+              problems.append("Expected pytest exit 1 for assertion failures only")
+
+          baseline = os.environ["BASELINE_STATUS"]
+          outcome = "ANOMALY" if problems else "EXPECTED_RED_REPRODUCED"
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+              summary.write(f"## Isolated Decimal Red diagnostic\n\nExisting stages before Red: {baseline}\n\n")
+              summary.write(f"Red diagnostic: **{outcome}**\n\n")
+              summary.write("Expected: five named failures and one passing integer control.\n\n")
+              summary.write("This diagnostic intentionally fails the job; it does not certify the full validation as PASS.\n")
+              for problem in problems:
+                  summary.write(f"\n- {problem}\n")
+          if problems:
+              for problem in problems:
+                  print(f"::error title=Decimal Red anomaly::{problem}")
+              sys.exit(2)
+          print("::warning title=Expected Decimal Red reproduced::5 expected failures; integer compatibility passed. Job remains failed until the calculation defect is fixed.")
+          sys.exit(1)
+          PY
