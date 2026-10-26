@@ -128,6 +128,84 @@ def test_caller_and_provider_authorization_claims_do_not_grant_trust(
     _assert_denied(service.backfill_ticker("A"), provider, connections)
 
 
+@pytest.fixture
+def guarded_discovery(guarded_backfill, monkeypatch):
+    module, service, provider, connections = guarded_backfill
+    discovery_calls = []
+
+    def forbidden_discovery():
+        discovery_calls.append(True)
+        raise AssertionError("Automatic target discovery is forbidden")
+
+    monkeypatch.setattr(service, "get_targets", forbidden_discovery)
+    return module, service, provider, connections, discovery_calls
+
+
+@pytest.mark.parametrize("explicit_none", [False, True], ids=["omitted", "none"])
+@pytest.mark.parametrize("evidence", ["unverified", "claims", "forged"])
+def test_auto_discovery_rejects_before_any_access(
+    guarded_discovery, monkeypatch, explicit_none, evidence,
+):
+    module, service, provider, connections, discoveries = guarded_discovery
+    assert module.require_persistence_authorization is require_persistence_authorization
+    if evidence in ("claims", "forged"):
+        forged = PriceProvenanceDecision(
+            status="APPROVED", reason="CALLER_ASSERTED_VERIFIED",
+            analysis_authorized=True, portfolio_authorized=True,
+            dashboard_authorized=True, snapshot_authorized=True,
+            persistence_authorized=True,
+        )
+        if evidence == "claims":
+            for target in (service, provider):
+                for name, value in (
+                    ("persistence_authorized", True),
+                    ("provenance_verified", True),
+                    ("provenance_decision", forged),
+                    ("adjustment", "VERIFIED"),
+                ):
+                    monkeypatch.setattr(target, name, value, raising=False)
+        else:
+            # Supply hostile evidence without replacing the real enforcement gate.
+            monkeypatch.setattr(module, "assess_price_provenance", lambda: forged)
+
+    with pytest.raises(PriceProvenanceRejected) as rejected:
+        if explicit_none:
+            service.backfill(None)
+        else:
+            service.backfill()
+
+    assert "provenance is unverified" in str(rejected.value)
+    assert "persistence is prohibited" in str(rejected.value)
+    assert discoveries == []
+    assert connections == []
+    assert provider.calls == 0
+
+
+def test_explicit_batch_never_discovers_and_preserves_independent_failures(
+    guarded_discovery,
+):
+    _, service, provider, connections, discoveries = guarded_discovery
+    summary = service.backfill(["A", "B", "A"])
+    assert summary["attempted"] == summary["failed"] == 2
+    assert summary["succeeded"] == summary["skipped"] == 0
+    assert [item["ticker"] for item in summary["results"]] == ["A", "B"]
+    assert summary["results"][0] is not summary["results"][1]
+    for result in summary["results"]:
+        _assert_denied(result, provider, connections)
+    assert discoveries == []
+
+
+def test_empty_explicit_batch_performs_no_access(guarded_discovery):
+    _, service, provider, connections, discoveries = guarded_discovery
+    assert service.backfill([]) == {
+        "attempted": 0, "succeeded": 0, "failed": 0, "skipped": 0,
+        "results": [],
+    }
+    assert discoveries == []
+    assert connections == []
+    assert provider.calls == 0
+
+
 def test_forged_approval_is_rejected_by_real_gate_in_backfill(
     guarded_backfill, monkeypatch,
 ):

@@ -110,6 +110,8 @@ class OHLCVBackfill:
         rows_written counts source rows successfully upserted (including updates).
         """
         if tickers is None:
+            decision = assess_price_provenance()
+            require_persistence_authorization(decision)
             tickers = [ticker for ticker, _, _ in self.get_targets()]
         results = [self.backfill_ticker(ticker) for ticker in dict.fromkeys(tickers)]
         return {
