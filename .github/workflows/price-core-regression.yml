@@ -11,6 +11,8 @@ on:
       - 'test_price_quality.py'
       - 'test_price_quality_boundary.py'
       - 'test_price_quality_daily_ranking.py'
+      - 'test_price_quality_summary.py'
+      - 'test_price_quality_overall.py'
       - 'test_development_price_write_guard.py'
       - 'test_price_loader_safety_contract.py'
       - 'price_loader.py'
@@ -55,6 +57,8 @@ jobs:
             test_price_quality.py
             test_price_quality_boundary.py
             test_price_quality_daily_ranking.py
+            test_price_quality_summary.py
+            test_price_quality_overall.py
           sparse-checkout-cone-mode: false
 
       - name: Setup Python
@@ -90,6 +94,8 @@ jobs:
             price_quality.py test_price_quality.py \
             test_price_quality_boundary.py \
             test_price_quality_daily_ranking.py \
+            test_price_quality_summary.py \
+            test_price_quality_overall.py \
             "$test_dir/"
 
           cp collector/etf_collector.py "$test_dir/collector/"
@@ -111,4 +117,6 @@ jobs:
             test_price_loader_safety_contract.py \
             test_price_quality.py \
             test_price_quality_boundary.py \
-            test_price_quality_daily_ranking.py
+            test_price_quality_daily_ranking.py \
+            test_price_quality_summary.py \
+            test_price_quality_overall.py

@@ -2,11 +2,12 @@ import sqlite3
 from contextlib import closing
 import pytest
 
-from price_test_support import isolated_price_db, phase8_test_scope
+from price_test_support import isolated_price_db
+from price_quality import summarize_price_quality_overall
 
 
-def test_overall_price_quality_report(tmp_path):
-    db = _scope.db.path
+def test_overall_price_quality_report(isolated_price_db):
+    db = isolated_price_db.path
 
     with closing(sqlite3.connect(db)) as conn:
         conn.executescript("""
@@ -57,32 +58,17 @@ def test_overall_price_quality_report(tmp_path):
     assert db.read_bytes() == before
 
 
-def test_overall_report_missing_database(tmp_path):
+def test_overall_report_missing_database(isolated_price_db):
     import pytest
 
-    db = _scope.db.path
+    db = isolated_price_db.path
 
     with pytest.raises(sqlite3.OperationalError):
         summarize_price_quality_overall(db)
 
     assert not db.exists()
 
-
 @pytest.fixture(autouse=True)
-def _protected_flask_state(isolated_price_db, monkeypatch):
-    with phase8_test_scope(isolated_price_db) as scope:
-        import sys
-        from price_quality import summarize_price_quality_overall
-        target = sys.modules[__name__]
-        for name, value in {"summarize_price_quality_overall": summarize_price_quality_overall, "_scope": scope}.items():
-            monkeypatch.setattr(target, name, value, raising=False)
-        config_before = dict(scope.api.app.config)
-        auth_path_before = scope.api.AUTH_CONFIG_PATH
-        # Preserve the original schemas and genuinely absent-DB error contracts.
-        scope.db.path.unlink()
-        try:
-            yield scope
-        finally:
-            scope.api.app.config.clear()
-            scope.api.app.config.update(config_before)
-            scope.api.AUTH_CONFIG_PATH = auth_path_before
+def _reset_quality_test_database(isolated_price_db):
+    """Reset only the fixture-owned temporary database."""
+    isolated_price_db.path.unlink()
