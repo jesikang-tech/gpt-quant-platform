@@ -237,11 +237,35 @@ jobs:
           cp core/price_provenance_gate.py "$dashboard_dir/core/"
           cp test_dashboard_api.py test_dashboard_data.py \
             test_dashboard_json.py "$dashboard_dir/"
+          cp naver-decimal-validation/test_dashboard_decimal_integration.py "$dashboard_dir/"
+          # Same synthetic import closure as the isolated Replay step.
+          (
+            cd naver-decimal-validation
+            while IFS= read -r source; do
+              cp --parents "$source" "$dashboard_dir/"
+            done <<'SOURCES'
+          core/decimal_price_conflict.py
+          core/decimal_source_integration.py
+          core/decimal_synthetic_bridge.py
+          core/naver_decimal_price_pipeline.py
+          core/naver_http_response_validation.py
+          core/naver_raw_observation.py
+          core/naver_source_evidence.py
+          core/price_pair_contract.py
+          core/synthetic_atomic_price_repository.py
+          core/synthetic_decimal_atomic_repository.py
+          core/synthetic_price_schema.py
+          core/trading_session_eligibility.py
+          price_rebuild_adapter.py
+          price_rebuild_preflight.py
+          SOURCES
+          )
           cd "$dashboard_dir"
           PYTHONPATH="$dashboard_dir" TMPDIR="$dashboard_dir" \
             python -m pytest -q -p no:cacheprovider \
               --basetemp="$dashboard_dir/pytest-tmp" \
-              test_dashboard_api.py test_dashboard_data.py test_dashboard_json.py
+              test_dashboard_api.py test_dashboard_data.py test_dashboard_json.py \
+              test_dashboard_decimal_integration.py
       - name: Run isolated rebuild adapter tests
         if: success()
         shell: bash
