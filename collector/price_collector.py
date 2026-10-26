@@ -2,7 +2,11 @@ from providers.fdr_provider import FDRProvider
 from repository import save_etf_price, save_etf_ohlcv_price
 import pandas as pd
 
-from core.price_provenance_gate import PriceProvenanceRejected
+from core.price_provenance_gate import (
+    PriceProvenanceRejected,
+    assess_price_provenance,
+    require_persistence_authorization,
+)
 
 
 class PriceCollector:
@@ -21,6 +25,9 @@ class PriceCollector:
         """
         ETF 가격 데이터 수집 및 저장
         """
+
+        decision = assess_price_provenance()
+        require_persistence_authorization(decision)
 
         if self.provider is not self._initial_provider:
             raise PriceProvenanceRejected(

@@ -1,7 +1,11 @@
-﻿from datetime import date, timedelta
+from datetime import date, timedelta
 
 from database import get_connection
 from collector.price_collector import PriceCollector
+from core.price_provenance_gate import (
+    assess_price_provenance,
+    require_persistence_authorization,
+)
 
 
 def calculate_update_range(latest_date, end_date, initial_start_date="2025-01-01"):
@@ -44,6 +48,8 @@ class IncrementalPriceUpdater:
         self, ticker, end_date, initial_start_date="2025-01-01",
         current_date=None,
     ):
+        decision = assess_price_provenance()
+        require_persistence_authorization(decision)
         if current_date is not None:
             safe_end_date = current_date - timedelta(days=1)
             end_date = min(
@@ -113,6 +119,8 @@ class IncrementalPriceUpdater:
         self, end_date, initial_start_date="2025-01-01",
         current_date=None,
     ):
+        decision = assess_price_provenance()
+        require_persistence_authorization(decision)
         tickers = self.get_etf_list()
 
         results = []

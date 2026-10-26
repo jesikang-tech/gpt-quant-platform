@@ -1,6 +1,10 @@
 from database import get_connection
 from collector.price_collector import PriceCollector
 from repository import has_price_data
+from core.price_provenance_gate import (
+    assess_price_provenance,
+    require_persistence_authorization,
+)
 
 
 class BulkPriceCollector:
@@ -50,6 +54,8 @@ class BulkPriceCollector:
             테스트용 처리 개수 제한
         """
 
+        decision = assess_price_provenance()
+        require_persistence_authorization(decision)
         tickers = self.get_etf_list()
 
 

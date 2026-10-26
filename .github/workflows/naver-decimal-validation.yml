@@ -8,6 +8,9 @@ on:
     paths:
       - 'naver-decimal-validation/**'
       - 'collector/price_collector.py'
+      - 'collector/bulk_price_collector.py'
+      - 'collector/incremental_price_updater.py'
+      - 'test_collection_price_provenance_gate.py'
       - 'collector/ohlcv_backfill.py'
       - 'test_ohlcv_backfill.py'
       - 'test_repository_price_provenance_gate.py'
@@ -42,6 +45,9 @@ jobs:
             core/price_provenance_gate.py
             core/naver_persistence_entry.py
             collector/price_collector.py
+            collector/bulk_price_collector.py
+            collector/incremental_price_updater.py
+            test_collection_price_provenance_gate.py
             collector/ohlcv_backfill.py
             price_quality.py
             api_server.py
@@ -175,6 +181,30 @@ jobs:
             python -m pytest -q -p no:cacheprovider \
               --basetemp="$repository_dir/pytest-tmp" \
               test_repository_price_provenance_gate.py
+
+      - name: Run isolated collection price provenance regressions
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: |
+          set -euo pipefail
+          collection_dir=$(mktemp -d /tmp/collection-price-gate.XXXXXX)
+          # Dependencies with operational side effects are test-local sentinels.
+          while IFS= read -r source; do
+            cp --parents "$source" "$collection_dir/"
+          done <<'SOURCES'
+          test_collection_price_provenance_gate.py
+          collector/price_collector.py
+          collector/bulk_price_collector.py
+          collector/incremental_price_updater.py
+          core/price_provenance_gate.py
+          SOURCES
+          cd "$collection_dir"
+          PYTHONPATH="$collection_dir" TMPDIR="$collection_dir" \
+            python -m pytest -q -p no:cacheprovider \
+              --basetemp="$collection_dir/pytest-tmp" \
+              test_collection_price_provenance_gate.py
 
       - name: Stage isolated legacy OHLCV algorithm tests
         shell: bash
