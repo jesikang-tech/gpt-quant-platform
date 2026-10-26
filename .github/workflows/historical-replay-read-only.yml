@@ -87,6 +87,8 @@ jobs:
             ranking_analyzer.py
             repository.py
             test_historical_replay_read_only.py
+            test_historical_replay_api_contract.py
+            test_historical_replay_portfolio_contract.py
             test_ohlcv_backfill.py
             test_price_test_import_safety.py
             testing_helpers.py
@@ -207,6 +209,8 @@ jobs:
           cp "ranking_analyzer.py" "$replay_dir/ranking_analyzer.py"
           cp "repository.py" "$replay_dir/repository.py"
           cp "test_historical_replay_read_only.py" "$replay_dir/test_historical_replay_read_only.py"
+          cp "test_historical_replay_api_contract.py" "$replay_dir/test_historical_replay_api_contract.py"
+          cp "test_historical_replay_portfolio_contract.py" "$replay_dir/test_historical_replay_portfolio_contract.py"
           cp "test_ohlcv_backfill.py" "$replay_dir/test_ohlcv_backfill.py"
           cp "test_price_test_import_safety.py" "$replay_dir/test_price_test_import_safety.py"
           cp "testing_helpers.py" "$replay_dir/testing_helpers.py"
@@ -215,4 +219,6 @@ jobs:
           export TMPDIR="$replay_dir"
           python -m pytest -q -p no:cacheprovider \
             --basetemp="$replay_dir/pytest-tmp" \
-            test_historical_replay_read_only.py
+            test_historical_replay_read_only.py \
+            test_historical_replay_api_contract.py \
+            test_historical_replay_portfolio_contract.py
