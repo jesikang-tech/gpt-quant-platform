@@ -89,6 +89,12 @@ jobs:
             test_historical_replay_read_only.py
             test_historical_replay_api_contract.py
             test_historical_replay_portfolio_contract.py
+            test_historical_replay_ui_contract.py
+            test_ver11_analysis_condition_contract.py
+            test_current_analysis_date.py
+            test_current_analysis_period.py
+            static/dashboard.js
+            templates/index.html
             test_ohlcv_backfill.py
             test_price_test_import_safety.py
             testing_helpers.py
@@ -211,6 +217,14 @@ jobs:
           cp "test_historical_replay_read_only.py" "$replay_dir/test_historical_replay_read_only.py"
           cp "test_historical_replay_api_contract.py" "$replay_dir/test_historical_replay_api_contract.py"
           cp "test_historical_replay_portfolio_contract.py" "$replay_dir/test_historical_replay_portfolio_contract.py"
+          mkdir -p "$replay_dir/static"
+          mkdir -p "$replay_dir/templates"
+          cp "test_historical_replay_ui_contract.py" "$replay_dir/test_historical_replay_ui_contract.py"
+          cp "test_ver11_analysis_condition_contract.py" "$replay_dir/test_ver11_analysis_condition_contract.py"
+          cp "test_current_analysis_date.py" "$replay_dir/test_current_analysis_date.py"
+          cp "test_current_analysis_period.py" "$replay_dir/test_current_analysis_period.py"
+          cp "static/dashboard.js" "$replay_dir/static/dashboard.js"
+          cp "templates/index.html" "$replay_dir/templates/index.html"
           cp "test_ohlcv_backfill.py" "$replay_dir/test_ohlcv_backfill.py"
           cp "test_price_test_import_safety.py" "$replay_dir/test_price_test_import_safety.py"
           cp "testing_helpers.py" "$replay_dir/testing_helpers.py"
@@ -221,4 +235,8 @@ jobs:
             --basetemp="$replay_dir/pytest-tmp" \
             test_historical_replay_read_only.py \
             test_historical_replay_api_contract.py \
-            test_historical_replay_portfolio_contract.py
+            test_historical_replay_portfolio_contract.py \
+            test_historical_replay_ui_contract.py \
+            test_ver11_analysis_condition_contract.py \
+            test_current_analysis_date.py \
+            test_current_analysis_period.py
