@@ -2,6 +2,10 @@ import pandas as pd
 import FinanceDataReader as fdr
 
 from .base_provider import BaseProvider
+from core.price_provenance_gate import (
+    assess_price_provenance,
+    require_persistence_authorization,
+)
 
 
 class FDRProvider(BaseProvider):
@@ -20,6 +24,8 @@ class FDRProvider(BaseProvider):
         end_date: str
     ) -> pd.DataFrame:
 
+        decision = assess_price_provenance()
+        require_persistence_authorization(decision)
         return fdr.DataReader(
             ticker,
             start_date,

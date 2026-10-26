@@ -7,6 +7,9 @@ on:
       - validation/naver-observation-isolated
     paths:
       - 'naver-decimal-validation/**'
+      - 'providers/fdr_provider.py'
+      - 'providers/base_provider.py'
+      - 'test_fdr_provider_price_provenance_gate.py'
       - 'collector/price_collector.py'
       - 'collector/bulk_price_collector.py'
       - 'collector/incremental_price_updater.py'
@@ -42,6 +45,9 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             naver-decimal-validation
+            providers/fdr_provider.py
+            providers/base_provider.py
+            test_fdr_provider_price_provenance_gate.py
             core/price_provenance_gate.py
             core/naver_persistence_entry.py
             collector/price_collector.py
@@ -205,6 +211,28 @@ jobs:
             python -m pytest -q -p no:cacheprovider \
               --basetemp="$collection_dir/pytest-tmp" \
               test_collection_price_provenance_gate.py
+
+      - name: Run isolated direct FDR price provenance regression
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: |
+          set -euo pipefail
+          provider_dir=$(mktemp -d /tmp/fdr-price-gate.XXXXXX)
+          while IFS= read -r source; do
+            cp --parents "$source" "$provider_dir/"
+          done <<'SOURCES'
+          test_fdr_provider_price_provenance_gate.py
+          providers/fdr_provider.py
+          providers/base_provider.py
+          core/price_provenance_gate.py
+          SOURCES
+          cd "$provider_dir"
+          PYTHONPATH="$provider_dir" TMPDIR="$provider_dir" \
+            python -m pytest -q -p no:cacheprovider \
+              --basetemp="$provider_dir/pytest-tmp" \
+              test_fdr_provider_price_provenance_gate.py
 
       - name: Stage isolated legacy OHLCV algorithm tests
         shell: bash
