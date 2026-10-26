@@ -348,7 +348,7 @@ jobs:
             'test_price_test_import_safety.py::test_quality_backfill_full_cleanup_on_failure[test_ohlcv_backfill-sql]' \
             'test_price_test_import_safety.py::test_quality_backfill_full_cleanup_on_failure[test_ohlcv_backfill-init]'
 
-      - name: Diagnose isolated period-analysis Decimal Red (expected failure)
+      - name: Verify isolated period-analysis Decimal Green regressions
         if: ${{ !cancelled() }}
         shell: bash
         env:
@@ -357,18 +357,18 @@ jobs:
           BASELINE_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
-          red_dir=$(mktemp -d /tmp/period-decimal-red.XXXXXX)
-          mkdir -p "$red_dir/core"
-          cp core/period_analysis.py "$red_dir/core/period_analysis.py"
-          cp naver-decimal-validation/test_period_analysis_decimal_compatibility.py "$red_dir/"
-          cd "$red_dir"
-          export PYTHONPATH="$red_dir" TMPDIR="$red_dir"
+          green_dir=$(mktemp -d /tmp/period-decimal-green.XXXXXX)
+          mkdir -p "$green_dir/core"
+          cp core/period_analysis.py "$green_dir/core/period_analysis.py"
+          cp naver-decimal-validation/test_period_analysis_decimal_compatibility.py "$green_dir/"
+          cd "$green_dir"
+          export PYTHONPATH="$green_dir" TMPDIR="$green_dir"
           pytest_exit=0
           python -m pytest -q -p no:cacheprovider \
-            --basetemp="$red_dir/pytest-tmp" --junitxml="$red_dir/results.xml" \
+            --basetemp="$green_dir/pytest-tmp" --junitxml="$green_dir/results.xml" \
             test_period_analysis_decimal_compatibility.py || pytest_exit=$?
-          export DECIMAL_RED_PYTEST_EXIT="$pytest_exit"
-          # Runner-only result inspection: exact case outcomes, not an xfail mask.
+          export DECIMAL_GREEN_PYTEST_EXIT="$pytest_exit"
+          # Preserve pytest failure status while inspecting the exact JUnit cases.
           python - <<'PY'
           import os
           from pathlib import Path
@@ -376,58 +376,46 @@ jobs:
           import xml.etree.ElementTree as ET
 
           expected = {
-              "test_decimal_sub_float_increment_counts_as_up_day": "AssertionError",
-              "test_decimal_sub_float_increment_preserves_positive_return": "AssertionError",
-              "test_decimal_threshold_uses_exact_pass_fail_boundary[exact_threshold]": "TypeError",
-              "test_decimal_threshold_uses_exact_pass_fail_boundary[strictly_below_threshold]": "TypeError",
-              "test_legacy_float_threshold_does_not_round_decimal_shortfall_into_pass": "AssertionError",
+              "test_decimal_sub_float_increment_counts_as_up_day",
+              "test_decimal_sub_float_increment_preserves_positive_return",
+              "test_decimal_threshold_uses_exact_pass_fail_boundary[exact_threshold]",
+              "test_decimal_threshold_uses_exact_pass_fail_boundary[strictly_below_threshold]",
+              "test_legacy_float_threshold_does_not_round_decimal_shortfall_into_pass",
+              "test_integer_price_inputs_preserve_existing_results",
           }
-          control = "test_integer_price_inputs_preserve_existing_results"
           problems = []
           try:
               root = ET.parse("results.xml").getroot()
               cases = root.findall(".//testcase")
               by_name = {case.get("name"): case for case in cases}
-              if len(cases) != 6 or set(by_name) != set(expected) | {control}:
+              if len(cases) != 6 or set(by_name) != expected:
                   problems.append("Expected exactly the six named Decimal/control cases")
-              for name, failure_type in expected.items():
-                  case = by_name.get(name)
-                  if case is None:
-                      continue
-                  failures = case.findall("failure")
-                  message = failures[0].get("message", "") if len(failures) == 1 else ""
-                  # Pytest JUnit failures need not have a 'type' attribute.
-                  expected_exception = (
-                      message.startswith("TypeError:") if failure_type == "TypeError"
-                      else message.startswith(("assert ", "AssertionError"))
-                  )
-                  if (case.find("error") is not None or case.find("skipped") is not None
-                          or len(failures) != 1
-                          or not expected_exception):
-                      problems.append(f"Unexpected Red outcome or exception type: {name}")
-              case = by_name.get(control)
-              if case is None or any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
-                  problems.append("Integer compatibility control did not pass")
-              if any(int(suite.get("errors", "0")) for suite in root.iter("testsuite")):
-                  problems.append("Collection/setup/teardown error in isolated Red run")
+              for case in cases:
+                  if any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
+                      problems.append(f"Case did not pass: {case.get('name')}")
+              suites = list(root.iter("testsuite"))
+              totals = {"tests": 6, "failures": 0, "errors": 0, "skipped": 0}
+              if len(suites) != 1 or any(
+                  int(suites[0].get(key, "-1")) != value for key, value in totals.items()
+              ):
+                  problems.append("JUnit totals must be 6 tests, 0 failures, 0 errors, 0 skipped")
           except (OSError, ET.ParseError, ValueError) as exc:
               problems.append(f"Missing or malformed pytest report: {exc}")
-          if os.environ["DECIMAL_RED_PYTEST_EXIT"] != "1":
-              problems.append("Expected pytest exit 1 for assertion failures only")
+          if os.environ["DECIMAL_GREEN_PYTEST_EXIT"] != "0":
+              problems.append("Pytest must exit 0")
 
           baseline = os.environ["BASELINE_STATUS"]
-          outcome = "ANOMALY" if problems else "EXPECTED_RED_REPRODUCED"
+          outcome = "FAIL" if problems else "GREEN"
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
-              summary.write(f"## Isolated Decimal Red diagnostic\n\nExisting stages before Red: {baseline}\n\n")
-              summary.write(f"Red diagnostic: **{outcome}**\n\n")
-              summary.write("Expected: five named failures and one passing integer control.\n\n")
-              summary.write("This diagnostic intentionally fails the job; it does not certify the full validation as PASS.\n")
+              summary.write(f"## Isolated Decimal Green regressions\n\nExisting stages before Green: {baseline}\n\n")
+              summary.write(f"Decimal regression result: **{outcome}**\n\n")
+              summary.write("Required: six named cases passed, zero failures/errors/skips, pytest exit 0.\n\n")
+              summary.write("This step's Green result does not override failures in earlier validation stages.\n")
               for problem in problems:
                   summary.write(f"\n- {problem}\n")
           if problems:
               for problem in problems:
-                  print(f"::error title=Decimal Red anomaly::{problem}")
-              sys.exit(2)
-          print("::warning title=Expected Decimal Red reproduced::5 expected failures; integer compatibility passed. Job remains failed until the calculation defect is fixed.")
-          sys.exit(1)
+                  print(f"::error title=Decimal Green regression failure::{problem}")
+              sys.exit(1)
+          print("Decimal Green: all six named regression cases passed.")
           PY

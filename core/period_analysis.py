@@ -1,5 +1,7 @@
 from config import MIN_RETURN_3M
 from repository import get_etf_prices
+from decimal import Decimal, localcontext
+from fractions import Fraction
 
 
 DEFAULT_PERIODS = {
@@ -10,8 +12,25 @@ DEFAULT_PERIODS = {
 
 
 def calculate_period_return(prices):
+    """Return Decimal for Decimal endpoints, otherwise preserve legacy float.
+
+    Mixed endpoints use Decimal(str(value)) for non-Decimal values. Decimal
+    arithmetic inherits the caller's precision/rounding in a local context;
+    subtract before division to avoid losing tiny gains by subtracting one.
+    Supported prices are finite int/float/Decimal values with positive start.
+    Nonpositive starts retain the existing None result. Other invalid-input
+    conversion or Decimal arithmetic errors are not suppressed.
+    """
     if len(prices) < 2:
         return None
+
+    if isinstance(prices[0], Decimal) or isinstance(prices[-1], Decimal):
+        start_price = Decimal(str(prices[0]))
+        end_price = Decimal(str(prices[-1]))
+        if start_price <= 0:
+            return None
+        with localcontext():
+            return ((end_price - start_price) / start_price) * Decimal(100)
 
     start_price = float(prices[0])
     end_price = float(prices[-1])
@@ -23,6 +42,7 @@ def calculate_period_return(prices):
 
 
 def calculate_period_uptrend_ratio(prices):
+    """Keep the legacy float percentage; compare Decimal prices without loss."""
     if len(prices) < 2:
         return None
 
@@ -31,13 +51,27 @@ def calculate_period_uptrend_ratio(prices):
     up_days = sum(
         1
         for previous, current in zip(prices, prices[1:])
-        if float(current) > float(previous)
+        if (Decimal(str(current)) > Decimal(str(previous))
+            if isinstance(current, Decimal) or isinstance(previous, Decimal)
+            else float(current) > float(previous))
     )
 
     return (up_days / changes) * 100.0
 
 
 def analyze_period(prices, period_days, threshold):
+    """Compare finite numeric inputs exactly, without rounding a shortfall up.
+
+    Threshold display preserves Decimal versus legacy float types. The decision
+    uses exact rational arithmetic on decimal text, independent of rounded
+    return/display values or Decimal context. For floats, str(value) defines
+    the decimal interpretation; prior binary precision loss cannot be recovered.
+    Finite negative/zero thresholds remain valid. Nonfinite endpoints or
+    thresholds cannot pass the decision or reach Fraction conversion; earlier
+    unsupported-input arithmetic errors still propagate. Displayed Decimal
+    returns can round to the threshold while the exact decision remains False.
+    """
+    threshold_percent = threshold * (Decimal(100) if isinstance(threshold, Decimal) else 100.0)
     if len(prices) < period_days:
         return {
             "period_days": period_days,
@@ -46,7 +80,7 @@ def analyze_period(prices, period_days, threshold):
             "available_data": len(prices),
             "return_rate": None,
             "uptrend_ratio": None,
-            "threshold": threshold * 100.0,
+            "threshold": threshold_percent,
             "threshold_pass": False,
         }
 
@@ -62,10 +96,15 @@ def analyze_period(prices, period_days, threshold):
         "available_data": len(period_prices),
         "return_rate": return_rate,
         "uptrend_ratio": uptrend_ratio,
-        "threshold": threshold * 100.0,
+        "threshold": threshold_percent,
         "threshold_pass": (
             return_rate is not None
-            and round(return_rate, 10) >= round(threshold * 100.0, 10)
+            and all(Decimal(str(value)).is_finite() for value in (
+                period_prices[0], period_prices[-1], threshold,
+            ))
+            and Fraction(str(period_prices[-1])) >= (
+                Fraction(str(period_prices[0])) * (1 + Fraction(str(threshold)))
+            )
         ),
     }
 
