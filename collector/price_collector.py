@@ -9,6 +9,7 @@ class PriceCollector:
 
     def __init__(self):
         self.provider = FDRProvider()
+        self._initial_provider = self.provider
 
 
     def collect(
@@ -20,6 +21,11 @@ class PriceCollector:
         """
         ETF 가격 데이터 수집 및 저장
         """
+
+        if self.provider is not self._initial_provider:
+            raise PriceProvenanceRejected(
+                "Replaced provider cannot use legacy price writers"
+            )
 
         if getattr(self.provider, "provider", None) == "NAVER":
             raise PriceProvenanceRejected(
