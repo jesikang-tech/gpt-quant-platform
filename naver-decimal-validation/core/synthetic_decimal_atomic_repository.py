@@ -5,7 +5,7 @@ No operational database connections, provider calls, or authorization.
 Decimal values are stored as exact canonical text.
 """
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from core.decimal_synthetic_bridge import DecimalPricePair
 from core.synthetic_atomic_price_repository import (
@@ -316,3 +316,74 @@ def insert_synthetic_decimal_batch(conn, pairs):
     except BaseException:
         conn.rollback()
         raise
+
+
+def _read_decimal_text(value):
+    if type(value) is not str:
+        raise SyntheticDecimalWriteRejected("Decimal TEXT required")
+    try:
+        number = Decimal(value)
+    except InvalidOperation as exc:
+        raise SyntheticDecimalWriteRejected("Malformed Decimal TEXT") from exc
+    if not number.is_finite() or str(number) != value:
+        raise SyntheticDecimalWriteRejected("Finite canonical Decimal TEXT required")
+    return number
+
+
+def read_synthetic_replay_prices(conn, *, ticker, analysis_date):
+    """Read validated synthetic (date, Decimal close) tuples, never authority.
+
+    Validate every stored pair for the requested ticker, including future
+    rows, before applying the inclusive analysis-date cutoff. Other tickers
+    are outside this read's scope. An absent ticker or empty as-of window
+    returns (). Source evidence, adjustment and revisions are not stored in
+    these tables and cannot be reconstructed or authenticated by this read.
+    No connection is opened and no transaction or data is changed.
+    """
+    from datetime import date
+    from price_rebuild_adapter import (
+        SyntheticRebuildRows,
+        prepare_synthetic_replay_asof_prices,
+    )
+
+    if type(ticker) is not str or not ticker or ticker != ticker.strip():
+        raise ValueError("Canonical ticker required")
+    if type(analysis_date) is not str:
+        raise ValueError("Canonical analysis date required")
+    try:
+        parsed_date = date.fromisoformat(analysis_date)
+    except ValueError as exc:
+        raise ValueError("Canonical analysis date required") from exc
+    if parsed_date.isoformat() != analysis_date:
+        raise ValueError("Canonical analysis date required")
+
+    _require_synthetic_connection(conn)
+    _validate_decimal_schema(conn)
+    prices = conn.execute(
+        "SELECT ticker, date, close_price FROM main.synthetic_decimal_prices "
+        "WHERE ticker = ? ORDER BY date", (ticker,),
+    ).fetchall()
+    ohlcv = conn.execute(
+        "SELECT ticker, date, open_price, high_price, low_price, close_price, volume "
+        "FROM main.synthetic_decimal_ohlcv WHERE ticker = ? ORDER BY date", (ticker,),
+    ).fetchall()
+    if [row[:2] for row in prices] != [row[:2] for row in ohlcv]:
+        raise SyntheticDecimalWriteRejected("PRICE/OHLCV keys mismatch")
+
+    rows = []
+    for price_row, ohlcv_row in zip(prices, ohlcv):
+        values = tuple(_read_decimal_text(value) for value in ohlcv_row[2:])
+        pair = DecimalPricePair(ohlcv_row[0], ohlcv_row[1], *values)
+        _validate_decimal_pair(pair)
+        close = _read_decimal_text(price_row[2])
+        if close != pair.close_price:
+            raise SyntheticDecimalWriteRejected("PRICE/OHLCV close mismatch")
+        if price_row[2] != ohlcv_row[5]:
+            raise SyntheticDecimalWriteRejected("PRICE/OHLCV close TEXT mismatch")
+        rows.append(SyntheticRebuildRows(
+            ticker, (ticker, pair.observation_date, close),
+            (ticker, pair.observation_date, *values),
+        ))
+    if not rows:
+        return ()
+    return prepare_synthetic_replay_asof_prices(tuple(rows), analysis_date)

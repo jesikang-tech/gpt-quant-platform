@@ -13,6 +13,7 @@ from core.synthetic_decimal_atomic_repository import (
     insert_synthetic_decimal_batch,
     insert_synthetic_decimal_pair,
     insert_synthetic_rebuild_batch,
+    read_synthetic_replay_prices,
 )
 
 
@@ -462,5 +463,207 @@ def test_rebuild_integration_retry_after_collision_removal_stores_complete_batch
             for ticker, day in sorted(expected_keys)
         ]
         assert not conn.in_transaction
+    finally:
+        conn.close()
+
+
+def test_synthetic_read_preserves_decimal_orders_and_filters_without_writes(monkeypatch):
+    conn = _database()
+    try:
+        insert_synthetic_decimal_batch(conn, (
+            _pair("AAA", "2026-01-06", "10.12345678901234567892"),
+            _pair("BBB", "2026-01-02"),
+            _pair("AAA", "2026-01-05", "10.12345678901234567891"),
+            _pair("AAA", "2026-01-02", "10.12345678901234567890"),
+        ))
+        before = (_rows(conn, "synthetic_decimal_prices"), _rows(conn, "synthetic_decimal_ohlcv"))
+        changes = conn.total_changes
+
+        def forbidden_connection(*args, **kwargs):
+            raise AssertionError("The read bridge must not open a connection")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(sqlite3, "connect", forbidden_connection)
+            series = read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+        assert type(series) is tuple
+        assert series == (
+            ("2026-01-02", Decimal("10.12345678901234567890")),
+            ("2026-01-05", Decimal("10.12345678901234567891")),
+        )
+        assert all(type(row) is tuple and type(row[1]) is Decimal for row in series)
+        assert series[0][1].as_tuple() == Decimal("10.12345678901234567890").as_tuple()
+        assert series[0][1] != series[1][1]
+        assert float(series[0][1]) == float(series[1][1])
+        assert conn.total_changes == changes
+        assert (_rows(conn, "synthetic_decimal_prices"), _rows(conn, "synthetic_decimal_ohlcv")) == before
+        assert not conn.in_transaction
+    finally:
+        conn.close()
+
+
+def test_synthetic_read_reuses_stored_rebuild_and_remains_unapproved():
+    from core.naver_persistence_entry import persist_naver_observation
+    from core.price_provenance_gate import PriceProvenanceRejected, require_analysis_authorization
+    from price_rebuild_adapter import prepare_real_rebuild_rows
+
+    requests = _integration_requests()
+    conn = _database()
+    calls = []
+    try:
+        insert_synthetic_rebuild_batch(
+            conn, requests, expected_keys=_integration_keys(requests), synthetic_fixture=True,
+        )
+        series = read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+        assert series == (("2026-01-02", Decimal("105000000000000000001")),)
+        with pytest.raises(PriceProvenanceRejected, match="Invalid provenance decision"):
+            require_analysis_authorization(series)
+        with pytest.raises(ValueError, match="RebuildPreflight required"):
+            prepare_real_rebuild_rows(series)
+        with pytest.raises(PriceProvenanceRejected, match="persistence is prohibited"):
+            persist_naver_observation(series, lambda value: calls.append(value))
+        assert calls == []
+        assert not conn.in_transaction
+    finally:
+        conn.close()
+
+
+@pytest.mark.parametrize("ticker,cutoff", [("ABSENT", "2026-01-05"), ("AAA", "2026-01-01")])
+def test_synthetic_read_empty_scope_returns_empty_tuple(ticker, cutoff):
+    conn = _database()
+    try:
+        insert_synthetic_decimal_pair(conn, _pair("AAA", "2026-01-02"))
+        assert read_synthetic_replay_prices(conn, ticker=ticker, analysis_date=cutoff) == ()
+    finally:
+        conn.close()
+
+
+@pytest.mark.parametrize("table", ["synthetic_decimal_prices", "synthetic_decimal_ohlcv"])
+def test_synthetic_read_rejects_missing_pair(table):
+    conn = _database()
+    try:
+        insert_synthetic_decimal_pair(conn, _pair("AAA", "2026-01-02"))
+        conn.execute(f"DELETE FROM {table}")
+        conn.commit()
+        with pytest.raises(SyntheticDecimalWriteRejected, match="keys mismatch"):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+    finally:
+        conn.close()
+
+
+@pytest.mark.parametrize("table,column,value", [
+    ("synthetic_decimal_prices", "close_price", "not-a-number"),
+    ("synthetic_decimal_prices", "close_price", "NaN"),
+    ("synthetic_decimal_prices", "close_price", "10.5"),
+    ("synthetic_decimal_ohlcv", "open_price", b"10"),
+    ("synthetic_decimal_ohlcv", "open_price", " 10"),
+    ("synthetic_decimal_ohlcv", "open_price", "1_0"),
+    ("synthetic_decimal_ohlcv", "high_price", "Infinity"),
+    ("synthetic_decimal_ohlcv", "high_price", "NaN"),
+    ("synthetic_decimal_ohlcv", "open_price", "0"),
+    ("synthetic_decimal_ohlcv", "close_price", "-1"),
+    ("synthetic_decimal_ohlcv", "volume", "-1"),
+    ("synthetic_decimal_ohlcv", "high_price", "9"),
+])
+def test_synthetic_read_rejects_invalid_stored_values(table, column, value):
+    conn = _database()
+    try:
+        insert_synthetic_decimal_pair(conn, _pair("AAA", "2026-01-02"))
+        # Only the fixed identifiers in this parameter list are interpolated.
+        conn.execute(f"UPDATE {table} SET {column} = ?", (value,))
+        conn.commit()
+        with pytest.raises(SyntheticDecimalWriteRejected):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+        assert not conn.in_transaction
+    finally:
+        conn.close()
+
+
+@pytest.mark.parametrize("day", ["2026-02-30", "20260102"])
+def test_synthetic_read_rejects_invalid_stored_dates(day):
+    conn = _database()
+    try:
+        insert_synthetic_decimal_pair(conn, _pair("AAA", "2026-01-02"))
+        for table in ("synthetic_decimal_prices", "synthetic_decimal_ohlcv"):
+            conn.execute(f"UPDATE {table} SET date = ?", (day,))
+        conn.commit()
+        with pytest.raises(SyntheticDecimalWriteRejected, match="date"):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-03-01")
+    finally:
+        conn.close()
+
+
+def test_synthetic_read_rejects_mismatched_dates():
+    conn = _database()
+    try:
+        insert_synthetic_decimal_pair(conn, _pair("AAA", "2026-01-02"))
+        conn.execute("UPDATE synthetic_decimal_ohlcv SET date = '2026-01-05'")
+        conn.commit()
+        with pytest.raises(SyntheticDecimalWriteRejected, match="keys mismatch"):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+    finally:
+        conn.close()
+
+
+def test_synthetic_read_rejects_numerically_equal_but_different_close_text():
+    conn = _database()
+    try:
+        insert_synthetic_decimal_pair(conn, _pair("AAA", "2026-01-02", "10.50"))
+        assert read_synthetic_replay_prices(
+            conn, ticker="AAA", analysis_date="2026-01-05",
+        ) == (("2026-01-02", Decimal("10.50")),)
+        conn.execute("UPDATE synthetic_decimal_prices SET close_price = ?", ("10.5",))
+        conn.commit()
+        price_text = _rows(conn, "synthetic_decimal_prices")[0][2]
+        ohlcv_text = _rows(conn, "synthetic_decimal_ohlcv")[0][5]
+        assert price_text == "10.5" and ohlcv_text == "10.50"
+        assert str(Decimal(price_text)) == price_text
+        assert str(Decimal(ohlcv_text)) == ohlcv_text
+        assert Decimal(price_text) == Decimal(ohlcv_text)
+        assert price_text != ohlcv_text
+        with pytest.raises(
+            SyntheticDecimalWriteRejected, match=r"^PRICE/OHLCV close TEXT mismatch$",
+        ):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+        assert not conn.in_transaction
+    finally:
+        conn.close()
+
+
+def test_synthetic_read_validates_future_rows_before_filtering():
+    conn = _database()
+    try:
+        insert_synthetic_decimal_batch(conn, (
+            _pair("AAA", "2026-01-02"), _pair("AAA", "2026-01-06"),
+        ))
+        conn.execute("UPDATE synthetic_decimal_ohlcv SET volume = '-1' WHERE date = '2026-01-06'")
+        conn.commit()
+        with pytest.raises(SyntheticDecimalWriteRejected, match="Negative volume"):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+    finally:
+        conn.close()
+
+
+@pytest.mark.parametrize("ticker,cutoff", [
+    (None, "2026-01-05"), ("", "2026-01-05"), (" AAA", "2026-01-05"),
+    ("AAA", None), ("AAA", "20260105"), ("AAA", "2026-02-30"),
+])
+def test_synthetic_read_rejects_invalid_scope_before_connection(ticker, cutoff):
+    with pytest.raises(ValueError):
+        read_synthetic_replay_prices(None, ticker=ticker, analysis_date=cutoff)
+
+
+@pytest.mark.parametrize("connection_kind", ["file", "transaction", "schema"])
+def test_synthetic_read_preserves_connection_and_schema_guards(tmp_path, connection_kind):
+    conn = sqlite3.connect(tmp_path / "read-rejected.sqlite3") if connection_kind == "file" else _database()
+    try:
+        if connection_kind == "transaction":
+            conn.execute("BEGIN")
+        elif connection_kind == "schema":
+            conn.execute("CREATE TABLE unexpected (value TEXT)")
+            conn.commit()
+        error = SyntheticDecimalWriteRejected if connection_kind == "schema" else SyntheticPriceWriteRejected
+        with pytest.raises(error):
+            read_synthetic_replay_prices(conn, ticker="AAA", analysis_date="2026-01-05")
+        assert conn.in_transaction is (connection_kind == "transaction")
     finally:
         conn.close()
