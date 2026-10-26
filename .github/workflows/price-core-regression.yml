@@ -8,6 +8,9 @@ on:
       - '.github/workflows/price-core-regression.yml'
       - 'test_database.py'
       - 'test_price_database.py'
+      - 'test_development_price_write_guard.py'
+      - 'test_price_loader_safety_contract.py'
+      - 'price_loader.py'
       - 'price_test_support.py'
       - 'database.py'
       - 'repository.py'
@@ -42,6 +45,9 @@ jobs:
             core/price_provenance_gate.py
             test_database.py
             test_price_database.py
+            test_development_price_write_guard.py
+            test_price_loader_safety_contract.py
+            price_loader.py
           sparse-checkout-cone-mode: false
 
       - name: Setup Python
@@ -72,6 +78,8 @@ jobs:
           cp config.py database.py repository.py \
             price_test_support.py \
             test_database.py test_price_database.py \
+            test_development_price_write_guard.py \
+            test_price_loader_safety_contract.py price_loader.py \
             "$test_dir/"
 
           cp collector/etf_collector.py "$test_dir/collector/"
@@ -88,4 +96,6 @@ jobs:
             --basetemp="$test_dir/pytest-tmp" \
             test_database.py::test_database_initialization_is_idempotent \
             test_database.py::test_etf_collector_persists_mock_list_and_csv \
-            test_price_database.py::test_price_count_order_and_ticker_filter
+            test_price_database.py::test_price_count_order_and_ticker_filter \
+            test_development_price_write_guard.py \
+            test_price_loader_safety_contract.py
