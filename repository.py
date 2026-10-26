@@ -2,6 +2,10 @@ from datetime import datetime
 import json
 from contextlib import closing
 from database import get_connection
+from core.price_provenance_gate import (
+    assess_price_provenance,
+    require_persistence_authorization,
+)
 
 
 def save_etf_ohlcv_price(
@@ -9,6 +13,8 @@ def save_etf_ohlcv_price(
     close_price=None, volume=None,
 ):
     """Save an independent OHLCV observation; unavailable fields remain NULL."""
+    decision = assess_price_provenance()
+    require_persistence_authorization(decision)
     with closing(get_connection()) as conn:
         with conn:
             conn.execute(
@@ -50,6 +56,8 @@ def save_etf_price(
     ETF 가격 데이터 저장
     """
 
+    decision = assess_price_provenance()
+    require_persistence_authorization(decision)
     conn = get_connection()
     cursor = conn.cursor()
 

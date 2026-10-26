@@ -10,6 +10,7 @@ on:
       - 'collector/price_collector.py'
       - 'collector/ohlcv_backfill.py'
       - 'test_ohlcv_backfill.py'
+      - 'test_repository_price_provenance_gate.py'
       - 'test_price_test_import_safety.py'
       - 'price_test_support.py'
       - 'core/**'
@@ -92,6 +93,7 @@ jobs:
             ranking_analyzer.py
             repository.py
             test_ohlcv_backfill.py
+            test_repository_price_provenance_gate.py
             test_price_test_import_safety.py
           sparse-checkout-cone-mode: false
 
@@ -150,6 +152,29 @@ jobs:
         run: |
           python -m pytest -q -p no:cacheprovider -ra \
             test_price_rebuild_adapter.py
+
+      - name: Run isolated repository price provenance regressions
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: |
+          set -euo pipefail
+          repository_dir=$(mktemp -d /tmp/repository-price-gate.XXXXXX)
+          # No config.py, operational data, or conftest.py is staged.
+          while IFS= read -r source; do
+            cp --parents "$source" "$repository_dir/"
+          done <<'SOURCES'
+          test_repository_price_provenance_gate.py
+          repository.py
+          database.py
+          core/price_provenance_gate.py
+          SOURCES
+          cd "$repository_dir"
+          PYTHONPATH="$repository_dir" TMPDIR="$repository_dir" \
+            python -m pytest -q -p no:cacheprovider \
+              --basetemp="$repository_dir/pytest-tmp" \
+              test_repository_price_provenance_gate.py
 
       - name: Stage isolated legacy OHLCV algorithm tests
         shell: bash
