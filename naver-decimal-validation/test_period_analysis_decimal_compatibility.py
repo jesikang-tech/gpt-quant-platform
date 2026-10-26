@@ -6,6 +6,7 @@ imports with test-local dependencies. These tests do not authorize NAVER use.
 """
 
 from decimal import Context, Decimal, localcontext
+from datetime import date, timedelta
 import importlib.util
 from pathlib import Path
 import sys
@@ -102,3 +103,58 @@ def test_integer_price_inputs_preserve_existing_results(period_analysis):
         "threshold": 20.0,
         "threshold_pass": True,
     }
+
+
+def _query_synthetic_prices(period_analysis, monkeypatch, prices, thresholds):
+    # Explicit synthetic calendar labels, not an inferred exchange schedule.
+    rows = [((date(2026, 1, 1) + timedelta(days=index)).isoformat(), price)
+            for index, price in enumerate(prices)]
+    calls = []
+
+    def fake_get_etf_prices(ticker, end_date=None):
+        calls.append((ticker, end_date))
+        return rows
+
+    with monkeypatch.context() as patch:
+        patch.setattr(period_analysis, "get_etf_prices", fake_get_etf_prices)
+        result = period_analysis.get_period_analysis(
+            "SYNTHETIC", rows[-1][0], thresholds=thresholds,
+        )
+    assert calls == [("SYNTHETIC", rows[-1][0])]
+    assert [row[1] for row in rows] == prices
+    assert result["ticker"] == "SYNTHETIC"
+    assert result["analysis_date"] == rows[-1][0]
+    return result
+
+
+def test_query_boundary_preserves_decimal_prices_and_period_results(period_analysis, monkeypatch):
+    prices = [Decimal("1")] * 59 + [Decimal("1.00000000000000000001")]
+    thresholds = {days: Decimal("1E-21") for days in (20, 40, 60)}
+    assert float(prices[0]) == float(prices[-1])
+    with localcontext(Context(prec=50)):
+        expected = period_analysis.analyze_periods(prices, thresholds)
+        result = _query_synthetic_prices(period_analysis, monkeypatch, prices, thresholds)
+    for days in (20, 40, 60):
+        period = result["periods"][str(days)]
+        assert type(period["return_rate"]) is Decimal
+        assert period["return_rate"] == Decimal("1E-18")
+        assert period["uptrend_ratio"] == (1 / (days - 1)) * 100.0
+        assert period["threshold_pass"] is True
+    assert result["periods"] == expected
+    assert result["trend_state"] == period_analysis.calculate_trend_state(expected) == "DOWNTREND"
+
+
+@pytest.mark.parametrize("numeric_type", [int, float], ids=["integer_rows", "float_rows"])
+def test_query_boundary_preserves_legacy_numeric_results(period_analysis, monkeypatch, numeric_type):
+    prices = [numeric_type(100)] * 59 + [numeric_type(125)]
+    thresholds = {20: 0.05, 40: 0.10, 60: 0.15}
+    expected = period_analysis.analyze_periods(prices, thresholds)
+    result = _query_synthetic_prices(period_analysis, monkeypatch, prices, thresholds)
+    assert result["periods"] == expected
+    assert result["trend_state"] == period_analysis.calculate_trend_state(expected) == "UPTREND"
+    for days in (20, 40, 60):
+        period = result["periods"][str(days)]
+        assert type(period["return_rate"]) is float
+        assert period["return_rate"] == 25.0
+        assert period["uptrend_ratio"] == (1 / (days - 1)) * 100.0
+        assert period["threshold_pass"] is True
