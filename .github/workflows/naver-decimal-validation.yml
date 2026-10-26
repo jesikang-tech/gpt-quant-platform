@@ -102,6 +102,7 @@ jobs:
             core/portfolio_intelligence_score.py
             database.py
             factor_engine.py
+            historical_replay.py
             price_test_support.py
             ranking_analyzer.py
             repository.py
@@ -173,6 +174,26 @@ jobs:
             python -m pytest -q -p no:cacheprovider \
               --basetemp="$factor_dir/pytest-tmp" \
               naver-decimal-validation/test_factor_decimal_boundary.py
+      - name: Run isolated Replay Decimal integration tests
+        if: success()
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: |
+          set -euo pipefail
+          replay_dir=$(mktemp -d /tmp/replay-decimal-integration.XXXXXX)
+          mkdir -p "$replay_dir/naver-decimal-validation"
+          cp historical_replay.py "$replay_dir/historical_replay.py"
+          cp factor_engine.py "$replay_dir/factor_engine.py"
+          cp config.py "$replay_dir/config.py"
+          cp naver-decimal-validation/test_replay_decimal_integration.py \
+            "$replay_dir/naver-decimal-validation/test_replay_decimal_integration.py"
+          cd "$replay_dir"
+          PYTHONPATH="$replay_dir" TMPDIR="$replay_dir" \
+            python -m pytest -q -p no:cacheprovider \
+              --basetemp="$replay_dir/pytest-tmp" \
+              naver-decimal-validation/test_replay_decimal_integration.py
       - name: Run isolated rebuild adapter tests
         if: success()
         shell: bash
