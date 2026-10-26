@@ -258,7 +258,7 @@ def test_key_coverage_authority_cannot_be_forged(name):
         )
     with pytest.raises(FrozenInstanceError):
         setattr(result, name, True)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError, match=f"field {name} is declared with init=False"):
         replace(result, **{name: True})
 
 
