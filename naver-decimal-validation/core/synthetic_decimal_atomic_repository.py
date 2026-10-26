@@ -112,9 +112,8 @@ def create_synthetic_decimal_schema(conn):
         raise
 
 
-def insert_synthetic_decimal_pair(conn, pair):
-    """Atomically insert one exact-Decimal synthetic price pair."""
-
+def _validate_decimal_pair(pair):
+    """Validate one synthetic Decimal pair and encode exact values."""
     if type(pair) is not DecimalPricePair:
         raise SyntheticDecimalWriteRejected(
             "DecimalPricePair required"
@@ -168,6 +167,14 @@ def insert_synthetic_decimal_pair(conn, pair):
     if parsed_date.isoformat() != pair.observation_date:
         raise SyntheticDecimalWriteRejected("Noncanonical date")
 
+    return encoded
+
+
+def insert_synthetic_decimal_pair(conn, pair):
+    """Atomically insert one exact-Decimal synthetic price pair."""
+
+    encoded = _validate_decimal_pair(pair)
+
     _require_synthetic_connection(conn)
 
     try:
@@ -204,6 +211,73 @@ def insert_synthetic_decimal_pair(conn, pair):
                 encoded[4],
             ),
         )
+
+        conn.commit()
+
+    except BaseException:
+        conn.rollback()
+        raise
+def insert_synthetic_decimal_batch(conn, pairs):
+    """Atomically insert a complete synthetic Decimal price batch.
+
+    Only a caller-owned isolated in-memory SQLite database is permitted.
+    All pairs are validated before any database write.
+    """
+
+    if type(pairs) not in (tuple, list) or not pairs:
+        raise SyntheticDecimalWriteRejected(
+            "Nonempty explicit synthetic batch required"
+        )
+
+    validated = []
+    seen = set()
+
+    for pair in pairs:
+        encoded = _validate_decimal_pair(pair)
+
+        key = (pair.ticker, pair.observation_date)
+
+        if key in seen:
+            raise SyntheticDecimalWriteRejected(
+                "Duplicate synthetic batch key"
+            )
+
+        seen.add(key)
+        validated.append((key, encoded))
+
+    _require_synthetic_connection(conn)
+
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        _validate_decimal_schema(conn)
+
+        for (ticker, observation_date), encoded in validated:
+            conn.execute(
+                """
+                INSERT INTO synthetic_decimal_prices
+                    (ticker, date, close_price)
+                VALUES (?, ?, ?)
+                """,
+                (ticker, observation_date, encoded[3]),
+            )
+
+            conn.execute(
+                """
+                INSERT INTO synthetic_decimal_ohlcv
+                    (ticker, date, open_price, high_price,
+                     low_price, close_price, volume)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ticker,
+                    observation_date,
+                    encoded[0],
+                    encoded[1],
+                    encoded[2],
+                    encoded[3],
+                    encoded[4],
+                ),
+            )
 
         conn.commit()
 
