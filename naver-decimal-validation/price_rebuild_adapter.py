@@ -359,3 +359,28 @@ def prepare_synthetic_replay_price_series(rows):
         previous_date = parsed_date
 
     return tuple(result)
+
+def prepare_synthetic_replay_asof_prices(rows, analysis_date):
+    """Select synthetic replay rows at or before a declared analysis date.
+
+    This is a pure comparison helper, not authorization to run analysis.
+    """
+    from datetime import date
+
+    if type(analysis_date) is not str:
+        raise ValueError("Analysis date string required")
+
+    try:
+        parsed_analysis_date = date.fromisoformat(analysis_date)
+    except ValueError as exc:
+        raise ValueError("Invalid analysis date") from exc
+
+    if parsed_analysis_date.isoformat() != analysis_date:
+        raise ValueError("Canonical YYYY-MM-DD analysis date required")
+
+    series = prepare_synthetic_replay_price_series(rows)
+
+    return tuple(
+        row for row in series
+        if row[0] <= analysis_date
+    )

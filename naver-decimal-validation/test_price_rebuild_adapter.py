@@ -721,3 +721,101 @@ def test_synthetic_replay_price_series_contract():
     for case in invalid_cases:
         with pytest.raises(ValueError):
             prepare_synthetic_replay_price_series(case)
+
+def test_synthetic_replay_asof_price_boundary():
+    from decimal import Decimal
+    import pytest
+
+    from price_rebuild_adapter import (
+        SyntheticRebuildRows,
+        prepare_synthetic_replay_asof_prices,
+    )
+
+    def make_row(day, close):
+        ticker = "069500"
+        return SyntheticRebuildRows(
+            ticker=ticker,
+            price_row=(ticker, day, close),
+            ohlcv_row=(
+                ticker,
+                day,
+                Decimal("9900"),
+                Decimal("10100"),
+                Decimal("9800"),
+                close,
+                Decimal("12345"),
+            ),
+        )
+
+    before = make_row(
+        "2026-07-20", Decimal("10000.123456789")
+    )
+    on_date = make_row(
+        "2026-07-21", Decimal("10001.987654321")
+    )
+    future = make_row(
+        "2026-07-22", Decimal("10002.111111111")
+    )
+
+    series = (before, on_date, future)
+
+    assert prepare_synthetic_replay_asof_prices(
+        series, "2026-07-21"
+    ) == (
+        ("2026-07-20", Decimal("10000.123456789")),
+        ("2026-07-21", Decimal("10001.987654321")),
+    )
+
+    assert prepare_synthetic_replay_asof_prices(
+        series, "2026-07-20"
+    ) == (
+        ("2026-07-20", Decimal("10000.123456789")),
+    )
+
+    assert prepare_synthetic_replay_asof_prices(
+        series, "2026-07-19"
+    ) == ()
+
+    assert prepare_synthetic_replay_asof_prices(
+        series, "2026-07-22"
+    ) == (
+        ("2026-07-20", Decimal("10000.123456789")),
+        ("2026-07-21", Decimal("10001.987654321")),
+        ("2026-07-22", Decimal("10002.111111111")),
+    )
+
+    invalid_dates = (
+        None,
+        20260721,
+        "2026-7-21",
+        "2026-02-30",
+        "2026-07-21T00:00:00",
+        "",
+    )
+
+    for invalid_date in invalid_dates:
+        with pytest.raises(ValueError):
+            prepare_synthetic_replay_asof_prices(
+                series, invalid_date
+            )
+
+    invalid_future = make_row(
+        "2026-07-22", Decimal("NaN")
+    )
+
+    with pytest.raises(ValueError):
+        prepare_synthetic_replay_asof_prices(
+            (before, on_date, invalid_future),
+            "2026-07-21",
+        )
+
+    with pytest.raises(ValueError):
+        prepare_synthetic_replay_asof_prices(
+            (on_date, before),
+            "2026-07-21",
+        )
+
+    assert all(
+        row.persistence_authorized is False
+        for row in series
+    )
