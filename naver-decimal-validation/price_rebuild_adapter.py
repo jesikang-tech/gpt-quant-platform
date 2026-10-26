@@ -14,7 +14,11 @@ from core.naver_source_evidence import (
     ObservationIdentity,
     assess_naver_source_evidence,
 )
-from price_rebuild_preflight import RebuildPreflight
+from price_rebuild_preflight import (
+    RebuildPreflight,
+    RebuildKeyCoverage,
+    assess_rebuild_key_coverage,
+)
 
 
 @dataclass(frozen=True)
@@ -172,6 +176,82 @@ def prepare_bound_synthetic_rebuild_rows(
         adjustment=adjustment, synthetic_fixture=synthetic_fixture,
     )
     return BoundSyntheticRebuildRows(rows, evidence, adjustment, revision_id)
+
+
+@dataclass(frozen=True)
+class SyntheticRebuildRequest:
+    raw_response: bytes
+    evidence: NaverSourceEvidence
+    expected_observation: ObservationIdentity
+    adjustment: str
+    revision_id: str | None = None
+
+
+@dataclass(frozen=True)
+class SyntheticRebuildBatch:
+    pairs: tuple
+    coverage: RebuildKeyCoverage
+    verification_status: str = field(default="SYNTHETIC_ONLY", init=False)
+    provenance_verified: bool = field(default=False, init=False)
+    analysis_authorized: bool = field(default=False, init=False)
+    persistence_authorized: bool = field(default=False, init=False)
+    rebuild_authorized: bool = field(default=False, init=False)
+    execution_authorized: bool = field(default=False, init=False)
+
+    def __post_init__(self):
+        if type(self.pairs) is not tuple or not self.pairs:
+            raise ValueError("Nonempty immutable bound-pair tuple required")
+        if any(type(pair) is not BoundSyntheticRebuildRows for pair in self.pairs):
+            raise ValueError("BoundSyntheticRebuildRows required")
+        if type(self.coverage) is not RebuildKeyCoverage:
+            raise ValueError("RebuildKeyCoverage required")
+        if (self.coverage.status != "COMPLETE_UNVERIFIED"
+                or self.coverage.missing_keys != () or self.coverage.unexpected_keys != ()
+                or self.coverage.expected_count != len(self.pairs)
+                or self.coverage.observed_count != len(self.pairs)):
+            raise ValueError("Complete prepared-pair coverage required")
+        for result in (self.coverage, *self.pairs):
+            if any(getattr(result, name) is not False for name in (
+                "provenance_verified", "analysis_authorized", "persistence_authorized",
+                "rebuild_authorized", "execution_authorized",
+            )):
+                raise ValueError("Synthetic batch authority escalation prohibited")
+
+
+def prepare_synthetic_rebuild_batch(requests, *, expected_keys, synthetic_fixture):
+    """Prepare all requested synthetic pairs or raise without returning a batch.
+
+    expected_keys describes prepared pairs only, not all source observations.
+    Special-row requests fail; no rows, sessions, or revisions are inferred or
+    silently omitted. Intermediate pairs stay local until complete coverage.
+    This function performs no writes, acquisition, or operational dispatch.
+    """
+    if synthetic_fixture is not True:
+        raise ValueError("Explicit synthetic fixture declaration required")
+    if type(requests) not in (tuple, list) or not requests:
+        raise ValueError("Nonempty explicit request collection required")
+    pairs = []
+    for request in requests:
+        if type(request) is not SyntheticRebuildRequest:
+            raise ValueError("SyntheticRebuildRequest required")
+        pairs.append(prepare_bound_synthetic_rebuild_rows(
+            request.raw_response, request.evidence,
+            expected_observation=request.expected_observation,
+            adjustment=request.adjustment, revision_id=request.revision_id,
+            synthetic_fixture=synthetic_fixture,
+        ))
+    coverage = assess_rebuild_key_coverage(
+        expected_keys=expected_keys,
+        observed_keys=[(pair.observation.ticker, pair.observation.observation_date)
+                       for pair in pairs],
+    )
+    if coverage.status != "COMPLETE_UNVERIFIED":
+        raise ValueError("Incomplete synthetic rebuild coverage: "
+                         f"missing={coverage.missing_keys}, unexpected={coverage.unexpected_keys}")
+    ordered = tuple(sorted(pairs, key=lambda pair: (
+        pair.observation.ticker, pair.observation.observation_date,
+    )))
+    return SyntheticRebuildBatch(ordered, coverage)
 
 
 def reject_unverified_rebuild(preflight):

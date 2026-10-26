@@ -8,6 +8,9 @@ import pytest
 
 from price_rebuild_adapter import (
     BoundSyntheticRebuildRows,
+    SyntheticRebuildRequest,
+    SyntheticRebuildBatch,
+    prepare_synthetic_rebuild_batch,
     prepare_bound_synthetic_rebuild_rows,
     prepare_synthetic_rebuild_rows,
     prepare_real_rebuild_rows,
@@ -341,3 +344,163 @@ def test_bound_requires_explicit_synthetic_fixture(declaration):
     raw, evidence = _bound_inputs()
     with pytest.raises(ValueError, match="synthetic fixture"):
         _bound(raw, evidence, synthetic_fixture=declaration)
+
+
+def _batch_request(ticker, day, *, revision_id=None, adjustment="UNADJUSTED"):
+    raw, evidence = _bound_inputs((f"{day.replace('-', '')}|100|110|90|105|1000",))
+    evidence = replace(evidence, observation=replace(
+        evidence.observation, ticker=ticker, observation_date=day,
+    ))
+    return SyntheticRebuildRequest(raw, evidence, evidence.observation, adjustment, revision_id)
+
+
+def _batch_requests():
+    return (
+        _batch_request("BBB", "2026-01-05", revision_id="revision-b"),
+        _batch_request("AAA", "2026-01-05", adjustment="ADJUSTED"),
+        _batch_request("AAA", "2026-01-02", revision_id="revision-a"),
+    )
+
+
+def _request_keys(requests):
+    return [(item.expected_observation.ticker, item.expected_observation.observation_date)
+            for item in requests]
+
+
+def test_batch_multiple_tickers_dates_order_and_evidence_preservation():
+    requests = _batch_requests()
+    result = prepare_synthetic_rebuild_batch(
+        requests, expected_keys=_request_keys(requests), synthetic_fixture=True,
+    )
+    keys = [(pair.observation.ticker, pair.observation.observation_date) for pair in result.pairs]
+    assert keys == [("AAA", "2026-01-02"), ("AAA", "2026-01-05"), ("BBB", "2026-01-05")]
+    assert result.coverage.status == "COMPLETE_UNVERIFIED"
+    assert result.coverage.expected_count == result.coverage.observed_count == 3
+    assert result.verification_status == "SYNTHETIC_ONLY"
+    originals = dict(zip(_request_keys(requests), requests))
+    for key, pair in zip(keys, result.pairs):
+        request = originals[key]
+        assert pair.evidence is request.evidence
+        assert pair.source_sha256 == sha256(request.raw_response).hexdigest()
+        assert pair.adjustment == request.adjustment
+        assert pair.revision_id == request.revision_id
+        assert pair.rows.price_row[:2] == pair.rows.ohlcv_row[:2] == key
+        assert pair.rows.price_row[2] is pair.rows.ohlcv_row[5]
+        assert pair.rows.price_row[2] == Decimal("105")
+        assert pair.persistence_authorized is False
+
+
+def test_batch_input_permutation_produces_identical_complete_result():
+    requests = _batch_requests()
+    first = prepare_synthetic_rebuild_batch(
+        requests, expected_keys=_request_keys(requests), synthetic_fixture=True,
+    )
+    second = prepare_synthetic_rebuild_batch(
+        list(reversed(requests)), expected_keys=list(reversed(_request_keys(requests))),
+        synthetic_fixture=True,
+    )
+    assert first == second
+
+
+def test_batch_duplicate_requests_rejected_without_revision_merging():
+    request = _batch_requests()[0]
+    with pytest.raises(ValueError, match="Duplicate observed key"):
+        prepare_synthetic_rebuild_batch(
+            [request, replace(request, revision_id="other-revision")],
+            expected_keys=_request_keys([request]), synthetic_fixture=True,
+        )
+
+
+@pytest.mark.parametrize("missing", [True, False], ids=["missing", "unexpected"])
+def test_batch_incomplete_expected_coverage_rejected(missing):
+    requests = _batch_requests()
+    expected = _request_keys(requests)
+    expected = expected + [("CCC", "2026-01-02")] if missing else expected[:-1]
+    with pytest.raises(ValueError, match="Incomplete synthetic rebuild coverage"):
+        prepare_synthetic_rebuild_batch(requests, expected_keys=expected, synthetic_fixture=True)
+
+
+def test_batch_later_invalid_request_raises_without_returning_partial_result():
+    requests = _batch_requests()
+    bad = replace(requests[1], raw_response=requests[1].raw_response + b" ")
+    marker = object()
+    returned = marker
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        returned = prepare_synthetic_rebuild_batch(
+            [requests[0], bad], expected_keys=_request_keys(requests[:2]), synthetic_fixture=True,
+        )
+    assert returned is marker
+
+
+def test_batch_special_request_is_rejected_not_omitted():
+    raw, evidence = _bound_inputs(("20260102|0|0|0|105|0",))
+    request = SyntheticRebuildRequest(raw, evidence, evidence.observation, "UNADJUSTED")
+    with pytest.raises(ValueError, match="Special observation"):
+        prepare_synthetic_rebuild_batch(
+            [request], expected_keys=_request_keys([request]), synthetic_fixture=True,
+        )
+
+
+def test_batch_existing_pair_error_propagates_unchanged():
+    request = replace(_batch_requests()[0], adjustment="UNKNOWN")
+    with pytest.raises(ValueError, match="Explicit synthetic adjustment required"):
+        prepare_synthetic_rebuild_batch(
+            [request], expected_keys=_request_keys([request]), synthetic_fixture=True,
+        )
+
+
+@pytest.mark.parametrize("requests", [[], (), None, {}, "requests"])
+def test_batch_requires_nonempty_explicit_requests(requests):
+    with pytest.raises(ValueError, match="Nonempty explicit request collection"):
+        prepare_synthetic_rebuild_batch(requests, expected_keys=[], synthetic_fixture=True)
+
+
+def test_batch_rejects_wrong_request_type():
+    with pytest.raises(ValueError, match="SyntheticRebuildRequest required"):
+        prepare_synthetic_rebuild_batch([{}], expected_keys=[], synthetic_fixture=True)
+
+
+@pytest.mark.parametrize("declaration", [False, None, "true", 1])
+def test_batch_requires_exact_synthetic_fixture(declaration):
+    requests = _batch_requests()
+    with pytest.raises(ValueError, match="synthetic fixture"):
+        prepare_synthetic_rebuild_batch(
+            requests, expected_keys=_request_keys(requests), synthetic_fixture=declaration,
+        )
+
+
+def test_batch_and_nested_results_are_immutable():
+    requests = _batch_requests()
+    result = prepare_synthetic_rebuild_batch(
+        requests, expected_keys=_request_keys(requests), synthetic_fixture=True,
+    )
+    assert type(result.pairs) is tuple
+    assert type(result.coverage.missing_keys) is tuple
+    for target, name, value in (
+        (result, "pairs", ()), (result.coverage, "status", "APPROVED"),
+        (result.pairs[0], "revision_id", "latest"),
+        (result.pairs[0].rows, "price_row", ()),
+        (result.pairs[0].evidence, "caller_claims_verified", True),
+        (requests[0], "adjustment", "ADJUSTED"),
+    ):
+        with pytest.raises(FrozenInstanceError):
+            setattr(target, name, value)
+
+
+@pytest.mark.parametrize("name", [
+    "provenance_verified", "analysis_authorized", "persistence_authorized",
+    "rebuild_authorized", "execution_authorized", "verification_status",
+])
+def test_batch_authority_and_status_are_fixed_and_non_overridable(name):
+    requests = _batch_requests()
+    result = prepare_synthetic_rebuild_batch(
+        requests, expected_keys=_request_keys(requests), synthetic_fixture=True,
+    )
+    value = "APPROVED" if name == "verification_status" else True
+    assert getattr(result, name) == ("SYNTHETIC_ONLY" if name == "verification_status" else False)
+    with pytest.raises(TypeError):
+        SyntheticRebuildBatch(result.pairs, result.coverage, **{name: value})
+    with pytest.raises(FrozenInstanceError):
+        setattr(result, name, value)
+    with pytest.raises(TypeError):
+        replace(result, **{name: value})
