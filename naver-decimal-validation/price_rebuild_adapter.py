@@ -311,3 +311,51 @@ def prepare_synthetic_replay_price_row(rows):
         raise ValueError("PRICE/OHLCV close mismatch")
 
     return (price[1], price[2])
+
+def prepare_synthetic_replay_price_series(rows):
+    """Validate ordered synthetic rows for replay-shaped comparison only.
+
+    No analysis, persistence, database, or provider authorization is implied.
+    """
+    from datetime import date
+
+    if type(rows) is not tuple:
+        raise ValueError("Tuple of synthetic rebuild rows required")
+
+    if not rows:
+        raise ValueError("Nonempty synthetic replay series required")
+
+    result = []
+    previous_date = None
+    ticker = None
+
+    for item in rows:
+        replay_row = prepare_synthetic_replay_price_row(item)
+        observation_date, close_price = replay_row
+
+        if type(observation_date) is not str:
+            raise ValueError("Date string required")
+
+        try:
+            parsed_date = date.fromisoformat(observation_date)
+        except ValueError as exc:
+            raise ValueError("Invalid observation date") from exc
+
+        if parsed_date.isoformat() != observation_date:
+            raise ValueError("Canonical YYYY-MM-DD date required")
+
+        if previous_date is not None and parsed_date <= previous_date:
+            raise ValueError("Duplicate or unordered observation date")
+
+        if ticker is None:
+            ticker = item.ticker
+        elif item.ticker != ticker:
+            raise ValueError("Mixed tickers prohibited")
+
+        if not close_price.is_finite() or close_price <= 0:
+            raise ValueError("Positive finite Decimal close required")
+
+        result.append(replay_row)
+        previous_date = parsed_date
+
+    return tuple(result)

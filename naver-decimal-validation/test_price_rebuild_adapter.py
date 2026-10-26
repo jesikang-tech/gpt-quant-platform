@@ -660,3 +660,64 @@ def test_synthetic_replay_row_contract():
                 ohlcv_row=rows.ohlcv_row,
             )
         )
+
+def test_synthetic_replay_price_series_contract():
+    from decimal import Decimal
+    import pytest
+
+    from price_rebuild_adapter import (
+        SyntheticRebuildRows,
+        prepare_synthetic_replay_price_series,
+    )
+
+    def make_row(day, close, ticker="069500"):
+        return SyntheticRebuildRows(
+            ticker=ticker,
+            price_row=(ticker, day, close),
+            ohlcv_row=(
+                ticker,
+                day,
+                Decimal("9900"),
+                Decimal("10100"),
+                Decimal("9800"),
+                close,
+                Decimal("12345"),
+            ),
+        )
+
+    first = make_row("2026-07-20", Decimal("10000.123456789"))
+    second = make_row("2026-07-21", Decimal("10001.987654321"))
+
+    result = prepare_synthetic_replay_price_series(
+        (first, second)
+    )
+
+    assert result == (
+        ("2026-07-20", Decimal("10000.123456789")),
+        ("2026-07-21", Decimal("10001.987654321")),
+    )
+
+    assert type(result) is tuple
+    assert all(type(row[1]) is Decimal for row in result)
+    assert first.persistence_authorized is False
+    assert second.persistence_authorized is False
+
+    invalid_cases = (
+        (),
+        [first, second],
+        (second, first),
+        (first, first),
+        (first, make_row(
+            "2026-07-21", Decimal("10001"), ticker="114800"
+        )),
+        (make_row("2026-02-30", Decimal("10000")),),
+        (make_row("2026-7-20", Decimal("10000")),),
+        (make_row("2026-07-20", Decimal("0")),),
+        (make_row("2026-07-20", Decimal("-1")),),
+        (make_row("2026-07-20", Decimal("NaN")),),
+        (make_row("2026-07-20", Decimal("Infinity")),),
+    )
+
+    for case in invalid_cases:
+        with pytest.raises(ValueError):
+            prepare_synthetic_replay_price_series(case)
