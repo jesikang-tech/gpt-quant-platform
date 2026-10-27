@@ -177,6 +177,28 @@ jobs:
             python -m pytest -q -p no:cacheprovider \
               --basetemp="$factor_dir/pytest-tmp" \
               naver-decimal-validation/test_factor_decimal_boundary.py
+      - name: Run isolated current analysis Decimal regression
+        if: success()
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: |
+          set -euo pipefail
+          analysis_dir=$(mktemp -d /tmp/current-analysis-decimal.XXXXXX)
+          mkdir -p "$analysis_dir/naver-decimal-validation"
+          cp current_analysis.py "$analysis_dir/current_analysis.py"
+          cp factor_engine.py "$analysis_dir/factor_engine.py"
+          cp config.py "$analysis_dir/config.py"
+          cp naver-decimal-validation/test_factor_decimal_boundary.py \
+            "$analysis_dir/naver-decimal-validation/test_factor_decimal_boundary.py"
+          cp naver-decimal-validation/test_current_analysis_decimal_boundary.py \
+            "$analysis_dir/naver-decimal-validation/test_current_analysis_decimal_boundary.py"
+          cd "$analysis_dir"
+          PYTHONPATH="$analysis_dir/naver-decimal-validation" TMPDIR="$analysis_dir" \
+            python -m pytest -q -p no:cacheprovider \
+              --basetemp="$analysis_dir/pytest-tmp" \
+              naver-decimal-validation/test_current_analysis_decimal_boundary.py
       - name: Run isolated Replay Decimal integration tests
         if: success()
         shell: bash
