@@ -31,4 +31,4 @@ jobs:
           python -m unittest -v \
             pvk.tests.test_core \
             pvk.tests.test_outcome \
-            pvk.tests.test_trust_boundary
+            pvk.tests.test_trust_boundary pvk.tests.test_result_transport_contract
