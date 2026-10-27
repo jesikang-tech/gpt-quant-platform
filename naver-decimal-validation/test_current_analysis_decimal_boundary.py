@@ -9,6 +9,7 @@ import ast
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Optional
 
 import pytest
 
@@ -40,6 +41,7 @@ def _load_analysis_function():
 
     namespace = {
         "Decimal": Decimal,
+        "Optional": Optional,
         "_normalize_analysis_date": lambda value: "2026-09-04",
         "_get_period_config": lambda value: {
             "lookback_trading_days": 2,
