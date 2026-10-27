@@ -59,3 +59,33 @@ execution are part of this scaffold.
 5. Integrate only through explicitly verified authorization gates.
 
 No completion or authorization is implied by this document.
+
+## Existing platform integration boundary
+
+The existing `providers/base_provider.py` defines ETF-list and
+price-DataFrame retrieval methods. It does not establish provenance,
+licensing, adjustment semantics, or observation-time evidence.
+
+The current `FDRProvider` in `providers/fdr_provider.py` invokes the root
+`core.price_provenance_gate` before calling FinanceDataReader.
+The gate currently denies unverified persistence authorization.
+
+KIS and KIWOOM observation adapters must remain independent from:
+- `providers/fdr_provider.py`
+- `collector/etf_collector.py`
+- `collector/price_collector.py`
+- `collector/ohlcv_backfill.py`
+
+Do not register KIS or KIWOOM as operational `BaseProvider`
+implementations until separately approved and verified.
+
+The root provenance gate is a denial boundary, not a source
+certification mechanism. The NAVER-specific gate must not be used
+to certify KIS or KIWOOM.
+
+A synthetic Decimal record does not authorize analysis, dashboard
+display, snapshots, persistence, or database rebuild.
+
+Provider-specific API response fields, licensing, adjustment policy,
+observation timestamps, and independently authenticated provenance
+remain unresolved. No real API request is authorized by this document.
