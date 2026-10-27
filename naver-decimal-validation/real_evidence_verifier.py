@@ -21,6 +21,21 @@ from core.naver_http_response_validation import (
 EXPECTED_TICKERS = frozenset({"005930", "035420", "000660", "005380"})
 
 
+def _validate_rebuild_preflight(ticker, observations, normal, zero, one_unit, error_message):
+    """Check offline rebuild counts without granting persistence authority."""
+    preflight = assess_rebuild_candidates(ticker, observations)
+    if (
+        preflight.total_rows != len(observations)
+        or preflight.normal_rows != normal
+        or preflight.zero_ohlc_rows != zero
+        or preflight.high_below_close_rows != one_unit
+        or preflight.price_candidates != normal
+        or preflight.ohlcv_candidates != normal
+        or preflight.verification_status != "UNVERIFIED"
+        or preflight.persistence_authorized is not False
+    ):
+        raise ValueError(error_message)
+
 def verify_evidence_directory(directory):
     """Verify an explicit directory and return classification summaries."""
     directory = Path(directory)
@@ -91,19 +106,7 @@ def verify_evidence_directory(directory):
                     f"Unexpected special-row authority: {ticker}"
                 )
 
-        preflight = assess_rebuild_candidates(ticker, observations)
-
-        if (
-            preflight.total_rows != len(observations)
-            or preflight.normal_rows != normal
-            or preflight.zero_ohlc_rows != zero
-            or preflight.high_below_close_rows != one_unit
-            or preflight.price_candidates != normal
-            or preflight.ohlcv_candidates != normal
-            or preflight.verification_status != "UNVERIFIED"
-            or preflight.persistence_authorized is not False
-        ):
-            raise ValueError(f"Rebuild preflight mismatch: {ticker}")
+        _validate_rebuild_preflight(ticker, observations, normal, zero, one_unit, f"Rebuild preflight mismatch: {ticker}")
 
         summaries.append({
             "ticker": ticker,
@@ -207,18 +210,7 @@ def verify_selected_evidence_directory(directory, expected_tickers):
             elif item.analysis_authorized is not False:
                 raise ValueError("Unexpected special-row authority")
 
-        preflight = assess_rebuild_candidates(ticker, observations)
-        if (
-            preflight.total_rows != len(observations)
-            or preflight.normal_rows != normal
-            or preflight.zero_ohlc_rows != zero
-            or preflight.high_below_close_rows != one_unit
-            or preflight.price_candidates != normal
-            or preflight.ohlcv_candidates != normal
-            or preflight.verification_status != "UNVERIFIED"
-            or preflight.persistence_authorized is not False
-        ):
-            raise ValueError("Rebuild preflight mismatch")
+        _validate_rebuild_preflight(ticker, observations, normal, zero, one_unit, "Rebuild preflight mismatch")
 
         summaries.append({
             "ticker": ticker,
