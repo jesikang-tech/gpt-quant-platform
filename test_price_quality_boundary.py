@@ -10,6 +10,18 @@ def _reset_quality_test_database(isolated_price_db):
     isolated_price_db.path.unlink()
 from price_quality import check_price_quality
 
+def _create_quality_test_tables(conn):
+    """Create minimal synthetic tables for price-quality boundary tests."""
+    conn.executescript("""
+        CREATE TABLE etf_prices (
+            ticker TEXT, date TEXT, close_price REAL
+        );
+        CREATE TABLE etf_ohlcv_prices (
+            ticker TEXT, date TEXT, close_price REAL
+        );
+    """)
+
+
 
 @pytest.mark.parametrize(
     "legacy,ohlcv",
@@ -27,14 +39,7 @@ def test_invalid_price_values(isolated_price_db, legacy, ohlcv):
     db = isolated_price_db.path
 
     with closing(sqlite3.connect(db)) as conn:
-        conn.executescript("""
-            CREATE TABLE etf_prices (
-                ticker TEXT, date TEXT, close_price REAL
-            );
-            CREATE TABLE etf_ohlcv_prices (
-                ticker TEXT, date TEXT, close_price REAL
-            );
-        """)
+        _create_quality_test_tables(conn)
         conn.execute(
             "INSERT INTO etf_prices VALUES ('TEST', '2026-09-16', ?)",
             (legacy,),
@@ -57,14 +62,7 @@ def test_both_sources_missing(isolated_price_db):
     db = isolated_price_db.path
 
     with closing(sqlite3.connect(db)) as conn:
-        conn.executescript("""
-            CREATE TABLE etf_prices (
-                ticker TEXT, date TEXT, close_price REAL
-            );
-            CREATE TABLE etf_ohlcv_prices (
-                ticker TEXT, date TEXT, close_price REAL
-            );
-        """)
+        _create_quality_test_tables(conn)
         conn.commit()
 
     before = db.read_bytes()
