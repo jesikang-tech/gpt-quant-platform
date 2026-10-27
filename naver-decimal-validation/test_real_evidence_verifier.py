@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from real_evidence_verifier import verify_evidence_directory
+from real_evidence_verifier import verify_evidence_directory, verify_selected_evidence_directory
 
 
 TICKERS = ("005930", "035420", "000660", "005380")
