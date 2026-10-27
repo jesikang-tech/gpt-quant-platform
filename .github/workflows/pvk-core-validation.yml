@@ -1,0 +1,34 @@
+name: PVK Core Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - validation/pvk-independent-core
+    paths:
+      - "pvk/**"
+      - ".github/workflows/pvk-core-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pvk-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Run PVK core unit tests
+        run: |
+          python -m unittest -v \
+            pvk.tests.test_core \
+            pvk.tests.test_outcome \
+            pvk.tests.test_trust_boundary
