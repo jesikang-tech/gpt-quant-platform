@@ -130,3 +130,84 @@ def test_invalid_ohlcv_is_rejected(tmp_path):
 
     with pytest.raises(ValueError, match="Invalid NAVER OHLCV"):
         verify_evidence_directory(tmp_path)
+
+def test_selected_evidence_four_tickers_match_existing_verifier(tmp_path):
+    from real_evidence_verifier import verify_selected_evidence_directory
+
+    _make_evidence(tmp_path)
+
+    existing = verify_evidence_directory(tmp_path)
+    selected = verify_selected_evidence_directory(
+        tmp_path, tuple(reversed(TICKERS))
+    )
+
+    assert {item["ticker"]: item for item in selected} == {
+        item["ticker"]: item for item in existing
+    }
+    assert tuple(item["ticker"] for item in selected) == tuple(sorted(TICKERS))
+
+
+def test_selected_evidence_rejects_incomplete_expected_coverage(tmp_path):
+    from real_evidence_verifier import verify_selected_evidence_directory
+
+    _make_evidence(tmp_path)
+
+    with pytest.raises(ValueError, match="coverage"):
+        verify_selected_evidence_directory(tmp_path, ("005930",))
+
+
+@pytest.mark.parametrize(
+    "tickers",
+    [
+        (),
+        ("005930", "005930"),
+        ("../bad",),
+        ("00593A",),
+        ("005930.xml",),
+        ["005930"],
+    ],
+)
+def test_selected_evidence_rejects_invalid_ticker_contract(tmp_path, tickers):
+    from real_evidence_verifier import verify_selected_evidence_directory
+
+    with pytest.raises(ValueError):
+        verify_selected_evidence_directory(tmp_path, tickers)
+
+
+def test_selected_evidence_rejects_modified_xml(tmp_path):
+    from real_evidence_verifier import verify_selected_evidence_directory
+
+    _make_evidence(tmp_path)
+    path = tmp_path / "005930.xml"
+    path.write_bytes(path.read_bytes() + b"modified")
+
+    with pytest.raises(ValueError, match="Byte count mismatch"):
+        verify_selected_evidence_directory(tmp_path, TICKERS)
+
+
+def test_selected_evidence_rejects_authority_escalation(tmp_path):
+    from real_evidence_verifier import verify_selected_evidence_directory
+
+    manifest = _make_evidence(tmp_path)
+    manifest[0]["provenance_verified"] = True
+    _save_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="Unsafe authorization"):
+        verify_selected_evidence_directory(tmp_path, TICKERS)
+
+def test_selected_evidence_two_tickers_success(tmp_path):
+    from real_evidence_verifier import verify_selected_evidence_directory
+
+    manifest = _make_evidence(tmp_path)
+    selected = ("005930", "035420")
+
+    _save_manifest(
+        tmp_path,
+        [record for record in manifest if record["ticker"] in selected],
+    )
+
+    result = verify_selected_evidence_directory(tmp_path, selected)
+
+    assert tuple(item["ticker"] for item in result) == selected
+    assert all(item["rows"] > 0 for item in result)
+    assert all(len(item["sha256"]) == 64 for item in result)
