@@ -36,6 +36,39 @@ def _validate_rebuild_preflight(ticker, observations, normal, zero, one_unit, er
     ):
         raise ValueError(error_message)
 
+def _verify_observation_payload(raw, expected_bytes, expected_digest, ticker, errors):
+    """Validate explicit offline bytes and return observations with no authority."""
+    if type(expected_bytes) is not int or len(raw) != expected_bytes:
+        raise ValueError(errors["bytes"])
+
+    digest = sha256(raw).hexdigest()
+    if type(expected_digest) is not str or digest != expected_digest:
+        raise ValueError(errors["digest"])
+
+    observations = validate_naver_http_response(raw, expected_digest, ticker)
+    counts = Counter(type(item) for item in observations)
+
+    normal = counts.pop(NaverRawObservation, 0)
+    zero = counts.pop(NaverZeroOhlcSpecialRow, 0)
+    one_unit = counts.pop(NaverHighBelowCloseByOneRow, 0)
+    if counts:
+        raise ValueError(errors["types"])
+
+    for item in observations:
+        if (
+            item.provenance_verified is not False
+            or item.adjustment != "UNKNOWN"
+            or item.persistence_authorized is not False
+        ):
+            raise ValueError(errors["authority"])
+        if type(item) is NaverRawObservation:
+            if hasattr(item, "analysis_authorized"):
+                raise ValueError(errors["raw_analysis"])
+        elif item.analysis_authorized is not False:
+            raise ValueError(errors["special_authority"])
+
+    return observations, digest, normal, zero, one_unit
+
 def verify_evidence_directory(directory):
     """Verify an explicit directory and return classification summaries."""
     directory = Path(directory)
@@ -67,44 +100,22 @@ def verify_evidence_directory(directory):
             raise ValueError(f"Unsafe authorization: {ticker}")
 
         raw = (directory / filename).read_bytes()
-
-        if len(raw) != record["bytes"]:
-            raise ValueError(f"Byte count mismatch: {ticker}")
-
-        digest = sha256(raw).hexdigest()
-        if digest != record["sha256"]:
-            raise ValueError(f"SHA-256 mismatch: {ticker}")
-
-        observations = validate_naver_http_response(
-            raw, record["sha256"], ticker
+        observations, digest, normal, zero, one_unit = (
+            _verify_observation_payload(
+                raw,
+                record["bytes"],
+                record["sha256"],
+                ticker,
+                {
+                    "bytes": f"Byte count mismatch: {ticker}",
+                    "digest": f"SHA-256 mismatch: {ticker}",
+                    "types": f"Unexpected observation types: {ticker}",
+                    "authority": f"Unexpected authority: {ticker}",
+                    "raw_analysis": f"Unexpected raw analysis authority: {ticker}",
+                    "special_authority": f"Unexpected special-row authority: {ticker}",
+                },
+            )
         )
-
-        counts = Counter(type(item) for item in observations)
-
-        normal = counts.pop(NaverRawObservation, 0)
-        zero = counts.pop(NaverZeroOhlcSpecialRow, 0)
-        one_unit = counts.pop(NaverHighBelowCloseByOneRow, 0)
-
-        if counts:
-            raise ValueError(f"Unexpected observation types: {ticker}")
-
-        for item in observations:
-            if (
-                item.provenance_verified is not False
-                or item.adjustment != "UNKNOWN"
-                or item.persistence_authorized is not False
-            ):
-                raise ValueError(f"Unexpected authority: {ticker}")
-
-            if type(item) is NaverRawObservation:
-                if hasattr(item, "analysis_authorized"):
-                    raise ValueError(
-                        f"Unexpected raw analysis authority: {ticker}"
-                    )
-            elif item.analysis_authorized is not False:
-                raise ValueError(
-                    f"Unexpected special-row authority: {ticker}"
-                )
 
         _validate_rebuild_preflight(ticker, observations, normal, zero, one_unit, f"Rebuild preflight mismatch: {ticker}")
 
@@ -176,39 +187,26 @@ def verify_selected_evidence_directory(directory, expected_tickers):
         raw = (directory / filename).read_bytes()
         if type(record.get("bytes")) is not int:
             raise ValueError("Invalid byte count")
-        if len(raw) != record["bytes"]:
-            raise ValueError("Byte count mismatch")
 
-        digest = sha256(raw).hexdigest()
         if type(record.get("sha256")) is not str:
             raise ValueError("Invalid digest")
-        if digest != record["sha256"]:
-            raise ValueError("SHA-256 mismatch")
 
-        observations = validate_naver_http_response(
-            raw, record["sha256"], ticker
+        observations, digest, normal, zero, one_unit = (
+            _verify_observation_payload(
+                raw,
+                record["bytes"],
+                record["sha256"],
+                ticker,
+                {
+                    "bytes": "Byte count mismatch",
+                    "digest": "SHA-256 mismatch",
+                    "types": "Unexpected observation type",
+                    "authority": "Unexpected observation authority",
+                    "raw_analysis": "Unexpected raw analysis authority",
+                    "special_authority": "Unexpected special-row authority",
+                },
+            )
         )
-        counts = Counter(type(item) for item in observations)
-
-        normal = counts.pop(NaverRawObservation, 0)
-        zero = counts.pop(NaverZeroOhlcSpecialRow, 0)
-        one_unit = counts.pop(NaverHighBelowCloseByOneRow, 0)
-
-        if counts:
-            raise ValueError("Unexpected observation type")
-
-        for item in observations:
-            if (
-                item.provenance_verified is not False
-                or item.adjustment != "UNKNOWN"
-                or item.persistence_authorized is not False
-            ):
-                raise ValueError("Unexpected observation authority")
-            if type(item) is NaverRawObservation:
-                if hasattr(item, "analysis_authorized"):
-                    raise ValueError("Unexpected raw analysis authority")
-            elif item.analysis_authorized is not False:
-                raise ValueError("Unexpected special-row authority")
 
         _validate_rebuild_preflight(ticker, observations, normal, zero, one_unit, "Rebuild preflight mismatch")
 

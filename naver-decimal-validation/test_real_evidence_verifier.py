@@ -211,3 +211,35 @@ def test_selected_evidence_two_tickers_success(tmp_path):
     assert tuple(item["ticker"] for item in result) == selected
     assert all(item["rows"] > 0 for item in result)
     assert all(len(item["sha256"]) == 64 for item in result)
+
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("bytes", True),
+        ("bytes", "123"),
+        ("bytes", None),
+        ("sha256", 123),
+        ("sha256", None),
+    ],
+)
+@pytest.mark.parametrize(
+    "verifier",
+    [
+        verify_evidence_directory,
+        verify_selected_evidence_directory,
+    ],
+)
+def test_invalid_manifest_metadata_types_are_rejected(
+    tmp_path, field, value, verifier
+):
+    manifest = _make_evidence(tmp_path)
+    manifest[0][field] = value
+    _save_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError):
+        if verifier is verify_selected_evidence_directory:
+            verifier(tmp_path, TICKERS)
+        else:
+            verifier(tmp_path)
