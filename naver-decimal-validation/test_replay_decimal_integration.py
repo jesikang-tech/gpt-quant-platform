@@ -230,3 +230,60 @@ def test_repository_close_text_mismatch_blocks_replay_evaluation(
     assert not conn.in_transaction
     with pytest.raises(AssertionError, match="^DATABASE_ACCESS_FORBIDDEN$"):
         engine._get_historical_prices(ticker)
+
+
+def test_synthetic_asof_prices_exclude_future_before_replay(monkeypatch):
+    from price_rebuild_adapter import (
+        SyntheticRebuildRows,
+        prepare_synthetic_replay_asof_prices,
+    )
+
+    engine_type = _load_replay_without_database(monkeypatch)
+    historical = _synthetic_prices()
+    analysis_date = historical[-1][0]
+    future_date = (
+        date.fromisoformat(analysis_date) + timedelta(days=1)
+    ).isoformat()
+
+    def make_row(day, close):
+        return SyntheticRebuildRows(
+            ticker="SYNTHETIC_REPLAY",
+            price_row=("SYNTHETIC_REPLAY", day, close),
+            ohlcv_row=(
+                "SYNTHETIC_REPLAY",
+                day,
+                close,
+                close,
+                close,
+                close,
+                Decimal("1000"),
+            ),
+        )
+
+    rows = tuple(make_row(day, close) for day, close in historical)
+    rows += (make_row(future_date, Decimal("999999")),)
+
+    selected = prepare_synthetic_replay_asof_prices(
+        rows, analysis_date
+    )
+
+    assert selected == historical
+    assert len(selected) == 70
+    assert all(day <= analysis_date for day, _ in selected)
+
+    engine = engine_type(analysis_date)
+    calls = []
+
+    def synthetic_prices(ticker):
+        calls.append(ticker)
+        assert ticker == "SYNTHETIC_REPLAY"
+        return selected
+
+    engine._get_historical_prices = synthetic_prices
+    result = engine._evaluate_ticker("SYNTHETIC_REPLAY")
+
+    assert calls == ["SYNTHETIC_REPLAY"]
+    assert result is not None
+    assert result["trading_days"] == 70
+    assert result["analysis_date"] == analysis_date
+    assert result["return_rate"] > 15
