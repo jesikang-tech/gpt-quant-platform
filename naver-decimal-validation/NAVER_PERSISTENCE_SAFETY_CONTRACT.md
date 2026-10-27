@@ -41,13 +41,18 @@ substitute for independent evidence.
 
 ## 4. Existing storage routes
 
-Legacy collection and backfill routes must be assessed against
-their current fail-closed provenance enforcement. In particular,
-the tracked OHLCV backfill implementation calls the shared
-provenance assessment before its protected processing paths.
+The inspected legacy price collector, bulk collector, incremental
+updater, OHLCV backfill, repository PRICE/OHLCV writers, and direct
+FDR provider contain calls to the shared provenance assessment and
+persistence-authorization gate.
 
-The full behavior of all legacy FDR routes has not been
-established by this document review.
+Existing isolated regressions cover rejection before selected fetch,
+discovery, delegation, and database-access operations. These tests
+establish the specified fail-closed contracts, not exhaustive
+protection of every possible runtime path.
+
+No legacy source is thereby authenticated or licensed. Any future
+NAVER integration requires separate evidence and authorization.
 
 No existing route authorizes unverified NAVER observations,
 and no NAVER-to-operational-repository connection is approved.
