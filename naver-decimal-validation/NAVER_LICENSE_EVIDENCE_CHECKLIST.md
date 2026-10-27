@@ -50,12 +50,12 @@ scope; do not treat a general partnership reply as a blanket data license.
 | [Rebuild preflight](price_rebuild_preflight.py) | Counts candidate rows without writes | Real-data rebuild approval; outputs remain UNVERIFIED |
 | [Persistence safety contract](NAVER_PERSISTENCE_SAFETY_CONTRACT.md) | Mandatory prerequisites and separate operational approval requirement | Current permission to collect or write |
 
-The persistence safety document is **DRAFT / PARTIAL / DENIED**. Its statements
-that legacy routes and FDR behavior remain unchanged require reconciliation with
-newer fail-closed collection, repository writer, backfill, and direct FDR fetch
-changes. Treat those historical statements as pending reconciliation, not as
-permission or an instruction to weaken enforcement. This checklist does not
-modify that document or replace its denial.
+The persistence safety document remains **DRAFT / PARTIAL / DENIED**.
+Its legacy collection, repository writer, backfill, and direct FDR
+descriptions were reconciled with the inspected shared provenance gates.
+The current checks do not establish exhaustive runtime-path protection,
+source authentication, licensing rights, or operational authorization.
+All existing denial boundaries remain in force.
 
 ## Evidence records
 
