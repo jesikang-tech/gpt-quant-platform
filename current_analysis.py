@@ -492,7 +492,7 @@ def get_current_analysis_data(
         enough_data += 1
 
         close_prices = [
-            float(price[1])
+            price[1] if isinstance(price[1], Decimal) else float(price[1])
             for price in prices[-lookback_trading_days:]
         ]
 
