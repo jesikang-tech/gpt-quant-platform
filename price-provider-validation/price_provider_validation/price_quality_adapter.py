@@ -69,7 +69,12 @@ def assess_provider_price_quality(quality_input):
         quality_input.ohlcv,
     )
 
-    return assess_trading_session(
-        quality_input.ohlcv[3],
-        quality_input.ohlcv,
-    )
+    try:
+        return assess_trading_session(
+            quality_input.ohlcv[3],
+            quality_input.ohlcv,
+        )
+    except ValueError as exc:
+        raise ProviderObservationRejected(
+            "Invalid provider OHLCV numeric field"
+        ) from exc
