@@ -5,7 +5,7 @@ No provider certification, database access, or operational authorization.
 
 from dataclasses import dataclass
 
-from .provider_contract import RawPriceObservation, ProviderObservationRejected
+from .provider_contract import RawPriceObservation, ProviderObservationRejected, prepare_raw_observation
 from .ohlcv_mapping import OhlcvFieldMapping, map_raw_ohlcv
 
 
@@ -61,6 +61,13 @@ def assess_provider_price_quality(quality_input):
 
     if type(quality_input.ohlcv) is not tuple or len(quality_input.ohlcv) != 5:
         raise ProviderObservationRejected("Five OHLCV fields required")
+
+    prepare_raw_observation(
+        quality_input.provider,
+        quality_input.ticker,
+        quality_input.observation_date,
+        quality_input.ohlcv,
+    )
 
     return assess_trading_session(
         quality_input.ohlcv[3],

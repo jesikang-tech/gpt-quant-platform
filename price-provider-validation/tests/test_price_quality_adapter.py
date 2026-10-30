@@ -175,3 +175,41 @@ def test_shared_quality_classifier_rejects_invalid_numeric(invalid):
     quality = _quality_input(("100", "110", "90", invalid, "1000"))
     with pytest.raises(ValueError):
         assess_provider_price_quality(quality)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"provider": "NAVER"},
+        {"provider": "kis"},
+        {"provider": None},
+        {"ticker": ""},
+        {"ticker": " 005930"},
+        {"ticker": "005930 "},
+        {"ticker": None},
+        {"observation_date": "2026-02-30"},
+        {"observation_date": "20261028"},
+        {"observation_date": "2026-10-28 "},
+        {"observation_date": None},
+    ],
+)
+def test_quality_classifier_rejects_invalid_identity(changes):
+    quality = replace(
+        _quality_input(("100", "110", "90", "105", "1000")),
+        **changes,
+    )
+    with pytest.raises(ProviderObservationRejected):
+        assess_provider_price_quality(quality)
+
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_quality_classifier_valid_identity_remains_unverified(provider):
+    quality = replace(
+        _quality_input(("100", "110", "90", "105", "1000")),
+        provider=provider,
+    )
+    decision = assess_provider_price_quality(quality)
+    assert decision.status == "CANDIDATE"
+    assert decision.reason == "STRUCTURALLY_VALID_UNVERIFIED"
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
