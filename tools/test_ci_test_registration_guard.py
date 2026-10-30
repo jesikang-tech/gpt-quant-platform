@@ -152,3 +152,69 @@ def test_nested_test_file_is_rejected(tmp_path):
         match="Unsupported nested test files",
     ):
         check_registration(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "disabled_job",
+    ["synthetic-contract", "ci-registration-guard"],
+)
+def test_disabled_ci_execution_is_rejected(tmp_path, disabled_job):
+    workflow = make_fixture(tmp_path)
+    text = workflow.read_text(encoding="utf-8")
+    marker = f"  {disabled_job}:\n"
+    assert text.count(marker) == 1
+    text = text.replace(
+        marker,
+        marker + "    if: false\n",
+        1,
+    )
+    workflow.write_text(text, encoding="utf-8")
+
+    with pytest.raises(RegistrationError):
+        check_registration(tmp_path)
+
+
+def test_disabled_test_execution_step_is_rejected(tmp_path):
+    workflow = make_fixture(tmp_path)
+    text = workflow.read_text(encoding="utf-8")
+    marker = "      - run: python -m pytest -q "
+    assert text.count(marker) == 1
+    text = text.replace(
+        marker,
+        "      - if: false\n" + marker,
+        1,
+    )
+    workflow.write_text(text, encoding="utf-8")
+
+    with pytest.raises(RegistrationError):
+        check_registration(tmp_path)
+
+
+def test_unrelated_job_condition_is_ignored(tmp_path):
+    workflow = make_fixture(tmp_path)
+    text = workflow.read_text(encoding="utf-8")
+    text += (
+        "  unrelated-job:\n"
+        "    if: false\n"
+        "    steps:\n"
+        "      - run: echo unrelated\n"
+    )
+    workflow.write_text(text, encoding="utf-8")
+
+    assert len(check_registration(tmp_path)) == 2
+
+
+def test_conditional_guard_step_is_rejected(tmp_path):
+    workflow = make_fixture(tmp_path)
+    text = workflow.read_text(encoding="utf-8")
+    marker = "      - run: python tools/ci_test_registration_guard.py\n"
+    assert text.count(marker) == 1
+    text = text.replace(
+        marker,
+        "      - if: false\n" + marker,
+        1,
+    )
+    workflow.write_text(text, encoding="utf-8")
+
+    with pytest.raises(RegistrationError):
+        check_registration(tmp_path)

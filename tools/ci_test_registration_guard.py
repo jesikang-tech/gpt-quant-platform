@@ -9,6 +9,39 @@ class RegistrationError(ValueError):
     """Unsupported or inconsistent CI test registration."""
 
 
+def reject_conditional_execution(text: str) -> None:
+    """Reject conditional execution in the two required CI jobs."""
+    required_jobs = ("synthetic-contract", "ci-registration-guard")
+    lines = text.splitlines()
+
+    job_positions = [
+        (index, match.group(1))
+        for index, line in enumerate(lines)
+        if (match := re.fullmatch(r"  ([A-Za-z0-9_-]+):\s*", line))
+    ]
+
+    for job_name in required_jobs:
+        matches = [
+            index for index, name in job_positions if name == job_name
+        ]
+
+        if len(matches) != 1:
+            raise RegistrationError(
+                f"Required CI job missing or duplicated: {job_name}"
+            )
+
+        start = matches[0]
+        end = next(
+            (index for index, _ in job_positions if index > start),
+            len(lines),
+        )
+
+        for line in lines[start + 1:end]:
+            if re.match(r"^\s+if\s*:", line):
+                raise RegistrationError(
+                    f"Conditional CI execution unsupported: {job_name}"
+                )
+
 def check_registration(root: Path) -> tuple[str, ...]:
     root = Path(root)
     tests_dir = root / "price-provider-validation" / "tests"
@@ -47,6 +80,8 @@ def check_registration(root: Path) -> tuple[str, ...]:
 
     if end <= start:
         raise RegistrationError("Invalid CI job order")
+
+    reject_conditional_execution(text)
 
     scoped_text = text[start:end]
 
