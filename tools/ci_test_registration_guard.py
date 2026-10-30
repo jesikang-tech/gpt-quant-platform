@@ -37,7 +37,7 @@ def reject_conditional_execution(text: str) -> None:
         )
 
         for line in lines[start + 1:end]:
-            if re.match(r"^\s+if\s*:", line):
+            if re.match(r"^\s*(?:-\s*)?if\s*:", line):
                 raise RegistrationError(
                     f"Conditional CI execution unsupported: {job_name}"
                 )
