@@ -181,7 +181,8 @@ def test_disabled_test_execution_step_is_rejected(tmp_path):
     assert text.count(marker) == 1
     text = text.replace(
         marker,
-        "      - if: false\n" + marker,
+        "      - if: false\n        run: python -m pytest -q "
+        + "tests/test_alpha.py tests/test_beta.py\n",
         1,
     )
     workflow.write_text(text, encoding="utf-8")
@@ -211,7 +212,8 @@ def test_conditional_guard_step_is_rejected(tmp_path):
     assert text.count(marker) == 1
     text = text.replace(
         marker,
-        "      - if: false\n" + marker,
+        "      - if: false\n"
+        "        run: python tools/ci_test_registration_guard.py\n",
         1,
     )
     workflow.write_text(text, encoding="utf-8")
