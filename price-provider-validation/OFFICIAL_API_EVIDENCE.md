@@ -138,3 +138,32 @@ Unverified:
 No live API call, provider activation, analysis,
 dashboard, persistence, database rebuild, automatic
 fallback or broker operation is authorized.
+
+
+## Official route documentation reconciliation
+
+Review date: 2026-10-30
+Status: OFFICIAL_DOCUMENT_ROUTE_IDENTIFIED / RUNTIME_UNVERIFIED
+
+Official Kiwoom API detail pages:
+- https://openapi.kiwoom.com/m/guide/apiguide/08/ka10081
+- https://openapi.kiwoom.com/m/guide/apiguide/08/ka10086
+
+Read-only inspection of both official pages confirmed:
+- Displayed URL: /api/dostk/acnt
+- Request API identifier header: api-id
+- Neither page contained /api/dostk/chart.
+
+The earlier /api/dostk/chart claim came from
+secondary reference material, not these official pages.
+
+Documentation-level route comparison: RESOLVED.
+Actual endpoint execution and server acceptance: UNVERIFIED.
+
+The existing local provider validation modules do not
+implement a live HTTP transport or authorize API dispatch.
+
+This record does not authorize real API calls, broker
+access, source certification, adjustment certification,
+analysis, dashboard use, persistence, database rebuild,
+or automatic provider fallback.
