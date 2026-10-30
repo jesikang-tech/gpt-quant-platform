@@ -149,3 +149,41 @@ def test_pair_decision_has_no_source_selection_or_fallback():
     assert not hasattr(decision, "fallback_provider")
     assert not hasattr(decision, "preferred_provider")
     _assert_denied(decision)
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"ticker": ""},
+        {"ticker": " 005930"},
+        {"ticker": "005930 "},
+        {"observation_date": ""},
+        {"observation_date": "2026-02-30"},
+        {"observation_date": "20261028"},
+        {"observation_date": "2026-10-28 "},
+    ],
+)
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_mutated_observation_identity_rejected(provider, changes):
+    changed = replace(_observation(provider), **changes)
+    kis = changed if provider == "KIS" else _observation("KIS")
+    kiwoom = changed if provider == "KIWOOM" else _observation("KIWOOM")
+
+    with pytest.raises(ProviderObservationRejected):
+        assess_provider_pair(kis, kiwoom)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"ticker": ""},
+        {"observation_date": "2026-02-30"},
+    ],
+)
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_mutated_observation_rejected_even_if_other_missing(provider, changes):
+    changed = replace(_observation(provider), **changes)
+    kis = changed if provider == "KIS" else None
+    kiwoom = changed if provider == "KIWOOM" else None
+
+    with pytest.raises(ProviderObservationRejected):
+        assess_provider_pair(kis, kiwoom)

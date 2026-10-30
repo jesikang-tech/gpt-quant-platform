@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from .provider_contract import (
     ProviderObservationRejected,
     RawPriceObservation,
+    prepare_raw_observation,
 )
 
 
@@ -44,13 +45,13 @@ def assess_provider_pair(kis_observation, kiwoom_observation):
                 "Unverified adjustment must remain UNKNOWN"
             )
 
-        if (
-            type(observation.raw_fields) is not tuple
-            or len(observation.raw_fields) != 5
-        ):
-            raise ProviderObservationRejected(
-                "Invalid raw provider fields"
-            )
+        # Reuse the provider-neutral contract for ticker, date, and field shape.
+        prepare_raw_observation(
+            observation.provider,
+            observation.ticker,
+            observation.observation_date,
+            observation.raw_fields,
+        )
 
     if kis_observation is None or kiwoom_observation is None:
         return ProviderPairDecision(
