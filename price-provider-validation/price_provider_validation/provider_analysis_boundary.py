@@ -79,3 +79,34 @@ def assess_provider_analysis_boundary(
         status=provenance.status,
         reason="UNVERIFIED_PROVIDER_PROVENANCE_ADJUSTMENT_AND_TRADING_DAY",
     )
+def invoke_provider_analysis(decision, analysis_callback):
+    """Never execute analysis for uncertified provider observations."""
+    from core.price_provenance_gate import (
+        PriceProvenanceRejected,
+        require_analysis_authorization,
+        assess_price_provenance,
+    )
+
+    if type(decision) is not ProviderAnalysisBoundaryDecision:
+        raise ProviderObservationRejected("Invalid analysis boundary decision")
+
+    if (
+        decision.status != "BLOCKED"
+        or decision.analysis_authorized is not False
+        or decision.dashboard_authorized is not False
+        or decision.snapshot_authorized is not False
+        or decision.persistence_authorized is not False
+    ):
+        raise ProviderObservationRejected("Analysis boundary authority escalation")
+
+    if not callable(analysis_callback):
+        raise ProviderObservationRejected("Invalid analysis callback")
+
+    provenance = assess_price_provenance(
+        provider=decision.provider,
+        adjustment="UNKNOWN",
+    )
+
+    require_analysis_authorization(provenance)
+
+    raise PriceProvenanceRejected("Unreachable analysis boundary")

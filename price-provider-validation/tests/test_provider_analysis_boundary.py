@@ -136,3 +136,96 @@ def test_adjustment_escalation_rejected():
         assess_provider_analysis_boundary(
             observation, evidence, trading_day
         )
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_analysis_callback_never_executed(provider):
+    from core.price_provenance_gate import PriceProvenanceRejected
+    from price_provider_validation.provider_analysis_boundary import (
+        invoke_provider_analysis,
+    )
+
+    observation = prepare_raw_observation(
+        provider, "005930", "2026-10-29",
+        ("100", "110", "90", "105", "1000"),
+    )
+    decision = assess_provider_analysis_boundary(
+        observation,
+        ProviderEvidenceDecision(reason="UNVERIFIED"),
+        TradingDayCertificationDecision(
+            "CANDIDATE", "STRUCTURALLY_VALID_UNVERIFIED", True
+        ),
+    )
+
+    calls = []
+
+    def callback():
+        calls.append("EXECUTED")
+        return "UNSAFE"
+
+    with pytest.raises(PriceProvenanceRejected):
+        invoke_provider_analysis(decision, callback)
+
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("status", "AUTHORIZED"),
+        ("analysis_authorized", True),
+        ("dashboard_authorized", True),
+        ("snapshot_authorized", True),
+        ("persistence_authorized", True),
+    ],
+)
+def test_forged_analysis_boundary_rejected(field, value):
+    from price_provider_validation.provider_analysis_boundary import (
+        ProviderAnalysisBoundaryDecision,
+        invoke_provider_analysis,
+    )
+
+    decision = replace(
+        ProviderAnalysisBoundaryDecision(
+            provider="KIS",
+            ticker="005930",
+            observation_date="2026-10-29",
+            status="BLOCKED",
+            reason="UNVERIFIED",
+        ),
+        **{field: value},
+    )
+
+    calls = []
+
+    with pytest.raises(ProviderObservationRejected):
+        invoke_provider_analysis(
+            decision, lambda: calls.append("EXECUTED")
+        )
+
+    assert calls == []
+
+
+def test_invalid_analysis_decision_rejected():
+    from price_provider_validation.provider_analysis_boundary import (
+        invoke_provider_analysis,
+    )
+
+    with pytest.raises(ProviderObservationRejected):
+        invoke_provider_analysis(object(), lambda: None)
+
+
+def test_invalid_analysis_callback_rejected():
+    from price_provider_validation.provider_analysis_boundary import (
+        ProviderAnalysisBoundaryDecision,
+        invoke_provider_analysis,
+    )
+
+    decision = ProviderAnalysisBoundaryDecision(
+        provider="KIS",
+        ticker="005930",
+        observation_date="2026-10-29",
+        status="BLOCKED",
+        reason="UNVERIFIED",
+    )
+
+    with pytest.raises(ProviderObservationRejected):
+        invoke_provider_analysis(decision, None)
