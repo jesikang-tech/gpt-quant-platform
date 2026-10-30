@@ -55,3 +55,20 @@ def assess_provider_evidence(evidence):
     if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
         raise ProviderEvidenceRejected("Invalid SHA256 format")
     return ProviderEvidenceDecision(reason="INDEPENDENT_PROVIDER_PROVENANCE_NOT_VERIFIED")
+
+def assess_observation_evidence_binding(observation, evidence):
+    """Check identity binding only; never certify provenance or authorize use."""
+    from .provider_contract import RawPriceObservation
+
+    if type(observation) is not RawPriceObservation:
+        raise ProviderEvidenceRejected("Invalid observation type")
+    decision = assess_provider_evidence(evidence)
+    if observation.provider != evidence.provider:
+        raise ProviderEvidenceRejected("Provider mismatch")
+    if observation.ticker != evidence.ticker:
+        raise ProviderEvidenceRejected("Ticker mismatch")
+    if observation.observation_date != evidence.observation_date:
+        raise ProviderEvidenceRejected("Observation date mismatch")
+    if observation.adjustment != "UNKNOWN":
+        raise ProviderEvidenceRejected("Observation adjustment must remain UNKNOWN")
+    return decision
