@@ -80,3 +80,37 @@ Tag:
 `price-providers-synthetic-ci-baseline-20261030`
 
 This document does not alter that baseline.
+
+## Nested Test Directory Protection
+
+The registration guard additionally scans the test directory
+recursively for files matching `test_*.py`.
+
+Nested test files are not supported by the current explicit
+file-registration contract.
+
+If a matching test file is discovered below a subdirectory,
+the guard raises `RegistrationError` and fails closed.
+
+This prevents nested test files from being silently omitted
+from the isolated provider CI workflow.
+
+The existing top-level test registration format is unchanged.
+
+### Additional Regression Evidence
+
+- Commit: `20b7a9fa773483758b3f9757eedbb6a09a3dce74`
+- GitHub Actions run: `40992366069`
+- Workflow conclusion: `success`
+- `synthetic-contract`: `success`
+- `ci-registration-guard`: `success`
+- Added regression: `test_nested_test_file_is_rejected`
+
+### Remaining Scope Limitations
+
+This protection applies only to the isolated
+`price-provider-validation/tests` tree and its configured workflow.
+
+It does not verify all tests elsewhere in the repository.
+It does not authorize production data acquisition, analysis,
+persistence, database rebuilding or broker execution.
