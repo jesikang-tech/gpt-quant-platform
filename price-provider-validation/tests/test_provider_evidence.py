@@ -136,7 +136,7 @@ def test_raw_byte_binding_identity_mismatch_rejected():
 @pytest.mark.parametrize("acquired_at", [
     "2026-10-27T23:59:59+09:00",
     "2026-10-27T00:00:00+09:00",
-    "2026-10-27T23:59:59Z",
+    "2026-10-27T14:59:59Z",
 ])
 def test_acquisition_time_precedes_observation_date_rejected(acquired_at):
     with pytest.raises(
