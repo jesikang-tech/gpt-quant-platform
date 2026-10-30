@@ -37,4 +37,4 @@ jobs:
         env:
           PYTHONPATH: .
           PYTHONDONTWRITEBYTECODE: "1"
-        run: python -m pytest -q tests/test_provider_ohlcv_contract.py tests/test_existing_decimal_reuse.py tests/test_provider_evidence.py
+        run: python -m pytest -q tests/test_provider_ohlcv_contract.py tests/test_existing_decimal_reuse.py tests/test_provider_evidence.py tests/test_price_quality_adapter.py
