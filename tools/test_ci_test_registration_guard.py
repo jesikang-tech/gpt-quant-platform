@@ -31,7 +31,7 @@ def make_fixture(tmp_path, names=("test_alpha.py", "test_beta.py"), arguments=No
         "jobs:\n"
         "  synthetic-contract:\n"
         "    steps:\n"
-        f        "      - run: {command}\n"
+        f"      - run: {command}\n"
         "  ci-registration-guard:\n"
         "    steps:\n"
         "      - run: python tools/ci_test_registration_guard.py\n",

@@ -55,7 +55,7 @@ def check_registration(root: Path) -> tuple[str, ...]:
 
     tokens = command.split()
 
-        if tokens and tokens[0] == "-":
+    if tokens and tokens[0] == "-":
         tokens = tokens[1:]
 
     if tokens[:5] != ["run:", "python", "-m", "pytest", "-q"]:
