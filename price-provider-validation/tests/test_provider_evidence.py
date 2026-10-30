@@ -95,3 +95,39 @@ def test_binding_adjustment_escalation_rejected():
 def test_binding_invalid_observation_type_rejected():
     with pytest.raises(ProviderEvidenceRejected):
         assess_observation_evidence_binding(object(), _evidence())
+
+from hashlib import sha256
+from price_provider_validation.provider_evidence import assess_raw_bytes_evidence_binding
+
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_raw_byte_binding_valid_remains_denied(provider):
+    body = b"original daily response bytes"
+    evidence = _evidence(provider=provider, content_sha256=sha256(body).hexdigest())
+    decision = assess_raw_bytes_evidence_binding(_observation(provider), evidence, body)
+    assert decision.status == "DENIED"
+    assert decision.independently_verified is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
+
+
+def test_raw_byte_binding_modified_body_rejected():
+    body = b"original daily response bytes"
+    evidence = _evidence(content_sha256=sha256(body).hexdigest())
+    with pytest.raises(ProviderEvidenceRejected, match="SHA256 mismatch"):
+        assess_raw_bytes_evidence_binding(_observation(), evidence, body + b" changed")
+
+
+@pytest.mark.parametrize("invalid", ["text", bytearray(b"raw"), None, 123])
+def test_raw_byte_binding_non_bytes_rejected(invalid):
+    body = b"original daily response bytes"
+    evidence = _evidence(content_sha256=sha256(body).hexdigest())
+    with pytest.raises(ProviderEvidenceRejected, match="must be bytes"):
+        assess_raw_bytes_evidence_binding(_observation(), evidence, invalid)
+
+
+def test_raw_byte_binding_identity_mismatch_rejected():
+    body = b"original daily response bytes"
+    evidence = _evidence(provider="KIWOOM", content_sha256=sha256(body).hexdigest())
+    with pytest.raises(ProviderEvidenceRejected, match="Provider mismatch"):
+        assess_raw_bytes_evidence_binding(_observation(), evidence, body)

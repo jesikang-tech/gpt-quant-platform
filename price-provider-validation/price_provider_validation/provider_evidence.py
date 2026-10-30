@@ -72,3 +72,16 @@ def assess_observation_evidence_binding(observation, evidence):
     if observation.adjustment != "UNKNOWN":
         raise ProviderEvidenceRejected("Observation adjustment must remain UNKNOWN")
     return decision
+
+def assess_raw_bytes_evidence_binding(observation, evidence, raw_response):
+    """Check supplied original bytes against a claimed digest; grant no authority."""
+    from hashlib import sha256
+    from hmac import compare_digest
+
+    decision = assess_observation_evidence_binding(observation, evidence)
+    if type(raw_response) is not bytes:
+        raise ProviderEvidenceRejected("Raw response must be bytes")
+    actual_digest = sha256(raw_response).hexdigest()
+    if not compare_digest(actual_digest, evidence.content_sha256):
+        raise ProviderEvidenceRejected("Raw response SHA256 mismatch")
+    return decision
