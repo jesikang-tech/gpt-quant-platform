@@ -114,3 +114,21 @@ This protection applies only to the isolated
 It does not verify all tests elsewhere in the repository.
 It does not authorize production data acquisition, analysis,
 persistence, database rebuilding or broker execution.
+
+## Conditional Execution Detection Final Verification
+
+- Fix commit: `e39ee21b9f843914038decbb009c015811d78135`
+- GitHub Actions run: `40993889539`
+- Workflow conclusion: **success**
+- `synthetic-contract`: success
+- `ci-registration-guard`: success
+- Job-level conditional execution detection: covered
+- Step-level conditional execution detection: covered
+
+The corrected conditional execution regression suite passed
+in GitHub Actions.
+
+This verification applies only to the isolated provider
+contract workflow. It does not certify repository-wide CI
+coverage or authorize operational price analysis,
+persistence, database rebuilding, or broker execution.
