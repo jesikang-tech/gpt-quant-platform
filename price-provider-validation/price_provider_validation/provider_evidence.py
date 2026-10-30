@@ -99,7 +99,11 @@ def assess_observation_evidence_binding(observation, evidence):
     return decision
 
 def assess_raw_bytes_evidence_binding(observation, evidence, raw_response):
-    """Check supplied original bytes against a claimed digest; grant no authority."""
+    """Compare supplied bytes with a claimed digest; grant no authority.
+
+    This does not establish that the observation was parsed from those bytes,
+    authenticate the claimed source, or certify adjustment or price quality.
+    """
     from hashlib import sha256
     from hmac import compare_digest
 

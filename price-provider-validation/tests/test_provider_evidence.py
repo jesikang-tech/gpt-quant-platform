@@ -221,3 +221,23 @@ def test_evidence_adjustment_claim_never_grants_authority(adjustment):
     assert decision.independently_verified is False
     assert decision.analysis_authorized is False
     assert decision.persistence_authorized is False
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_matching_digest_does_not_certify_observation_origin(provider):
+    # These bytes are deliberately unrelated to the observation's OHLCV.
+    body = b"unrelated synthetic payload"
+    observation = _observation(provider)
+    evidence = _evidence(
+        provider=provider,
+        content_sha256=sha256(body).hexdigest(),
+    )
+
+    decision = assess_raw_bytes_evidence_binding(
+        observation, evidence, body
+    )
+
+    assert decision.reason == "INDEPENDENT_PROVIDER_PROVENANCE_NOT_VERIFIED"
+    assert decision.status == "DENIED"
+    assert decision.independently_verified is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
