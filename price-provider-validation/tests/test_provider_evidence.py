@@ -158,3 +158,31 @@ def test_acquisition_time_on_or_after_observation_date_remains_denied(acquired_a
     assert decision.independently_verified is False
     assert decision.analysis_authorized is False
     assert decision.persistence_authorized is False
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+@pytest.mark.parametrize("bad_fields", [
+    (),
+    ("100",),
+    ("100", "110", "90", "105"),
+    ("100", "110", "90", "105", "1000", "extra"),
+    ["100", "110", "90", "105", "1000"],
+    None,
+])
+def test_binding_rejects_forged_raw_field_structure(provider, bad_fields):
+    observation = replace(_observation(provider), raw_fields=bad_fields)
+    evidence = _evidence(provider=provider)
+
+    with pytest.raises(ProviderEvidenceRejected, match="Invalid observation structure"):
+        assess_observation_evidence_binding(observation, evidence)
+
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_raw_byte_binding_rejects_forged_raw_field_structure(provider):
+    body = b"original daily response bytes"
+    observation = replace(_observation(provider), raw_fields=("100",))
+    evidence = _evidence(
+        provider=provider,
+        content_sha256=sha256(body).hexdigest(),
+    )
+
+    with pytest.raises(ProviderEvidenceRejected, match="Invalid observation structure"):
+        assess_raw_bytes_evidence_binding(observation, evidence, body)

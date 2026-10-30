@@ -67,6 +67,24 @@ def assess_observation_evidence_binding(observation, evidence):
 
     if type(observation) is not RawPriceObservation:
         raise ProviderEvidenceRejected("Invalid observation type")
+    from .provider_contract import (
+        ProviderObservationRejected,
+        prepare_raw_observation,
+    )
+
+    if observation.adjustment != "UNKNOWN":
+        raise ProviderEvidenceRejected("Observation adjustment must remain UNKNOWN")
+
+    try:
+        prepare_raw_observation(
+            observation.provider,
+            observation.ticker,
+            observation.observation_date,
+            observation.raw_fields,
+        )
+    except ProviderObservationRejected as exc:
+        raise ProviderEvidenceRejected("Invalid observation structure") from exc
+
     decision = assess_provider_evidence(evidence)
     if observation.provider != evidence.provider:
         raise ProviderEvidenceRejected("Provider mismatch")
