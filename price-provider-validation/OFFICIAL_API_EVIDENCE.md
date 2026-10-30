@@ -88,3 +88,53 @@ official primary-source verification.
 No external data, adjustment state, provenance, licensing,
 trading calendar, analysis, persistence, or operational
 authorization is certified by these references.
+
+
+## Kiwoom official primary-source verification
+
+Review date: 2026-10-30
+Status: OFFICIAL_FIELD_CONTRACT_REVIEWED / NO_DATA_CERTIFICATION
+
+Official primary sources:
+- https://openapi.kiwoom.com/m/guide/apiguide/08/ka10081
+- https://openapi.kiwoom.com/m/guide/apiguide/08/ka10086
+
+ka10081:
+- Request: base_dt (YYYYMMDD), upd_stkpc_tp (required).
+- Request upd_stkpc_tp 0: original price.
+- Request upd_stkpc_tp 1: adjusted price.
+- Adjusted historical retrieval depends on base_dt relative
+  to the corporate-action effective date and continuation.
+- Response array: stk_dt_pole_chart_qry.
+- Response date: dt (YYYYMMDD).
+- OHLCV: open_pric, high_pric, low_pric, cur_prc, trde_qty.
+- Response upd_stkpc_tp describes corporate-action event
+  codes and must not be interpreted as the request selector.
+
+ka10086:
+- Request: qry_dt (YYYYMMDD), indc_tp (0 quantity, 1 amount).
+- Response array: daly_stkpc.
+- Response date: date (YYYYMMDD).
+- OHLCV: open_pric, high_pric, low_pric,
+  close_pric, trde_qty.
+- The official guide describes signed numeric price fields.
+- An adjusted-price request selector was not identified
+  in the reviewed request body.
+
+Endpoint discrepancy:
+- The reviewed official detail pages display
+  URL /api/dostk/acnt for both APIs.
+- Earlier secondary references describe /api/dostk/chart.
+- The discrepancy is UNRESOLVED.
+- Do not execute either endpoint based on this evidence.
+
+Unverified:
+- Actual data provenance, accuracy and completeness.
+- Adjustment results for real historical observations.
+- Price sign normalization and corporate-action handling.
+- Trading-day calendar and source timestamps.
+- Licensing, API entitlement and permitted downstream use.
+
+No live API call, provider activation, analysis,
+dashboard, persistence, database rebuild, automatic
+fallback or broker operation is authorized.
