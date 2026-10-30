@@ -133,3 +133,22 @@ def test_scoped_job_ignores_other_pytest_invocations(tmp_path):
     )
     workflow.write_text(text, encoding="utf-8")
     assert len(check_registration(tmp_path)) == 2
+
+def test_nested_test_file_is_rejected(tmp_path):
+    make_fixture(tmp_path)
+
+    nested_dir = (
+        tmp_path / "price-provider-validation" / "tests" / "contracts"
+    )
+    nested_dir.mkdir(parents=True)
+
+    (nested_dir / "test_nested.py").write_text(
+        "# synthetic nested test\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        RegistrationError,
+        match="Unsupported nested test files",
+    ):
+        check_registration(tmp_path)

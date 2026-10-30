@@ -17,6 +17,17 @@ def check_registration(root: Path) -> tuple[str, ...]:
     if not tests_dir.is_dir() or not workflow.is_file():
         raise RegistrationError("Required test directory or workflow missing")
 
+    nested_tests = sorted(
+        path.relative_to(tests_dir).as_posix()
+        for path in tests_dir.rglob("test_*.py")
+        if path.is_file() and path.parent != tests_dir
+    )
+
+    if nested_tests:
+        raise RegistrationError(
+            f"Unsupported nested test files: {nested_tests}"
+        )
+
     actual = {
         f"tests/{path.name}"
         for path in tests_dir.glob("test_*.py")
