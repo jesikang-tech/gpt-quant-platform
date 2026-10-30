@@ -42,3 +42,27 @@ def existing_trading_session_contract():
         "naver-decimal-validation/core/trading_session_eligibility.py",
         "assess_trading_session",
     )
+
+def assess_provider_price_quality(quality_input):
+    """Reuse the existing structural classifier without granting authority."""
+    from core.trading_session_eligibility import assess_trading_session
+
+    if type(quality_input) is not ProviderPriceQualityInput:
+        raise ProviderObservationRejected("Invalid quality input type")
+
+    if quality_input.adjustment != "UNKNOWN":
+        raise ProviderObservationRejected("Unverified adjustment must remain UNKNOWN")
+
+    if (
+        quality_input.analysis_authorized is not False
+        or quality_input.persistence_authorized is not False
+    ):
+        raise ProviderObservationRejected("Quality input authority escalation")
+
+    if type(quality_input.ohlcv) is not tuple or len(quality_input.ohlcv) != 5:
+        raise ProviderObservationRejected("Five OHLCV fields required")
+
+    return assess_trading_session(
+        quality_input.ohlcv[3],
+        quality_input.ohlcv,
+    )

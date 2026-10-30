@@ -92,3 +92,86 @@ def test_existing_classifier_is_reference_only():
         "naver-decimal-validation/core/trading_session_eligibility.py"
     )
     assert function == "assess_trading_session"
+
+from price_provider_validation.price_quality_adapter import assess_provider_price_quality
+
+
+def _quality_input(ohlcv):
+    return ProviderPriceQualityInput(
+        provider="KIS",
+        ticker="005930",
+        observation_date="2026-10-28",
+        ohlcv=ohlcv,
+    )
+
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_shared_quality_classifier_candidate(provider):
+    quality = replace(
+        _quality_input(("100", "110", "90", "105", "1000")),
+        provider=provider,
+    )
+    decision = assess_provider_price_quality(quality)
+    assert decision.status == "CANDIDATE"
+    assert decision.reason == "STRUCTURALLY_VALID_UNVERIFIED"
+    assert decision.trading_day_eligible is True
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
+
+
+@pytest.mark.parametrize(
+    "ohlcv",
+    [
+        ("100", "104", "90", "105", "1000"),
+        ("100", "110", "106", "105", "1000"),
+        ("100", "110", "90", "105", "0"),
+        ("100", "110", "90", "105", "-1"),
+    ],
+)
+def test_shared_quality_classifier_blocks_invalid_ohlcv(ohlcv):
+    decision = assess_provider_price_quality(_quality_input(ohlcv))
+    assert decision.status == "BLOCKED"
+    assert decision.trading_day_eligible is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
+
+
+def test_shared_quality_classifier_non_trading_zero_ohlc():
+    decision = assess_provider_price_quality(
+        _quality_input(("0", "0", "0", "105", "0"))
+    )
+    assert decision.status == "NON_TRADING"
+    assert decision.trading_day_eligible is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"adjustment": "ADJUSTED"},
+        {"adjustment": "UNADJUSTED"},
+        {"analysis_authorized": True},
+        {"persistence_authorized": True},
+        {"ohlcv": ("100", "110", "90", "105")},
+    ],
+)
+def test_shared_quality_classifier_rejects_invalid_contract(changes):
+    quality = replace(
+        _quality_input(("100", "110", "90", "105", "1000")),
+        **changes,
+    )
+    with pytest.raises(ProviderObservationRejected):
+        assess_provider_price_quality(quality)
+
+
+def test_shared_quality_classifier_rejects_wrong_input_type():
+    with pytest.raises(ProviderObservationRejected):
+        assess_provider_price_quality(object())
+
+
+@pytest.mark.parametrize("invalid", ["NaN", "Infinity", None, True])
+def test_shared_quality_classifier_rejects_invalid_numeric(invalid):
+    quality = _quality_input(("100", "110", "90", invalid, "1000"))
+    with pytest.raises(ValueError):
+        assess_provider_price_quality(quality)
