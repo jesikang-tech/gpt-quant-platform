@@ -60,3 +60,31 @@ and live API execution remain DENIED.
 
 No source code, operating database, or main branch
 modification is authorized by this document.
+
+## Kiwoom secondary-reference cross-check
+
+Status: SECONDARY_SOURCES_ONLY / NOT_OFFICIALLY_VERIFIED
+
+Reference materials:
+- https://github.com/SungmanHan/kiwoom-rest-api-java/blob/main/chart/README.md
+- https://algolab.co.kr/blog/kiwoom-rest-api-chart-daily-minute-tick-2026
+- https://github.com/unohee/pykiwoom-rest/blob/master/docs/API.md
+
+The external references describe:
+- ka10081: POST /api/dostk/chart
+- Response list: stk_dt_pole_chart_qry
+- Date field: dt
+- Close field: cur_prc
+- OHLCV: open_pric, high_pric, low_pric, cur_prc, trde_qty
+- Request selector: upd_stkpc_tp
+- Selector 0: unadjusted; selector 1: adjusted
+
+These statements are not a substitute for an independently
+verified official Kiwoom API specification.
+
+ka10086 response fields and adjustment policy remain pending
+official primary-source verification.
+
+No external data, adjustment state, provenance, licensing,
+trading calendar, analysis, persistence, or operational
+authorization is certified by these references.
