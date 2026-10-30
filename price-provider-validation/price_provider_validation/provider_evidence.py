@@ -1,6 +1,6 @@
 """Untrusted provider evidence contract. No I/O or authorization."""
 from dataclasses import dataclass, field
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta, timezone
 from .provider_contract import SUPPORTED_PROVIDERS
 
 
@@ -51,8 +51,10 @@ def assess_provider_evidence(evidence):
         raise ProviderEvidenceRejected("Invalid acquisition timestamp") from exc
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ProviderEvidenceRejected("Timezone required")
+    # Domestic daily observations use the Korean market calendar date.
+    kst = timezone(timedelta(hours=9))
     observation_start = datetime.combine(
-        parsed_date, time.min, tzinfo=parsed.tzinfo
+        parsed_date, time.min, tzinfo=kst
     )
     if parsed < observation_start:
         raise ProviderEvidenceRejected("Acquisition precedes observation date")

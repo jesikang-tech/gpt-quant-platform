@@ -186,3 +186,38 @@ def test_raw_byte_binding_rejects_forged_raw_field_structure(provider):
 
     with pytest.raises(ProviderEvidenceRejected, match="Invalid observation structure"):
         assess_raw_bytes_evidence_binding(observation, evidence, body)
+
+@pytest.mark.parametrize("acquired_at", [
+    "2026-10-28T00:30:00+14:00",
+    "2026-10-27T14:59:59Z",
+    "2026-10-27T09:59:59-05:00",
+])
+def test_acquisition_timezone_normalized_to_kst_rejects_earlier_instant(acquired_at):
+    with pytest.raises(
+        ProviderEvidenceRejected,
+        match="Acquisition precedes observation date",
+    ):
+        assess_provider_evidence(_evidence(acquired_at=acquired_at))
+
+
+@pytest.mark.parametrize("acquired_at", [
+    "2026-10-27T15:00:00Z",
+    "2026-10-27T10:00:00-05:00",
+    "2026-10-28T00:00:00+09:00",
+])
+def test_acquisition_timezone_normalized_to_kst_accepts_boundary_without_authority(acquired_at):
+    decision = assess_provider_evidence(_evidence(acquired_at=acquired_at))
+    assert decision.status == "DENIED"
+    assert decision.independently_verified is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
+
+
+@pytest.mark.parametrize("adjustment", ["UNKNOWN", "ADJUSTED", "UNADJUSTED"])
+def test_evidence_adjustment_claim_never_grants_authority(adjustment):
+    evidence = _evidence(adjustment=adjustment)
+    decision = assess_observation_evidence_binding(_observation(), evidence)
+    assert decision.status == "DENIED"
+    assert decision.independently_verified is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
