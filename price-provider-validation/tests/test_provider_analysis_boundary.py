@@ -60,10 +60,8 @@ def test_forged_evidence_authority_rejected(field, value):
         "KIS", "005930", "2026-10-29",
         ("100", "110", "90", "105", "1000"),
     )
-    evidence = replace(
-        ProviderEvidenceDecision(reason="UNVERIFIED"),
-        **{field: value},
-    )
+    evidence = ProviderEvidenceDecision(reason="UNVERIFIED")
+    object.__setattr__(evidence, field, value)
     trading_day = TradingDayCertificationDecision(
         "CANDIDATE", "STRUCTURALLY_VALID_UNVERIFIED", True
     )
