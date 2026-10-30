@@ -131,3 +131,30 @@ def test_raw_byte_binding_identity_mismatch_rejected():
     evidence = _evidence(provider="KIWOOM", content_sha256=sha256(body).hexdigest())
     with pytest.raises(ProviderEvidenceRejected, match="Provider mismatch"):
         assess_raw_bytes_evidence_binding(_observation(), evidence, body)
+
+
+@pytest.mark.parametrize("acquired_at", [
+    "2026-10-27T23:59:59+09:00",
+    "2026-10-27T00:00:00+09:00",
+    "2026-10-27T23:59:59Z",
+])
+def test_acquisition_time_precedes_observation_date_rejected(acquired_at):
+    with pytest.raises(
+        ProviderEvidenceRejected,
+        match="Acquisition precedes observation date",
+    ):
+        assess_provider_evidence(_evidence(acquired_at=acquired_at))
+
+
+@pytest.mark.parametrize("acquired_at", [
+    "2026-10-28T00:00:00+09:00",
+    "2026-10-28T15:30:00+09:00",
+    "2026-10-29T09:00:00+09:00",
+    "2026-10-28T00:00:00Z",
+])
+def test_acquisition_time_on_or_after_observation_date_remains_denied(acquired_at):
+    decision = assess_provider_evidence(_evidence(acquired_at=acquired_at))
+    assert decision.status == "DENIED"
+    assert decision.independently_verified is False
+    assert decision.analysis_authorized is False
+    assert decision.persistence_authorized is False
