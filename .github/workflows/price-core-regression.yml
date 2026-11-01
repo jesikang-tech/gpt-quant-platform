@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - validation/naver-observation-isolated
+      - feature/parallel-price-providers
     paths:
       - '.github/workflows/price-core-regression.yml'
       - 'test_database.py'

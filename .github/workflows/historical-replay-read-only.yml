@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - validation/naver-observation-isolated
+      - feature/parallel-price-providers
     paths:
       - '.github/workflows/historical-replay-read-only.yml'
       - 'test_historical_replay_read_only.py'
