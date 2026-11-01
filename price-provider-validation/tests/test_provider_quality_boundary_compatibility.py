@@ -59,7 +59,7 @@ def test_quality_and_existing_analysis_boundary_remain_denied(provider):
         is quality.structural_trading_day_eligible
     )
 
-    evidence = ProviderEvidenceDecision()
+    evidence = ProviderEvidenceDecision(reason="SYNTHETIC_UNVERIFIED")
     boundary = assess_provider_analysis_boundary(
         observation,
         evidence,
