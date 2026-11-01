@@ -128,3 +128,105 @@ where required by the existing provider contracts.
 
 P7_FINAL_HANDOFF_CI: PENDING
 MAIN_MERGE: NOT_AUTHORIZED
+
+## 10. F5 Transfer and Recovery Addendum
+
+Status: EVIDENCE_RECORDED / F5_FINAL_CI_PENDING / OPERATIONAL_USE_DENIED
+
+### 10.1 Current development baseline
+
+- Repository: jesikang-tech/gpt-quant-platform
+- Branch: feature/parallel-price-providers
+- Current verified Git HEAD: 713f49046b3da22007500f32d2bc6b1baf9529bd
+- Local and remote branch synchronization: PASS
+- Working tree at evidence collection: CLEAN
+- Main merge: NOT_AUTHORIZED
+
+The original pre-handoff baseline in section 1 is retained
+as historical evidence, not replaced retroactively.
+
+### 10.2 GitHub Actions evidence
+
+Parallel Price Provider Contract:
+- Run ID: 41293943596
+- Commit: 713f49046b3da22007500f32d2bc6b1baf9529bd
+- Result: completed / success
+- Includes repeated denial and callback non-execution tests.
+
+Historical Replay Read Only:
+- Run ID: 41291296916
+- Commit: fa74fa5dc61b07e864d63bd81722916c6031758b
+- Result: completed / success
+- Includes historical replay, Ver1.1 analysis API,
+  snapshot contracts, and provider API source integration.
+
+Price Core Regression:
+- Run ID: 41273732998
+- Commit: f653ace9e683edea186db7889593db6cb3921cc5
+- Result: completed / success
+
+Historical Replay and Price Core were not rerun at 713f490.
+Their successful ancestor-commit evidence is reused only
+with explicit unchanged-file and change-scope checks.
+
+F4 change-scope assessment:
+- Historical Replay CI ancestor relationship: PASS
+- Protected regression files unchanged: PASS
+- Changes after fa74fa5: one handoff document and four
+  provider-denial test files
+- Unexpected changed files: NONE
+- Exact-HEAD replay CI: NOT_RUN
+
+This evidence does not establish live market-data certification.
+
+### 10.3 Safe transfer procedure
+
+1. Use the authorized Git remote as the source of tracked files.
+2. Clone into a new, empty directory on the destination computer.
+3. Fetch feature/parallel-price-providers.
+4. Check out the feature branch without merging into main.
+5. Verify HEAD equals the documented commit.
+6. Verify git status is clean.
+7. Review the provider contracts and this handoff document.
+8. Check GitHub Actions run IDs and associated commit hashes.
+9. Keep all providers UNVERIFIED and execution DENY_ONLY.
+10. Run additional tests only inside separately authorized
+    isolated CI, not with host Python or operating databases.
+
+Do not copy credentials, access tokens, account secrets,
+operating database contents, or live broker sessions.
+
+### 10.4 Recovery and rollback
+
+If transfer verification fails:
+- Stop before running application or provider entrypoints.
+- Preserve diagnostic output without including secrets.
+- Do not force-push, reset, clean, or overwrite existing work.
+- Do not modify the operating database.
+- Compare local HEAD, remote HEAD, and expected commit.
+- Restore only into a new, empty isolated working directory
+  after reviewing the discrepancy.
+- Revalidate GitHub Actions evidence and safety boundaries.
+- Require explicit approval before any destructive recovery
+  or main-branch integration.
+
+### 10.5 Remaining authorization gates
+
+- Official provider licensing: PENDING
+- Independent real-price provenance: UNVERIFIED
+- Real-price adjustment and calendar certification: PENDING
+- Operational price analysis: DENIED
+- Operating database writes: PROHIBITED
+- Broker and live API calls: DENIED
+- Production deployment: NOT_AUTHORIZED
+- Main merge: NOT_AUTHORIZED
+
+### 10.6 F5 acceptance conditions
+
+- Review this addendum for consistency with prior evidence.
+- Commit and push only the reviewed documentation change.
+- Verify the resulting GitHub Actions status.
+- Confirm local/remote synchronization and clean working tree.
+- Preserve all pending external certification requirements.
+
+F5_FINAL_ACCEPTANCE: PENDING
