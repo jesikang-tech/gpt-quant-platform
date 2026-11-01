@@ -182,3 +182,152 @@ def test_inconsistent_structural_trading_day_rejected(status, eligible):
         assess_provider_platform_integration(
             observation, evidence, trading_day
         )
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_platform_raw_bytes_matching_digest_remains_denied(provider):
+    from hashlib import sha256
+    from price_provider_validation.provider_platform_integration import (
+        assess_provider_platform_raw_bytes_integration,
+    )
+
+    body = b"synthetic daily response bytes"
+    observation, evidence, trading_day = _inputs(provider)
+    evidence = replace(evidence, content_sha256=sha256(body).hexdigest())
+
+    decision = assess_provider_platform_raw_bytes_integration(
+        observation, evidence, trading_day, body
+    )
+
+    assert decision.status == "DENIED"
+    assert decision.evidence_status == "DENIED"
+    assert decision.analysis_authorized is False
+    assert decision.dashboard_authorized is False
+    assert decision.snapshot_authorized is False
+    assert decision.persistence_authorized is False
+    assert decision.live_api_execution_authorized is False
+    assert decision.broker_execution_authorized is False
+
+
+def test_platform_raw_bytes_modified_body_rejected():
+    from hashlib import sha256
+    from price_provider_validation.provider_platform_integration import (
+        assess_provider_platform_raw_bytes_integration,
+    )
+
+    body = b"synthetic daily response bytes"
+    observation, evidence, trading_day = _inputs()
+    evidence = replace(evidence, content_sha256=sha256(body).hexdigest())
+
+    with pytest.raises(ProviderPlatformIntegrationRejected):
+        assess_provider_platform_raw_bytes_integration(
+            observation, evidence, trading_day, body + b" modified"
+        )
+
+
+@pytest.mark.parametrize("invalid", ["text", bytearray(b"raw"), None, 123])
+def test_platform_raw_bytes_non_bytes_rejected(invalid):
+    from hashlib import sha256
+    from price_provider_validation.provider_platform_integration import (
+        assess_provider_platform_raw_bytes_integration,
+    )
+
+    body = b"synthetic daily response bytes"
+    observation, evidence, trading_day = _inputs()
+    evidence = replace(evidence, content_sha256=sha256(body).hexdigest())
+
+    with pytest.raises(ProviderPlatformIntegrationRejected):
+        assess_provider_platform_raw_bytes_integration(
+            observation, evidence, trading_day, invalid
+        )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("provider", "KIS"),
+        ("ticker", "000660"),
+        ("observation_date", "2026-10-29"),
+    ],
+)
+def test_platform_raw_bytes_identity_mismatch_rejected(field, value):
+    from hashlib import sha256
+    from price_provider_validation.provider_platform_integration import (
+        assess_provider_platform_raw_bytes_integration,
+    )
+
+    body = b"synthetic daily response bytes"
+    observation, evidence, trading_day = _inputs()
+    evidence = replace(
+        evidence,
+        content_sha256=sha256(body).hexdigest(),
+        **{field: value},
+    )
+
+    with pytest.raises(ProviderPlatformIntegrationRejected):
+        assess_provider_platform_raw_bytes_integration(
+            observation, evidence, trading_day, body
+        )
+
+
+def test_platform_raw_bytes_adjustment_relabel_rejected():
+    from hashlib import sha256
+    from price_provider_validation.provider_platform_integration import (
+        assess_provider_platform_raw_bytes_integration,
+    )
+
+    body = b"synthetic daily response bytes"
+    observation, evidence, trading_day = _inputs()
+    evidence = replace(
+        evidence,
+        content_sha256=sha256(body).hexdigest(),
+        adjustment="ADJUSTED",
+    )
+
+    with pytest.raises(ProviderPlatformIntegrationRejected):
+        assess_provider_platform_raw_bytes_integration(
+            observation, evidence, trading_day, body
+        )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("status", "APPROVED"),
+        ("independently_verified", True),
+        ("analysis_authorized", True),
+        ("persistence_authorized", True),
+    ],
+)
+def test_platform_raw_bytes_forged_authority_rejected(
+    monkeypatch, field, value
+):
+    from hashlib import sha256
+    from price_provider_validation import provider_platform_integration as module
+    from price_provider_validation.provider_evidence import (
+        ProviderEvidenceDecision,
+    )
+
+    body = b"synthetic daily response bytes"
+    observation, evidence, trading_day = _inputs()
+    evidence = replace(evidence, content_sha256=sha256(body).hexdigest())
+
+    forged = ProviderEvidenceDecision(reason="SYNTHETIC")
+    object.__setattr__(forged, field, value)
+
+    original_binding = module.assess_observation_evidence_binding
+
+    monkeypatch.setattr(
+        module,
+        "assess_observation_evidence_binding",
+        original_binding,
+    )
+
+    monkeypatch.setattr(
+        "price_provider_validation.provider_evidence.assess_raw_bytes_evidence_binding",
+        lambda observation, evidence, raw_response: forged,
+    )
+
+    with pytest.raises(ProviderPlatformIntegrationRejected):
+        module.assess_provider_platform_raw_bytes_integration(
+            observation, evidence, trading_day, body
+        )

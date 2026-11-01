@@ -105,3 +105,47 @@ def assess_provider_platform_integration(
         evidence_status=evidence_decision.status,
         trading_day_status=trading_day_decision.status,
     )
+
+def assess_provider_platform_raw_bytes_integration(
+    observation, evidence, trading_day_decision, raw_response
+):
+    """Bind claimed raw bytes without authenticating source or granting rights.
+
+    The existing evidence verifier checks supplied bytes against a claimed
+    digest. It does not prove response origin, parsing lineage, adjustment
+    policy, or permission to use the data.
+    """
+    from .provider_evidence import (
+        ProviderEvidenceRejected,
+        assess_raw_bytes_evidence_binding,
+    )
+
+    decision = assess_provider_platform_integration(
+        observation, evidence, trading_day_decision
+    )
+
+    try:
+        raw_decision = assess_raw_bytes_evidence_binding(
+            observation, evidence, raw_response
+        )
+    except ValueError as exc:
+        raise ProviderPlatformIntegrationRejected(
+            "Raw byte evidence binding rejected"
+        ) from exc
+
+    if type(raw_decision) is not ProviderEvidenceDecision:
+        raise ProviderPlatformIntegrationRejected(
+            "Invalid raw byte evidence decision"
+        )
+
+    if (
+        raw_decision.status != "DENIED"
+        or raw_decision.independently_verified is not False
+        or raw_decision.analysis_authorized is not False
+        or raw_decision.persistence_authorized is not False
+    ):
+        raise ProviderPlatformIntegrationRejected(
+            "Raw byte evidence authority escalation"
+        )
+
+    return decision
