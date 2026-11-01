@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/historical-replay-read-only.yml'
       - 'test_historical_replay_read_only.py'
+      - 'test_provider_api_source_integration.py'
       - 'testing_helpers.py'
       - 'price_test_support.py'
       - 'api_server.py'
@@ -79,6 +80,7 @@ jobs:
             core/portfolio_explainability.py
             core/portfolio_intelligence_score.py
             core/price_provenance_gate.py
+            core/naver_api_entry_gate.py
             current_analysis.py
             database.py
             factor_engine.py
@@ -88,6 +90,7 @@ jobs:
             ranking_analyzer.py
             repository.py
             test_historical_replay_read_only.py
+            test_provider_api_source_integration.py
             test_historical_replay_api_contract.py
             test_historical_replay_portfolio_contract.py
             test_historical_replay_ui_contract.py
@@ -205,6 +208,7 @@ jobs:
           cp "core/portfolio_intelligence_score.py" "$replay_dir/core/portfolio_intelligence_score.py"
           mkdir -p "$replay_dir/core"
           cp "core/price_provenance_gate.py" "$replay_dir/core/price_provenance_gate.py"
+          cp "core/naver_api_entry_gate.py" "$replay_dir/core/naver_api_entry_gate.py"
           cp "current_analysis.py" "$replay_dir/current_analysis.py"
           cp "database.py" "$replay_dir/database.py"
           cp "factor_engine.py" "$replay_dir/factor_engine.py"
@@ -216,6 +220,7 @@ jobs:
           cp "ranking_analyzer.py" "$replay_dir/ranking_analyzer.py"
           cp "repository.py" "$replay_dir/repository.py"
           cp "test_historical_replay_read_only.py" "$replay_dir/test_historical_replay_read_only.py"
+          cp "test_provider_api_source_integration.py" "$replay_dir/test_provider_api_source_integration.py"
           cp "test_historical_replay_api_contract.py" "$replay_dir/test_historical_replay_api_contract.py"
           cp "test_historical_replay_portfolio_contract.py" "$replay_dir/test_historical_replay_portfolio_contract.py"
           mkdir -p "$replay_dir/static"
@@ -240,4 +245,5 @@ jobs:
             test_historical_replay_ui_contract.py \
             test_ver11_analysis_condition_contract.py \
             test_current_analysis_date.py \
-            test_current_analysis_period.py
+            test_current_analysis_period.py \
+            test_provider_api_source_integration.py
