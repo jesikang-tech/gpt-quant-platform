@@ -227,3 +227,33 @@ def test_invalid_analysis_callback_rejected():
 
     with pytest.raises(ProviderObservationRejected):
         invoke_provider_analysis(decision, None)
+
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_repeated_analysis_denial_never_invokes_callback(provider):
+    from core.price_provenance_gate import PriceProvenanceRejected
+    from price_provider_validation.provider_analysis_boundary import (
+        invoke_provider_analysis,
+    )
+
+    observation = prepare_raw_observation(
+        provider, "005930", "2026-10-29",
+        ("100", "110", "90", "105", "1000"),
+    )
+    decision = assess_provider_analysis_boundary(
+        observation,
+        ProviderEvidenceDecision(reason="UNVERIFIED"),
+        TradingDayCertificationDecision(
+            "CANDIDATE", "STRUCTURALLY_VALID_UNVERIFIED", True
+        ),
+    )
+    calls = []
+
+    def callback():
+        calls.append("EXECUTED")
+
+    for _ in range(3):
+        with pytest.raises(PriceProvenanceRejected):
+            invoke_provider_analysis(decision, callback)
+
+    assert calls == []

@@ -163,3 +163,20 @@ def test_unverified_adjustment_cannot_be_relabelled():
     )
     with pytest.raises(ProviderObservationRejected):
         _invoke(**values)
+
+
+def test_repeated_persistence_denial_never_invokes_callback():
+    values = _inputs()
+    calls = []
+
+    def callback():
+        calls.append("EXECUTED")
+
+    for _ in range(3):
+        with pytest.raises(PriceProvenanceRejected):
+            invoke_provider_persistence(
+                persist_callback=callback,
+                **values,
+            )
+
+    assert calls == []

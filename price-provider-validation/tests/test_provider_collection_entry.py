@@ -119,3 +119,18 @@ def test_direct_forged_usage_assessment_denied():
         api_execution_authorized=True,
     )
     _assert_denied_without_callback(usage)
+
+
+def test_repeated_collection_denial_never_invokes_callback():
+    usage = _usage()
+    calls = []
+
+    def callback():
+        calls.append("EXECUTED")
+        return "UNSAFE"
+
+    for _ in range(3):
+        with pytest.raises(ProviderObservationRejected):
+            invoke_provider_collection(usage, callback)
+
+    assert calls == []

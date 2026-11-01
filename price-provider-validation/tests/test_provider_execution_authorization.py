@@ -195,3 +195,21 @@ def test_result_immutable():
 def test_invalid_decision_type_rejected(invalid):
     with pytest.raises(ProviderExecutionRejected):
         invoke_provider_execution(invalid, lambda: None)
+
+
+@pytest.mark.parametrize("provider", ["KIS", "KIWOOM"])
+def test_repeated_execution_denial_never_invokes_callback(provider):
+    certification, license_decision = _inputs(provider)
+    decision = assess_provider_execution_authorization(
+        certification, license_decision
+    )
+    calls = []
+
+    def callback():
+        calls.append("EXECUTED")
+
+    for _ in range(3):
+        with pytest.raises(ProviderExecutionRejected):
+            invoke_provider_execution(decision, callback)
+
+    assert calls == []
