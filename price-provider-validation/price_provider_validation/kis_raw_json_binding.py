@@ -10,7 +10,10 @@ from .kis_daily_response import (
     prepare_kis_daily_observation,
 )
 from .provider_contract import ProviderObservationRejected
-from .provider_evidence import assess_raw_bytes_evidence_binding
+from .provider_evidence import (
+    ProviderEvidenceRejected,
+    assess_raw_bytes_evidence_binding,
+)
 
 
 MAX_RAW_JSON_BYTES = 2_000_000
@@ -82,6 +85,9 @@ def bind_kis_raw_json_observation(
 
     if len(selected) != 1:
         raise ProviderObservationRejected("Selected observation not unique")
+
+    if getattr(evidence, "adjustment", None) != "UNKNOWN":
+        raise ProviderEvidenceRejected("Unverified adjustment claim")
 
     decision = assess_raw_bytes_evidence_binding(
         selected[0], evidence, raw_response

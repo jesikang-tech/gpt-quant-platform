@@ -89,8 +89,9 @@ def test_selected_row_preserved_but_never_authorized():
     ],
 )
 def test_invalid_raw_response_rejected(raw):
+    valid_raw = _raw()
     with pytest.raises(ProviderObservationRejected):
-        _bind(raw)
+        _bind(raw, _evidence(valid_raw))
 
 
 def test_duplicate_selected_date_rejected():
