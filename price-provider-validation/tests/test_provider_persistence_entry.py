@@ -44,7 +44,10 @@ def _inputs():
             reason="SYNTHETIC_UNVERIFIED"
         ),
         "trading_day_decision": TradingDayCertificationDecision(
-            reason="SYNTHETIC_UNVERIFIED"
+            structural_status="CANDIDATE",
+            structural_reason="SYNTHETIC_STRUCTURAL_ONLY",
+            structural_trading_day_eligible=True,
+            reason="SYNTHETIC_UNVERIFIED",
         ),
     }
 
