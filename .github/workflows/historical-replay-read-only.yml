@@ -9,6 +9,8 @@ on:
       - '.github/workflows/historical-replay-read-only.yml'
       - 'test_historical_replay_read_only.py'
       - 'test_provider_api_source_integration.py'
+      - 'test_ver11_analysis_api_contract.py'
+      - 'test_ver11_snapshot_contract.py'
       - 'testing_helpers.py'
       - 'price_test_support.py'
       - 'api_server.py'
@@ -91,6 +93,8 @@ jobs:
             repository.py
             test_historical_replay_read_only.py
             test_provider_api_source_integration.py
+            test_ver11_analysis_api_contract.py
+            test_ver11_snapshot_contract.py
             test_historical_replay_api_contract.py
             test_historical_replay_portfolio_contract.py
             test_historical_replay_ui_contract.py
@@ -221,6 +225,8 @@ jobs:
           cp "repository.py" "$replay_dir/repository.py"
           cp "test_historical_replay_read_only.py" "$replay_dir/test_historical_replay_read_only.py"
           cp "test_provider_api_source_integration.py" "$replay_dir/test_provider_api_source_integration.py"
+          cp "test_ver11_analysis_api_contract.py" "$replay_dir/test_ver11_analysis_api_contract.py"
+          cp "test_ver11_snapshot_contract.py" "$replay_dir/test_ver11_snapshot_contract.py"
           cp "test_historical_replay_api_contract.py" "$replay_dir/test_historical_replay_api_contract.py"
           cp "test_historical_replay_portfolio_contract.py" "$replay_dir/test_historical_replay_portfolio_contract.py"
           mkdir -p "$replay_dir/static"
@@ -246,4 +252,6 @@ jobs:
             test_ver11_analysis_condition_contract.py \
             test_current_analysis_date.py \
             test_current_analysis_period.py \
-            test_provider_api_source_integration.py
+            test_provider_api_source_integration.py \
+            test_ver11_analysis_api_contract.py \
+            test_ver11_snapshot_contract.py
