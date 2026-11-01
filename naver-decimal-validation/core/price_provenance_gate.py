@@ -28,6 +28,15 @@ def assess_price_provenance(*, provider=None, adjustment=None):
     return PriceProvenanceDecision()
 
 
+def require_persistence_authorization(decision):
+    """Reject persistence without independently established provenance."""
+    if type(decision) is not PriceProvenanceDecision:
+        raise PriceProvenanceRejected("Invalid provenance decision")
+
+    raise PriceProvenanceRejected(
+        "Price provenance is unverified; persistence is prohibited"
+    )
+
 def require_analysis_authorization(decision):
     """Reject all unverified evidence, including forged approval fields."""
     if type(decision) is not PriceProvenanceDecision:
