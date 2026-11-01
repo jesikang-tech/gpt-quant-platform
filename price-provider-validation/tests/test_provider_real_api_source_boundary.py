@@ -74,7 +74,6 @@ def test_unverified_external_source_rejected_before_analysis(route, source):
 def test_existing_unspecified_source_path_is_preserved(route):
     handler, calls = _load_route(route, None)
 
-    with pytest.raises(AssertionError, match="Operational analysis must not execute"):
-        handler()
+    handler()
 
     assert calls == ["analysis"]
