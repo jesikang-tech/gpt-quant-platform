@@ -167,3 +167,66 @@ This record does not authorize real API calls, broker
 access, source certification, adjustment certification,
 analysis, dashboard use, persistence, database rebuild,
 or automatic provider fallback.
+
+## KIWOOM official Q&A 7961 reply evidence (2026-11-04)
+
+Status: OFFICIAL_SITE_REPLY_OBSERVED / PDF_CAPTURE_REVIEWED / INDEPENDENT_AUTHENTICITY_UNVERIFIED
+
+### Evidence identity
+
+- Provider: KIWOOM Securities REST API
+- Q&A inquiry number: 7961 (user-reported inquiry identifier)
+- Reply timestamp displayed: 2026-11-02 15:05
+- Reply author displayed: KIWOOM Securities operator
+- Source: official REST API Q&A website
+- Source page: https://openapi.kiwoom.com/board/Board0201View?dummyVal=0
+- Evidence artifact: user-supplied two-page PDF print of the Q&A page
+- PDF was visually reviewed; no independent cryptographic or server-side authenticity verification was performed.
+- The PDF is not committed to the repository by this change.
+
+### Provider reply: permitted-use scope
+
+The reply states that individual customers may use REST API data
+for their own investment purposes.
+
+The reply indicates:
+- No data-category differentiation or storage-period restriction.
+- Third-party provision and redistribution are prohibited.
+- Commercial use requires a separate information-use agreement.
+- Additional usage terms and notices may apply.
+
+These statements are recorded as provider guidance for personal use.
+They do not independently establish a blanket operational entitlement
+for every account, endpoint, or deployment.
+
+### Provider reply: technical limitations
+
+- REST API data is described as corresponding to HTS data.
+- The provider recommends checking the official API guide
+  and comparing REST API TR results with the matching HTS screens.
+- The reply does not certify actual historical observations.
+- No complete corporate-action adjustment methodology is provided.
+- Adjusted/unadjusted historical price results remain unverified.
+- Actual endpoint responses, provenance, calendar, completeness,
+  and price normalization remain unverified.
+- Rate limits and connection guidance are referred to other
+  official notices and FAQ entries.
+
+### Platform decision
+
+- PERSONAL_USE_GUIDANCE: OFFICIAL_REPLY_OBSERVED
+- SOURCE_AUTHENTICITY: INDEPENDENTLY_UNVERIFIED
+- REAL_PRICE_PROVENANCE: UNVERIFIED
+- ADJUSTMENT_CERTIFICATION: PENDING
+- KIS_LICENSE_SCOPE: SEPARATELY_UNVERIFIED
+- LIVE_API_EXECUTION: DENIED
+- PRICE_ANALYSIS: DENIED
+- PRICE_PERSISTENCE: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- HOST_PYTHON_EXECUTION: DENIED
+- BROKER_CALLS: DENIED
+- MAIN_MERGE: NOT_AUTHORIZED
+
+This evidence updates the earlier reply-pending history without
+retroactively modifying historical records or granting operational
+authority.
