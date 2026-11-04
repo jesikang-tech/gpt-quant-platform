@@ -213,7 +213,7 @@ def _protected_flask_state(isolated_price_db, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _synthetic_api_price_boundary(monkeypatch):
+def _synthetic_api_price_boundary(monkeypatch, _protected_flask_state):
     """Exercise synthetic API contracts without authorizing real prices."""
     import api_server
 
