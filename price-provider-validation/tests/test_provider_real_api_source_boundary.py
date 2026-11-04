@@ -23,7 +23,13 @@ def _load_route(name, source):
         node for node in tree.body
         if isinstance(node, ast.FunctionDef) and node.name == name
     ]
+    guards = [
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef)
+        and node.name == "_require_ver11_price_provenance"
+    ]
     assert len(functions) == 1
+    assert len(guards) == 1
 
     function = functions[0]
     function.decorator_list = []
@@ -52,7 +58,7 @@ def _load_route(name, source):
         "save_ver11_analysis_snapshot": forbidden_save,
     }
 
-    module = ast.Module(body=[function], type_ignores=[])
+    module = ast.Module(body=[guards[0], function], type_ignores=[])
     ast.fix_missing_locations(module)
     exec(compile(module, str(API), "exec"), namespace)
 
@@ -71,12 +77,17 @@ def test_unverified_external_source_rejected_before_analysis(route, source):
 
 
 @pytest.mark.parametrize("route", ROUTES)
-def test_existing_unspecified_source_path_is_preserved(route):
+def test_unspecified_source_denied_before_analysis(route):
     handler, calls = _load_route(route, None)
 
-    handler()
+    response, status = handler()
 
-    assert calls == ["analysis"]
+    assert status == 400
+    assert response["success"] is False
+    assert response["message"] == (
+        "Price provenance is unverified; analysis is prohibited"
+    )
+    assert calls == []
 
 
 @pytest.mark.parametrize("module_name", ("current_analysis.py", "repository.py"))
