@@ -24,7 +24,7 @@ def protected_api(isolated_price_db):
             api.AUTH_CONFIG_PATH = original_auth_path
 
 
-@pytest.mark.parametrize("source", ["KIS", "KIWOOM", "NAVER"])
+@pytest.mark.parametrize("source", ["KIS", "KIWOOM", "NAVER", "UNKNOWN"])
 @pytest.mark.parametrize(
     "endpoint",
     [
@@ -57,7 +57,7 @@ def test_explicit_source_denied_before_analysis(
     assert calls == []
 
 
-@pytest.mark.parametrize("source", ["KIS", "KIWOOM", "NAVER"])
+@pytest.mark.parametrize("source", ["KIS", "KIWOOM", "NAVER", "UNKNOWN"])
 def test_explicit_source_denied_before_snapshot_save(
     protected_api, monkeypatch, source
 ):
