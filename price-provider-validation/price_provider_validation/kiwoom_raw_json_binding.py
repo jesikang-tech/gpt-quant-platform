@@ -85,6 +85,9 @@ def bind_kiwoom_raw_json_observation(
     if len(selected) != 1:
         raise ProviderObservationRejected("Selected observation not found")
 
+    if getattr(evidence, "adjustment", None) != "UNKNOWN":
+        raise ProviderEvidenceRejected("Unverified adjustment claim")
+
     try:
         decision = assess_raw_bytes_evidence_binding(
             selected[0], evidence, raw_response

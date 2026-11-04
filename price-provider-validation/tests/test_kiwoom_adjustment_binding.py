@@ -124,13 +124,11 @@ def test_modified_raw_response_rejected():
 @pytest.mark.parametrize("adjustment", ["ADJUSTED", "UNADJUSTED"])
 def test_evidence_adjustment_claim_does_not_certify_response(adjustment):
     body = _raw_body()
-    decision = _assess(
-        "1",
-        evidence=_evidence(body, adjustment=adjustment),
-    )
-    assert decision.response_adjustment == "UNKNOWN"
-    assert decision.independently_verified is False
-    assert decision.analysis_authorized is False
+    with pytest.raises(ProviderEvidenceRejected, match="Unverified adjustment claim"):
+        _assess(
+            "1",
+            evidence=_evidence(body, adjustment=adjustment),
+        )
 
 
 def test_decision_authority_fields_cannot_be_modified():
