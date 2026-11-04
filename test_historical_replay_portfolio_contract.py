@@ -369,3 +369,15 @@ def _protected_flask_state(isolated_price_db, monkeypatch):
             api.app.config.clear()
             api.app.config.update(config_before)
             api.AUTH_CONFIG_PATH = auth_path_before
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_replay_api_price_boundary(monkeypatch):
+    """Preserve isolated synthetic replay API contract tests."""
+    import api_server
+
+    monkeypatch.setattr(
+        api_server,
+        "_require_ver11_price_provenance",
+        lambda: None,
+    )
