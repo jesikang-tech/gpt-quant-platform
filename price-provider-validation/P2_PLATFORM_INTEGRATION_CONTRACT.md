@@ -101,3 +101,14 @@ Official reply: PENDING
 
 No actual price collection, persistence or analysis
 is authorized by this design document.
+
+## KIWOOM Q&A 7961 follow-up (2026-11-04)
+
+- Historical baseline: official reply PENDING at P2/P7 handoff.
+- Reported reply timestamp: 2026-11-02 15:05 KST (conversation summary; original capture not repository-verified).
+- Reported scope: personal investment use, personal storage, own analysis and backtesting.
+- Reported restriction: third-party redistribution is not permitted.
+- Evidence state: OFFICIAL_REPLY_REPORTED / SOURCE_AUTHENTICITY_UNVERIFIED.
+- No automatic permission for commercial services, broker execution, or production integration.
+- No certification of provider provenance, adjustment policy, data accuracy, or API runtime behavior.
+- All operational gates remain DENIED; operating DB access and host Python execution remain prohibited.

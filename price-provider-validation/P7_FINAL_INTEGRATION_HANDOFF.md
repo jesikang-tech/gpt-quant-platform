@@ -252,3 +252,14 @@ F5_FINAL_ACCEPTANCE: PENDING
 Historical PENDING records above are preserved as point-in-time
 evidence and do not override this exact-HEAD CI result.
 This result does not authorize operational price use.
+
+## KIWOOM Q&A 7961 follow-up (2026-11-04)
+
+- Historical baseline: official reply PENDING at P2/P7 handoff.
+- Reported reply timestamp: 2026-11-02 15:05 KST (conversation summary; original capture not repository-verified).
+- Reported scope: personal investment use, personal storage, own analysis and backtesting.
+- Reported restriction: third-party redistribution is not permitted.
+- Evidence state: OFFICIAL_REPLY_REPORTED / SOURCE_AUTHENTICITY_UNVERIFIED.
+- No automatic permission for commercial services, broker execution, or production integration.
+- No certification of provider provenance, adjustment policy, data accuracy, or API runtime behavior.
+- All operational gates remain DENIED; operating DB access and host Python execution remain prohibited.
