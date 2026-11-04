@@ -22,7 +22,7 @@ def test_historical_replay_api_rejects_unsupported_period():
     data = response.get_json()
 
     assert data["success"] is False
-    assert data["message"] == "Invalid period. Use 1m, 2m, or 3m."
+    assert data["message"] == "Price provenance is unverified; analysis is prohibited"
 
 
 def test_historical_replay_api_rejects_12m():
@@ -37,7 +37,7 @@ def test_historical_replay_api_rejects_12m():
     data = response.get_json()
 
     assert data["success"] is False
-    assert data["message"] == "Invalid period. Use 1m, 2m, or 3m."
+    assert data["message"] == "Price provenance is unverified; analysis is prohibited"
 
 
 def test_historical_replay_api_passes_supported_period(monkeypatch):
