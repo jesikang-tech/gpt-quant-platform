@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/historical-replay-read-only.yml'
       - 'test_historical_replay_read_only.py'
+      - 'test_historical_replay_api_contract.py'
       - 'test_provider_api_source_integration.py'
       - 'test_ver11_analysis_api_contract.py'
       - 'test_ver11_snapshot_contract.py'
