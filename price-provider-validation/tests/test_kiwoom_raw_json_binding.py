@@ -133,11 +133,10 @@ def test_modified_raw_body_rejected():
         _bind(changed, evidence=evidence)
 
 
-def test_adjustment_claim_does_not_upgrade_observation():
+@pytest.mark.parametrize("adjustment", ["ADJUSTED", "UNADJUSTED"])
+def test_unverified_adjustment_claim_rejected(adjustment):
     body = _body()
-    evidence = replace(_evidence(body), adjustment="UNADJUSTED")
-    observation, decision = _bind(body, evidence=evidence)
+    evidence = replace(_evidence(body), adjustment=adjustment)
 
-    assert observation.adjustment == "UNKNOWN"
-    assert decision.status == "DENIED"
-    assert decision.independently_verified is False
+    with pytest.raises(ProviderEvidenceRejected, match="Unverified adjustment claim"):
+        _bind(body, evidence=evidence)
