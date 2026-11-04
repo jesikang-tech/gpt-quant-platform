@@ -552,3 +552,14 @@ def _synthetic_api_price_boundary(monkeypatch):
         "_require_ver11_price_provenance",
         lambda: None,
     )
+
+@pytest.fixture(autouse=True)
+def _synthetic_snapshot_persistence_boundary(monkeypatch):
+    """Permit isolated synthetic snapshot tests without changing production authorization."""
+    import core.price_provenance_gate as provenance_gate
+
+    monkeypatch.setattr(
+        provenance_gate,
+        "require_persistence_authorization",
+        lambda decision: None,
+    )

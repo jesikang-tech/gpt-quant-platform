@@ -4185,6 +4185,15 @@ def save_ver11_analysis_snapshot(
     snapshot_payload,
     snapshot_version="VER11-PIT-SNAPSHOT-v1",
 ):
+    from core.price_provenance_gate import (
+        assess_price_provenance,
+        require_persistence_authorization,
+    )
+
+    require_persistence_authorization(
+        assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
+    )
+
     created_at = datetime.now().astimezone().isoformat()
     payload_json = json.dumps(
         snapshot_payload,
