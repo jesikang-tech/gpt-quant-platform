@@ -263,3 +263,67 @@ This result does not authorize operational price use.
 - No automatic permission for commercial services, broker execution, or production integration.
 - No certification of provider provenance, adjustment policy, data accuracy, or API runtime behavior.
 - All operational gates remain DENIED; operating DB access and host Python execution remain prohibited.
+
+## 11. Latest Parallel Provider CI Verification (2026-11-04)
+
+Status: SYNTHETIC_CI_VERIFIED / PRICE_CORE_CI_VERIFIED / OPERATIONAL_USE_DENIED
+
+### 11.1 Verified source baseline
+
+- Repository: jesikang-tech/gpt-quant-platform
+- Branch: feature/parallel-price-providers
+- Pre-document-update HEAD: a2b045739e0543a57621e8c099efe490606a49ca
+- Working tree at verification: CLEAN
+- Main merge: NOT_AUTHORIZED
+
+### 11.2 GitHub Actions evidence
+
+Parallel Price Provider Contract:
+- Run ID: 41747727667
+- Commit: 0348a230faef4b80cf7ed1d50764bdb02f371d82
+- Result: completed / success
+- Jobs: synthetic-contract and ci-registration-guard succeeded
+
+Price Core Regression:
+- Run ID: 41748925811
+- Commit: a2b045739e0543a57621e8c099efe490606a49ca
+- Result: completed / success
+- Trigger: feature-branch push
+- The trigger commit changed only a workflow comment
+
+The provider-contract run predates the comment-only Price Core trigger commit.
+These are separate, explicitly identified CI baselines.
+
+### 11.3 Integration coverage
+
+- Seven existing integration boundary modules were located.
+- Thirteen related test files were confirmed registered in provider CI.
+- Collection, analysis, persistence, and execution denial contracts were reviewed.
+- Unverified adjustment claims remain rejected.
+- No operational authority was granted by these checks.
+
+### 11.4 External certification remains unresolved
+
+- KIWOOM Q&A 7961 reply: REPORTED / SOURCE_AUTHENTICITY_UNVERIFIED
+- KIS licensing and permitted-use evidence: NOT_CERTIFIED
+- Actual provider observation provenance: UNVERIFIED
+- Real-price adjustment and trading-calendar certification: PENDING
+- Live API runtime behavior: NOT_VERIFIED
+
+### 11.5 Operational safety
+
+- UNVERIFIED_PRICE_ANALYSIS: DENIED
+- UNVERIFIED_PRICE_PERSISTENCE: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- HOST_PYTHON_EXECUTION: DENIED
+- BROKER_CALLS: DENIED
+- LIVE_API_EXECUTION: DENIED
+- PRODUCTION_DEPLOYMENT: NOT_AUTHORIZED
+- MAIN_MERGE: NOT_AUTHORIZED
+
+### 11.6 Final handoff state
+
+- Existing historical evidence is preserved unchanged.
+- This addendum records the latest verified pre-document-update baseline.
+- Final documentation commit and CI verification remain pending.
+- No synthetic CI result certifies actual market data or authorizes operations.
