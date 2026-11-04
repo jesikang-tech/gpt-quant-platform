@@ -105,3 +105,46 @@ K22: HANDOFF_DOCUMENT_PREPARED
 K22_FINAL_CI: PENDING
 PRODUCTION_READINESS: NOT_VERIFIED
 MAIN_MERGE: NOT_AUTHORIZED
+## Ver1.1 KIWOOM-Only Offline Handoff Addendum (2026-11-04)
+
+This addendum records a later verification baseline.
+Historical K13/K22 status entries above remain unchanged.
+
+### Scope and source policy
+
+- Ver1.1 price provider candidate: KIWOOM only.
+- KIS offline adapters and contracts are preserved for Ver1.2.
+- No automatic KIS fallback is authorized.
+- NAVER authorization is separate and cannot certify KIWOOM.
+
+### Verified offline baseline
+
+- Branch: feature/parallel-price-providers
+- Commit: 5b83b46d483369a3590d4d741fe2817676fa4755
+- Parallel Price Provider Contract CI: 41796612106 (SUCCESS).
+- Historical Replay Read Only Regression CI: 41796611998 (SUCCESS).
+- Both CI runs verified against the same commit.
+- API provenance denial and direct analysis/snapshot guards are covered.
+- Redundant AST route execution tests were consolidated into
+  existing Flask integration tests; import separation checks remain.
+- The working tree was clean at the verification baseline.
+
+### Outstanding external certification
+
+- Independent KIWOOM observation provenance: UNVERIFIED.
+- Actual provider response and endpoint acceptance: UNVERIFIED.
+- Adjustment and corporate-action policy: UNVERIFIED.
+- Official trading-calendar evidence: UNVERIFIED.
+- Production price collection and database rebuilding: DENIED.
+- Unverified analysis, dashboard, snapshot and persistence: DENIED.
+- Live API execution and broker operations: DENIED.
+
+### Completion classification
+
+- Ver1.1 offline implementation and selected CI safety checks:
+  VERIFIED AT THE RECORDED BASELINE.
+- Independent real-market data certification: NOT COMPLETE.
+- Production activation and main merge: NOT AUTHORIZED.
+
+Further authorization requires independent evidence, explicit
+approval, isolated regression tests and successful GitHub CI.
