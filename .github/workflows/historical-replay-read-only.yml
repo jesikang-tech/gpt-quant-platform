@@ -86,6 +86,7 @@ jobs:
             core/price_provenance_gate.py
             core/naver_api_entry_gate.py
             current_analysis.py
+            historical_replay.py
             database.py
             factor_engine.py
             price_test_support.py
@@ -218,6 +219,7 @@ jobs:
           cp "core/price_provenance_gate.py" "$replay_dir/core/price_provenance_gate.py"
           cp "core/naver_api_entry_gate.py" "$replay_dir/core/naver_api_entry_gate.py"
           cp "current_analysis.py" "$replay_dir/current_analysis.py"
+          cp "historical_replay.py" "$replay_dir/historical_replay.py"
           cp "database.py" "$replay_dir/database.py"
           cp "factor_engine.py" "$replay_dir/factor_engine.py"
           cp "price_test_support.py" "$replay_dir/price_test_support.py"
