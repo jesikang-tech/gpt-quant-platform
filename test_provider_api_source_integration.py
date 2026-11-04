@@ -99,3 +99,51 @@ def test_explicit_source_denied_before_snapshot_save(
     assert response.status_code == 400
     assert response.get_json()["success"] is False
     assert calls == []
+
+
+@pytest.mark.parametrize(
+    "endpoint,method",
+    [
+        ("/api/historical-replay", "GET"),
+        ("/api/ver11-analysis", "GET"),
+        ("/api/ver11-analysis/snapshots", "POST"),
+    ],
+)
+def test_default_source_denied_before_analysis_or_snapshot(
+    protected_api, monkeypatch, endpoint, method
+):
+    from testing_helpers import authenticated_client
+
+    calls = []
+
+    def forbidden(*args, **kwargs):
+        calls.append("FORBIDDEN")
+        raise AssertionError("Unverified price operation executed")
+
+    monkeypatch.setattr(
+        protected_api,
+        "get_current_analysis_data",
+        forbidden,
+    )
+    monkeypatch.setattr(
+        protected_api,
+        "save_ver11_analysis_snapshot",
+        forbidden,
+    )
+
+    client = authenticated_client(protected_api.app)
+
+    if method == "POST":
+        response = client.post(
+            endpoint,
+            json={"date": "2026-10-30", "period": "3m"},
+        )
+    else:
+        response = client.get(
+            endpoint,
+            query_string={"date": "2026-10-30"},
+        )
+
+    assert response.status_code == 400
+    assert response.get_json()["success"] is False
+    assert calls == []

@@ -300,8 +300,23 @@ def _build_ver11_snapshot_payload(data):
 
     return sanitize(data)
 
+def _require_ver11_price_provenance():
+    """Fail closed before unverified price analysis or snapshot writes."""
+    from core.price_provenance_gate import (
+        assess_price_provenance,
+        require_analysis_authorization,
+    )
+    require_analysis_authorization(
+        assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
+    )
+
+
 @app.route("/api/historical-replay")
 def historical_replay_api():
+    try:
+        _require_ver11_price_provenance()
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
     source = request.args.get("source")
     if source is not None:
         try:
@@ -347,6 +362,10 @@ def naver_validation_status_api():
 
 @app.route("/api/ver11-analysis")
 def ver11_analysis_api():
+    try:
+        _require_ver11_price_provenance()
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
     source = request.args.get("source")
     if source is not None:
         try:
@@ -395,6 +414,10 @@ def ver11_analysis_api():
 
 @app.route("/api/ver11-analysis/snapshots", methods=["POST"])
 def save_ver11_analysis_snapshot_api():
+    try:
+        _require_ver11_price_provenance()
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
     body = request.get_json(silent=True) or {}
     source = body.get("source")
     if source is not None:
