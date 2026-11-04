@@ -440,12 +440,24 @@ def get_current_analysis_data(
     analysis_date: Optional[str] = None,
     period: str = "3m",
     sort_by: str = "final_score",
+    provider: Optional[str] = None,
 ) -> dict:
     """
     Calculate current ETF scores entirely in memory.
 
     No production database writes are performed.
     """
+
+    if provider is not None:
+        if type(provider) is not str or provider != "KIWOOM":
+            raise ValueError("Unsupported explicit price provider")
+        from core.price_provenance_gate import (
+            assess_price_provenance,
+            require_analysis_authorization,
+        )
+        require_analysis_authorization(
+            assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
+        )
 
     if limit < 1:
         raise ValueError("limit must be >= 1")
