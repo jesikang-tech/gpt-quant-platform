@@ -230,3 +230,37 @@ for every account, endpoint, or deployment.
 This evidence updates the earlier reply-pending history without
 retroactively modifying historical records or granting operational
 authority.
+
+## KIWOOM official Q&A 8123 preserved evidence
+
+Evidence record date: 2026-11-04
+Status: PDF_PRESERVED / SHA256_VERIFIED / CONTENT_REVIEW_PENDING
+
+- Provider: KIWOOM Securities REST API
+- Official Q&A inquiry number: 8123
+- Reply: user-confirmed received
+- Preserved PDF filename:
+  KIWOOM_REST_API_QA_8123_Official_Reply_20261104.pdf
+- Preserved PDF location (office PC, outside Git):
+  D:\Projects\official-api-evidence\kiwoom
+- PDF size: 93940 bytes
+- SHA256:
+  BBE8A08D5E5959D7DA66CA29B421E2D696FCD8AAD4809A5A63C265A72E6A057A
+- Original PDF remains on the user's desktop.
+- Preserved copy hash matched the original.
+- PDF header check: PASS.
+- Independent provider authenticity: NOT_VERIFIED.
+- Full reply transcription and scope assessment: PENDING.
+
+This record establishes a reproducible file-integrity baseline.
+It does not independently authenticate the provider response.
+
+Data-use permission, adjustment policy, actual market-data
+provenance, analysis, persistence, and operational authorization
+must be assessed separately before any execution.
+
+- HOST_PYTHON_EXECUTION: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- BROKER_CALLS: DENIED
+- LIVE_API_EXECUTION: DENIED
+- MAIN_MERGE: NOT_AUTHORIZED
