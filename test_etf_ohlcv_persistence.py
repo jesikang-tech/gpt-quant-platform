@@ -123,3 +123,13 @@ def _protected_collection(isolated_price_db):
         # original legacy/custom schema tests still start with an empty file.
         scope.db.path.unlink()
         yield scope
+
+@pytest.fixture(autouse=True)
+def _synthetic_direct_analysis_price_boundary(monkeypatch):
+    """Allow only isolated synthetic direct-analysis contract tests."""
+    import core.price_provenance_gate as provenance_gate
+    monkeypatch.setattr(
+        provenance_gate,
+        "require_analysis_authorization",
+        lambda decision: None,
+    )

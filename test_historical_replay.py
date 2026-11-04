@@ -341,3 +341,13 @@ def _protected_flask_state(isolated_price_db, monkeypatch):
             scope.api.app.config.clear()
             scope.api.app.config.update(config_before)
             scope.api.AUTH_CONFIG_PATH = auth_path_before
+
+@pytest.fixture(autouse=True)
+def _synthetic_direct_analysis_price_boundary(monkeypatch):
+    """Allow only isolated synthetic direct-analysis contract tests."""
+    import core.price_provenance_gate as provenance_gate
+    monkeypatch.setattr(
+        provenance_gate,
+        "require_analysis_authorization",
+        lambda decision: None,
+    )

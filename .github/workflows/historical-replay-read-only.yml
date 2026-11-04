@@ -12,6 +12,7 @@ on:
       - 'test_ver11_analysis_api_contract.py'
       - 'test_ver11_snapshot_contract.py'
       - 'test_ver11_snapshot_persistence_denial.py'
+      - 'test_ver11_default_price_read_denial.py'
       - 'testing_helpers.py'
       - 'price_test_support.py'
       - 'api_server.py'
@@ -97,6 +98,7 @@ jobs:
             test_ver11_analysis_api_contract.py
             test_ver11_snapshot_contract.py
             test_ver11_snapshot_persistence_denial.py
+            test_ver11_default_price_read_denial.py
             test_historical_replay_api_contract.py
             test_historical_replay_portfolio_contract.py
             test_historical_replay_ui_contract.py
@@ -230,6 +232,7 @@ jobs:
           cp "test_ver11_analysis_api_contract.py" "$replay_dir/test_ver11_analysis_api_contract.py"
           cp "test_ver11_snapshot_contract.py" "$replay_dir/test_ver11_snapshot_contract.py"
           cp "test_ver11_snapshot_persistence_denial.py" "$replay_dir/test_ver11_snapshot_persistence_denial.py"
+          cp "test_ver11_default_price_read_denial.py" "$replay_dir/test_ver11_default_price_read_denial.py"
           cp "test_historical_replay_api_contract.py" "$replay_dir/test_historical_replay_api_contract.py"
           cp "test_historical_replay_portfolio_contract.py" "$replay_dir/test_historical_replay_portfolio_contract.py"
           mkdir -p "$replay_dir/static"
@@ -258,4 +261,5 @@ jobs:
             test_provider_api_source_integration.py \
             test_ver11_analysis_api_contract.py \
             test_ver11_snapshot_contract.py \
-            test_ver11_snapshot_persistence_denial.py
+            test_ver11_snapshot_persistence_denial.py \
+            test_ver11_default_price_read_denial.py

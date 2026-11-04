@@ -448,16 +448,15 @@ def get_current_analysis_data(
     No production database writes are performed.
     """
 
-    if provider is not None:
-        if type(provider) is not str or provider != "KIWOOM":
-            raise ValueError("Unsupported explicit price provider")
-        from core.price_provenance_gate import (
-            assess_price_provenance,
-            require_analysis_authorization,
-        )
-        require_analysis_authorization(
-            assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
-        )
+    if provider is not None and (type(provider) is not str or provider != "KIWOOM"):
+        raise ValueError("Unsupported explicit price provider")
+    from core.price_provenance_gate import (
+        assess_price_provenance,
+        require_analysis_authorization,
+    )
+    require_analysis_authorization(
+        assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
+    )
 
     if limit < 1:
         raise ValueError("limit must be >= 1")

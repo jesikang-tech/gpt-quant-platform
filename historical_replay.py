@@ -29,16 +29,15 @@ class HistoricalReplayEngine:
     TOP_N = 10
 
     def __init__(self, analysis_date, provider=None):
-        if provider is not None:
-            if type(provider) is not str or provider != "KIWOOM":
-                raise ValueError("Unsupported explicit price provider")
-            from core.price_provenance_gate import (
-                assess_price_provenance,
-                require_analysis_authorization,
-            )
-            require_analysis_authorization(
-                assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
-            )
+        if provider is not None and (type(provider) is not str or provider != "KIWOOM"):
+            raise ValueError("Unsupported explicit price provider")
+        from core.price_provenance_gate import (
+            assess_price_provenance,
+            require_analysis_authorization,
+        )
+        require_analysis_authorization(
+            assess_price_provenance(provider="KIWOOM", adjustment="UNKNOWN")
+        )
         self.analysis_date = self._validate_analysis_date(
             analysis_date
         )

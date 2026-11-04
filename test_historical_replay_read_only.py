@@ -188,3 +188,13 @@ def _synthetic_replay_api_price_boundary(monkeypatch):
         "_require_ver11_price_provenance",
         lambda: None,
     )
+
+@pytest.fixture(autouse=True)
+def _synthetic_direct_analysis_price_boundary(monkeypatch):
+    """Allow only isolated synthetic direct-analysis contract tests."""
+    import core.price_provenance_gate as provenance_gate
+    monkeypatch.setattr(
+        provenance_gate,
+        "require_analysis_authorization",
+        lambda decision: None,
+    )
