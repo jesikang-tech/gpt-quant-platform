@@ -1,3 +1,4 @@
+# CI verification trigger: parallel provider integration regression
 name: Price Core Regression
 
 on:
