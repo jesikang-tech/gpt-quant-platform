@@ -309,3 +309,45 @@ This assessment updates the current evidence state without
 retroactively rewriting historical reply-pending records.
 It does not authorize execution, database construction,
 external distribution, or deployment.
+
+## KIWOOM HTS TR Mapping Evidence - 2026-11-04
+
+Status: OFFICIAL_DOCUMENT_OBSERVED / REAL_PRICE_UNVERIFIED
+
+Official material:
+- Title: 영웅문4(HTS) - 키움 REST API, 키움 OPEN API + TR 매칭
+- Published update date: 2025-11-06
+- Source: https://openapi.kiwoom.com/
+- Evidence: user-provided official notice attachments, PDF and XLSX
+
+Documented HTS mappings:
+- ka10081: 6600, 0613, 0615, 0617
+- ka10086: 0124
+- ka40003: 0277, 0279 (ETF comparison candidate only)
+
+Suggested comparison targets:
+- ka10081: HTS 0613, with 6600 as secondary reference
+- ka10086: HTS 0124
+- ETF-specific supplemental reference: HTS 0277
+
+The mapping document identifies corresponding HTS screens.
+It does not independently certify:
+- Actual REST API response authenticity
+- Historical OHLCV numerical equivalence
+- Adjusted-price methodology or adjustment factors
+- Corporate-action effective dates and retroactive adjustments
+- Official exchange trading-calendar alignment
+- ETF distribution adjustment policy
+
+Existing offline contracts remain fail-closed.
+
+INDEPENDENT_SOURCE_VERIFICATION: PENDING
+ORIGINAL_RESPONSE_VERIFICATION: PENDING
+ADJUSTMENT_CERTIFICATION: PENDING
+CORPORATE_ACTION_CERTIFICATION: PENDING
+OFFICIAL_TRADING_DAY_CERTIFICATION: PENDING
+ANALYSIS_AUTHORIZED: FALSE
+PERSISTENCE_AUTHORIZED: FALSE
+DATABASE_REBUILD_AUTHORIZED: FALSE
+LIVE_API_EXECUTION_AUTHORIZED: FALSE
+BROKER_EXECUTION_AUTHORIZED: FALSE
