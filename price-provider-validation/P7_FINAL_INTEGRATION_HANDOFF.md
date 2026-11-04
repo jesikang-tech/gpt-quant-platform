@@ -327,3 +327,68 @@ These are separate, explicitly identified CI baselines.
 - This addendum records the latest verified pre-document-update baseline.
 - Final documentation commit and CI verification remain pending.
 - No synthetic CI result certifies actual market data or authorizes operations.
+
+## Latest KIWOOM Analysis Boundary Verification (2026-11-04)
+
+Status: SYNTHETIC_CI_VERIFIED / OPERATIONAL_USE_DENIED
+
+### Repository baseline
+
+- Branch: feature/parallel-price-providers
+- Verified source HEAD: 4b90200fc44f6dc8582fe2c2754893ea07f34b7c
+- Working tree before addendum: CLEAN
+- Remote branch synchronization: PASS
+- Main merge: NOT_AUTHORIZED
+
+### GitHub Actions evidence
+
+Parallel Price Provider Contract:
+- Run: 41758989362
+- Commit: 4b90200
+- Result: completed / success
+- Jobs: synthetic-contract and ci-registration-guard succeeded.
+
+Historical Replay Read Only Regression:
+- Commit: af55279
+- Result: completed / success
+- Includes API source denial, Ver1.1 analysis and snapshot regression.
+- Changes from af55279 to 4b90200 affect only
+  .github/workflows/parallel-price-provider-contract.yml.
+- Exact-HEAD replay workflow: NOT_RUN.
+- Successful unchanged-scope evidence is reused.
+
+Price Core Regression:
+- Earlier successful commit: a2b0457
+- Price Core workflow test target sources were unchanged
+  after that success, based on the reviewed change scope.
+- Exact-HEAD Price Core workflow: NOT_RUN.
+- Success is not represented as a new run.
+
+### KIWOOM analysis protection
+
+- Explicit KIWOOM analysis provider requests are denied.
+- HistoricalReplayEngine explicit KIWOOM requests are denied.
+- Existing Flask API source denial tests are preserved.
+- No real provider transport or market-data use is authorized.
+
+### External evidence and approval
+
+- KIWOOM official Q&A 7961 reply evidence recorded.
+- KIWOOM official Q&A 8123: REPLY_PENDING.
+- KIS and KIWOOM real data provenance and licensing:
+  NOT_CERTIFIED.
+- Actual price and adjustment verification: PENDING.
+- Operational integration and deployment: DENIED.
+
+### Safety boundaries
+
+- HOST_PYTHON_EXECUTION: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- BROKER_CALLS: DENIED
+- LIVE_API_EXECUTION: DENIED
+- REAL_PRICE_COLLECTION: DENIED
+- UNVERIFIED_ANALYSIS_AND_PERSISTENCE: DENIED
+- MAIN_MERGE: NOT_AUTHORIZED
+
+This addendum records synthetic development evidence only.
+It does not authorize operational market-data processing.
