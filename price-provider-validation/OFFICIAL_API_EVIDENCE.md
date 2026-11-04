@@ -250,7 +250,7 @@ Status: PDF_PRESERVED / SHA256_VERIFIED / CONTENT_REVIEW_PENDING
 - Preserved copy hash matched the original.
 - PDF header check: PASS.
 - Independent provider authenticity: NOT_VERIFIED.
-- Full reply transcription and scope assessment: PENDING.
+- Full PDF transcription: PENDING; screenshot-based scope assessment recorded below.
 
 This record establishes a reproducible file-integrity baseline.
 It does not independently authenticate the provider response.
@@ -264,3 +264,48 @@ must be assessed separately before any execution.
 - BROKER_CALLS: DENIED
 - LIVE_API_EXECUTION: DENIED
 - MAIN_MERGE: NOT_AUTHORIZED
+
+### Q&A 8123 screenshot-based permitted-use assessment
+
+Assessment date: 2026-11-04
+Status: USER_SUPPLIED_SCREENSHOT_REVIEWED / PDF_FULL_TEXT_NOT_VERIFIED
+
+The user-supplied official Q&A reply screenshot was reviewed.
+The following is a paraphrase of the visible reply, not an
+independently authenticated provider transcript:
+
+- Individual customers may use REST API data for investment
+  of their own assets.
+- The visible reply indicates no separate restrictions on
+  automated collection by data category or retention period.
+- Provision or redistribution to third parties is prohibited.
+- Commercial information provision and separate service
+  agreements are not authorized by this personal-use guidance.
+- REST API data is described as corresponding to HTS data.
+- The provider recommends consulting API and HTS guides
+  and comparing matching TR results with HTS screens.
+
+Interpretation boundaries:
+
+- PERSONAL_INVESTMENT_USE_GUIDANCE: OBSERVED
+- AUTOMATED_COLLECTION_GUIDANCE: OBSERVED
+- STORAGE_PERIOD_GUIDANCE: OBSERVED
+- THIRD_PARTY_REDISTRIBUTION: PROHIBITED
+- FULL_PDF_TEXT_REVIEW: PENDING
+- INDEPENDENT_PROVIDER_AUTHENTICITY: UNVERIFIED
+- SPECIFIC_ANALYSIS_AND_BACKTEST_SCOPE: NOT_INDEPENDENTLY_CERTIFIED
+- ACTUAL_PRICE_PROVENANCE: UNVERIFIED
+- CORPORATE_ACTION_ADJUSTMENT: PENDING
+- HISTORICAL_CALENDAR_AND_COMPLETENESS: PENDING
+- KIS_PERMISSION_SCOPE: SEPARATELY_UNVERIFIED
+- LIVE_API_EXECUTION: DENIED
+- REAL_PRICE_COLLECTION: DENIED
+- PRICE_ANALYSIS_AND_PERSISTENCE: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- BROKER_CALLS: DENIED
+- MAIN_MERGE: NOT_AUTHORIZED
+
+This assessment updates the current evidence state without
+retroactively rewriting historical reply-pending records.
+It does not authorize execution, database construction,
+external distribution, or deployment.

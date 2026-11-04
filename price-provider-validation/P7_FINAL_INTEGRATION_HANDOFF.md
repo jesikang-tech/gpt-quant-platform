@@ -374,7 +374,7 @@ Price Core Regression:
 ### External evidence and approval
 
 - KIWOOM official Q&A 7961 reply evidence recorded.
-- KIWOOM official Q&A 8123: REPLY_PENDING.
+- KIWOOM official Q&A 8123: REPLY_OBSERVED / PDF_SHA256_VERIFIED / INDEPENDENT_AUTHENTICITY_UNVERIFIED.
 - KIS and KIWOOM real data provenance and licensing:
   NOT_CERTIFIED.
 - Actual price and adjustment verification: PENDING.
@@ -392,3 +392,21 @@ Price Core Regression:
 
 This addendum records synthetic development evidence only.
 It does not authorize operational market-data processing.
+
+## KIWOOM Q&A 8123 current evidence assessment (2026-11-04)
+
+Status: REPLY_OBSERVED / PDF_SHA256_VERIFIED / OPERATIONAL_USE_DENIED
+
+- The official Q&A 8123 reply has been user-confirmed.
+- The preserved PDF SHA-256 is recorded in OFFICIAL_API_EVIDENCE.md.
+- The screenshot-based scope assessment records guidance on
+  personal investment use, automated collection, retention,
+  and the prohibition on third-party redistribution.
+- Full PDF text and independent provider authenticity
+  have not been verified.
+- Real historical price provenance, corporate-action adjustment,
+  trading calendar, completeness, and endpoint behavior
+  remain unverified.
+- The KIS provider requires separate evidence.
+- No actual API collection, analysis, database construction,
+  broker execution, or main merge is authorized.
