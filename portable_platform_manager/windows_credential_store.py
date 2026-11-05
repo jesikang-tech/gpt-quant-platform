@@ -998,3 +998,68 @@ def assess_windows_file_identity(
         True,
         "OBSERVED_IDENTITY_MATCH_NOT_AUTHORIZED",
     )
+
+@dataclass(frozen=True)
+class WindowsHandleAccessInspection:
+    """Granted access on one open handle; never storage authorization."""
+
+    inspected: bool
+    reason: str
+    granted_access: int | None = None
+
+
+def _inspect_windows_handle_granted_access(
+    handle: object,
+) -> WindowsHandleAccessInspection:
+    """Read FileAccessInfo from an already-open Windows handle.
+
+    The caller retains handle ownership. This does not evaluate an
+    arbitrary token's effective ACL access, maintain handle lifetime
+    after return, or authorize credential storage.
+    """
+    if sys.platform != "win32":
+        return WindowsHandleAccessInspection(False, "WINDOWS_REQUIRED")
+
+    import ctypes
+    from ctypes import wintypes
+
+    if type(handle) is not int or handle <= 0:
+        return WindowsHandleAccessInspection(False, "INVALID_HANDLE")
+
+    if handle >= ctypes.c_void_p(-1).value:
+        return WindowsHandleAccessInspection(False, "INVALID_HANDLE")
+
+    FILE_ACCESS_INFO_CLASS = 17
+
+    class FILE_ACCESS_INFO(ctypes.Structure):
+        _fields_ = [("AccessFlags", wintypes.DWORD)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    get_file_information = kernel32.GetFileInformationByHandleEx
+    get_file_information.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+    ]
+    get_file_information.restype = wintypes.BOOL
+
+    info = FILE_ACCESS_INFO()
+
+    if not get_file_information(
+        handle,
+        FILE_ACCESS_INFO_CLASS,
+        ctypes.byref(info),
+        ctypes.sizeof(info),
+    ):
+        return WindowsHandleAccessInspection(
+            False,
+            "HANDLE_ACCESS_INFO_FAILED",
+        )
+
+    return WindowsHandleAccessInspection(
+        True,
+        "HANDLE_GRANTED_ACCESS_OBSERVED_NOT_AUTHORIZED",
+        int(info.AccessFlags),
+    )

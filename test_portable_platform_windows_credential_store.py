@@ -1393,3 +1393,109 @@ def test_windows_handle_identity_default_is_not_authority():
     assert not hasattr(result, "storage_authorized")
     assert not hasattr(result, "write_authorized")
     assert not hasattr(result, "toctou_verified")
+
+def test_windows_handle_granted_access_fail_closed():
+    """Invalid handles must never become storage authorization."""
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_windows_handle_granted_access,
+    )
+
+    for handle in (None, False, 0, -1, "123", 1.5):
+        result = _inspect_windows_handle_granted_access(handle)
+        assert result.inspected is False
+        assert result.granted_access is None
+        assert result.reason in (
+            "INVALID_HANDLE",
+            "WINDOWS_REQUIRED",
+        )
+
+
+def test_windows_handle_access_result_has_no_storage_authority():
+    """Observation results cannot authorize credential writes."""
+    from portable_platform_manager.windows_credential_store import (
+        WindowsHandleAccessInspection,
+    )
+
+    result = WindowsHandleAccessInspection(
+        inspected=True,
+        reason="HANDLE_GRANTED_ACCESS_OBSERVED_NOT_AUTHORIZED",
+        granted_access=0x00020000,
+    )
+
+    assert result.inspected is True
+    assert result.granted_access == 0x00020000
+    assert not hasattr(result, "storage_authorized")
+    assert not hasattr(result, "write_authorized")
+    assert not hasattr(result, "toctou_verified")
+
+def test_windows_handle_granted_access_real_api():
+    """Observe a disposable Windows NUL device handle, never credentials."""
+    import sys
+
+    if sys.platform != "win32":
+        return
+
+    import ctypes
+    from ctypes import wintypes
+
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_windows_handle_granted_access,
+    )
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    GENERIC_READ = 0x80000000
+    FILE_SHARE_READ = 0x00000001
+    OPEN_EXISTING = 3
+
+    handle = create_file(
+        "NUL",
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        None,
+        OPEN_EXISTING,
+        0,
+        None,
+    )
+
+    invalid_handle = ctypes.c_void_p(-1).value
+
+    assert handle not in (None, 0, invalid_handle)
+
+    try:
+        result = _inspect_windows_handle_granted_access(handle)
+
+        # Device handles may reject FileAccessInfo. Either outcome
+        # must remain explicitly diagnostic and non-authorizing.
+        assert result.reason in (
+            "HANDLE_GRANTED_ACCESS_OBSERVED_NOT_AUTHORIZED",
+            "HANDLE_ACCESS_INFO_FAILED",
+        )
+
+        if result.inspected:
+            assert type(result.granted_access) is int
+            assert result.granted_access >= 0
+        else:
+            assert result.granted_access is None
+
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "write_authorized")
+        assert not hasattr(result, "toctou_verified")
+    finally:
+        assert close_handle(handle)
