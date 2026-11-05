@@ -1171,3 +1171,50 @@ def test_windows_ace_invalid_handle_has_no_observation():
         assert result.ace_entries is None
         assert not hasattr(result, "storage_authorized")
         assert not hasattr(result, "acl_verified")
+
+def test_observed_ace_policy_never_grants_storage_authority():
+    """Observed ACE data and synthetic acceptance are not OS authorization."""
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        WindowsSecurityDescriptorInspection,
+        assess_synthetic_windows_acl,
+    )
+
+    entries = (
+        WindowsAclEntry(
+            sid="S-1-5-18",
+            access_type="ALLOW",
+            rights=0x001F01FF,
+            inherited=False,
+        ),
+    )
+
+    observation = WindowsSecurityDescriptorInspection(
+        inspected=True,
+        reason="HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED",
+        owner_sid="S-1-5-18",
+        dacl_present=True,
+        dacl_null=False,
+        dacl_protected=True,
+        ace_entries=entries,
+    )
+
+    assert observation.inspected is True
+    assert observation.ace_entries == entries
+
+    policy = assess_synthetic_windows_acl(
+        owner_sid=observation.owner_sid,
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=observation.dacl_protected,
+        entries=observation.ace_entries,
+        trusted_sids=("S-1-5-18",),
+    )
+
+    assert policy.accepted is True
+    assert policy.reason == "SYNTHETIC_POLICY_ONLY_NOT_AUTHORIZED"
+
+    for result in (observation, policy):
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "write_authorized")
+        assert not hasattr(result, "acl_verified")
+        assert not hasattr(result, "effective_access_verified")
