@@ -556,6 +556,7 @@ class WindowsSecurityDescriptorInspection:
     owner_sid: str | None = None
     dacl_present: bool = False
     dacl_null: bool = True
+    dacl_protected: bool | None = None
 
 
 def _denied_windows_security_descriptor(
@@ -595,6 +596,7 @@ def _inspect_security_descriptor_from_handle(
 
     OWNER_SECURITY_INFORMATION = 0x00000001
     DACL_SECURITY_INFORMATION = 0x00000004
+    SE_DACL_PROTECTED = 0x1000
     SE_FILE_OBJECT = 1
 
     advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
@@ -612,6 +614,14 @@ def _inspect_security_descriptor_from_handle(
         ctypes.POINTER(ctypes.c_void_p),
     ]
     get_security_info.restype = wintypes.DWORD
+
+    get_security_control = advapi32.GetSecurityDescriptorControl
+    get_security_control.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(wintypes.WORD),
+        ctypes.POINTER(wintypes.DWORD),
+    ]
+    get_security_control.restype = wintypes.BOOL
 
     convert_sid = advapi32.ConvertSidToStringSidW
     convert_sid.argtypes = [
@@ -673,12 +683,25 @@ def _inspect_security_descriptor_from_handle(
                 "OWNER_SID_INVALID"
             )
 
+        control = wintypes.WORD()
+        revision = wintypes.DWORD()
+
+        if not get_security_control(
+            descriptor,
+            ctypes.byref(control),
+            ctypes.byref(revision),
+        ):
+            return _denied_windows_security_descriptor(
+                "SECURITY_CONTROL_FAILED"
+            )
+
         return WindowsSecurityDescriptorInspection(
             inspected=True,
             reason="HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED",
             owner_sid=owner_sid,
             dacl_present=True,
             dacl_null=False,
+            dacl_protected=bool(control.value & SE_DACL_PROTECTED),
         )
     finally:
         if sid_string.value:

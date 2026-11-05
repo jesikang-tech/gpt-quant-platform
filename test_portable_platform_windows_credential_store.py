@@ -946,3 +946,90 @@ def test_windows_optional_security_observation_failure_denied(
     assert result.reason == "SECURITY_DESCRIPTOR_OBSERVATION_FAILED"
     assert len(observed_handles) >= 1
     assert not hasattr(result, "storage_authorized")
+
+def test_windows_dacl_protection_observation(tmp_path):
+    """Observe the real DACL protection flag without assuming its value."""
+    import ctypes
+    import sys
+
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_security_descriptor_from_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only DACL protection observation")
+
+    from ctypes import wintypes
+
+    directory = tmp_path / "dacl-protection-observation"
+    directory.mkdir()
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    READ_CONTROL = 0x00020000
+    FILE_READ_ATTRIBUTES = 0x00000080
+    FILE_SHARE_READ = 0x00000001
+    FILE_SHARE_WRITE = 0x00000002
+    FILE_SHARE_DELETE = 0x00000004
+    OPEN_EXISTING = 3
+    FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+
+    handle = create_file(
+        str(directory),
+        READ_CONTROL | FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        None,
+    )
+
+    assert handle not in (None, ctypes.c_void_p(-1).value)
+
+    try:
+        result = _inspect_security_descriptor_from_handle(handle)
+    finally:
+        assert close_handle(handle) != 0
+
+    assert result.inspected is True
+    assert result.reason == "HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED"
+    assert result.dacl_present is True
+    assert result.dacl_null is False
+    assert type(result.dacl_protected) is bool
+    assert not hasattr(result, "storage_authorized")
+    assert not hasattr(result, "acl_verified")
+
+
+def test_windows_dacl_protection_failure_has_no_verified_state():
+    from portable_platform_manager.windows_credential_store import (
+        _denied_windows_security_descriptor,
+    )
+
+    result = _denied_windows_security_descriptor(
+        "SECURITY_CONTROL_FAILED"
+    )
+
+    assert result.inspected is False
+    assert result.dacl_protected is None
+    assert result.owner_sid is None
+    assert result.dacl_present is False
+    assert result.dacl_null is True
+    assert not hasattr(result, "storage_authorized")
