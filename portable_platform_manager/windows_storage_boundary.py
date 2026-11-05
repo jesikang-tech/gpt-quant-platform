@@ -262,3 +262,82 @@ def assess_windows_observed_store_security(
         True,
         "OBSERVATIONS_ONLY_NOT_AUTHORIZED",
     )
+
+@dataclass(frozen=True)
+class WindowsLockLifecycleObservation:
+    """Caller-declared lock state, not trusted OS lock evidence."""
+
+    acquired: bool
+    held: bool
+    released: bool
+    same_handle: bool
+
+
+@dataclass(frozen=True)
+class WindowsLockLifecycleDecision:
+    """Diagnostic decision only; never grants storage execution."""
+
+    consistent: bool
+    reason: str
+    storage_authorized: bool = False
+
+
+def assess_windows_lock_lifecycle(
+    observation: object,
+    *,
+    platform: str | None = None,
+) -> WindowsLockLifecycleDecision:
+    """Assess declared lock state without acquiring or trusting a lock.
+
+    This is a synthetic diagnostic contract. No caller-supplied state,
+    including an all-true declaration, can authorize credential I/O.
+    """
+    import sys
+
+    actual_platform = sys.platform if platform is None else platform
+
+    if actual_platform != "win32":
+        return WindowsLockLifecycleDecision(
+            False, "WINDOWS_REQUIRED",
+        )
+
+    if type(observation) is not WindowsLockLifecycleObservation:
+        return WindowsLockLifecycleDecision(
+            False, "INVALID_LOCK_OBSERVATION",
+        )
+
+    fields = (
+        observation.acquired,
+        observation.held,
+        observation.released,
+        observation.same_handle,
+    )
+
+    if any(type(value) is not bool for value in fields):
+        return WindowsLockLifecycleDecision(
+            False, "INVALID_LOCK_FIELD",
+        )
+
+    if not observation.acquired:
+        return WindowsLockLifecycleDecision(
+            False, "LOCK_NOT_ACQUIRED",
+        )
+
+    if observation.released:
+        return WindowsLockLifecycleDecision(
+            False, "LOCK_ALREADY_RELEASED",
+        )
+
+    if not observation.held:
+        return WindowsLockLifecycleDecision(
+            False, "LOCK_NOT_HELD",
+        )
+
+    if not observation.same_handle:
+        return WindowsLockLifecycleDecision(
+            False, "LOCK_HANDLE_IDENTITY_UNVERIFIED",
+        )
+
+    return WindowsLockLifecycleDecision(
+        True, "DECLARED_LOCK_STATE_ONLY_NOT_AUTHORIZED",
+    )

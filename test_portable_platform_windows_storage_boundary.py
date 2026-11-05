@@ -650,3 +650,120 @@ def test_observed_store_security_overlapping_location_denied():
     assert result.observed is False
     assert result.reason == "LOCATION_PACKAGE_CREDENTIAL_OVERLAP"
     assert result.storage_authorized is False
+
+def test_lock_lifecycle_requires_windows():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(True, True, False, True)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="linux",
+    )
+    assert result.consistent is False
+    assert result.reason == "WINDOWS_REQUIRED"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_rejects_invalid_observation():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_lock_lifecycle,
+    )
+
+    result = assess_windows_lock_lifecycle(
+        object(), platform="win32",
+    )
+    assert result.consistent is False
+    assert result.reason == "INVALID_LOCK_OBSERVATION"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_rejects_nonboolean_fields():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(1, True, False, True)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="win32",
+    )
+    assert result.consistent is False
+    assert result.reason == "INVALID_LOCK_FIELD"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_rejects_unacquired_lock():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(False, False, False, True)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="win32",
+    )
+    assert result.consistent is False
+    assert result.reason == "LOCK_NOT_ACQUIRED"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_rejects_released_lock():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(True, True, True, True)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="win32",
+    )
+    assert result.consistent is False
+    assert result.reason == "LOCK_ALREADY_RELEASED"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_rejects_not_held():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(True, False, False, True)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="win32",
+    )
+    assert result.consistent is False
+    assert result.reason == "LOCK_NOT_HELD"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_rejects_handle_mismatch():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(True, True, False, False)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="win32",
+    )
+    assert result.consistent is False
+    assert result.reason == "LOCK_HANDLE_IDENTITY_UNVERIFIED"
+    assert result.storage_authorized is False
+
+
+def test_lock_lifecycle_consistent_declaration_never_authorizes():
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsLockLifecycleObservation,
+        assess_windows_lock_lifecycle,
+    )
+
+    observation = WindowsLockLifecycleObservation(True, True, False, True)
+    result = assess_windows_lock_lifecycle(
+        observation, platform="win32",
+    )
+    assert result.consistent is True
+    assert result.reason == "DECLARED_LOCK_STATE_ONLY_NOT_AUTHORIZED"
+    assert result.storage_authorized is False
