@@ -150,3 +150,55 @@ Status: DESIGN_ONLY
 - Credential leakage and password reset boundary tests
   are required.
 - Synthetic multi-platform authentication tests are required.
+## 12. PPM Authentication Isolation
+
+Status: DESIGN_ONLY
+
+### Independent Administrator Identity
+
+- PPM MUST maintain its own administrator credentials.
+- Existing web dashboard passwords MUST NOT grant PPM authority.
+- PPM credentials MUST NOT grant web dashboard authority.
+- Authentication MUST be independent of Flask sessions.
+- The common engine MUST NOT import platform-specific
+  authentication configuration or operating databases.
+
+### Password Security
+
+- PPM MUST support strong administrator passphrases.
+- Existing four-digit and seven-digit numeric password
+  policies MUST NOT be reused for PPM.
+- Password hashing MUST use an established maintained
+  password-hashing implementation.
+- Password verification MUST reject malformed stored hashes.
+- Credential storage MUST be outside distributed ZIP packages.
+- Credential files MUST have appropriate OS access controls.
+- Authentication failures MUST be rate-limited.
+- Passwords MUST NOT be written to logs or command arguments.
+
+### Protected Operations
+
+- Install, reinstall, update, and uninstall require PPM
+  administrator authentication.
+- Destructive restore and data deletion require separate
+  explicit authorization.
+- Authentication MUST be verified before protected changes.
+- A successful password check MUST NOT bypass path,
+  package-integrity, ownership, or execution safety checks.
+
+### Enrollment and Recovery
+
+- First-time enrollment MUST use a separately verified
+  local authorization boundary.
+- Existing installations MUST NOT permit silent re-enrollment.
+- Credential replacement MUST require verified authority.
+- No hardcoded recovery password or hidden bypass is allowed.
+
+### Reuse and Verification
+
+- Reuse established hashing primitives where appropriate.
+- Do not couple PPM to the existing platform_auth module.
+- Synthetic tests MUST cover multiple platform identities.
+- Wrong-password, missing-password, malformed-hash,
+  and unauthorized enrollment attempts MUST fail closed.
+- No operating database or broker access is authorized.
