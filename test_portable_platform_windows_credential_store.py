@@ -222,3 +222,163 @@ def test_windows_special_paths_denied(invalid_path):
 
     assert result.eligible is False
     assert result.reason == "INVALID_PATH"
+
+
+def test_directory_inspection_nonwindows_denied():
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\PPM\Credentials",
+        platform="linux",
+    )
+
+    assert result.accepted is False
+    assert result.reason == "WINDOWS_REQUIRED"
+
+
+def test_directory_inspection_invalid_path_denied():
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\..\Credentials",
+        platform="win32",
+    )
+
+    assert result.accepted is False
+    assert result.reason == "INVALID_PATH"
+
+
+def test_directory_inspection_normal_path(monkeypatch):
+    import os
+    import stat
+    from types import SimpleNamespace
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    visited = []
+
+    def fake_lstat(path):
+        visited.append(path)
+        return SimpleNamespace(
+            st_mode=stat.S_IFDIR | 0o700,
+            st_file_attributes=0,
+        )
+
+    monkeypatch.setattr(os, "lstat", fake_lstat)
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\PPM\Credentials",
+        platform="win32",
+    )
+
+    assert result.accepted is True
+    assert result.reason == "READ_ONLY_PATH_INSPECTED_NOT_AUTHORIZED"
+    assert len(visited) == 3
+
+
+def test_directory_inspection_reparse_point_denied(monkeypatch):
+    import os
+    import stat
+    from types import SimpleNamespace
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    def fake_lstat(path):
+        attributes = (
+            stat.FILE_ATTRIBUTE_REPARSE_POINT
+            if path.lower().endswith("ppm")
+            else 0
+        )
+
+        return SimpleNamespace(
+            st_mode=stat.S_IFDIR | 0o700,
+            st_file_attributes=attributes,
+        )
+
+    monkeypatch.setattr(os, "lstat", fake_lstat)
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\PPM\Credentials",
+        platform="win32",
+    )
+
+    assert result.accepted is False
+    assert result.reason == "REPARSE_POINT_DENIED"
+
+
+def test_directory_inspection_regular_file_denied(monkeypatch):
+    import os
+    import stat
+    from types import SimpleNamespace
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    def fake_lstat(path):
+        return SimpleNamespace(
+            st_mode=stat.S_IFREG | 0o600,
+            st_file_attributes=0,
+        )
+
+    monkeypatch.setattr(os, "lstat", fake_lstat)
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\PPM\Credentials",
+        platform="win32",
+    )
+
+    assert result.accepted is False
+    assert result.reason == "NOT_A_DIRECTORY"
+
+
+def test_directory_inspection_missing_path_denied(monkeypatch):
+    import os
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    def fake_lstat(path):
+        raise FileNotFoundError("synthetic missing directory")
+
+    monkeypatch.setattr(os, "lstat", fake_lstat)
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\PPM\Credentials",
+        platform="win32",
+    )
+
+    assert result.accepted is False
+    assert result.reason == "DIRECTORY_INSPECTION_FAILED"
+
+
+def test_directory_inspection_missing_windows_attributes_denied(monkeypatch):
+    import os
+    import stat
+    from types import SimpleNamespace
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory,
+    )
+
+    def fake_lstat(path):
+        return SimpleNamespace(st_mode=stat.S_IFDIR | 0o700)
+
+    monkeypatch.setattr(os, "lstat", fake_lstat)
+
+    result = inspect_windows_directory(
+        r"C:\ProgramData\PPM\Credentials",
+        platform="win32",
+    )
+
+    assert result.accepted is False
+    assert result.reason == "DIRECTORY_INSPECTION_FAILED"

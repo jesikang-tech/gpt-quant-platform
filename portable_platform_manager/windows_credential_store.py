@@ -129,3 +129,74 @@ def assess_windows_store_location(
         return LocationDecision(False, "INSTALL_CREDENTIAL_OVERLAP")
 
     return LocationDecision(True, "LEXICAL_SEPARATION_ONLY")
+
+
+@dataclass(frozen=True)
+class WindowsDirectoryInspection:
+    """Read-only OS inspection result; not a storage authorization."""
+
+    accepted: bool
+    reason: str
+    path: str | None = None
+
+
+def inspect_windows_directory(
+    path: object,
+    *,
+    platform: str | None = None,
+) -> WindowsDirectoryInspection:
+    """Inspect a Windows directory without modifying filesystem state.
+
+    This first-stage implementation rejects non-Windows systems,
+    malformed paths, missing directories, and reparse-point paths.
+
+    It does not establish handle-based identity, ownership, ACL
+    safety, exclusive locking, or atomic-write guarantees.
+    """
+
+    import os
+    import stat
+
+    actual_platform = sys.platform if platform is None else platform
+
+    if actual_platform != "win32":
+        return WindowsDirectoryInspection(False, "WINDOWS_REQUIRED")
+
+    canonical = _canonical_declared_path(path)
+
+    if canonical is None:
+        return WindowsDirectoryInspection(False, "INVALID_PATH")
+
+    try:
+        current = ntpath.splitdrive(canonical)[0] + "\\"
+
+        for component in canonical[len(current):].split("\\"):
+            if not component:
+                continue
+
+            current = ntpath.join(current, component)
+            info = os.lstat(current)
+
+            if info.st_file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+                return WindowsDirectoryInspection(
+                    False,
+                    "REPARSE_POINT_DENIED",
+                )
+
+            if not stat.S_ISDIR(info.st_mode):
+                return WindowsDirectoryInspection(
+                    False,
+                    "NOT_A_DIRECTORY",
+                )
+
+    except (OSError, AttributeError, ValueError):
+        return WindowsDirectoryInspection(
+            False,
+            "DIRECTORY_INSPECTION_FAILED",
+        )
+
+    return WindowsDirectoryInspection(
+        True,
+        "READ_ONLY_PATH_INSPECTED_NOT_AUTHORIZED",
+        canonical,
+    )
