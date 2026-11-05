@@ -7,9 +7,6 @@ The caller must provide a trusted, private, empty destination.
 from __future__ import annotations
 
 import sys
-
-_IS_WINDOWS = sys.platform == "win32"
-
 import hashlib
 import os
 import stat
@@ -131,7 +128,7 @@ def stage_backup_file(
     resistance to concurrent filesystem modifications.
     """
 
-    if _IS_WINDOWS:
+    if sys.platform == "win32":
         raise ValueError("WINDOWS_SAFE_SOURCE_READER_PENDING_VERIFICATION")
 
     inspection = inspect_backup_file(source_root, relative_path)
