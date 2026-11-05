@@ -710,3 +710,77 @@ def test_synthetic_windows_acl_rejects_untrusted_generic_rights(rights):
     )
 
     assert result.accepted is False
+def test_windows_security_descriptor_result_denies_authority():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsSecurityDescriptorInspection,
+    )
+
+    result = WindowsSecurityDescriptorInspection(
+        inspected=True,
+        reason="OBSERVATION_ONLY_NOT_AUTHORIZED",
+        owner_sid="S-1-5-18",
+        dacl_present=True,
+        dacl_null=False,
+    )
+
+    assert result.inspected is True
+    assert not hasattr(result, "storage_authorized")
+
+
+def test_windows_security_descriptor_failure_is_closed():
+    from portable_platform_manager.windows_credential_store import (
+        _denied_windows_security_descriptor,
+    )
+
+    result = _denied_windows_security_descriptor("SECURITY_INFO_FAILED")
+
+    assert result.inspected is False
+    assert result.owner_sid is None
+    assert result.dacl_present is False
+    assert result.dacl_null is True
+    assert not hasattr(result, "storage_authorized")
+    assert result.reason == "SECURITY_INFO_FAILED"
+
+def test_security_descriptor_handle_rejects_invalid_handle():
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_security_descriptor_from_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows handle test")
+
+    import ctypes
+
+    invalid_values = (
+        None,
+        0,
+        -1,
+        ctypes.c_void_p(-1).value,
+        "not-a-handle",
+        True,
+    )
+
+    for invalid in invalid_values:
+        result = _inspect_security_descriptor_from_handle(invalid)
+        assert result.inspected is False
+        assert result.reason == "INVALID_HANDLE"
+        assert not hasattr(result, "storage_authorized")
+
+
+def test_security_descriptor_handle_requires_windows():
+    import sys
+
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_security_descriptor_from_handle,
+    )
+
+    if sys.platform == "win32":
+        return
+
+    result = _inspect_security_descriptor_from_handle(1)
+
+    assert result.inspected is False
+    assert result.reason == "WINDOWS_REQUIRED"

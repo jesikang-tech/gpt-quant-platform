@@ -530,3 +530,141 @@ def assess_synthetic_windows_acl(
         True,
         "SYNTHETIC_POLICY_ONLY_NOT_AUTHORIZED",
     )
+@dataclass(frozen=True)
+class WindowsSecurityDescriptorInspection:
+    """Read-only observation; never a credential storage authorization."""
+
+    inspected: bool
+    reason: str
+    owner_sid: str | None = None
+    dacl_present: bool = False
+    dacl_null: bool = True
+
+
+def _denied_windows_security_descriptor(
+    reason: str,
+) -> WindowsSecurityDescriptorInspection:
+    """Fail closed without claiming actual Windows ACL verification."""
+    return WindowsSecurityDescriptorInspection(
+        inspected=False,
+        reason=reason,
+        owner_sid=None,
+        dacl_present=False,
+        dacl_null=True,
+    )
+
+def _inspect_security_descriptor_from_handle(
+    handle: object,
+) -> WindowsSecurityDescriptorInspection:
+    """Observe owner and DACL from an already-open Windows handle.
+
+    This is not an ACL effectiveness assessment or storage authorization.
+    The caller owns and must close the handle.
+    """
+    if sys.platform != "win32":
+        return _denied_windows_security_descriptor("WINDOWS_REQUIRED")
+
+    import ctypes
+    from ctypes import wintypes
+
+    if type(handle) is not int or handle in (0, -1):
+        return _denied_windows_security_descriptor("INVALID_HANDLE")
+
+    if handle < 0 or handle > ctypes.c_void_p(-1).value:
+        return _denied_windows_security_descriptor("INVALID_HANDLE")
+
+    if handle == ctypes.c_void_p(-1).value:
+        return _denied_windows_security_descriptor("INVALID_HANDLE")
+
+    OWNER_SECURITY_INFORMATION = 0x00000001
+    DACL_SECURITY_INFORMATION = 0x00000004
+    SE_FILE_OBJECT = 1
+
+    advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    get_security_info = advapi32.GetSecurityInfo
+    get_security_info.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_void_p),
+        ctypes.POINTER(ctypes.c_void_p),
+    ]
+    get_security_info.restype = wintypes.DWORD
+
+    convert_sid = advapi32.ConvertSidToStringSidW
+    convert_sid.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_void_p),
+    ]
+    convert_sid.restype = wintypes.BOOL
+
+    local_free = kernel32.LocalFree
+    local_free.argtypes = [ctypes.c_void_p]
+    local_free.restype = ctypes.c_void_p
+
+    owner = ctypes.c_void_p()
+    dacl = ctypes.c_void_p()
+    descriptor = ctypes.c_void_p()
+    sid_string = ctypes.c_void_p()
+
+    try:
+        status = get_security_info(
+            handle,
+            SE_FILE_OBJECT,
+            OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+            ctypes.byref(owner),
+            None,
+            ctypes.byref(dacl),
+            None,
+            ctypes.byref(descriptor),
+        )
+
+        if status != 0:
+            return _denied_windows_security_descriptor(
+                "SECURITY_INFO_FAILED"
+            )
+
+        if not descriptor.value or not owner.value:
+            return _denied_windows_security_descriptor(
+                "OWNER_OR_DESCRIPTOR_MISSING"
+            )
+
+        if not dacl.value:
+            return _denied_windows_security_descriptor(
+                "NULL_OR_MISSING_DACL"
+            )
+
+        if not convert_sid(owner, ctypes.byref(sid_string)):
+            return _denied_windows_security_descriptor(
+                "OWNER_SID_CONVERSION_FAILED"
+            )
+
+        if not sid_string.value:
+            return _denied_windows_security_descriptor(
+                "OWNER_SID_MISSING"
+            )
+
+        owner_sid = ctypes.wstring_at(sid_string.value)
+
+        if not _valid_synthetic_sid(owner_sid):
+            return _denied_windows_security_descriptor(
+                "OWNER_SID_INVALID"
+            )
+
+        return WindowsSecurityDescriptorInspection(
+            inspected=True,
+            reason="HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED",
+            owner_sid=owner_sid,
+            dacl_present=True,
+            dacl_null=False,
+        )
+    finally:
+        if sid_string.value:
+            local_free(sid_string)
+        if descriptor.value:
+            local_free(descriptor)
