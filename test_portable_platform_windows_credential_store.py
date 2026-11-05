@@ -1647,3 +1647,112 @@ def test_lock_path_rejects_noncanonical_credential_root():
     assert result.reason == "INVALID_PATH"
     assert result.lock_path is None
     assert result.storage_authorized is False
+
+def test_os_lock_rejects_invalid_handle():
+    import pytest
+    from portable_platform_manager.windows_credential_store import (
+        _acquire_windows_exclusive_lock_handle,
+    )
+
+    with pytest.raises(ValueError, match="INVALID_WINDOWS_HANDLE"):
+        _acquire_windows_exclusive_lock_handle(0)
+
+
+def test_os_lock_acquire_release_on_temporary_file(tmp_path):
+    import ctypes
+    import msvcrt
+    import os
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        _acquire_windows_exclusive_lock_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only OS lock test")
+
+    path = tmp_path / "ppm-test.lock"
+
+    with open(path, "w+b") as stream:
+        stream.write(b"\0")
+        stream.flush()
+        os.fsync(stream.fileno())
+
+        handle = msvcrt.get_osfhandle(stream.fileno())
+        lock = _acquire_windows_exclusive_lock_handle(handle)
+        assert lock._released is False
+        lock.release()
+        assert lock._released is True
+        lock.release()
+        assert lock._released is True
+
+
+def test_os_lock_conflict_and_reacquire_on_temporary_file(tmp_path):
+    import msvcrt
+    import os
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        _acquire_windows_exclusive_lock_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only OS lock test")
+
+    path = tmp_path / "ppm-conflict.lock"
+
+    with open(path, "w+b") as first:
+        first.write(b"\0")
+        first.flush()
+        os.fsync(first.fileno())
+
+        with open(path, "r+b") as second:
+            first_handle = msvcrt.get_osfhandle(first.fileno())
+            second_handle = msvcrt.get_osfhandle(second.fileno())
+
+            lock = _acquire_windows_exclusive_lock_handle(first_handle)
+
+            try:
+                with pytest.raises(OSError):
+                    _acquire_windows_exclusive_lock_handle(
+                        second_handle,
+                    )
+            finally:
+                lock.release()
+
+            next_lock = _acquire_windows_exclusive_lock_handle(
+                second_handle,
+            )
+            next_lock.release()
+
+
+def test_os_lock_release_failure_is_not_success():
+    import ctypes
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        WindowsExclusiveLockHandle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only OS lock test")
+
+    class FakeOverlapped(ctypes.Structure):
+        _fields_ = [("value", ctypes.c_ulong)]
+
+    def failing_unlock(*args):
+        return 0
+
+    lock = WindowsExclusiveLockHandle(
+        123,
+        FakeOverlapped(),
+        failing_unlock,
+    )
+
+    with pytest.raises(OSError, match="WINDOWS_LOCK_RELEASE_FAILED"):
+        lock.release()
+
+    assert lock._released is False

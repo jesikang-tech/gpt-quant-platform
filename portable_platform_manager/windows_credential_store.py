@@ -1220,3 +1220,112 @@ def assess_windows_lock_path(
         "LEXICAL_LOCK_PATH_ONLY_NOT_AUTHORIZED",
         canonical_lock,
     )
+
+class WindowsExclusiveLockHandle:
+    """Own an OS-locked, caller-opened Windows file handle.
+
+    Internal adapter only. A successful lock does not establish
+    path trust, ACL effectiveness, or credential storage authority.
+    """
+
+    def __init__(self, handle: int, overlapped: object, unlock: object):
+        self._handle = handle
+        self._overlapped = overlapped
+        self._unlock = unlock
+        self._released = False
+
+    def release(self) -> None:
+        """Release the byte-range lock; caller still owns the file handle."""
+        if self._released:
+            return
+
+        import ctypes
+
+        if not self._unlock(
+            self._handle,
+            0,
+            1,
+            0,
+            ctypes.byref(self._overlapped),
+        ):
+            raise OSError(
+                ctypes.get_last_error(),
+                "WINDOWS_LOCK_RELEASE_FAILED",
+            )
+
+        self._released = True
+
+
+def _acquire_windows_exclusive_lock_handle(
+    handle: object,
+) -> WindowsExclusiveLockHandle:
+    """Lock byte zero on a caller-opened handle; never open a path.
+
+    This low-level adapter does not create files, read credentials,
+    change ACLs, or authorize storage. The caller owns and must close
+    the handle after releasing the lock.
+    """
+    if sys.platform != "win32":
+        raise OSError("WINDOWS_REQUIRED")
+
+    if type(handle) is not int or handle <= 0:
+        raise ValueError("INVALID_WINDOWS_HANDLE")
+
+    import ctypes
+    from ctypes import wintypes
+
+    class OVERLAPPED(ctypes.Structure):
+        _fields_ = [
+            ("Internal", ctypes.c_size_t),
+            ("InternalHigh", ctypes.c_size_t),
+            ("Offset", wintypes.DWORD),
+            ("OffsetHigh", wintypes.DWORD),
+            ("hEvent", wintypes.HANDLE),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    lock_file = kernel32.LockFileEx
+    lock_file.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.POINTER(OVERLAPPED),
+    ]
+    lock_file.restype = wintypes.BOOL
+
+    unlock_file = kernel32.UnlockFileEx
+    unlock_file.argtypes = [
+        wintypes.HANDLE,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.POINTER(OVERLAPPED),
+    ]
+    unlock_file.restype = wintypes.BOOL
+
+    LOCKFILE_FAIL_IMMEDIATELY = 0x00000001
+    LOCKFILE_EXCLUSIVE_LOCK = 0x00000002
+
+    overlapped = OVERLAPPED()
+
+    if not lock_file(
+        handle,
+        LOCKFILE_FAIL_IMMEDIATELY | LOCKFILE_EXCLUSIVE_LOCK,
+        0,
+        1,
+        0,
+        ctypes.byref(overlapped),
+    ):
+        raise OSError(
+            ctypes.get_last_error(),
+            "WINDOWS_LOCK_ACQUISITION_FAILED",
+        )
+
+    return WindowsExclusiveLockHandle(
+        handle,
+        overlapped,
+        unlock_file,
+    )
