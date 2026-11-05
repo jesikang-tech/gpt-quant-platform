@@ -207,11 +207,16 @@ def inspect_windows_directory(
 
 @dataclass(frozen=True)
 class WindowsHandleInspection:
-    """Read-only handle diagnostic, never credential storage authority."""
+    """Read-only diagnostic; inspected handles are closed before return.
+
+    This result never proves persistent object identity, effective ACL
+    rights, TOCTOU protection, or credential storage authorization.
+    """
 
     accepted: bool
     reason: str
     final_path: str | None = None
+    file_identity: "WindowsFileIdentity | None" = None
 
 
 def inspect_windows_directory_handle(
@@ -313,6 +318,8 @@ def inspect_windows_directory_handle(
         current = ntpath.join(current, component)
         paths.append(current)
 
+    final_identity = None
+
     for inspected_path in paths:
         desired_access = FILE_READ_ATTRIBUTES
         if inspect_security is True:
@@ -395,6 +402,13 @@ def inspect_windows_directory_handle(
                     "HANDLE_PATH_MISMATCH",
                 )
 
+            if inspected_path == paths[-1]:
+                final_identity = WindowsFileIdentity(
+                    volume_serial=int(info.dwVolumeSerialNumber),
+                    file_index_high=int(info.nFileIndexHigh),
+                    file_index_low=int(info.nFileIndexLow),
+                )
+
             if inspect_security is True:
                 security = _inspect_security_descriptor_from_handle(handle)
                 if not security.inspected:
@@ -410,6 +424,7 @@ def inspect_windows_directory_handle(
         True,
         "ANCESTOR_HANDLES_INSPECTED_NOT_AUTHORIZED",
         canonical,
+        final_identity,
     )
 @dataclass(frozen=True)
 class WindowsAclEntry:
@@ -929,4 +944,57 @@ def assess_observed_windows_acl_policy(
         protected_dacl=observation.dacl_protected,
         entries=observation.ace_entries,
         trusted_sids=trusted_sids,
+    )
+@dataclass(frozen=True)
+class WindowsFileIdentity:
+    """Observed file identity only; never grants filesystem authority."""
+
+    volume_serial: int
+    file_index_high: int
+    file_index_low: int
+
+
+@dataclass(frozen=True)
+class WindowsFileIdentityAssessment:
+    matched: bool
+    reason: str
+
+
+def assess_windows_file_identity(
+    *,
+    expected: object,
+    observed: object,
+) -> WindowsFileIdentityAssessment:
+    """Compare independently supplied Windows file identity observations.
+
+    This comparison does not keep handles open, prevent object replacement,
+    establish ACL effectiveness, or authorize credential storage.
+    """
+    if (
+        type(expected) is not WindowsFileIdentity
+        or type(observed) is not WindowsFileIdentity
+    ):
+        return WindowsFileIdentityAssessment(False, "INVALID_IDENTITY")
+
+    for identity in (expected, observed):
+        for value in (
+            identity.volume_serial,
+            identity.file_index_high,
+            identity.file_index_low,
+        ):
+            if type(value) is not int or not 0 <= value <= 0xFFFFFFFF:
+                return WindowsFileIdentityAssessment(
+                    False,
+                    "INVALID_IDENTITY_FIELD",
+                )
+
+    if expected != observed:
+        return WindowsFileIdentityAssessment(
+            False,
+            "FILE_IDENTITY_MISMATCH",
+        )
+
+    return WindowsFileIdentityAssessment(
+        True,
+        "OBSERVED_IDENTITY_MATCH_NOT_AUTHORIZED",
     )

@@ -1309,3 +1309,87 @@ def test_observed_acl_bridge_policy_cases():
         assert not hasattr(result, "write_authorized")
         assert not hasattr(result, "acl_verified")
         assert not hasattr(result, "effective_access_verified")
+
+def test_windows_file_identity_assessment_cases():
+    """Identity comparison is fail-closed and never storage authority."""
+    from portable_platform_manager.windows_credential_store import (
+        WindowsFileIdentity,
+        assess_windows_file_identity,
+    )
+
+    baseline = WindowsFileIdentity(
+        volume_serial=12345,
+        file_index_high=67,
+        file_index_low=89,
+    )
+
+    cases = (
+        (
+            baseline,
+            True,
+            "OBSERVED_IDENTITY_MATCH_NOT_AUTHORIZED",
+        ),
+        (
+            WindowsFileIdentity(54321, 67, 89),
+            False,
+            "FILE_IDENTITY_MISMATCH",
+        ),
+        (
+            WindowsFileIdentity(12345, 68, 89),
+            False,
+            "FILE_IDENTITY_MISMATCH",
+        ),
+        (
+            WindowsFileIdentity(12345, 67, 90),
+            False,
+            "FILE_IDENTITY_MISMATCH",
+        ),
+        (
+            WindowsFileIdentity(-1, 67, 89),
+            False,
+            "INVALID_IDENTITY_FIELD",
+        ),
+        (
+            WindowsFileIdentity(12345, 67, 0x100000000),
+            False,
+            "INVALID_IDENTITY_FIELD",
+        ),
+        (
+            WindowsFileIdentity(True, 67, 89),
+            False,
+            "INVALID_IDENTITY_FIELD",
+        ),
+        (
+            None,
+            False,
+            "INVALID_IDENTITY",
+        ),
+    )
+
+    for observed, matched, reason in cases:
+        result = assess_windows_file_identity(
+            expected=baseline,
+            observed=observed,
+        )
+        assert result.matched is matched
+        assert result.reason == reason
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "write_authorized")
+        assert not hasattr(result, "toctou_verified")
+
+
+def test_windows_handle_identity_default_is_not_authority():
+    """A handle diagnostic does not imply a persistent open handle."""
+    from portable_platform_manager.windows_credential_store import (
+        WindowsHandleInspection,
+    )
+
+    result = WindowsHandleInspection(
+        accepted=False,
+        reason="HANDLE_OPEN_FAILED",
+    )
+
+    assert result.file_identity is None
+    assert not hasattr(result, "storage_authorized")
+    assert not hasattr(result, "write_authorized")
+    assert not hasattr(result, "toctou_verified")
