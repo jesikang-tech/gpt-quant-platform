@@ -857,3 +857,92 @@ def test_windows_security_descriptor_real_directory_handle(tmp_path):
     assert result.dacl_null is False
     assert not hasattr(result, "storage_authorized")
     assert not hasattr(result, "acl_verified")
+
+def test_windows_optional_security_observation_success(tmp_path):
+    """Verify opt-in observation and default compatibility on Windows CI."""
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only integration test")
+
+    directory = tmp_path / "optional-security-observation"
+    directory.mkdir()
+
+    default_result = inspect_windows_directory_handle(str(directory))
+    explicit_false = inspect_windows_directory_handle(
+        str(directory),
+        inspect_security=False,
+    )
+    observed = inspect_windows_directory_handle(
+        str(directory),
+        inspect_security=True,
+    )
+
+    assert default_result.accepted is True
+    assert explicit_false == default_result
+    assert observed.accepted is True
+    assert observed.reason == "ANCESTOR_HANDLES_INSPECTED_NOT_AUTHORIZED"
+    assert observed.final_path == default_result.final_path
+    assert not hasattr(observed, "storage_authorized")
+    assert not hasattr(observed, "acl_verified")
+
+
+def test_windows_optional_security_observation_invalid_option():
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    for invalid in (None, 0, 1, "true", [], {}):
+        result = inspect_windows_directory_handle(
+            r"C:\PPM\credentials",
+            inspect_security=invalid,
+        )
+
+        assert result.accepted is False
+        assert result.reason == "INVALID_SECURITY_OPTION"
+
+
+def test_windows_optional_security_observation_failure_denied(
+    tmp_path,
+    monkeypatch,
+):
+    """Simulate descriptor observation failure without changing OS ACLs."""
+    import sys
+    import pytest
+
+    import portable_platform_manager.windows_credential_store as store
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only integration test")
+
+    directory = tmp_path / "security-observation-denied"
+    directory.mkdir()
+
+    observed_handles = []
+
+    def denied_observation(handle):
+        observed_handles.append(handle)
+        return store._denied_windows_security_descriptor(
+            "SYNTHETIC_SECURITY_FAILURE"
+        )
+
+    monkeypatch.setattr(
+        store,
+        "_inspect_security_descriptor_from_handle",
+        denied_observation,
+    )
+
+    result = store.inspect_windows_directory_handle(
+        str(directory),
+        inspect_security=True,
+    )
+
+    assert result.accepted is False
+    assert result.reason == "SECURITY_DESCRIPTOR_OBSERVATION_FAILED"
+    assert len(observed_handles) >= 1
+    assert not hasattr(result, "storage_authorized")

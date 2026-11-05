@@ -218,6 +218,7 @@ def inspect_windows_directory_handle(
     path: object,
     *,
     platform: str | None = None,
+    inspect_security: bool = False,
 ) -> WindowsHandleInspection:
     """Inspect a directory handle without granting storage authority.
 
@@ -225,6 +226,9 @@ def inspect_windows_directory_handle(
     ancestor safety, owner/ACL safety, locking, or atomic writes.
     The platform override is for synthetic tests, not authorization.
     """
+
+    if type(inspect_security) is not bool:
+        return WindowsHandleInspection(False, "INVALID_SECURITY_OPTION")
 
     if sys.platform != "win32":
         return WindowsHandleInspection(False, "WINDOWS_REQUIRED")
@@ -241,6 +245,7 @@ def inspect_windows_directory_handle(
     from ctypes import wintypes
 
     FILE_READ_ATTRIBUTES = 0x0080
+    READ_CONTROL = 0x00020000
     FILE_SHARE_READ = 0x00000001
     OPEN_EXISTING = 3
     FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
@@ -309,9 +314,13 @@ def inspect_windows_directory_handle(
         paths.append(current)
 
     for inspected_path in paths:
+        desired_access = FILE_READ_ATTRIBUTES
+        if inspect_security is True:
+            desired_access |= READ_CONTROL
+
         handle = create_file(
             inspected_path,
-            FILE_READ_ATTRIBUTES,
+            desired_access,
             FILE_SHARE_READ,
             None,
             OPEN_EXISTING,
@@ -385,6 +394,14 @@ def inspect_windows_directory_handle(
                     False,
                     "HANDLE_PATH_MISMATCH",
                 )
+
+            if inspect_security is True:
+                security = _inspect_security_descriptor_from_handle(handle)
+                if not security.inspected:
+                    return WindowsHandleInspection(
+                        False,
+                        "SECURITY_DESCRIPTOR_OBSERVATION_FAILED",
+                    )
 
         finally:
             close_handle(handle)
