@@ -199,3 +199,25 @@ def test_detects_staging_hash_mismatch(
         stage_backup_file(source, "sample.txt", staging)
 
     assert not (staging / "sample.txt").exists()
+
+def test_windows_staging_denied_until_verified(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from portable_platform_manager import backup_staging
+
+    source = tmp_path / "source"
+    staging = tmp_path / "staging"
+    source.mkdir()
+    staging.mkdir()
+    (source / "sample.txt").write_bytes(b"synthetic")
+
+    monkeypatch.setattr(backup_staging.os, "name", "nt")
+
+    with pytest.raises(
+        ValueError,
+        match="WINDOWS_SAFE_SOURCE_READER_PENDING_VERIFICATION",
+    ):
+        stage_backup_file(source, "sample.txt", staging)
+
+    assert list(staging.iterdir()) == []

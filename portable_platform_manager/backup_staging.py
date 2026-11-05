@@ -15,6 +15,100 @@ from pathlib import Path
 from .backup_file_inspector import inspect_backup_file
 
 
+def _open_windows_source_read_only(path: Path):
+    """Open a Windows source using a non-following Win32 file handle.
+
+    This helper is not yet authorized for operating-platform backup.
+    """
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
+    GENERIC_READ = 0x80000000
+    FILE_SHARE_READ = 0x00000001
+    OPEN_EXISTING = 3
+    FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+    FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
+    FILE_ATTRIBUTE_DIRECTORY = 0x00000010
+
+    class BY_HANDLE_FILE_INFORMATION(ctypes.Structure):
+        _fields_ = [
+            ("dwFileAttributes", wintypes.DWORD),
+            ("ftCreationTime", wintypes.FILETIME),
+            ("ftLastAccessTime", wintypes.FILETIME),
+            ("ftLastWriteTime", wintypes.FILETIME),
+            ("dwVolumeSerialNumber", wintypes.DWORD),
+            ("nFileSizeHigh", wintypes.DWORD),
+            ("nFileSizeLow", wintypes.DWORD),
+            ("nNumberOfLinks", wintypes.DWORD),
+            ("nFileIndexHigh", wintypes.DWORD),
+            ("nFileIndexLow", wintypes.DWORD),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    get_info = kernel32.GetFileInformationByHandle
+    get_info.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(BY_HANDLE_FILE_INFORMATION),
+    ]
+    get_info.restype = wintypes.BOOL
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    handle = create_file(
+        str(path),
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_OPEN_REPARSE_POINT,
+        None,
+    )
+
+    invalid_handle = ctypes.c_void_p(-1).value
+
+    if handle in (None, 0, invalid_handle):
+        raise OSError("WINDOWS_SOURCE_OPEN_FAILED")
+
+    try:
+        info = BY_HANDLE_FILE_INFORMATION()
+
+        if not get_info(handle, ctypes.byref(info)):
+            raise OSError("WINDOWS_SOURCE_HANDLE_INFO_FAILED")
+
+        if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT:
+            raise ValueError("WINDOWS_SOURCE_REPARSE_POINT_DENIED")
+
+        if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY:
+            raise ValueError("WINDOWS_SOURCE_DIRECTORY_DENIED")
+
+        descriptor = msvcrt.open_osfhandle(
+            handle,
+            os.O_RDONLY | os.O_BINARY,
+        )
+        handle = None
+
+        return os.fdopen(descriptor, "rb")
+
+    finally:
+        if handle is not None:
+            close_handle(handle)
+
 @dataclass(frozen=True)
 class StagedBackupFile:
     relative_path: str
@@ -32,6 +126,9 @@ def stage_backup_file(
     This function does not establish source-content safety or
     resistance to concurrent filesystem modifications.
     """
+
+    if os.name == "nt":
+        raise ValueError("WINDOWS_SAFE_SOURCE_READER_PENDING_VERIFICATION")
 
     inspection = inspect_backup_file(source_root, relative_path)
 
@@ -92,9 +189,13 @@ def stage_backup_file(
         flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
         flags |= getattr(os, "O_NOFOLLOW", 0)
 
-        descriptor = os.open(source, flags)
+        if os.name == "nt":
+            reader_context = _open_windows_source_read_only(source)
+        else:
+            descriptor = os.open(source, flags)
+            reader_context = os.fdopen(descriptor, "rb")
 
-        with os.fdopen(descriptor, "rb") as reader:
+        with reader_context as reader:
             opened_stat = os.fstat(reader.fileno())
 
             if not stat.S_ISREG(opened_stat.st_mode):
