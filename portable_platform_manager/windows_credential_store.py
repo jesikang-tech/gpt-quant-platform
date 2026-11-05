@@ -1160,3 +1160,63 @@ def inspect_windows_same_handle_read_only(
                 ctypes.get_last_error(),
                 "SAME_HANDLE_CLOSE_FAILED",
             )
+
+@dataclass(frozen=True)
+class WindowsLockPathDecision:
+    """Lexical lock-path decision only; no OS authority."""
+
+    eligible: bool
+    reason: str
+    lock_path: str | None = None
+    storage_authorized: bool = False
+
+
+def assess_windows_lock_path(
+    location: object,
+    *,
+    platform: str | None = None,
+) -> WindowsLockPathDecision:
+    """Derive a fixed lock path without filesystem operations.
+
+    Lexical eligibility does not establish directory trust, ACL safety,
+    file identity, OS lock ownership, or credential write permission.
+    """
+    location_decision = assess_windows_store_location(
+        location,
+        platform=platform,
+    )
+
+    if not location_decision.eligible:
+        return WindowsLockPathDecision(
+            False,
+            location_decision.reason,
+        )
+
+    credential_root = _canonical_declared_path(
+        location.credential_root,
+    )
+
+    if credential_root is None:
+        return WindowsLockPathDecision(
+            False,
+            "INVALID_CREDENTIAL_ROOT",
+        )
+
+    lock_path = ntpath.join(
+        credential_root,
+        ".ppm-credential.lock",
+    )
+
+    canonical_lock = _canonical_declared_path(lock_path)
+
+    if canonical_lock is None:
+        return WindowsLockPathDecision(
+            False,
+            "INVALID_LOCK_PATH",
+        )
+
+    return WindowsLockPathDecision(
+        True,
+        "LEXICAL_LOCK_PATH_ONLY_NOT_AUTHORIZED",
+        canonical_lock,
+    )

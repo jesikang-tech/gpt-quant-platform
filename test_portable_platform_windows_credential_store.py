@@ -1544,3 +1544,106 @@ def test_windows_same_handle_rejects_invalid_path():
         assert result.inspected is False
         assert result.reason in ("WINDOWS_REQUIRED", "INVALID_PATH")
         assert result.granted_access is None
+
+def test_lock_path_valid_declared_location():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+        assess_windows_lock_path,
+    )
+
+    location = WindowsStoreLocation(
+        package_root=r"C:\Package",
+        install_root=r"C:\Applications\PPM",
+        credential_root=r"C:\ProgramData\PPM\Credentials",
+    )
+    result = assess_windows_lock_path(location, platform="win32")
+    assert result.eligible is True
+    assert result.reason == "LEXICAL_LOCK_PATH_ONLY_NOT_AUTHORIZED"
+    assert result.lock_path == (
+        r"c:\programdata\ppm\credentials\.ppm-credential.lock"
+    )
+    assert result.storage_authorized is False
+
+
+def test_lock_path_rejects_nonwindows_platform():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+        assess_windows_lock_path,
+    )
+
+    location = WindowsStoreLocation(
+        r"C:\Package",
+        r"C:\Applications\PPM",
+        r"C:\ProgramData\PPM\Credentials",
+    )
+    result = assess_windows_lock_path(location, platform="linux")
+    assert result.eligible is False
+    assert result.reason == "WINDOWS_REQUIRED"
+    assert result.lock_path is None
+    assert result.storage_authorized is False
+
+
+def test_lock_path_rejects_invalid_location():
+    from portable_platform_manager.windows_credential_store import (
+        assess_windows_lock_path,
+    )
+
+    result = assess_windows_lock_path(object(), platform="win32")
+    assert result.eligible is False
+    assert result.reason == "INVALID_LOCATION"
+    assert result.lock_path is None
+    assert result.storage_authorized is False
+
+
+def test_lock_path_rejects_package_overlap():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+        assess_windows_lock_path,
+    )
+
+    location = WindowsStoreLocation(
+        r"C:\Package",
+        r"C:\Applications\PPM",
+        r"C:\Package\Credentials",
+    )
+    result = assess_windows_lock_path(location, platform="win32")
+    assert result.eligible is False
+    assert result.reason == "PACKAGE_CREDENTIAL_OVERLAP"
+    assert result.lock_path is None
+    assert result.storage_authorized is False
+
+
+def test_lock_path_rejects_install_overlap():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+        assess_windows_lock_path,
+    )
+
+    location = WindowsStoreLocation(
+        r"C:\Package",
+        r"C:\Applications\PPM",
+        r"C:\Applications\PPM\Credentials",
+    )
+    result = assess_windows_lock_path(location, platform="win32")
+    assert result.eligible is False
+    assert result.reason == "INSTALL_CREDENTIAL_OVERLAP"
+    assert result.lock_path is None
+    assert result.storage_authorized is False
+
+
+def test_lock_path_rejects_noncanonical_credential_root():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+        assess_windows_lock_path,
+    )
+
+    location = WindowsStoreLocation(
+        r"C:\Package",
+        r"C:\Applications\PPM",
+        r"C:\ProgramData\PPM\..\Credentials",
+    )
+    result = assess_windows_lock_path(location, platform="win32")
+    assert result.eligible is False
+    assert result.reason == "INVALID_PATH"
+    assert result.lock_path is None
+    assert result.storage_authorized is False
