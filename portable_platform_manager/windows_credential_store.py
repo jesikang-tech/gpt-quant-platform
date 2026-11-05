@@ -557,6 +557,7 @@ class WindowsSecurityDescriptorInspection:
     dacl_present: bool = False
     dacl_null: bool = True
     dacl_protected: bool | None = None
+    ace_entries: tuple[WindowsAclEntry, ...] | None = None
 
 
 def _denied_windows_security_descriptor(
@@ -623,6 +624,27 @@ def _inspect_security_descriptor_from_handle(
     ]
     get_security_control.restype = wintypes.BOOL
 
+    get_acl_information = advapi32.GetAclInformation
+    get_acl_information.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+    ]
+    get_acl_information.restype = wintypes.BOOL
+
+    get_ace = advapi32.GetAce
+    get_ace.argtypes = [
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        ctypes.POINTER(ctypes.c_void_p),
+    ]
+    get_ace.restype = wintypes.BOOL
+
+    get_length_sid = advapi32.GetLengthSid
+    get_length_sid.argtypes = [ctypes.c_void_p]
+    get_length_sid.restype = wintypes.DWORD
+
     convert_sid = advapi32.ConvertSidToStringSidW
     convert_sid.argtypes = [
         ctypes.c_void_p,
@@ -633,6 +655,20 @@ def _inspect_security_descriptor_from_handle(
     local_free = kernel32.LocalFree
     local_free.argtypes = [ctypes.c_void_p]
     local_free.restype = ctypes.c_void_p
+
+    class AclSizeInformation(ctypes.Structure):
+        _fields_ = [
+            ("AceCount", wintypes.DWORD),
+            ("AclBytesInUse", wintypes.DWORD),
+            ("AclBytesFree", wintypes.DWORD),
+        ]
+
+    class AceHeader(ctypes.Structure):
+        _fields_ = [
+            ("AceType", ctypes.c_ubyte),
+            ("AceFlags", ctypes.c_ubyte),
+            ("AceSize", wintypes.WORD),
+        ]
 
     owner = ctypes.c_void_p()
     dacl = ctypes.c_void_p()
@@ -695,6 +731,158 @@ def _inspect_security_descriptor_from_handle(
                 "SECURITY_CONTROL_FAILED"
             )
 
+        ACL_SIZE_INFORMATION = 2
+        ACCESS_ALLOWED_ACE_TYPE = 0
+        ACCESS_DENIED_ACE_TYPE = 1
+        INHERITED_ACE = 0x10
+        MAX_OBSERVED_ACES = 4096
+
+        acl_info = AclSizeInformation()
+
+        if not get_acl_information(
+            dacl,
+            ctypes.byref(acl_info),
+            ctypes.sizeof(acl_info),
+            ACL_SIZE_INFORMATION,
+        ):
+            return _denied_windows_security_descriptor(
+                "ACL_INFORMATION_FAILED"
+            )
+
+        if (
+            acl_info.AceCount > MAX_OBSERVED_ACES
+            or acl_info.AclBytesInUse < 8
+        ):
+            return _denied_windows_security_descriptor(
+                "ACL_BOUNDS_INVALID"
+            )
+
+        # Each ACE requires at least a four-byte ACE_HEADER.
+        # The ACL header itself occupies eight bytes.
+        if acl_info.AceCount > (acl_info.AclBytesInUse - 8) // 4:
+            return _denied_windows_security_descriptor(
+                "ACL_ACE_COUNT_BOUNDS_INVALID"
+            )
+
+        observed_entries = []
+        total_ace_bytes = 0
+
+        for index in range(acl_info.AceCount):
+            ace_pointer = ctypes.c_void_p()
+
+            if not get_ace(
+                dacl,
+                index,
+                ctypes.byref(ace_pointer),
+            ):
+                return _denied_windows_security_descriptor(
+                    "ACE_READ_FAILED"
+                )
+
+            if not ace_pointer.value:
+                return _denied_windows_security_descriptor(
+                    "ACE_POINTER_MISSING"
+                )
+
+            header = AceHeader.from_address(ace_pointer.value)
+
+            if (
+                header.AceType not in (
+                    ACCESS_ALLOWED_ACE_TYPE,
+                    ACCESS_DENIED_ACE_TYPE,
+                )
+                or header.AceSize < 12
+                or header.AceSize > acl_info.AclBytesInUse
+            ):
+                return _denied_windows_security_descriptor(
+                    "UNSUPPORTED_OR_INVALID_ACE"
+                )
+
+            total_ace_bytes += header.AceSize
+
+            if total_ace_bytes > acl_info.AclBytesInUse - 8:
+                return _denied_windows_security_descriptor(
+                    "ACL_ACE_TOTAL_BOUNDS_INVALID"
+                )
+
+            rights = ctypes.c_uint32.from_address(
+                ace_pointer.value + 4
+            ).value
+
+            # A standard ALLOW/DENY ACE has an 8-byte prefix
+            # followed by a variable-length SID. Validate the
+            # SID header and declared sub-authority count first.
+            sid_offset = 8
+            sid_available = header.AceSize - sid_offset
+
+            if sid_available < 8:
+                return _denied_windows_security_descriptor(
+                    "ACE_SID_BOUNDS_INVALID"
+                )
+
+            sid_address = ace_pointer.value + sid_offset
+            sid_header = ctypes.string_at(sid_address, 8)
+
+            if sid_header[0] != 1 or sid_header[1] > 15:
+                return _denied_windows_security_descriptor(
+                    "ACE_SID_HEADER_INVALID"
+                )
+
+            expected_sid_length = 8 + 4 * sid_header[1]
+
+            if expected_sid_length > sid_available:
+                return _denied_windows_security_descriptor(
+                    "ACE_SID_BOUNDS_INVALID"
+                )
+
+            ace_sid_pointer = ctypes.c_void_p(sid_address)
+
+            if get_length_sid(ace_sid_pointer) != expected_sid_length:
+                return _denied_windows_security_descriptor(
+                    "ACE_SID_LENGTH_INVALID"
+                )
+
+            ace_sid_string = ctypes.c_void_p()
+
+            try:
+                if not convert_sid(
+                    ace_sid_pointer,
+                    ctypes.byref(ace_sid_string),
+                ):
+                    return _denied_windows_security_descriptor(
+                        "ACE_SID_CONVERSION_FAILED"
+                    )
+
+                if not ace_sid_string.value:
+                    return _denied_windows_security_descriptor(
+                        "ACE_SID_MISSING"
+                    )
+
+                ace_sid = ctypes.wstring_at(ace_sid_string.value)
+
+                if not _valid_synthetic_sid(ace_sid):
+                    return _denied_windows_security_descriptor(
+                        "ACE_SID_INVALID"
+                    )
+
+                observed_entries.append(
+                    WindowsAclEntry(
+                        sid=ace_sid,
+                        access_type=(
+                            "ALLOW"
+                            if header.AceType == ACCESS_ALLOWED_ACE_TYPE
+                            else "DENY"
+                        ),
+                        rights=rights,
+                        inherited=bool(
+                            header.AceFlags & INHERITED_ACE
+                        ),
+                    )
+                )
+            finally:
+                if ace_sid_string.value:
+                    local_free(ace_sid_string)
+
         return WindowsSecurityDescriptorInspection(
             inspected=True,
             reason="HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED",
@@ -702,6 +890,7 @@ def _inspect_security_descriptor_from_handle(
             dacl_present=True,
             dacl_null=False,
             dacl_protected=bool(control.value & SE_DACL_PROTECTED),
+            ace_entries=tuple(observed_entries),
         )
     finally:
         if sid_string.value:

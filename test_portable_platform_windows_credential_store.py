@@ -1033,3 +1033,103 @@ def test_windows_dacl_protection_failure_has_no_verified_state():
     assert result.dacl_present is False
     assert result.dacl_null is True
     assert not hasattr(result, "storage_authorized")
+
+def test_windows_ace_entries_real_directory(tmp_path):
+    """Observe standard ACEs on Windows without granting storage authority."""
+    import ctypes
+    import sys
+
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        _inspect_security_descriptor_from_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only ACE observation")
+
+    from ctypes import wintypes
+
+    directory = tmp_path / "ace-observation"
+    directory.mkdir()
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    handle = create_file(
+        str(directory),
+        0x00020000 | 0x00000080,
+        0x00000001 | 0x00000002 | 0x00000004,
+        None,
+        3,
+        0x02000000,
+        None,
+    )
+
+    assert handle not in (None, ctypes.c_void_p(-1).value)
+
+    try:
+        result = _inspect_security_descriptor_from_handle(handle)
+    finally:
+        assert close_handle(handle) != 0
+
+    assert result.inspected is True
+    assert result.reason == "HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED"
+    assert type(result.dacl_protected) is bool
+    assert isinstance(result.ace_entries, tuple)
+    assert len(result.ace_entries) <= 4096
+
+    for entry in result.ace_entries:
+        assert type(entry) is WindowsAclEntry
+        assert entry.sid.startswith("S-1-")
+        assert entry.access_type in ("ALLOW", "DENY")
+        assert type(entry.rights) is int
+        assert 0 <= entry.rights <= 0xFFFFFFFF
+        assert type(entry.inherited) is bool
+
+    assert not hasattr(result, "storage_authorized")
+    assert not hasattr(result, "acl_verified")
+
+
+def test_windows_ace_observation_failure_is_not_authorized():
+    from portable_platform_manager.windows_credential_store import (
+        _denied_windows_security_descriptor,
+    )
+
+    for reason in (
+        "ACL_INFORMATION_FAILED",
+        "ACL_BOUNDS_INVALID",
+        "ACL_ACE_COUNT_BOUNDS_INVALID",
+        "ACL_ACE_TOTAL_BOUNDS_INVALID",
+        "ACE_READ_FAILED",
+        "ACE_POINTER_MISSING",
+        "UNSUPPORTED_OR_INVALID_ACE",
+        "ACE_SID_BOUNDS_INVALID",
+        "ACE_SID_HEADER_INVALID",
+        "ACE_SID_LENGTH_INVALID",
+        "ACE_SID_CONVERSION_FAILED",
+        "ACE_SID_INVALID",
+    ):
+        result = _denied_windows_security_descriptor(reason)
+
+        assert result.inspected is False
+        assert result.ace_entries is None
+        assert result.dacl_protected is None
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "acl_verified")
