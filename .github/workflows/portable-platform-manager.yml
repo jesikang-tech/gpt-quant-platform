@@ -12,6 +12,7 @@ on:
       - "test_portable_platform_credential_record.py"
       - "test_portable_platform_storage_policy.py"
       - "test_portable_platform_windows_credential_store.py"
+      - "test_portable_platform_windows_storage_boundary.py"
       - ".github/workflows/portable-platform-manager.yml"
 
   workflow_dispatch:
@@ -48,4 +49,4 @@ jobs:
       - name: Run PPM synthetic manifest tests
         shell: pwsh
         run: |
-          python -m pytest -q -p no:cacheprovider test_portable_platform_manifest.py test_portable_platform_auth.py test_portable_platform_auth_attempts.py test_portable_platform_credential_record.py test_portable_platform_storage_policy.py test_portable_platform_windows_credential_store.py
+          python -m pytest -q -p no:cacheprovider test_portable_platform_manifest.py test_portable_platform_auth.py test_portable_platform_auth_attempts.py test_portable_platform_credential_record.py test_portable_platform_storage_policy.py test_portable_platform_windows_credential_store.py test_portable_platform_windows_storage_boundary.py
