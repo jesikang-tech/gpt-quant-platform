@@ -1218,3 +1218,94 @@ def test_observed_ace_policy_never_grants_storage_authority():
         assert not hasattr(result, "write_authorized")
         assert not hasattr(result, "acl_verified")
         assert not hasattr(result, "effective_access_verified")
+
+def test_observed_acl_bridge_policy_cases():
+    """Observed ACL policy is fail-closed and never storage authority."""
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        WindowsSecurityDescriptorInspection,
+        assess_observed_windows_acl_policy,
+    )
+
+    trusted_entry = WindowsAclEntry(
+        sid="S-1-5-18",
+        access_type="ALLOW",
+        rights=0x001F01FF,
+        inherited=False,
+    )
+
+    untrusted_write = WindowsAclEntry(
+        sid="S-1-5-32-545",
+        access_type="ALLOW",
+        rights=0x00000002,
+        inherited=False,
+    )
+
+    def observation(
+        *,
+        inspected=True,
+        reason="HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED",
+        protected=True,
+        entries=(trusted_entry,),
+    ):
+        return WindowsSecurityDescriptorInspection(
+            inspected=inspected,
+            reason=reason,
+            owner_sid="S-1-5-18",
+            dacl_present=True,
+            dacl_null=False,
+            dacl_protected=protected,
+            ace_entries=entries,
+        )
+
+    cases = (
+        (
+            None,
+            False,
+            "INVALID_OBSERVATION",
+        ),
+        (
+            observation(inspected=False),
+            False,
+            "OBSERVATION_UNVERIFIED",
+        ),
+        (
+            observation(reason="SECURITY_INFO_FAILED"),
+            False,
+            "OBSERVATION_UNVERIFIED",
+        ),
+        (
+            observation(protected=False),
+            False,
+            "OBSERVATION_UNVERIFIED",
+        ),
+        (
+            observation(entries=()),
+            False,
+            "OBSERVATION_UNVERIFIED",
+        ),
+        (
+            observation(entries=(untrusted_write,)),
+            False,
+            "UNTRUSTED_WRITE_RIGHTS",
+        ),
+        (
+            observation(),
+            True,
+            "SYNTHETIC_POLICY_ONLY_NOT_AUTHORIZED",
+        ),
+    )
+
+    for observed, accepted, reason in cases:
+        result = assess_observed_windows_acl_policy(
+            observation=observed,
+            expected_owner_sid="S-1-5-18",
+            trusted_sids=("S-1-5-18",),
+        )
+
+        assert result.accepted is accepted
+        assert result.reason == reason
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "write_authorized")
+        assert not hasattr(result, "acl_verified")
+        assert not hasattr(result, "effective_access_verified")

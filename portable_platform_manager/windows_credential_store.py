@@ -897,3 +897,36 @@ def _inspect_security_descriptor_from_handle(
             local_free(sid_string)
         if descriptor.value:
             local_free(descriptor)
+
+def assess_observed_windows_acl_policy(
+    *,
+    observation: object,
+    expected_owner_sid: object,
+    trusted_sids: object,
+) -> WindowsAclAssessment:
+    """Apply synthetic policy to observed ACEs without OS authorization.
+
+    Observation alone cannot establish effective Windows access,
+    trusted token membership, TOCTOU safety, or storage authority.
+    """
+    if type(observation) is not WindowsSecurityDescriptorInspection:
+        return WindowsAclAssessment(False, "INVALID_OBSERVATION")
+
+    if (
+        observation.inspected is not True
+        or observation.reason != "HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED"
+        or observation.dacl_present is not True
+        or observation.dacl_null is not False
+        or observation.dacl_protected is not True
+        or type(observation.ace_entries) is not tuple
+        or not observation.ace_entries
+    ):
+        return WindowsAclAssessment(False, "OBSERVATION_UNVERIFIED")
+
+    return assess_synthetic_windows_acl(
+        owner_sid=observation.owner_sid,
+        expected_owner_sid=expected_owner_sid,
+        protected_dacl=observation.dacl_protected,
+        entries=observation.ace_entries,
+        trusted_sids=trusted_sids,
+    )
