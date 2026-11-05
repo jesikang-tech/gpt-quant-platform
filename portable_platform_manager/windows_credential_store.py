@@ -394,3 +394,139 @@ def inspect_windows_directory_handle(
         "ANCESTOR_HANDLES_INSPECTED_NOT_AUTHORIZED",
         canonical,
     )
+@dataclass(frozen=True)
+class WindowsAclEntry:
+    """Synthetic ACE declaration; not verified Windows OS evidence."""
+
+    sid: str
+    access_type: str
+    rights: int
+    inherited: bool
+
+
+@dataclass(frozen=True)
+class WindowsAclAssessment:
+    """Policy result only; never grants credential storage authority."""
+
+    accepted: bool
+    reason: str
+
+
+def _valid_synthetic_sid(value: object) -> bool:
+    """Validate canonical numeric SID syntax without resolving identity."""
+    if type(value) is not str:
+        return False
+
+    parts = value.split("-")
+
+    if len(parts) < 4 or parts[0] != "S" or parts[1] != "1":
+        return False
+
+    if len(parts) > 18:
+        return False
+
+    for part in parts[2:]:
+        if not part or not part.isascii() or not part.isdecimal():
+            return False
+        if len(part) > 1 and part.startswith("0"):
+            return False
+
+    authority = int(parts[2])
+    if authority > 0xFFFFFFFFFFFF:
+        return False
+
+    return all(int(part) <= 0xFFFFFFFF for part in parts[3:])
+
+
+_SYNTHETIC_ALLOWED_RIGHTS = (
+    0x001F01FF  # FileSystemRights.FullControl mask
+    | 0x10000000  # GENERIC_ALL
+    | 0x80000000  # GENERIC_READ
+    | 0x40000000  # GENERIC_WRITE
+    | 0x20000000  # GENERIC_EXECUTE
+)
+
+_SYNTHETIC_DANGEROUS_RIGHTS = (
+    0x00000002  # FILE_WRITE_DATA
+    | 0x00000004  # FILE_APPEND_DATA
+    | 0x00000010  # FILE_WRITE_EA
+    | 0x00000040  # FILE_DELETE_CHILD
+    | 0x00000100  # FILE_WRITE_ATTRIBUTES
+    | 0x00010000  # DELETE
+    | 0x00040000  # WRITE_DAC
+    | 0x00080000  # WRITE_OWNER
+    | 0x10000000  # GENERIC_ALL
+    | 0x40000000  # GENERIC_WRITE
+    | 0x20000000  # GENERIC_EXECUTE_DENIED_FOR_UNTRUSTED
+)
+
+
+def assess_synthetic_windows_acl(
+    *,
+    owner_sid: object,
+    expected_owner_sid: object,
+    protected_dacl: object,
+    entries: object,
+    trusted_sids: object,
+) -> WindowsAclAssessment:
+    """Fail-closed evaluation of synthetic ACL declarations.
+
+    This is not a Windows access-check algorithm, effective-rights
+    calculation, OS security descriptor inspection, or authorization.
+    """
+
+    if (
+        not _valid_synthetic_sid(owner_sid)
+        or not _valid_synthetic_sid(expected_owner_sid)
+        or owner_sid != expected_owner_sid
+    ):
+        return WindowsAclAssessment(False, "OWNER_UNVERIFIED")
+
+    if protected_dacl is not True:
+        return WindowsAclAssessment(False, "DACL_NOT_PROTECTED")
+
+    if (
+        type(trusted_sids) not in (tuple, frozenset)
+        or not trusted_sids
+        or any(
+            not _valid_synthetic_sid(sid)
+            for sid in trusted_sids
+        )
+        or owner_sid not in trusted_sids
+    ):
+        return WindowsAclAssessment(False, "INVALID_TRUSTED_SIDS")
+
+    if type(entries) not in (tuple, list) or not entries:
+        return WindowsAclAssessment(False, "INVALID_ACL_ENTRIES")
+
+    for entry in entries:
+        if type(entry) is not WindowsAclEntry:
+            return WindowsAclAssessment(False, "INVALID_ACL_ENTRY")
+
+        if (
+            not _valid_synthetic_sid(entry.sid)
+            or entry.access_type not in ("ALLOW", "DENY")
+            or type(entry.rights) is not int
+            or entry.rights < 0
+            or entry.rights > 0xFFFFFFFF
+            or (entry.rights & ~_SYNTHETIC_ALLOWED_RIGHTS) != 0
+            or type(entry.inherited) is not bool
+        ):
+            return WindowsAclAssessment(False, "INVALID_ACL_ENTRY")
+
+        if entry.inherited:
+            return WindowsAclAssessment(False, "INHERITED_ACE_UNVERIFIED")
+
+        if entry.sid not in trusted_sids:
+            if entry.access_type == "ALLOW" and (
+                entry.rights & _SYNTHETIC_DANGEROUS_RIGHTS
+            ):
+                return WindowsAclAssessment(
+                    False,
+                    "UNTRUSTED_WRITE_RIGHTS",
+                )
+
+    return WindowsAclAssessment(
+        True,
+        "SYNTHETIC_POLICY_ONLY_NOT_AUTHORIZED",
+    )

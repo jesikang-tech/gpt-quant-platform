@@ -547,3 +547,166 @@ def test_windows_drive_root_remains_separate_from_credential_location():
 
     assert result.eligible is False
     assert result.reason == "PACKAGE_CREDENTIAL_OVERLAP"
+def test_synthetic_windows_acl_rejects_untrusted_write():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid="S-1-5-18",
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=True,
+        trusted_sids=("S-1-5-18", "S-1-5-32-544"),
+        entries=(
+            WindowsAclEntry(
+                "S-1-5-32-545", "ALLOW", 0x00000002, False
+            ),
+        ),
+    )
+
+    assert result.accepted is False
+    assert result.reason == "UNTRUSTED_WRITE_RIGHTS"
+
+
+def test_synthetic_windows_acl_rejects_unprotected_dacl():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid="S-1-5-18",
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=False,
+        trusted_sids=("S-1-5-18",),
+        entries=(WindowsAclEntry("S-1-5-18", "ALLOW", 1, False),),
+    )
+
+    assert result.accepted is False
+    assert result.reason == "DACL_NOT_PROTECTED"
+
+
+def test_synthetic_windows_acl_rejects_wrong_owner():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid="S-1-5-32-545",
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=True,
+        trusted_sids=("S-1-5-18",),
+        entries=(WindowsAclEntry("S-1-5-18", "ALLOW", 1, False),),
+    )
+
+    assert result.accepted is False
+    assert result.reason == "OWNER_UNVERIFIED"
+
+
+def test_synthetic_windows_acl_accepts_policy_without_authority():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid="S-1-5-18",
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=True,
+        trusted_sids=("S-1-5-18", "S-1-5-32-544"),
+        entries=(
+            WindowsAclEntry("S-1-5-18", "ALLOW", 0x001F01FF, False),
+            WindowsAclEntry("S-1-5-32-545", "ALLOW", 0x00000001, False),
+        ),
+    )
+
+    assert result.accepted is True
+    assert result.reason == "SYNTHETIC_POLICY_ONLY_NOT_AUTHORIZED"
+    assert not hasattr(result, "write_authorized")
+    assert not hasattr(result, "acl_verified")
+
+
+def test_synthetic_windows_acl_rejects_inherited_ace():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid="S-1-5-18",
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=True,
+        trusted_sids=("S-1-5-18",),
+        entries=(WindowsAclEntry("S-1-5-18", "ALLOW", 1, True),),
+    )
+
+    assert result.accepted is False
+    assert result.reason == "INHERITED_ACE_UNVERIFIED"
+@pytest.mark.parametrize(
+    "owner_sid,rights",
+    [
+        ("S-1-5-018", 1),
+        ("S-1-5-4294967296", 1),
+        ("S-1-5-18-extra", 1),
+        ("S-1-5-18", 0x00000200),
+        ("S-1-5-18", 0x02000000),
+    ],
+)
+def test_synthetic_windows_acl_rejects_invalid_sid_and_rights(
+    owner_sid,
+    rights,
+):
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid=owner_sid,
+        expected_owner_sid=owner_sid,
+        protected_dacl=True,
+        trusted_sids=("S-1-5-18",),
+        entries=(
+            WindowsAclEntry(
+                "S-1-5-18",
+                "ALLOW",
+                rights,
+                False,
+            ),
+        ),
+    )
+
+    assert result.accepted is False
+@pytest.mark.parametrize(
+    "rights",
+    [
+        0x10000000,  # GENERIC_ALL
+        0x40000000,  # GENERIC_WRITE
+        0x20000000,  # GENERIC_EXECUTE
+        0x02000000,  # MAXIMUM_ALLOWED: unknown rights denied
+    ],
+)
+def test_synthetic_windows_acl_rejects_untrusted_generic_rights(rights):
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclEntry,
+        assess_synthetic_windows_acl,
+    )
+
+    result = assess_synthetic_windows_acl(
+        owner_sid="S-1-5-18",
+        expected_owner_sid="S-1-5-18",
+        protected_dacl=True,
+        trusted_sids=("S-1-5-18",),
+        entries=(
+            WindowsAclEntry(
+                "S-1-5-32-545",
+                "ALLOW",
+                rights,
+                False,
+            ),
+        ),
+    )
+
+    assert result.accepted is False
