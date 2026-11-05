@@ -34,7 +34,7 @@ def inspect_backup_file(
 
     relative = selection.relative_path
 
-    if type(source_root) not in (str, Path):
+    if not isinstance(source_root, (str, Path)):
         return BackupFileInspection(False, "INVALID_SOURCE_ROOT")
 
     try:
