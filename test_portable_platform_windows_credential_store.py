@@ -784,3 +784,76 @@ def test_security_descriptor_handle_requires_windows():
 
     assert result.inspected is False
     assert result.reason == "WINDOWS_REQUIRED"
+
+def test_windows_security_descriptor_real_directory_handle(tmp_path):
+    """Observe security metadata on a CI temporary directory only."""
+    import ctypes
+    import sys
+    import pytest
+    from ctypes import wintypes
+
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_security_descriptor_from_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only security descriptor test")
+
+    directory = tmp_path / "security-observation"
+    directory.mkdir()
+
+    READ_CONTROL = 0x00020000
+    FILE_READ_ATTRIBUTES = 0x00000080
+    FILE_SHARE_READ = 0x00000001
+    FILE_SHARE_WRITE = 0x00000002
+    FILE_SHARE_DELETE = 0x00000004
+    OPEN_EXISTING = 3
+    FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    handle = create_file(
+        str(directory),
+        READ_CONTROL | FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        None,
+    )
+
+    invalid = ctypes.c_void_p(-1).value
+
+    assert handle not in (None, invalid), (
+        "Temporary directory handle could not be opened"
+    )
+
+    try:
+        result = _inspect_security_descriptor_from_handle(handle)
+    finally:
+        assert close_handle(handle) != 0
+
+    assert result.inspected is True
+    assert result.reason == "HANDLE_SECURITY_OBSERVED_NOT_AUTHORIZED"
+    assert isinstance(result.owner_sid, str)
+    assert result.owner_sid.startswith("S-1-")
+    assert result.dacl_present is True
+    assert result.dacl_null is False
+    assert not hasattr(result, "storage_authorized")
+    assert not hasattr(result, "acl_verified")
