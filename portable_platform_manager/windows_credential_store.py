@@ -218,7 +218,7 @@ def inspect_windows_directory_handle(
 ) -> WindowsHandleInspection:
     """Inspect a directory handle without granting storage authority.
 
-    Only the final opened object is checked. This does not prove
+    Path components are inspected sequentially. This does not prove
     ancestor safety, owner/ACL safety, locking, or atomic writes.
     The platform override is for synthetic tests, not authorization.
     """
@@ -294,70 +294,102 @@ def inspect_windows_directory_handle(
     close_handle.argtypes = [wintypes.HANDLE]
     close_handle.restype = wintypes.BOOL
 
-    handle = create_file(
-        canonical,
-        FILE_READ_ATTRIBUTES,
-        FILE_SHARE_READ,
-        None,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
-        None,
-    )
-
     invalid_handle = ctypes.c_void_p(-1).value
 
-    if handle in (None, invalid_handle):
-        return WindowsHandleInspection(False, "HANDLE_OPEN_FAILED")
+    drive, tail = ntpath.splitdrive(canonical)
+    current = drive + "\\"
+    components = [part for part in tail.split("\\") if part]
+    paths = [current]
 
-    try:
-        info = BY_HANDLE_FILE_INFORMATION()
+    for component in components:
+        current = ntpath.join(current, component)
+        paths.append(current)
 
-        if not get_info(handle, ctypes.byref(info)):
-            return WindowsHandleInspection(False, "HANDLE_INFO_FAILED")
-
-        if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT:
-            return WindowsHandleInspection(False, "REPARSE_POINT_DENIED")
-
-        if not info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY:
-            return WindowsHandleInspection(False, "NOT_A_DIRECTORY")
-
-        required = get_final_path(
-            handle,
+    for inspected_path in paths:
+        handle = create_file(
+            inspected_path,
+            FILE_READ_ATTRIBUTES,
+            FILE_SHARE_READ,
             None,
-            0,
-            FILE_NAME_NORMALIZED,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+            None,
         )
 
-        if required == 0 or required > 32768:
-            return WindowsHandleInspection(False, "FINAL_PATH_FAILED")
+        if handle in (None, invalid_handle):
+            return WindowsHandleInspection(False, "HANDLE_OPEN_FAILED")
 
-        buffer = ctypes.create_unicode_buffer(required + 1)
+        try:
+            info = BY_HANDLE_FILE_INFORMATION()
 
-        written = get_final_path(
-            handle,
-            buffer,
-            len(buffer),
-            FILE_NAME_NORMALIZED,
-        )
+            if not get_info(handle, ctypes.byref(info)):
+                return WindowsHandleInspection(False, "HANDLE_INFO_FAILED")
 
-        if written == 0 or written >= len(buffer):
-            return WindowsHandleInspection(False, "FINAL_PATH_FAILED")
+            if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT:
+                return WindowsHandleInspection(
+                    False,
+                    "REPARSE_POINT_DENIED",
+                )
 
-        final_path = buffer.value
+            if not info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY:
+                return WindowsHandleInspection(
+                    False,
+                    "NOT_A_DIRECTORY",
+                )
 
-        if not final_path.startswith("\\\\?\\"):
-            return WindowsHandleInspection(False, "UNEXPECTED_FINAL_PATH")
+            required = get_final_path(
+                handle,
+                None,
+                0,
+                FILE_NAME_NORMALIZED,
+            )
 
-        normalized_final = _canonical_declared_path(final_path[4:])
+            if required == 0 or required > 32768:
+                return WindowsHandleInspection(
+                    False,
+                    "FINAL_PATH_FAILED",
+                )
 
-        if normalized_final is None or normalized_final != canonical:
-            return WindowsHandleInspection(False, "HANDLE_PATH_MISMATCH")
+            buffer = ctypes.create_unicode_buffer(required + 1)
 
-        return WindowsHandleInspection(
-            True,
-            "FINAL_HANDLE_INSPECTED_NOT_AUTHORIZED",
-            normalized_final,
-        )
+            written = get_final_path(
+                handle,
+                buffer,
+                len(buffer),
+                FILE_NAME_NORMALIZED,
+            )
 
-    finally:
-        close_handle(handle)
+            if written == 0 or written >= len(buffer):
+                return WindowsHandleInspection(
+                    False,
+                    "FINAL_PATH_FAILED",
+                )
+
+            final_path = buffer.value
+
+            if not final_path.startswith("\\\\?\\"):
+                return WindowsHandleInspection(
+                    False,
+                    "UNEXPECTED_FINAL_PATH",
+                )
+
+            normalized_final = _canonical_declared_path(
+                final_path[4:].rstrip("\\")
+            )
+
+            if normalized_final != ntpath.normcase(
+                inspected_path.rstrip("\\")
+            ):
+                return WindowsHandleInspection(
+                    False,
+                    "HANDLE_PATH_MISMATCH",
+                )
+
+        finally:
+            close_handle(handle)
+
+    return WindowsHandleInspection(
+        True,
+        "ANCESTOR_HANDLES_INSPECTED_NOT_AUTHORIZED",
+        canonical,
+    )

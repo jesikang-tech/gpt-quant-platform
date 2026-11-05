@@ -414,7 +414,7 @@ def test_windows_handle_inspection_existing_directory(tmp_path):
     result = inspect_windows_directory_handle(str(directory))
 
     assert result.accepted is True
-    assert result.reason == "FINAL_HANDLE_INSPECTED_NOT_AUTHORIZED"
+    assert result.reason == "ANCESTOR_HANDLES_INSPECTED_NOT_AUTHORIZED"
     assert result.final_path is not None
 
 
@@ -455,3 +455,69 @@ def test_windows_handle_inspection_missing_directory_denied(tmp_path):
 
     assert result.accepted is False
     assert result.reason == "HANDLE_OPEN_FAILED"
+
+
+def test_windows_handle_inspection_ancestor_symlink_denied(tmp_path):
+    import os
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows handle test")
+
+    actual_parent = tmp_path / "actual-parent"
+    actual_parent.mkdir()
+
+    credential_dir = actual_parent / "credentials"
+    credential_dir.mkdir()
+
+    linked_parent = tmp_path / "linked-parent"
+
+    try:
+        os.symlink(
+            actual_parent,
+            linked_parent,
+            target_is_directory=True,
+        )
+    except (OSError, NotImplementedError):
+        pytest.skip("Windows symlink privilege unavailable")
+
+    result = inspect_windows_directory_handle(
+        str(linked_parent / "credentials")
+    )
+
+    assert result.accepted is False
+    assert result.reason in (
+        "REPARSE_POINT_DENIED",
+        "HANDLE_PATH_MISMATCH",
+        "HANDLE_OPEN_FAILED",
+    )
+
+
+def test_windows_handle_inspection_result_never_grants_storage_authority(
+    tmp_path,
+):
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows handle test")
+
+    directory = tmp_path / "read-only-inspection"
+    directory.mkdir()
+
+    result = inspect_windows_directory_handle(str(directory))
+
+    assert result.accepted is True
+    assert result.reason == "ANCESTOR_HANDLES_INSPECTED_NOT_AUTHORIZED"
+    assert not hasattr(result, "write_authorized")
+    assert not hasattr(result, "acl_verified")
+    assert not hasattr(result, "lock_verified")
