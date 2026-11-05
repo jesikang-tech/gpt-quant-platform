@@ -1756,3 +1756,63 @@ def test_os_lock_release_failure_is_not_success():
         lock.release()
 
     assert lock._released is False
+
+def test_lock_handle_policy_windows_requirements():
+    from portable_platform_manager.windows_credential_store import (
+        assess_windows_lock_handle_policy,
+    )
+
+    policy = assess_windows_lock_handle_policy(platform="win32")
+
+    assert policy is not None
+    assert policy.desired_access == 0xC0000000
+    assert policy.share_mode == 0x00000001
+    assert policy.creation_disposition == 3
+    assert policy.requires_same_handle is True
+    assert policy.requires_explicit_release is True
+    assert policy.storage_authorized is False
+
+
+def test_lock_handle_policy_disallows_delete_sharing():
+    from portable_platform_manager.windows_credential_store import (
+        assess_windows_lock_handle_policy,
+    )
+
+    policy = assess_windows_lock_handle_policy(platform="win32")
+
+    FILE_SHARE_DELETE = 0x00000004
+    FILE_SHARE_WRITE = 0x00000002
+
+    assert policy is not None
+    assert policy.share_mode & FILE_SHARE_DELETE == 0
+    assert policy.share_mode & FILE_SHARE_WRITE == 0
+    assert policy.storage_authorized is False
+
+
+def test_lock_handle_policy_rejects_nonwindows_platform():
+    from portable_platform_manager.windows_credential_store import (
+        assess_windows_lock_handle_policy,
+    )
+
+    assert assess_windows_lock_handle_policy(platform="linux") is None
+    assert assess_windows_lock_handle_policy(platform="darwin") is None
+
+
+def test_lock_handle_policy_is_immutable_and_not_authorized():
+    from dataclasses import FrozenInstanceError
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        assess_windows_lock_handle_policy,
+    )
+
+    policy = assess_windows_lock_handle_policy(platform="win32")
+
+    assert policy is not None
+    assert policy.storage_authorized is False
+
+    with pytest.raises(FrozenInstanceError):
+        policy.share_mode = 0x00000004
+
+    assert policy.share_mode == 0x00000001
+    assert policy.storage_authorized is False

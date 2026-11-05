@@ -1329,3 +1329,44 @@ def _acquire_windows_exclusive_lock_handle(
         overlapped,
         unlock_file,
     )
+
+@dataclass(frozen=True)
+class WindowsLockHandlePolicy:
+    """Declared OS handle requirements; no filesystem authority."""
+
+    desired_access: int
+    share_mode: int
+    creation_disposition: int
+    requires_same_handle: bool
+    requires_explicit_release: bool
+    storage_authorized: bool = False
+
+
+def assess_windows_lock_handle_policy(
+    *,
+    platform: str | None = None,
+) -> WindowsLockHandlePolicy | None:
+    """Describe fail-closed lock-handle opening requirements.
+
+    The policy requires an existing lock file and prohibits delete
+    sharing. It does not open a file, validate directory ACLs,
+    establish file identity, or authorize credential persistence.
+    """
+    actual_platform = sys.platform if platform is None else platform
+
+    if actual_platform != "win32":
+        return None
+
+    GENERIC_READ = 0x80000000
+    GENERIC_WRITE = 0x40000000
+    FILE_SHARE_READ = 0x00000001
+    OPEN_EXISTING = 3
+
+    return WindowsLockHandlePolicy(
+        desired_access=GENERIC_READ | GENERIC_WRITE,
+        share_mode=FILE_SHARE_READ,
+        creation_disposition=OPEN_EXISTING,
+        requires_same_handle=True,
+        requires_explicit_release=True,
+        storage_authorized=False,
+    )
