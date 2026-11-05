@@ -377,9 +377,7 @@ def inspect_windows_directory_handle(
                 final_path[4:].rstrip("\\")
             )
 
-            if normalized_final != ntpath.normcase(
-                inspected_path.rstrip("\\")
-            ):
+            if normalized_final != ntpath.normcase(inspected_path):
                 return WindowsHandleInspection(
                     False,
                     "HANDLE_PATH_MISMATCH",
