@@ -252,7 +252,7 @@ def assess_windows_observed_store_security(
             "INVALID_ACL_ASSESSMENT",
         )
 
-    if acl.eligible is not True:
+    if acl.accepted is not True:
         return WindowsObservedStoreSecurityDecision(
             False,
             "ACL_POLICY_UNVERIFIED",
