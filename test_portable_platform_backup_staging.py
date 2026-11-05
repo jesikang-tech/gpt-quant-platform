@@ -212,7 +212,7 @@ def test_windows_staging_denied_until_verified(
     staging.mkdir()
     (source / "sample.txt").write_bytes(b"synthetic")
 
-    monkeypatch.setattr(backup_staging.sys, "platform", "win32")
+    monkeypatch.setattr(backup_staging, "_IS_WINDOWS", True)
 
     with pytest.raises(
         ValueError,
