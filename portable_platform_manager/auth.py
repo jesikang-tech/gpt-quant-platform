@@ -107,3 +107,93 @@ def assess_protected_operation(
         operation=operation,
         reason="PASSWORD_VERIFIED_ONLY",
     )
+
+@dataclass(frozen=True)
+class ProtectedAttemptAssessment:
+    """Password and attempt-policy result, not execution authority."""
+
+    password_accepted: bool
+    operation: ProtectedOperation | None
+    reason: str
+    next_state: "AttemptState"
+    execution_authorized: bool = False
+
+
+def assess_protected_operation_with_attempts(
+    operation: object,
+    *,
+    stored_hash: object,
+    passphrase: object,
+    attempt_state: object,
+    now: object,
+) -> ProtectedAttemptAssessment:
+    """Assess password and lockout without granting execution authority.
+
+    The caller must durably serialize attempt-state updates before any
+    future use of authentication results for protected operations.
+    No filesystem, network, or database operations occur here.
+    """
+    from .auth_attempts import AttemptState, assess_attempt
+
+    if type(operation) is not ProtectedOperation:
+        return ProtectedAttemptAssessment(
+            False,
+            None,
+            "INVALID_OPERATION",
+            attempt_state if type(attempt_state) is AttemptState
+            else AttemptState(failures=5, locked_until=float("inf")),
+        )
+
+    # Validate the state and time before any expensive password check.
+    preflight = assess_attempt(
+        attempt_state,
+        now=now,
+        password_verified=False,
+    )
+
+    if preflight.reason == "INVALID_STATE_OR_TIME":
+        return ProtectedAttemptAssessment(
+            False,
+            operation,
+            preflight.reason,
+            preflight.state,
+        )
+
+    if (
+        type(attempt_state) is AttemptState
+        and attempt_state.locked_until is not None
+        and preflight.reason == "LOCKED"
+    ):
+        return ProtectedAttemptAssessment(
+            False,
+            operation,
+            "LOCKED",
+            preflight.state,
+        )
+
+    password_decision = assess_protected_operation(
+        operation,
+        stored_hash=stored_hash,
+        passphrase=passphrase,
+    )
+
+    attempt_decision = assess_attempt(
+        attempt_state,
+        now=now,
+        password_verified=password_decision.authorized,
+    )
+
+    accepted = (
+        password_decision.authorized
+        and attempt_decision.accepted
+    )
+
+    return ProtectedAttemptAssessment(
+        accepted,
+        operation,
+        (
+            "PASSWORD_AND_ATTEMPT_POLICY_VERIFIED_ONLY"
+            if accepted else attempt_decision.reason
+        ),
+        attempt_decision.state,
+    )
