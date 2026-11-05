@@ -1063,3 +1063,100 @@ def _inspect_windows_handle_granted_access(
         "HANDLE_GRANTED_ACCESS_OBSERVED_NOT_AUTHORIZED",
         int(info.AccessFlags),
     )
+
+@dataclass(frozen=True)
+class WindowsSameHandleInspection:
+    """Diagnostic result only; the inspected handle is already closed."""
+
+    inspected: bool
+    reason: str
+    granted_access: int | None = None
+    security_reason: str | None = None
+
+
+def inspect_windows_same_handle_read_only(
+    path: object,
+) -> WindowsSameHandleInspection:
+    """Inspect security and access using one open directory handle.
+
+    No credential reads or writes occur. The handle remains open during
+    both inspections and is closed before return. This does not authorize
+    storage or establish protection for later path-based operations.
+    """
+    if sys.platform != "win32":
+        return WindowsSameHandleInspection(False, "WINDOWS_REQUIRED")
+
+    if type(path) is not str or not path:
+        return WindowsSameHandleInspection(False, "INVALID_PATH")
+
+    canonical = _canonical_declared_path(path)
+    if canonical is None:
+        return WindowsSameHandleInspection(False, "INVALID_PATH")
+
+    import ctypes
+    from ctypes import wintypes
+
+    FILE_READ_ATTRIBUTES = 0x00000080
+    READ_CONTROL = 0x00020000
+    FILE_SHARE_READ = 0x00000001
+    OPEN_EXISTING = 3
+    FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+    FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    handle = create_file(
+        canonical,
+        FILE_READ_ATTRIBUTES | READ_CONTROL,
+        FILE_SHARE_READ,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+        None,
+    )
+
+    invalid_handle = ctypes.c_void_p(-1).value
+
+    if handle in (None, 0, invalid_handle):
+        return WindowsSameHandleInspection(False, "HANDLE_OPEN_FAILED")
+
+    try:
+        access = _inspect_windows_handle_granted_access(handle)
+        security = _inspect_security_descriptor_from_handle(handle)
+
+        if not access.inspected or not security.inspected:
+            return WindowsSameHandleInspection(
+                False,
+                "SAME_HANDLE_INSPECTION_INCOMPLETE",
+                access.granted_access,
+                security.reason,
+            )
+
+        return WindowsSameHandleInspection(
+            True,
+            "SAME_HANDLE_OBSERVED_NOT_AUTHORIZED",
+            access.granted_access,
+            security.reason,
+        )
+    finally:
+        if not close_handle(handle):
+            raise OSError(
+                ctypes.get_last_error(),
+                "SAME_HANDLE_CLOSE_FAILED",
+            )

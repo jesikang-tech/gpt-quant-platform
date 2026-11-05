@@ -1499,3 +1499,48 @@ def test_windows_handle_granted_access_real_api():
         assert not hasattr(result, "toctou_verified")
     finally:
         assert close_handle(handle)
+
+def test_windows_same_handle_read_only_boundary():
+    """Require both Windows inspections to succeed on a temp directory."""
+    import sys
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_same_handle_read_only,
+    )
+
+    if sys.platform != "win32":
+        result = inspect_windows_same_handle_read_only("C:\\unused")
+        assert result.inspected is False
+        assert result.reason == "WINDOWS_REQUIRED"
+        return
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory(prefix="ppm-handle-test-") as path:
+        result = inspect_windows_same_handle_read_only(path)
+
+        assert result.inspected is True, (
+            result.reason,
+            result.security_reason,
+            result.granted_access,
+        )
+        assert result.reason == "SAME_HANDLE_OBSERVED_NOT_AUTHORIZED"
+        assert type(result.granted_access) is int
+        assert result.granted_access >= 0
+        assert result.security_reason is not None
+
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "write_authorized")
+        assert not hasattr(result, "toctou_verified")
+
+def test_windows_same_handle_rejects_invalid_path():
+    """Malformed paths cannot produce an authorized result."""
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_same_handle_read_only,
+    )
+
+    for path in (None, False, 123, "", [], {}):
+        result = inspect_windows_same_handle_read_only(path)
+        assert result.inspected is False
+        assert result.reason in ("WINDOWS_REQUIRED", "INVALID_PATH")
+        assert result.granted_access is None
