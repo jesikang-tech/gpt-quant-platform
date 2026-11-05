@@ -8,6 +8,7 @@ on:
       - "portable_platform_manager/**"
       - "test_portable_platform_manifest.py"
       - "test_portable_platform_auth.py"
+      - "test_portable_platform_auth_attempts.py"
       - ".github/workflows/portable-platform-manager.yml"
 
   workflow_dispatch:
@@ -44,4 +45,4 @@ jobs:
       - name: Run PPM synthetic manifest tests
         shell: pwsh
         run: |
-          python -m pytest -q -p no:cacheprovider test_portable_platform_manifest.py test_portable_platform_auth.py
+          python -m pytest -q -p no:cacheprovider test_portable_platform_manifest.py test_portable_platform_auth.py test_portable_platform_auth_attempts.py
