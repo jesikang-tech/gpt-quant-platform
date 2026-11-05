@@ -374,7 +374,7 @@ def inspect_windows_directory_handle(
                 )
 
             normalized_final = _canonical_declared_path(
-                final_path[4:].rstrip("\\")
+                final_path[4:]
             )
 
             if normalized_final != ntpath.normcase(inspected_path):
