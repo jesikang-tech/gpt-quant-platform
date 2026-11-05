@@ -480,3 +480,173 @@ def test_attempt_transaction_rejects_missing_security_evidence():
     assert result.authorized is False
     assert result.policy_eligible is False
     assert result.reason == "POLICY_INVALID_WINDOWS_EVIDENCE"
+
+def _p2_observation_inputs():
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+        WindowsSameHandleInspection,
+        WindowsAclAssessment,
+    )
+
+    return (
+        WindowsStoreLocation(
+            package_root=r"C:\PPM\package",
+            install_root=r"C:\PPM\installed",
+            credential_root=r"C:\PPM\credentials",
+        ),
+        WindowsSameHandleInspection(
+            True,
+            "SAME_HANDLE_OBSERVED_NOT_AUTHORIZED",
+        ),
+        WindowsAclAssessment(
+            True,
+            "SYNTHETIC_ACL_POLICY_ONLY",
+        ),
+    )
+
+
+def test_observed_store_security_valid_observations_not_authorized():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+
+    location, handle, acl = _p2_observation_inputs()
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=handle,
+        acl=acl,
+        platform="win32",
+    )
+
+    assert result.observed is True
+    assert result.reason == "OBSERVATIONS_ONLY_NOT_AUTHORIZED"
+    assert result.storage_authorized is False
+
+
+def test_observed_store_security_invalid_handle_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+
+    location, _, acl = _p2_observation_inputs()
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=object(),
+        acl=acl,
+        platform="win32",
+    )
+
+    assert result.observed is False
+    assert result.reason == "INVALID_HANDLE_OBSERVATION"
+    assert result.storage_authorized is False
+
+
+def test_observed_store_security_unverified_handle_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+    from portable_platform_manager.windows_credential_store import (
+        WindowsSameHandleInspection,
+    )
+
+    location, _, acl = _p2_observation_inputs()
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=WindowsSameHandleInspection(
+            False,
+            "HANDLE_OPEN_FAILED",
+        ),
+        acl=acl,
+        platform="win32",
+    )
+
+    assert result.observed is False
+    assert result.reason == "HANDLE_OBSERVATION_UNVERIFIED"
+    assert result.storage_authorized is False
+
+
+def test_observed_store_security_invalid_acl_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+
+    location, handle, _ = _p2_observation_inputs()
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=handle,
+        acl=object(),
+        platform="win32",
+    )
+
+    assert result.observed is False
+    assert result.reason == "INVALID_ACL_ASSESSMENT"
+    assert result.storage_authorized is False
+
+
+def test_observed_store_security_unverified_acl_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+    from portable_platform_manager.windows_credential_store import (
+        WindowsAclAssessment,
+    )
+
+    location, handle, _ = _p2_observation_inputs()
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=handle,
+        acl=WindowsAclAssessment(
+            False,
+            "ACL_POLICY_UNVERIFIED",
+        ),
+        platform="win32",
+    )
+
+    assert result.observed is False
+    assert result.reason == "ACL_POLICY_UNVERIFIED"
+    assert result.storage_authorized is False
+
+
+def test_observed_store_security_non_windows_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+
+    location, handle, acl = _p2_observation_inputs()
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=handle,
+        acl=acl,
+        platform="linux",
+    )
+
+    assert result.observed is False
+    assert result.reason == "LOCATION_WINDOWS_REQUIRED"
+    assert result.storage_authorized is False
+
+
+def test_observed_store_security_overlapping_location_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_observed_store_security,
+    )
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+    )
+
+    _, handle, acl = _p2_observation_inputs()
+    location = WindowsStoreLocation(
+        package_root=r"C:\PPM\package",
+        install_root=r"C:\PPM\installed",
+        credential_root=r"C:\PPM\package\credentials",
+    )
+
+    result = assess_windows_observed_store_security(
+        location=location,
+        same_handle=handle,
+        acl=acl,
+        platform="win32",
+    )
+
+    assert result.observed is False
+    assert result.reason == "LOCATION_PACKAGE_CREDENTIAL_OVERLAP"
+    assert result.storage_authorized is False

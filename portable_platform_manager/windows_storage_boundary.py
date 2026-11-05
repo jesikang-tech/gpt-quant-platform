@@ -192,3 +192,73 @@ def assess_attempt_storage_transaction(
         True,
         execution.policy_eligible,
     )
+
+@dataclass(frozen=True)
+class WindowsObservedStoreSecurityDecision:
+    """Diagnostic observation only, never credential storage authority."""
+
+    observed: bool
+    reason: str
+    storage_authorized: bool = False
+
+
+def assess_windows_observed_store_security(
+    *,
+    location: object,
+    same_handle: object,
+    acl: object,
+    platform: str | None = None,
+) -> WindowsObservedStoreSecurityDecision:
+    """Combine existing observations without elevating them to authority.
+
+    Inputs are independently supplied diagnostic objects. Even a
+    positive result cannot establish that observations concern the
+    same trusted object at the time of a later filesystem operation.
+    """
+    from .windows_credential_store import (
+        WindowsSameHandleInspection,
+        WindowsAclAssessment,
+    )
+
+    location_result = assess_windows_store_location(
+        location,
+        platform=platform,
+    )
+
+    if not location_result.eligible:
+        return WindowsObservedStoreSecurityDecision(
+            False,
+            "LOCATION_" + location_result.reason,
+        )
+
+    if type(same_handle) is not WindowsSameHandleInspection:
+        return WindowsObservedStoreSecurityDecision(
+            False,
+            "INVALID_HANDLE_OBSERVATION",
+        )
+
+    if (
+        same_handle.inspected is not True
+        or same_handle.reason != "SAME_HANDLE_OBSERVED_NOT_AUTHORIZED"
+    ):
+        return WindowsObservedStoreSecurityDecision(
+            False,
+            "HANDLE_OBSERVATION_UNVERIFIED",
+        )
+
+    if type(acl) is not WindowsAclAssessment:
+        return WindowsObservedStoreSecurityDecision(
+            False,
+            "INVALID_ACL_ASSESSMENT",
+        )
+
+    if acl.eligible is not True:
+        return WindowsObservedStoreSecurityDecision(
+            False,
+            "ACL_POLICY_UNVERIFIED",
+        )
+
+    return WindowsObservedStoreSecurityDecision(
+        True,
+        "OBSERVATIONS_ONLY_NOT_AUTHORIZED",
+    )
