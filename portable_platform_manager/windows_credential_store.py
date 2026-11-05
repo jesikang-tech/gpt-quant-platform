@@ -200,3 +200,164 @@ def inspect_windows_directory(
         "READ_ONLY_PATH_INSPECTED_NOT_AUTHORIZED",
         canonical,
     )
+
+
+@dataclass(frozen=True)
+class WindowsHandleInspection:
+    """Read-only handle diagnostic, never credential storage authority."""
+
+    accepted: bool
+    reason: str
+    final_path: str | None = None
+
+
+def inspect_windows_directory_handle(
+    path: object,
+    *,
+    platform: str | None = None,
+) -> WindowsHandleInspection:
+    """Inspect a directory handle without granting storage authority.
+
+    Only the final opened object is checked. This does not prove
+    ancestor safety, owner/ACL safety, locking, or atomic writes.
+    The platform override is for synthetic tests, not authorization.
+    """
+
+    if sys.platform != "win32":
+        return WindowsHandleInspection(False, "WINDOWS_REQUIRED")
+
+    if platform is not None and platform != "win32":
+        return WindowsHandleInspection(False, "WINDOWS_REQUIRED")
+
+    canonical = _canonical_declared_path(path)
+
+    if canonical is None:
+        return WindowsHandleInspection(False, "INVALID_PATH")
+
+    import ctypes
+    from ctypes import wintypes
+
+    FILE_READ_ATTRIBUTES = 0x0080
+    FILE_SHARE_READ = 0x00000001
+    OPEN_EXISTING = 3
+    FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+    FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+    FILE_ATTRIBUTE_DIRECTORY = 0x00000010
+    FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
+    FILE_NAME_NORMALIZED = 0
+
+    class BY_HANDLE_FILE_INFORMATION(ctypes.Structure):
+        _fields_ = [
+            ("dwFileAttributes", wintypes.DWORD),
+            ("ftCreationTime", wintypes.FILETIME),
+            ("ftLastAccessTime", wintypes.FILETIME),
+            ("ftLastWriteTime", wintypes.FILETIME),
+            ("dwVolumeSerialNumber", wintypes.DWORD),
+            ("nFileSizeHigh", wintypes.DWORD),
+            ("nFileSizeLow", wintypes.DWORD),
+            ("nNumberOfLinks", wintypes.DWORD),
+            ("nFileIndexHigh", wintypes.DWORD),
+            ("nFileIndexLow", wintypes.DWORD),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    create_file.restype = wintypes.HANDLE
+
+    get_info = kernel32.GetFileInformationByHandle
+    get_info.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(BY_HANDLE_FILE_INFORMATION),
+    ]
+    get_info.restype = wintypes.BOOL
+
+    get_final_path = kernel32.GetFinalPathNameByHandleW
+    get_final_path.argtypes = [
+        wintypes.HANDLE,
+        wintypes.LPWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+    ]
+    get_final_path.restype = wintypes.DWORD
+
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    handle = create_file(
+        canonical,
+        FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ,
+        None,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+        None,
+    )
+
+    invalid_handle = ctypes.c_void_p(-1).value
+
+    if handle in (None, invalid_handle):
+        return WindowsHandleInspection(False, "HANDLE_OPEN_FAILED")
+
+    try:
+        info = BY_HANDLE_FILE_INFORMATION()
+
+        if not get_info(handle, ctypes.byref(info)):
+            return WindowsHandleInspection(False, "HANDLE_INFO_FAILED")
+
+        if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT:
+            return WindowsHandleInspection(False, "REPARSE_POINT_DENIED")
+
+        if not info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY:
+            return WindowsHandleInspection(False, "NOT_A_DIRECTORY")
+
+        required = get_final_path(
+            handle,
+            None,
+            0,
+            FILE_NAME_NORMALIZED,
+        )
+
+        if required == 0 or required > 32768:
+            return WindowsHandleInspection(False, "FINAL_PATH_FAILED")
+
+        buffer = ctypes.create_unicode_buffer(required + 1)
+
+        written = get_final_path(
+            handle,
+            buffer,
+            len(buffer),
+            FILE_NAME_NORMALIZED,
+        )
+
+        if written == 0 or written >= len(buffer):
+            return WindowsHandleInspection(False, "FINAL_PATH_FAILED")
+
+        final_path = buffer.value
+
+        if not final_path.startswith("\\\\?\\"):
+            return WindowsHandleInspection(False, "UNEXPECTED_FINAL_PATH")
+
+        normalized_final = _canonical_declared_path(final_path[4:])
+
+        if normalized_final is None or normalized_final != canonical:
+            return WindowsHandleInspection(False, "HANDLE_PATH_MISMATCH")
+
+        return WindowsHandleInspection(
+            True,
+            "FINAL_HANDLE_INSPECTED_NOT_AUTHORIZED",
+            normalized_final,
+        )
+
+    finally:
+        close_handle(handle)

@@ -382,3 +382,76 @@ def test_directory_inspection_missing_windows_attributes_denied(monkeypatch):
 
     assert result.accepted is False
     assert result.reason == "DIRECTORY_INSPECTION_FAILED"
+
+
+def test_windows_handle_inspection_invalid_path():
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    result = inspect_windows_directory_handle(
+        r"C:\ProgramData\..\PPM",
+    )
+
+    assert result.accepted is False
+    assert result.reason in ("INVALID_PATH", "WINDOWS_REQUIRED")
+
+
+def test_windows_handle_inspection_existing_directory(tmp_path):
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows handle test")
+
+    directory = tmp_path / "credential-test"
+    directory.mkdir()
+
+    result = inspect_windows_directory_handle(str(directory))
+
+    assert result.accepted is True
+    assert result.reason == "FINAL_HANDLE_INSPECTED_NOT_AUTHORIZED"
+    assert result.final_path is not None
+
+
+def test_windows_handle_inspection_regular_file_denied(tmp_path):
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows handle test")
+
+    regular_file = tmp_path / "not-a-directory.txt"
+    regular_file.write_text("synthetic test only", encoding="utf-8")
+
+    result = inspect_windows_directory_handle(str(regular_file))
+
+    assert result.accepted is False
+    assert result.reason == "NOT_A_DIRECTORY"
+
+
+def test_windows_handle_inspection_missing_directory_denied(tmp_path):
+    import sys
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        inspect_windows_directory_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows handle test")
+
+    missing = tmp_path / "missing-directory"
+
+    result = inspect_windows_directory_handle(str(missing))
+
+    assert result.accepted is False
+    assert result.reason == "HANDLE_OPEN_FAILED"
