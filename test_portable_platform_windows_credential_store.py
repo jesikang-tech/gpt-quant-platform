@@ -521,3 +521,29 @@ def test_windows_handle_inspection_result_never_grants_storage_authority(
     assert not hasattr(result, "write_authorized")
     assert not hasattr(result, "acl_verified")
     assert not hasattr(result, "lock_verified")
+
+
+def test_windows_drive_root_canonicalization():
+    from portable_platform_manager.windows_credential_store import (
+        _canonical_declared_path,
+    )
+
+    assert _canonical_declared_path("C:\\") == "c:\\"
+    assert _canonical_declared_path("D:\\") == "d:\\"
+    assert _canonical_declared_path("C:") is None
+    assert _canonical_declared_path("C:\\\\") is None
+    assert _canonical_declared_path("C:\\..") is None
+
+
+def test_windows_drive_root_remains_separate_from_credential_location():
+    from portable_platform_manager.windows_credential_store import (
+        assess_windows_store_location,
+    )
+
+    result = assess_windows_store_location(
+        location(credential_root="C:\\"),
+        platform="win32",
+    )
+
+    assert result.eligible is False
+    assert result.reason == "PACKAGE_CREDENTIAL_OVERLAP"

@@ -60,6 +60,9 @@ def _canonical_declared_path(value: object) -> str | None:
 
     parts = tail.split("\\")
 
+    if tail == "\\":
+        return ntpath.normcase(normalized)
+
     reserved = {
         "CON", "PRN", "AUX", "NUL",
         *(f"COM{index}" for index in range(1, 10)),
