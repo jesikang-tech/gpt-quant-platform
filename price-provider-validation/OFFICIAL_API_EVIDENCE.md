@@ -351,3 +351,35 @@ PERSISTENCE_AUTHORIZED: FALSE
 DATABASE_REBUILD_AUTHORIZED: FALSE
 LIVE_API_EXECUTION_AUTHORIZED: FALSE
 BROKER_EXECUTION_AUTHORIZED: FALSE
+
+## KIWOOM official Q&A 8180 registration
+
+Evidence date: 2026-11-05
+Status: OFFICIAL_QA_LISTING_SCREENSHOT_OBSERVED / REPLY_PENDING
+
+- Provider: KIWOOM Securities REST API
+- Inquiry number: 8180
+- Registration timestamp displayed: 2026-11-05 10:33
+- Inquiry category displayed: API specification (TR-related)
+- Evidence: user-supplied official Q&A listing screenshot
+- Previous related inquiries: 7961, 8123
+- Scope: historical price provenance, adjustment and corporate
+  actions, trading calendar, ETF handling, and personal-use
+  analysis/backtesting permissions.
+- Full submitted inquiry text: NOT_INDEPENDENTLY_VERIFIED
+- Provider reply: NOT_YET_OBSERVED
+- Independent provider authenticity: UNVERIFIED
+- Real market-data provenance: UNVERIFIED
+- Adjustment certification: PENDING
+- Corporate-action certification: PENDING
+- Official trading-day certification: PENDING
+- License scope certification: PENDING
+- Real API execution: DENIED
+- Price analysis and persistence: DENIED
+- Operating database access: PROHIBITED
+- Broker calls: DENIED
+- Main merge: NOT_AUTHORIZED
+
+This registration records the observed inquiry listing only.
+It does not authenticate a provider reply, establish market-data
+provenance, or grant operational authority.
