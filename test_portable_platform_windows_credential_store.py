@@ -1133,3 +1133,41 @@ def test_windows_ace_observation_failure_is_not_authorized():
         assert result.dacl_protected is None
         assert not hasattr(result, "storage_authorized")
         assert not hasattr(result, "acl_verified")
+
+def test_windows_ace_invalid_handle_has_no_observation():
+    """Invalid handles must not expose ACEs or grant storage authority."""
+    import ctypes
+    import sys
+
+    import pytest
+
+    from portable_platform_manager.windows_credential_store import (
+        _inspect_security_descriptor_from_handle,
+    )
+
+    if sys.platform != "win32":
+        pytest.skip("Windows-only invalid handle observation")
+
+    invalid_handles = (
+        None,
+        False,
+        True,
+        0,
+        -1,
+        ctypes.c_void_p(-1).value,
+        ctypes.c_void_p(-1).value + 1,
+        "invalid-handle",
+    )
+
+    for handle in invalid_handles:
+        result = _inspect_security_descriptor_from_handle(handle)
+
+        assert result.inspected is False
+        assert result.reason == "INVALID_HANDLE"
+        assert result.owner_sid is None
+        assert result.dacl_present is False
+        assert result.dacl_null is True
+        assert result.dacl_protected is None
+        assert result.ace_entries is None
+        assert not hasattr(result, "storage_authorized")
+        assert not hasattr(result, "acl_verified")
