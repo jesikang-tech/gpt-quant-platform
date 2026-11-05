@@ -136,3 +136,59 @@ def assess_windows_storage_execution(
         "TRUSTED_WINDOWS_STORAGE_ADAPTER_NOT_IMPLEMENTED",
         True,
     )
+
+@dataclass(frozen=True)
+class AttemptStorageTransactionDecision:
+    """Assessment only; never grants credential storage execution."""
+
+    authorized: bool
+    reason: str
+    candidate_valid: bool
+    policy_eligible: bool
+
+
+def assess_attempt_storage_transaction(
+    transition: object,
+    evidence: object,
+    *,
+    platform: str | None = None,
+) -> AttemptStorageTransactionDecision:
+    """Reject storage execution until a trusted Windows adapter exists.
+
+    A candidate transition and declared security flags are not proof
+    of a trusted exclusive lock, same-handle record identity, durable
+    revision comparison, or atomic filesystem replacement.
+    """
+    from .credential_record import (
+        AttemptRecordTransition,
+        validate_record,
+    )
+
+    if type(transition) is not AttemptRecordTransition:
+        return AttemptStorageTransactionDecision(
+            False, "INVALID_TRANSITION", False, False,
+        )
+
+    candidate_valid = (
+        transition.eligible is True
+        and transition.reason == "CANDIDATE_ONLY_NOT_PERSISTED"
+        and validate_record(transition.next_record)
+    )
+
+    if not candidate_valid:
+        return AttemptStorageTransactionDecision(
+            False, "INVALID_TRANSITION_CANDIDATE", False, False,
+        )
+
+    execution = assess_windows_storage_execution(
+        StorageOperation.UPDATE_ATTEMPTS,
+        evidence,
+        platform=platform,
+    )
+
+    return AttemptStorageTransactionDecision(
+        False,
+        execution.reason,
+        True,
+        execution.policy_eligible,
+    )

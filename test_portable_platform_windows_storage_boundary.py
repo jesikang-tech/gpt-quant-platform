@@ -319,3 +319,164 @@ def test_storage_execution_denies_invalid_operation():
 
     assert decision.authorized is False
     assert decision.policy_eligible is False
+
+def _synthetic_attempt_transition():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    current = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(),
+        revision=3,
+    )
+
+    return prepare_attempt_record_transition(
+        current,
+        AttemptState(failures=1),
+        expected_revision=3,
+    )
+
+
+def test_attempt_transaction_valid_candidate_still_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_attempt_storage_transaction,
+    )
+
+    result = assess_attempt_storage_transaction(
+        _synthetic_attempt_transition(),
+        None,
+        platform="win32",
+    )
+
+    assert result.authorized is False
+    assert result.candidate_valid is True
+    assert result.policy_eligible is False
+
+
+def test_attempt_transaction_invalid_transition_denied():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_attempt_storage_transaction,
+    )
+
+    for invalid in (None, False, {}, "candidate"):
+        result = assess_attempt_storage_transaction(
+            invalid,
+            None,
+            platform="win32",
+        )
+
+        assert result.authorized is False
+        assert result.reason == "INVALID_TRANSITION"
+        assert result.candidate_valid is False
+        assert result.policy_eligible is False
+
+
+def test_attempt_transaction_forged_candidate_denied():
+    from portable_platform_manager.credential_record import (
+        AttemptRecordTransition,
+    )
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_attempt_storage_transaction,
+    )
+
+    valid = _synthetic_attempt_transition()
+
+    forged = (
+        AttemptRecordTransition(
+            True,
+            "FORGED_AUTHORITY",
+            valid.next_record,
+        ),
+        AttemptRecordTransition(
+            False,
+            "CANDIDATE_ONLY_NOT_PERSISTED",
+            valid.next_record,
+        ),
+        AttemptRecordTransition(
+            True,
+            "CANDIDATE_ONLY_NOT_PERSISTED",
+            None,
+        ),
+    )
+
+    for candidate in forged:
+        result = assess_attempt_storage_transaction(
+            candidate,
+            None,
+            platform="win32",
+        )
+
+        assert result.authorized is False
+        assert result.reason == "INVALID_TRANSITION_CANDIDATE"
+        assert result.candidate_valid is False
+        assert result.policy_eligible is False
+
+
+def test_attempt_transaction_declared_evidence_cannot_authorize():
+    from portable_platform_manager.storage_policy import StorageEvidence
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+    )
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsSecurityEvidence,
+        assess_attempt_storage_transaction,
+    )
+
+    evidence = WindowsSecurityEvidence(
+        location=WindowsStoreLocation(
+            package_root=r"C:\PPM-Package",
+            install_root=r"C:\PPM-Install",
+            credential_root=r"C:\PPM-Credentials",
+        ),
+        storage=StorageEvidence(
+            outside_package=True,
+            outside_install_tree=True,
+            trusted_parent=True,
+            protected_acl=True,
+            exclusive_lock=True,
+            atomic_replace_supported=True,
+            current_record_valid=True,
+            revision_matches=True,
+            enrollment_authorized=False,
+            replacement_authorized=False,
+        ),
+        handle_path_verified=True,
+        no_reparse_points=True,
+        owner_verified=True,
+        acl_verified=True,
+        lock_verified=True,
+        atomic_write_verified=True,
+    )
+
+    result = assess_attempt_storage_transaction(
+        _synthetic_attempt_transition(),
+        evidence,
+        platform="win32",
+    )
+
+    assert result.authorized is False
+    assert result.candidate_valid is True
+    assert result.reason != ""
+    if result.policy_eligible:
+        assert result.reason == (
+            "TRUSTED_WINDOWS_STORAGE_ADAPTER_NOT_IMPLEMENTED"
+        )
+
+
+def test_attempt_transaction_rejects_missing_security_evidence():
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_attempt_storage_transaction,
+    )
+
+    result = assess_attempt_storage_transaction(
+        _synthetic_attempt_transition(),
+        None,
+        platform="win32",
+    )
+
+    assert result.authorized is False
+    assert result.policy_eligible is False
+    assert result.reason == "POLICY_INVALID_WINDOWS_EVIDENCE"
