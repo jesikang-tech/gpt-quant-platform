@@ -152,3 +152,64 @@ def decode_record(data: object) -> CredentialRecord:
         raise ValueError("invalid PPM credential record content")
 
     return record
+
+@dataclass(frozen=True)
+class AttemptRecordTransition:
+    """Candidate state transition; never filesystem authority."""
+
+    eligible: bool
+    reason: str
+    next_record: CredentialRecord | None
+
+
+def prepare_attempt_record_transition(
+    current_record: object,
+    next_attempts: object,
+    *,
+    expected_revision: object,
+) -> AttemptRecordTransition:
+    """Prepare a revision-checked candidate without persisting it.
+
+    The actual Windows adapter must hold a trusted exclusive lock,
+    re-read the current record, verify its revision and identity,
+    and perform a verified atomic replacement before accepting it.
+    """
+    if not validate_record(current_record):
+        return AttemptRecordTransition(
+            False, "INVALID_CURRENT_RECORD", None,
+        )
+
+    if type(expected_revision) is not int or expected_revision < 0:
+        return AttemptRecordTransition(
+            False, "INVALID_EXPECTED_REVISION", None,
+        )
+
+    if current_record.revision != expected_revision:
+        return AttemptRecordTransition(
+            False, "REVISION_CONFLICT", None,
+        )
+
+    if type(next_attempts) is not AttemptState:
+        return AttemptRecordTransition(
+            False, "INVALID_NEXT_ATTEMPTS", None,
+        )
+
+    if current_record.revision >= (2**63 - 1):
+        return AttemptRecordTransition(
+            False, "REVISION_LIMIT_REACHED", None,
+        )
+
+    candidate = CredentialRecord(
+        password_hash=current_record.password_hash,
+        attempts=next_attempts,
+        revision=current_record.revision + 1,
+    )
+
+    if not validate_record(candidate):
+        return AttemptRecordTransition(
+            False, "INVALID_NEXT_RECORD", None,
+        )
+
+    return AttemptRecordTransition(
+        True, "CANDIDATE_ONLY_NOT_PERSISTED", candidate,
+    )

@@ -185,3 +185,183 @@ def test_record_is_immutable():
 
     with pytest.raises(AttributeError):
         record.revision = 1
+
+def test_attempt_transition_increments_revision_and_preserves_hash():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    original = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(failures=1),
+        revision=7,
+    )
+
+    result = prepare_attempt_record_transition(
+        original,
+        AttemptState(failures=2),
+        expected_revision=7,
+    )
+
+    assert result.eligible is True
+    assert result.reason == "CANDIDATE_ONLY_NOT_PERSISTED"
+    assert result.next_record.password_hash == original.password_hash
+    assert result.next_record.attempts == AttemptState(failures=2)
+    assert result.next_record.revision == 8
+    assert original.revision == 7
+    assert original.attempts == AttemptState(failures=1)
+
+
+def test_attempt_transition_rejects_revision_conflict():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    original = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(),
+        revision=5,
+    )
+
+    result = prepare_attempt_record_transition(
+        original,
+        AttemptState(failures=1),
+        expected_revision=4,
+    )
+
+    assert result.eligible is False
+    assert result.reason == "REVISION_CONFLICT"
+    assert result.next_record is None
+
+
+def test_attempt_transition_rejects_invalid_current_record():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    invalid = CredentialRecord(
+        password_hash="invalid",
+        attempts=AttemptState(),
+        revision=1,
+    )
+
+    result = prepare_attempt_record_transition(
+        invalid,
+        AttemptState(failures=1),
+        expected_revision=1,
+    )
+
+    assert result.eligible is False
+    assert result.reason == "INVALID_CURRENT_RECORD"
+    assert result.next_record is None
+
+
+def test_attempt_transition_rejects_invalid_next_state():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    original = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(),
+        revision=1,
+    )
+
+    for invalid in (
+        None,
+        False,
+        AttemptState(failures=-1),
+        AttemptState(failures=5),
+        AttemptState(failures=5, locked_until=float("inf")),
+    ):
+        result = prepare_attempt_record_transition(
+            original,
+            invalid,
+            expected_revision=1,
+        )
+
+        assert result.eligible is False
+        assert result.next_record is None
+
+
+def test_attempt_transition_rejects_invalid_expected_revision():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    original = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(),
+        revision=1,
+    )
+
+    for invalid in (None, False, -1, 1.0, "1"):
+        result = prepare_attempt_record_transition(
+            original,
+            AttemptState(failures=1),
+            expected_revision=invalid,
+        )
+
+        assert result.eligible is False
+        assert result.reason == "INVALID_EXPECTED_REVISION"
+        assert result.next_record is None
+
+
+def test_attempt_transition_rejects_revision_limit():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    maximum = 2**63 - 1
+
+    original = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(),
+        revision=maximum,
+    )
+
+    result = prepare_attempt_record_transition(
+        original,
+        AttemptState(failures=1),
+        expected_revision=maximum,
+    )
+
+    assert result.eligible is False
+    assert result.reason == "REVISION_LIMIT_REACHED"
+    assert result.next_record is None
+
+
+def test_attempt_transition_accepts_finite_lock_state_only():
+    from portable_platform_manager.auth_attempts import AttemptState
+    from portable_platform_manager.credential_record import (
+        CredentialRecord,
+        prepare_attempt_record_transition,
+    )
+
+    original = CredentialRecord(
+        password_hash="scrypt:32768:8:1$synthetic-salt$synthetic-hash",
+        attempts=AttemptState(failures=4),
+        revision=10,
+    )
+
+    result = prepare_attempt_record_transition(
+        original,
+        AttemptState(failures=5, locked_until=1900.0),
+        expected_revision=10,
+    )
+
+    assert result.eligible is True
+    assert result.next_record.revision == 11
+    assert result.next_record.attempts.locked_until == 1900.0
