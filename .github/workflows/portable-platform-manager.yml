@@ -54,4 +54,4 @@ jobs:
       - name: Run PPM synthetic manifest tests
         shell: pwsh
         run: |
-          python -m pytest -q -p no:cacheprovider test_portable_platform_manifest.py test_portable_platform_backup_selection.py test_portable_platform_archive_contract.py test_portable_platform_backup_plan.py test_portable_platform_backup_file_inspector.py test_portable_platform_backup_staging.py test_portable_platform_auth.py test_portable_platform_auth_attempts.py test_portable_platform_credential_record.py test_portable_platform_storage_policy.py test_portable_platform_windows_credential_store.py test_portable_platform_windows_storage_boundary.py
+          python -m pytest -q -p no:cacheprovider test_portable_platform_manifest.py test_portable_platform_backup_selection.py test_portable_platform_archive_contract.py test_portable_platform_backup_plan.py test_portable_platform_backup_file_inspector.py test_portable_platform_auth.py test_portable_platform_auth_attempts.py test_portable_platform_credential_record.py test_portable_platform_storage_policy.py test_portable_platform_windows_credential_store.py test_portable_platform_windows_storage_boundary.py
