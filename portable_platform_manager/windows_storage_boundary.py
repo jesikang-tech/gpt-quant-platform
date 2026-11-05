@@ -94,3 +94,45 @@ def assess_windows_storage_boundary(
         True,
         "DECLARED_PRECONDITIONS_ONLY",
     )
+
+@dataclass(frozen=True)
+class WindowsStorageExecutionDecision:
+    """Actual execution authority, distinct from policy eligibility."""
+
+    authorized: bool
+    reason: str
+    policy_eligible: bool
+
+
+def assess_windows_storage_execution(
+    operation: object,
+    evidence: object,
+    *,
+    platform: str | None = None,
+) -> WindowsStorageExecutionDecision:
+    """Deny credential storage execution until trusted OS controls exist.
+
+    Existing policy assessment is reused only for diagnostics.
+    Caller-provided evidence, including all-true security flags,
+    cannot authorize filesystem writes, replacement, or deletion.
+
+    This function performs no filesystem or credential operations.
+    """
+    policy = assess_windows_storage_boundary(
+        operation,
+        evidence,
+        platform=platform,
+    )
+
+    if not policy.eligible:
+        return WindowsStorageExecutionDecision(
+            False,
+            "POLICY_" + policy.reason,
+            False,
+        )
+
+    return WindowsStorageExecutionDecision(
+        False,
+        "TRUSTED_WINDOWS_STORAGE_ADAPTER_NOT_IMPLEMENTED",
+        True,
+    )

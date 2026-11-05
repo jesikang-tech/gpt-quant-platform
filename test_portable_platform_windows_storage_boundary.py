@@ -221,3 +221,101 @@ def test_storage_evidence_is_not_os_verification():
     assert item.acl_verified is True
     assert result.reason == "DECLARED_PRECONDITIONS_ONLY"
     assert not hasattr(result, "os_verified")
+
+def test_storage_execution_denies_all_declared_authority():
+    """Even a policy-eligible declaration cannot authorize writes."""
+    from portable_platform_manager.storage_policy import (
+        StorageEvidence,
+        StorageOperation,
+    )
+    from portable_platform_manager.windows_credential_store import (
+        WindowsStoreLocation,
+    )
+    from portable_platform_manager.windows_storage_boundary import (
+        WindowsSecurityEvidence,
+        assess_windows_storage_boundary,
+        assess_windows_storage_execution,
+    )
+
+    location = WindowsStoreLocation(
+        package_root="C:\\ppm-package",
+        install_root="C:\\ppm-install",
+        credential_root="C:\\ppm-private",
+    )
+
+    storage = StorageEvidence(
+        outside_package=True,
+        outside_install_tree=True,
+        trusted_parent=True,
+        protected_acl=True,
+        exclusive_lock=True,
+        atomic_replace_supported=True,
+        current_record_valid=False,
+        revision_matches=True,
+        enrollment_authorized=True,
+        replacement_authorized=True,
+    )
+
+    evidence = WindowsSecurityEvidence(
+        location=location,
+        storage=storage,
+        handle_path_verified=True,
+        no_reparse_points=True,
+        owner_verified=True,
+        acl_verified=True,
+        lock_verified=True,
+        atomic_write_verified=True,
+    )
+
+    policy = assess_windows_storage_boundary(
+        StorageOperation.ENROLL,
+        evidence,
+        platform="win32",
+    )
+    assert policy.eligible is True
+    assert policy.reason == "DECLARED_PRECONDITIONS_ONLY"
+
+    execution = assess_windows_storage_execution(
+        StorageOperation.ENROLL,
+        evidence,
+        platform="win32",
+    )
+    assert execution.authorized is False
+    assert execution.policy_eligible is True
+    assert execution.reason == (
+        "TRUSTED_WINDOWS_STORAGE_ADAPTER_NOT_IMPLEMENTED"
+    )
+
+
+def test_storage_execution_rejects_invalid_evidence():
+    """Invalid evidence cannot authorize credential operations."""
+    from portable_platform_manager.storage_policy import StorageOperation
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_storage_execution,
+    )
+
+    for evidence in (None, False, True, {}, [], "verified"):
+        decision = assess_windows_storage_execution(
+            StorageOperation.ENROLL,
+            evidence,
+            platform="win32",
+        )
+        assert decision.authorized is False
+        assert decision.policy_eligible is False
+        assert decision.reason.startswith("POLICY_")
+
+
+def test_storage_execution_denies_invalid_operation():
+    """An invalid operation cannot gain execution authority."""
+    from portable_platform_manager.windows_storage_boundary import (
+        assess_windows_storage_execution,
+    )
+
+    decision = assess_windows_storage_execution(
+        "enroll",
+        None,
+        platform="win32",
+    )
+
+    assert decision.authorized is False
+    assert decision.policy_eligible is False
