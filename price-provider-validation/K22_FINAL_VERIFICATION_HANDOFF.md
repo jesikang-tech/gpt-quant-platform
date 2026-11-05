@@ -148,3 +148,55 @@ Historical K13/K22 status entries above remain unchanged.
 
 Further authorization requires independent evidence, explicit
 approval, isolated regression tests and successful GitHub CI.
+## Current KIWOOM-Only K22 Verification Closure
+
+Status: OFFLINE_CI_EVIDENCE_VERIFIED / FINAL_DOCUMENT_CI_PENDING / OPERATIONAL_USE_DENIED
+
+### Current scope
+
+- Ver1.1 price-provider candidate: KIWOOM only.
+- KIS new development is deferred to Ver1.2.
+- Historical KIS contracts and regression tests remain preserved.
+- No automatic KIS fallback is authorized.
+
+### Verified CI evidence
+
+- Branch: feature/parallel-price-providers
+- Current pre-closure commit:
+  cdfa026adfaff11fecb0c6e72467f8ccca6b9f9e
+- Parallel Price Provider Contract:
+  run 41946554216, completed/success.
+- Required jobs:
+  synthetic-contract and ci-registration-guard,
+  both completed/success.
+- Historical KIWOOM-only handoff baseline:
+  5b83b46d483369a3590d4d741fe2817676fa4755
+- Parallel Price Provider Contract:
+  run 41796612106, completed/success.
+- Historical Replay Read Only Regression:
+  run 41796611998, completed/success.
+- Both historical runs matched the recorded commit.
+- Current contract workflow registers 40 synthetic test files.
+- Historical 35-file inventory is preserved as a past baseline.
+
+### Official KIWOOM reply evidence
+
+- Q&A 7961: official-site reply observed and PDF reviewed.
+- Q&A 8123: preserved PDF SHA256 verified.
+- Q&A 8123 full PDF text review remains pending.
+- Personal-use guidance is recorded, not independently
+  authenticated as unrestricted operational permission.
+- Independent market-data provenance remains unverified.
+- Adjustment and corporate-action certification remain pending.
+- Official trading-calendar certification remains pending.
+
+### Final acceptance boundary
+
+- Existing fail-closed modules and tests are reused.
+- No source-code or execution-authority change is authorized.
+- This documentation update requires its own commit, push,
+  exact-commit GitHub Actions verification and clean-tree check.
+- Independent real-price certification is not complete.
+- API execution, analysis, persistence, database rebuild,
+  broker calls and production deployment remain denied.
+- Main merge remains not authorized.
