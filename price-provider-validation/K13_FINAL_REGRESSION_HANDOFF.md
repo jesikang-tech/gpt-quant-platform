@@ -111,3 +111,50 @@ No CI success or synthetic evidence may be interpreted as production authorizati
 - Do not merge into main without explicit authorization.
 
 Until those checks pass, K13 remains IN_PROGRESS.
+## 10. Current KIWOOM-only verification update
+
+Status: OFFLINE_CI_VERIFIED / K13_DOCUMENT_UPDATE_PENDING_CI / OPERATIONAL_USE_DENIED
+
+### Scope decision
+
+- Current development scope: KIWOOM price-provider offline certification boundaries only.
+- New KIS development, including KIS raw-response and adjustment work: deferred to Ver1.2.
+- Historical K9-K13 KIS references above are preserved as development history.
+- Existing KIS regression tests remain registered; no new KIS work is authorized.
+
+### Current verified baseline
+
+- Branch: feature/parallel-price-providers
+- Verified source commit: 0568a2f3bc65f3dd326d220e6bd0c883a49c12d2
+- GitHub Actions run: 41801382588
+- Workflow: Parallel Price Provider Contract
+- Run status: completed
+- Run conclusion: success
+- Registered synthetic test files in current workflow: 40
+- Jobs: synthetic-contract and ci-registration-guard
+
+### KIWOOM offline boundaries reviewed
+
+- Adjustment-request and raw-response binding remain unverified and denied.
+- Corporate-action declarations do not establish independent certification.
+- Calendar continuity detects declared-date gaps but does not certify an official calendar.
+- STOCK, ETF and ETN declarations do not certify official API support.
+- Certification and licensing flags cannot authorize analysis or execution.
+- Existing platform analysis and historical replay entrypoint denial tests are registered.
+- No new duplicate modules are required based on the reviewed scope.
+
+### Remaining external evidence
+
+- Independent real-price provenance and raw-response authenticity.
+- Official adjustment and corporate-action interpretation.
+- Official exchange trading calendar and historical completeness.
+- Official ETF and ETN API support and relevant distribution policies.
+- Separate authorization for real-data acquisition and operational use.
+
+### Final K13 release condition
+
+This document update must be committed and pushed on the isolated feature branch.
+The new document commit requires successful GitHub Actions verification.
+Until then K13 document finalization remains pending.
+
+No real API, operating database, broker execution, or main merge is authorized.
