@@ -6,6 +6,8 @@ on:
       - feature/parallel-price-providers
     paths:
       - "price-provider-validation/**"
+      - "test_kiwoom_ver11_replay.py"
+      - "test_kiwoom_ver11_replay_api.py"
       - "naver-decimal-validation/core/price_provenance_gate.py"
       - "tools/ci_test_registration_guard.py"
       - "tools/test_ci_test_registration_guard.py"
