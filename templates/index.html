@@ -280,6 +280,36 @@ AI Powered ETF Ranking System
   </div>
 </aside>
 <main class="ver11-main">
+<section id="kiwoom-ver11-panel" class="historical-replay-section">
+  <h2>KIWOOM Ver1.1 Offline Analysis</h2>
+  <p>Caller-supplied KIWOOM ka10086 data only. No API collection or database writes.</p>
+
+  <div class="ver11-control-group">
+    <label for="kiwoom-ver11-ticker">Ticker</label>
+    <input id="kiwoom-ver11-ticker" type="text" maxlength="20" placeholder="069500">
+  </div>
+
+  <div class="ver11-control-group">
+    <label for="kiwoom-ver11-response">KIWOOM ka10086 response JSON</label>
+    <textarea
+      id="kiwoom-ver11-response"
+      rows="8"
+      spellcheck="false"
+      placeholder='{"daly_stkpc":[...]}'
+    ></textarea>
+  </div>
+
+  <div class="ver11-actions">
+    <button id="kiwoom-ver11-run" type="button">Run KIWOOM Analysis</button>
+  </div>
+
+  <div id="kiwoom-ver11-status" role="status" aria-live="polite"></div>
+
+  <section id="kiwoom-ver11-result" class="historical-replay-result" hidden>
+    <h3>KIWOOM Analysis Result</h3>
+    <div id="kiwoom-ver11-result-content"></div>
+  </section>
+</section>
 <section id="historical-replay-result" class="historical-replay-result" hidden>
     <div class="historical-replay-result-header">
         <div>

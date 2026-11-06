@@ -7903,3 +7903,124 @@ applyDashboardLanguage();
 /* V20: Portfolio Optimization visual cleanup */
 
 /* FINAL_DECISION_CONTROL_CARD_MARKER */
+
+/* KIWOOM Ver1.1 caller-supplied offline analysis. No data collection or writes. */
+function initializeKiwoomVer11OfflinePanel() {
+    const runButton = document.getElementById("kiwoom-ver11-run");
+    const tickerInput = document.getElementById("kiwoom-ver11-ticker");
+    const responseInput = document.getElementById("kiwoom-ver11-response");
+    const dateInput = document.getElementById("ver11-analysis-date");
+    const periodInput = document.getElementById("ver11-analysis-period");
+    const statusBox = document.getElementById("kiwoom-ver11-status");
+    const resultPanel = document.getElementById("kiwoom-ver11-result");
+    const resultContent = document.getElementById("kiwoom-ver11-result-content");
+
+    if (!runButton || !tickerInput || !responseInput ||
+        !dateInput || !periodInput || !statusBox ||
+        !resultPanel || !resultContent) {
+        return;
+    }
+
+    runButton.addEventListener("click", async function () {
+        resultPanel.hidden = true;
+        resultContent.textContent = "";
+        statusBox.textContent = "";
+
+        const ticker = tickerInput.value.trim();
+        const analysisDate = dateInput.value;
+        const period = periodInput.value || "3m";
+
+        if (!ticker || !analysisDate) {
+            statusBox.textContent = "Ticker and analysis date are required.";
+            return;
+        }
+
+        let suppliedResponse;
+        try {
+            suppliedResponse = JSON.parse(responseInput.value);
+            if (!suppliedResponse || Array.isArray(suppliedResponse) ||
+                typeof suppliedResponse !== "object") {
+                throw new Error("Expected a KIWOOM response object.");
+            }
+        } catch (error) {
+            statusBox.textContent = "Invalid KIWOOM response JSON.";
+            return;
+        }
+
+        runButton.disabled = true;
+        statusBox.textContent = "Running KIWOOM offline analysis...";
+
+        try {
+            const response = await fetch("/api/kiwoom-ver11-analysis", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    source: "KIWOOM",
+                    ticker: ticker,
+                    date: analysisDate,
+                    period: period,
+                    api_id: "ka10086",
+                    response: suppliedResponse,
+                }),
+            });
+
+            if (response.status === 401) {
+                throw new DashboardAuthenticationRequiredError(
+                    "Dashboard authentication required."
+                );
+            }
+
+            const data = await response.json();
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.message || "KIWOOM analysis failed.");
+            }
+
+            const result = data.result;
+            if (!result || result.source !== "KIWOOM" ||
+                data.persistence !== false) {
+                throw new Error("Unexpected KIWOOM analysis response.");
+            }
+
+            const fields = [
+                ["Ticker", result.ticker],
+                ["Analysis date", result.analysis_date],
+                ["Period", result.period],
+                ["Available", result.available],
+                ["Observed days", result.observed_days],
+                ["Required days", result.required_days],
+                ["Return (%)", result.return],
+                ["Return score", result.return_score],
+                ["Trend score", result.trend_score],
+                ["Slope score", result.slope_score],
+                ["Uptrend ratio (%)", result.uptrend_ratio],
+                ["Final score", result.final_score],
+                ["Selection pass", result.selection_pass],
+            ];
+
+            resultContent.textContent = fields
+                .map(([name, value]) => `${name}: ${value ?? "N/A"}`)
+                .join("\n");
+            resultContent.style.whiteSpace = "pre-wrap";
+            resultPanel.hidden = false;
+            statusBox.textContent =
+                "KIWOOM offline analysis complete. No data saved.";
+        } catch (error) {
+            if (error instanceof DashboardAuthenticationRequiredError) {
+                stopDashboard();
+                hidePlatformAdminPanel();
+                setPlatformLogoutButtonVisible(false);
+                setPlatformAuthMode("user");
+                showPlatformAuthOverlay();
+            }
+            statusBox.textContent =
+                error.message || "KIWOOM analysis failed.";
+        } finally {
+            runButton.disabled = false;
+        }
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeKiwoomVer11OfflinePanel
+);
