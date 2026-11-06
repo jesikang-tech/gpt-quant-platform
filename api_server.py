@@ -348,6 +348,51 @@ def historical_replay_api():
         return jsonify({"success": False, "message": str(exc)}), 500
 
 
+@app.route("/api/kiwoom-ver11-analysis", methods=["POST"])
+def kiwoom_ver11_analysis_api():
+    """Authenticated, caller-supplied offline scoring; no DB or API fetch."""
+    from decimal import Decimal, InvalidOperation
+    from kiwoom_ver11_analysis import score_kiwoom_ver11_close_prices
+
+    body = request.get_json(silent=True)
+    if type(body) is not dict:
+        return jsonify({"success": False, "message": "Invalid JSON body"}), 400
+
+    try:
+        if body.get("source") != "KIWOOM":
+            raise ValueError("Explicit KIWOOM source required")
+        raw_prices = body.get("prices")
+        if type(raw_prices) is not list or len(raw_prices) > 10000:
+            raise ValueError("Invalid price collection")
+
+        dated_closes = []
+        for row in raw_prices:
+            if type(row) is not list or len(row) != 2:
+                raise ValueError("Invalid price row")
+            observation_date, raw_close = row
+            if type(raw_close) is not str:
+                raise ValueError("Close must be a decimal string")
+            try:
+                close = Decimal(raw_close)
+            except InvalidOperation as exc:
+                raise ValueError("Invalid close price") from exc
+            dated_closes.append((observation_date, close))
+
+        result = score_kiwoom_ver11_close_prices(
+            body.get("ticker"),
+            dated_closes,
+            analysis_date=body.get("date"),
+            period=body.get("period", "3m"),
+        )
+        return jsonify({
+            "success": True,
+            "input_origin": "CALLER_SUPPLIED_UNVERIFIED",
+            "persistence": False,
+            "result": result,
+        })
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
 @app.route("/api/naver-validation-status", methods=["GET"])
 def naver_validation_status_api():
     """Expose the unverified NAVER boundary without reading prices."""
