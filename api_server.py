@@ -393,6 +393,52 @@ def kiwoom_ver11_analysis_api():
     except ValueError as exc:
         return jsonify({"success": False, "message": str(exc)}), 400
 
+@app.route("/api/kiwoom-ver11-replay", methods=["POST"])
+def kiwoom_ver11_replay_api():
+    """Authenticated, caller-supplied historical replay without DB access."""
+    from decimal import Decimal, InvalidOperation
+    from kiwoom_ver11_replay import replay_kiwoom_ver11_prices
+
+    body = request.get_json(silent=True)
+    if type(body) is not dict:
+        return jsonify({"success": False, "message": "Invalid JSON body"}), 400
+
+    try:
+        if body.get("source") != "KIWOOM":
+            raise ValueError("Explicit KIWOOM source required")
+
+        raw_mapping = body.get("ticker_prices")
+        if type(raw_mapping) is not dict or len(raw_mapping) > 5000:
+            raise ValueError("Invalid ticker price mapping")
+
+        ticker_prices = {}
+        for ticker, raw_rows in raw_mapping.items():
+            if type(raw_rows) is not list or len(raw_rows) > 10000:
+                raise ValueError("Invalid price collection")
+            dated_closes = []
+            for row in raw_rows:
+                if type(row) is not list or len(row) != 2:
+                    raise ValueError("Invalid price row")
+                observation_date, raw_close = row
+                if type(raw_close) is not str:
+                    raise ValueError("Close must be a decimal string")
+                try:
+                    close = Decimal(raw_close)
+                except InvalidOperation as exc:
+                    raise ValueError("Invalid close price") from exc
+                dated_closes.append((observation_date, close))
+            ticker_prices[ticker] = dated_closes
+
+        result = replay_kiwoom_ver11_prices(
+            ticker_prices,
+            analysis_date=body.get("date"),
+            period=body.get("period", "3m"),
+            limit=body.get("limit", 10),
+        )
+        return jsonify(result)
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
+
 @app.route("/api/naver-validation-status", methods=["GET"])
 def naver_validation_status_api():
     """Expose the unverified NAVER boundary without reading prices."""

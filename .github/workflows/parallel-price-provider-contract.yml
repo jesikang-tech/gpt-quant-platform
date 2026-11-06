@@ -90,4 +90,4 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: "1"
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
-        run: python -m pytest -q -p no:cacheprovider test_kiwoom_ver11_dashboard_provenance.py test_kiwoom_ver11_analysis.py test_kiwoom_ver11_api.py test_api_server.py
+        run: python -m pytest -q -p no:cacheprovider test_kiwoom_ver11_dashboard_provenance.py test_kiwoom_ver11_analysis.py test_kiwoom_ver11_api.py test_kiwoom_ver11_replay.py test_kiwoom_ver11_replay_api.py test_api_server.py
