@@ -539,6 +539,10 @@ def get_ver11_analysis_snapshot_api(snapshot_id):
 
 @app.route("/api/ranking")
 def ranking_api():
+    try:
+        _require_ver11_price_provenance()
+    except ValueError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 400
 
     data = get_dashboard_api_data()
     return jsonify(

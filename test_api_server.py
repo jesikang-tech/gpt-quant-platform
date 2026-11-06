@@ -35,7 +35,7 @@ def run_api_server_test(client):
         response.status_code
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 400
 
     data = response.get_json()
 
@@ -46,16 +46,12 @@ def run_api_server_test(client):
     print()
     print("===== Validation =====")
 
-    if data["success"]:
-        print(
-            "API Status : PASS"
-        )
-    else:
-        print(
-            "API Status : FAIL"
-        )
+    assert data["success"] is False
+    assert "Price provenance is unverified" in data["message"]
 
-    assert data["success"] is True
+    print(
+        "API Provenance Denial : PASS"
+    )
 
     print("=" * 50)
 
