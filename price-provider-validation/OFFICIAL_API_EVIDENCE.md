@@ -383,3 +383,45 @@ Status: OFFICIAL_QA_LISTING_SCREENSHOT_OBSERVED / REPLY_PENDING
 This registration records the observed inquiry listing only.
 It does not authenticate a provider reply, establish market-data
 provenance, or grant operational authority.
+
+## KIWOOM Q&A 8180 reply and Q&A 8245 registration
+
+Evidence review date: 2026-11-06
+Status: USER_CONFIRMED / INDEPENDENT_AUTHENTICITY_UNVERIFIED
+
+### Q&A 8180 reply
+
+- Inquiry number: 8180
+- Reply timestamp displayed: 2026-11-05 15:24
+- Reply evidence: user-supplied three-page PDF
+- User confirmed the reply belongs to Q&A 8180.
+- Provider stated that KIWOOM REST API provides HTS data.
+- Detailed technical clarification was not provided.
+- Original market-data provenance: UNVERIFIED
+- Adjustment and corporate-action certification: PENDING
+- Official trading-calendar certification: PENDING
+- Specific analysis and backtest authorization: UNVERIFIED
+- Independent provider authenticity: UNVERIFIED
+
+### Q&A 8245 registration
+
+- Inquiry number: 8245
+- Registration: USER_CONFIRMED
+- Question category: OTHER
+- Subject: personal-use automated historical-price collection,
+  local storage, analysis, and strategy backtesting permissions.
+- Official reply: PENDING
+- Additional separate questions on adjustment, trading days,
+  and REST/HTS consistency: NOT_YET_REGISTERED
+
+### Safety boundary
+
+- REAL_PRICE_COLLECTION: DENIED
+- PRICE_ANALYSIS_AND_PERSISTENCE: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- HOST_PYTHON_EXECUTION: DENIED
+- BROKER_CALLS: DENIED
+- MAIN_MERGE: NOT_AUTHORIZED
+
+This record preserves earlier historical evidence states.
+It does not establish independent certification or authorize execution.
