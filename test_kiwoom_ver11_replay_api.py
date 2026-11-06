@@ -8,10 +8,9 @@ from price_test_support import isolated_price_db, phase8_test_scope
 
 
 @pytest.fixture
-def api_scope():
-    with isolated_price_db() as db_path:
-        with phase8_test_scope(db_path) as scope:
-            yield scope
+def api_scope(isolated_price_db):
+    with phase8_test_scope(isolated_price_db) as scope:
+        yield scope.api
 
 
 def _payload():
