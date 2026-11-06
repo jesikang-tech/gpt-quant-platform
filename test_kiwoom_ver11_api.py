@@ -87,3 +87,72 @@ def test_existing_snapshot_write_remains_blocked(api_scope):
     )
     assert response.status_code == 400
     assert "Price provenance is unverified" in response.get_json()["message"]
+
+def _kiwoom_daily_response_payload():
+    start = date(2026, 8, 3)
+    rows = []
+    day = start
+    while len(rows) < 65:
+        if day.weekday() < 5:
+            close = str(100 + len(rows))
+            rows.append({
+                "date": day.strftime("%Y%m%d"),
+                "open_pric": close,
+                "high_pric": close,
+                "low_pric": close,
+                "close_pric": close,
+                "trde_qty": "1000",
+            })
+        day += timedelta(days=1)
+    return {
+        "source": "KIWOOM",
+        "ticker": "069500",
+        "date": rows[-1]["date"][:4] + "-" + rows[-1]["date"][4:6] + "-" + rows[-1]["date"][6:],
+        "period": "3m",
+        "api_id": "ka10086",
+        "response": {"daly_stkpc": list(reversed(rows))},
+    }
+
+
+def test_kiwoom_daily_response_analysis_success(api_scope):
+    client = authenticated_client(api_scope.app)
+    response = client.post(
+        "/api/kiwoom-ver11-analysis",
+        json=_kiwoom_daily_response_payload(),
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["success"] is True
+    assert body["input_origin"] == "CALLER_SUPPLIED_UNVERIFIED"
+    assert body["persistence"] is False
+    assert body["result"]["ticker"] == "069500"
+    assert body["result"]["source"] == "KIWOOM"
+    assert body["result"]["available"] is True
+    assert body["result"]["db_write"] is False
+
+
+def test_kiwoom_daily_response_invalid_close_denied(api_scope):
+    client = authenticated_client(api_scope.app)
+    payload = _kiwoom_daily_response_payload()
+    payload["response"]["daly_stkpc"][0]["close_pric"] = "NaN"
+    response = client.post("/api/kiwoom-ver11-analysis", json=payload)
+    assert response.status_code == 400
+    assert response.get_json()["success"] is False
+
+
+def test_kiwoom_daily_response_conflicting_inputs_denied(api_scope):
+    client = authenticated_client(api_scope.app)
+    payload = _kiwoom_daily_response_payload()
+    payload["prices"] = _payload()["prices"]
+    response = client.post("/api/kiwoom-ver11-analysis", json=payload)
+    assert response.status_code == 400
+    assert response.get_json()["success"] is False
+
+
+def test_kiwoom_daily_response_other_source_denied(api_scope):
+    client = authenticated_client(api_scope.app)
+    payload = _kiwoom_daily_response_payload()
+    payload["source"] = "NAVER"
+    response = client.post("/api/kiwoom-ver11-analysis", json=payload)
+    assert response.status_code == 400
+    assert response.get_json()["success"] is False

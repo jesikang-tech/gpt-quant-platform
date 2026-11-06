@@ -350,7 +350,7 @@ def historical_replay_api():
 
 @app.route("/api/kiwoom-ver11-analysis", methods=["POST"])
 def kiwoom_ver11_analysis_api():
-    """Authenticated, caller-supplied offline scoring; no DB or API fetch."""
+    """Authenticated caller-supplied KIWOOM analysis; no HTTP or DB writes."""
     from decimal import Decimal, InvalidOperation
     from kiwoom_ver11_analysis import score_kiwoom_ver11_close_prices
 
@@ -361,22 +361,40 @@ def kiwoom_ver11_analysis_api():
     try:
         if body.get("source") != "KIWOOM":
             raise ValueError("Explicit KIWOOM source required")
-        raw_prices = body.get("prices")
-        if type(raw_prices) is not list or len(raw_prices) > 10000:
-            raise ValueError("Invalid price collection")
 
-        dated_closes = []
-        for row in raw_prices:
-            if type(row) is not list or len(row) != 2:
-                raise ValueError("Invalid price row")
-            observation_date, raw_close = row
-            if type(raw_close) is not str:
-                raise ValueError("Close must be a decimal string")
-            try:
-                close = Decimal(raw_close)
-            except InvalidOperation as exc:
-                raise ValueError("Invalid close price") from exc
-            dated_closes.append((observation_date, close))
+        has_prices = "prices" in body
+        has_response = "response" in body
+        if has_prices == has_response:
+            raise ValueError("Exactly one KIWOOM price input required")
+
+        if has_response:
+            from price_provider_validation.kiwoom_ver11_price_input import (
+                prepare_kiwoom_ver11_close_prices,
+            )
+
+            dated_closes = prepare_kiwoom_ver11_close_prices(
+                body.get("api_id"),
+                body.get("ticker"),
+                body["response"],
+                requested_base_date=body.get("date"),
+            )
+        else:
+            raw_prices = body["prices"]
+            if type(raw_prices) is not list or len(raw_prices) > 10000:
+                raise ValueError("Invalid price collection")
+
+            dated_closes = []
+            for row in raw_prices:
+                if type(row) is not list or len(row) != 2:
+                    raise ValueError("Invalid price row")
+                observation_date, raw_close = row
+                if type(raw_close) is not str:
+                    raise ValueError("Close must be a decimal string")
+                try:
+                    close = Decimal(raw_close)
+                except InvalidOperation as exc:
+                    raise ValueError("Invalid close price") from exc
+                dated_closes.append((observation_date, close))
 
         result = score_kiwoom_ver11_close_prices(
             body.get("ticker"),
