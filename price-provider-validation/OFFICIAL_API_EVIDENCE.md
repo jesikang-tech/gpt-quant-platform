@@ -425,3 +425,85 @@ Status: USER_CONFIRMED / INDEPENDENT_AUTHENTICITY_UNVERIFIED
 
 This record preserves earlier historical evidence states.
 It does not establish independent certification or authorize execution.
+
+## KIWOOM Q&A 8245, 8247, 8249 and FAQ 39 evidence update
+
+Evidence review date: 2026-11-06
+Status: OFFICIAL_REPLY_PDF_REVIEWED / INDEPENDENT_AUTHENTICITY_UNVERIFIED
+
+### Q&A 8245 - Personal investment data use
+
+- Reply timestamp displayed: 2026-11-06 12:10
+- Personal customers may use data for their own asset investment purposes.
+- Provider stated no data-category or storage-duration restrictions.
+- Third-party provision or redistribution is restricted.
+- Provider referred to FAQ 39 and applicable service terms.
+- Separate individual authorization procedure was not offered.
+- Automated collection, storage, analysis and backtesting were
+  included in the submitted question.
+- The reply does not separately certify every technical operation.
+- File: KIWOOM_REST_API_QA_8245_Official_Reply_20261106.pdf
+- SHA256: FF9D1B13E0364C749CC877189854F1755C574642C82AB8EDE81CCFDE0747914C
+
+### FAQ 39 - Personal distribution and corporate use
+
+- Official notice date displayed: 2025-08-12
+- Personal market-data use is limited to own-asset investment.
+- Third-party market-data provision and redistribution are prohibited.
+- Corporate market-data use requires separate information agreements.
+- Sharing source code without market data is conditionally discussed.
+- Applicable API service terms and credential-protection rules remain relevant.
+- File: KIWOOM_REST_API_QA_8245_FAQ39_20261106.pdf
+- SHA256: F186D986BC4DFAD4F54E84B36F60EB2E03ED1C39EC3D69B2DE69089D23B47F23
+
+### Q&A 8247 - Adjustment and corporate actions
+
+- Reply timestamp displayed: 2026-11-06 12:15
+- Provider stated that ka10086 supplies original prices.
+- Provider directed ka10081 interpretation to its API guide.
+- Split, consolidation, bonus issue, dividend and ETF distribution
+  adjustment methodologies were not individually specified.
+- Actual response authenticity and numerical adjustment remain unverified.
+- File: KIWOOM_REST_API_QA_8247_Official_Reply_20261106.pdf
+- SHA256: 138DA8AF655250C71C75D87C481C801800B958BD5BED4D5F4870074666F5CA10
+
+### Q&A 8249 - Trading-day and missing-data classification
+
+- Reply timestamp displayed: 2026-11-06 12:18
+- Provider stated that missing-data classification criteria
+  are not provided.
+- Holiday, suspension, pre-listing and genuine data gaps cannot
+  be distinguished solely from missing REST response dates.
+- Independent trading-calendar and continuity evidence remains required.
+- File: KIWOOM_REST_API_QA_8249_Official_Reply_20261106.pdf
+- SHA256: 56678892FCC41B7173535DC92C074F5D0B0654B98ADAC225C11138A8657A267B
+
+### Q&A 8261 - HTS and REST price consistency
+
+- Inquiry number: 8261
+- Registration: USER_CONFIRMED
+- Subject: historical price consistency between HTS and REST API.
+- Provider reply: PENDING
+- Numerical equivalence: NOT_CERTIFIED
+
+### Evidence custody and safety
+
+- Original PDFs are retained by the user.
+- Evidence folder: D:\HQ 임시\gpt platform
+- Eight PDF files were inventoried with SHA256 on 2026-11-06.
+- Original files are planned for later USB transfer.
+- Copy integrity must be verified against original SHA256 values.
+- Independent provider authenticity: UNVERIFIED
+- Real market-data provenance: UNVERIFIED
+- Adjustment and corporate-action certification: PENDING
+- Official trading-calendar certification: PENDING
+- REAL_PRICE_COLLECTION: DENIED
+- PRICE_ANALYSIS_AND_PERSISTENCE: DENIED
+- OPERATING_DB_ACCESS: PROHIBITED
+- HOST_PYTHON_EXECUTION: DENIED
+- BROKER_CALLS: DENIED
+- MAIN_MERGE: NOT_AUTHORIZED
+
+This dated update supersedes earlier reply-pending observations
+only for the inquiries explicitly reviewed above.
+It does not grant production or real-data execution authority.
