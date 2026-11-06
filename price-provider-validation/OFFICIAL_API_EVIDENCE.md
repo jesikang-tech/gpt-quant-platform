@@ -483,8 +483,19 @@ Status: OFFICIAL_REPLY_PDF_REVIEWED / INDEPENDENT_AUTHENTICITY_UNVERIFIED
 - Inquiry number: 8261
 - Registration: USER_CONFIRMED
 - Subject: historical price consistency between HTS and REST API.
-- Provider reply: PENDING
+- Provider reply: RECEIVED_LIMITED_GUIDANCE
+- Reply timestamp: 2026-11-06 15:36
+- Official guidance: Check HTS settings and REST API request parameters when displayed data differs.
+- Specific HTS comparison screen: NOT_SPECIFIED
+- Official discrepancy escalation procedure: NOT_SPECIFIED
+- Official numerical comparison reference: NOT_PROVIDED
 - Numerical equivalence: NOT_CERTIFIED
+- Real market-data provenance: UNVERIFIED
+- File: KIWOOM_REST_API_QA_8261_Official_Reply_20261106.pdf
+- SHA256: F51065648D7930F014F2BB101B8ACAE03542AC77B4FA2559976E754C0F1864BF
+- Evidence custody: D:\HQ 임시\gpt platform
+- REAL_PRICE_COLLECTION: DENIED
+- PRICE_ANALYSIS_AND_PERSISTENCE: DENIED
 
 ### Evidence custody and safety
 
