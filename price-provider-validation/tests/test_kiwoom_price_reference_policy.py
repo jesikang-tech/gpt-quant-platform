@@ -18,6 +18,8 @@ def test_reference_policy_adopts_kiwoom_for_ver11():
     assert decision.ka10086_price_basis == "ORIGINAL_PRICE_REPORTED"
     assert decision.ka10081_price_basis == "API_GUIDE_REVIEW_REQUIRED"
     assert decision.hts_numeric_equivalence_required is False
+    assert decision.analysis_authorized is True
+    assert decision.dashboard_authorized is True
 
 
 def test_reference_policy_never_grants_execution_authority():
@@ -26,8 +28,6 @@ def test_reference_policy_never_grants_execution_authority():
         "trading_calendar_verified",
         "response_provenance_verified",
         "api_execution_authorized",
-        "analysis_authorized",
-        "dashboard_authorized",
         "snapshot_authorized",
         "persistence_authorized",
         "database_rebuild_authorized",

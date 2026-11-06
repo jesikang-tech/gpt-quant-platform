@@ -21,8 +21,8 @@ class KiwoomPriceReferenceDecision:
     trading_calendar_verified: bool = False
     response_provenance_verified: bool = False
     api_execution_authorized: bool = False
-    analysis_authorized: bool = False
-    dashboard_authorized: bool = False
+    analysis_authorized: bool = True
+    dashboard_authorized: bool = True
     snapshot_authorized: bool = False
     persistence_authorized: bool = False
     database_rebuild_authorized: bool = False
@@ -80,8 +80,8 @@ def assess_kiwoom_ver11_daily_reference(
         or policy.reference_policy != "OFFICIAL_REST_API"
         or policy.personal_scope_reported is not True
         or policy.api_execution_authorized is not False
-        or policy.analysis_authorized is not False
-        or policy.dashboard_authorized is not False
+        or policy.analysis_authorized is not True
+        or policy.dashboard_authorized is not True
         or policy.snapshot_authorized is not False
         or policy.persistence_authorized is not False
         or policy.database_rebuild_authorized is not False
