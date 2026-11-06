@@ -49,3 +49,54 @@ def assess_kiwoom_price_reference_policy():
         raise ValueError("KIWOOM_USAGE_POLICY_ESCALATION")
 
     return KiwoomPriceReferenceDecision()
+
+
+def assess_kiwoom_ver11_daily_reference(
+    ticker, response_row, evidence, trading_day_decision, *, api_id
+):
+    """Compose Ver1.1 reference policy with existing offline daily assessment.
+
+    Caller-supplied rows only. No API, database, broker, or execution rights.
+    """
+    from .provider_daily_bridge import assess_provider_daily_bridge
+
+    policy = assess_kiwoom_price_reference_policy()
+
+    if type(api_id) is not str or api_id not in ("ka10081", "ka10086"):
+        raise ValueError("UNSUPPORTED_KIWOOM_DAILY_API")
+
+    decision = assess_provider_daily_bridge(
+        "KIWOOM",
+        ticker,
+        response_row,
+        evidence,
+        trading_day_decision,
+        api_id=api_id,
+    )
+
+    if (
+        policy.provider != "KIWOOM"
+        or policy.platform_version != "1.1"
+        or policy.reference_policy != "OFFICIAL_REST_API"
+        or policy.personal_scope_reported is not True
+        or policy.api_execution_authorized is not False
+        or policy.analysis_authorized is not False
+        or policy.dashboard_authorized is not False
+        or policy.snapshot_authorized is not False
+        or policy.persistence_authorized is not False
+        or policy.database_rebuild_authorized is not False
+        or policy.broker_execution_authorized is not False
+        or decision.provider != "KIWOOM"
+        or decision.status != "DENIED"
+        or decision.independently_verified is not False
+        or decision.api_execution_authorized is not False
+        or decision.analysis_authorized is not False
+        or decision.dashboard_authorized is not False
+        or decision.snapshot_authorized is not False
+        or decision.persistence_authorized is not False
+        or decision.database_rebuild_authorized is not False
+        or decision.broker_execution_authorized is not False
+    ):
+        raise ValueError("KIWOOM_VER11_AUTHORITY_ESCALATION")
+
+    return decision
