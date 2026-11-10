@@ -71,3 +71,32 @@ OPERATING_DB_ACCESS: PROHIBITED
 REAL_API_CALLS: DENIED
 BROKER_CALLS: DENIED
 MAIN_MERGE: NOT_AUTHORIZED
+
+## Follow-up offline verification (2026-11-10)
+
+- Latest verified branch commit:
+  `3e77c138ba61164d9cb8aaa442f889d063d4b1ec`.
+- GitHub Actions Parallel Price Provider Contract run:
+  `42772670134`, completed successfully for that commit.
+- Six KIWOOM Ver1.1 root test files are explicitly registered in
+  the ranking-api-provenance CI job.
+- The isolated KIWOOM offline replay panel accepts caller-supplied
+  ticker price JSON and displays ranking, final score, return,
+  selection status, source and non-persistence information.
+- Existing dashboard ranking and empty-ranking protections remain
+  distinct from the KIWOOM offline replay.
+- Static dashboard contract tests do not constitute a real-browser
+  end-to-end test.
+- The original 2026-11-06 offline handoff remains preserved.
+- Full legacy dashboard replacement, future-outcome replay,
+  live KIWOOM API access and operating database writes are outside
+  this verified offline scope.
+- NAVER/KIS fail-closed boundaries and main-merge restrictions
+  remain unchanged.
+
+Verification classification: CI_VERIFIED_OFFLINE_SCOPE.
+Real-browser E2E: NOT_VERIFIED_BY_THIS_EVIDENCE.
+Operating database access: PROHIBITED.
+Real API calls: DENIED.
+Broker calls: DENIED.
+Main merge: NOT_AUTHORIZED.
