@@ -84,6 +84,7 @@ function loadDashboard(){
     .then(result => {
 
 
+        if (!result || !Array.isArray(result.data) || result.data.length === 0 || !result.data[0] || !result.data[0].ticker) { throw new Error("Dashboard ranking data is unavailable."); }
         const topTicker =
             result.data[0].ticker;
 
@@ -8023,4 +8024,124 @@ function initializeKiwoomVer11OfflinePanel() {
 document.addEventListener(
     "DOMContentLoaded",
     initializeKiwoomVer11OfflinePanel
+);
+
+
+/* KIWOOM Ver1.1 caller-supplied offline replay. No database writes. */
+function initializeKiwoomVer11ReplayPanel() {
+    const runButton = document.getElementById("kiwoom-ver11-replay-run");
+    const pricesInput = document.getElementById("kiwoom-ver11-replay-prices");
+    const limitInput = document.getElementById("kiwoom-ver11-replay-limit");
+    const dateInput = document.getElementById("ver11-analysis-date");
+    const periodInput = document.getElementById("ver11-analysis-period");
+    const statusBox = document.getElementById("kiwoom-ver11-replay-status");
+    const resultPanel = document.getElementById("kiwoom-ver11-replay-result");
+    const resultContent = document.getElementById("kiwoom-ver11-replay-result-content");
+
+    if (!runButton || !pricesInput || !limitInput || !dateInput ||
+        !periodInput || !statusBox || !resultPanel || !resultContent) {
+        return;
+    }
+
+    runButton.addEventListener("click", async function () {
+        resultPanel.hidden = true;
+        resultContent.textContent = "";
+        statusBox.textContent = "";
+
+        const analysisDate = dateInput.value;
+        const period = periodInput.value || "3m";
+        const limit = Number(limitInput.value);
+
+        if (!analysisDate || !Number.isInteger(limit) ||
+            limit < 1 || limit > 100) {
+            statusBox.textContent = "Valid analysis date and result limit (1-100) required.";
+            return;
+        }
+
+        let tickerPrices;
+        try {
+            tickerPrices = JSON.parse(pricesInput.value);
+            if (!tickerPrices || Array.isArray(tickerPrices) ||
+                typeof tickerPrices !== "object") {
+                throw new Error("Expected ticker price mapping.");
+            }
+        } catch (error) {
+            statusBox.textContent = "Invalid ticker prices JSON.";
+            return;
+        }
+
+        runButton.disabled = true;
+        statusBox.textContent = "Running KIWOOM offline replay...";
+
+        try {
+            const response = await fetch("/api/kiwoom-ver11-replay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    source: "KIWOOM",
+                    ticker_prices: tickerPrices,
+                    date: analysisDate,
+                    period: period,
+                    limit: limit
+                })
+            });
+
+            if (response.status === 401) {
+                throw new DashboardAuthenticationRequiredError(
+                    "Dashboard authentication required."
+                );
+            }
+
+            const data = await response.json();
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.message || "KIWOOM replay failed.");
+            }
+
+            if (data.source !== "KIWOOM" ||
+                data.input_origin !== "CALLER_SUPPLIED_UNVERIFIED" ||
+                data.persistence !== false || data.db_write !== false ||
+                !Array.isArray(data.results)) {
+                throw new Error("Unexpected KIWOOM replay response.");
+            }
+
+            const summary = [
+                "Source: KIWOOM",
+                "Input origin: CALLER_SUPPLIED_UNVERIFIED",
+                "Analysis date: " + data.analysis_date,
+                "Period: " + data.period,
+                "Selected: " + data.total_selected,
+                "Displayed: " + data.results.length,
+                "Unavailable: " + (data.unavailable_tickers || []).join(", "),
+                "Database writes: false",
+                ""
+            ];
+
+            const ranked = data.results.map((item, index) =>
+                (index + 1) + ". " + item.ticker +
+                " | Score: " + item.final_score +
+                " | Return: " + item.return +
+                " | Selection: " + item.selection_pass
+            );
+
+            resultContent.textContent = summary.concat(ranked).join("\n");
+            resultPanel.hidden = false;
+            statusBox.textContent = "KIWOOM offline replay complete. No data saved.";
+        } catch (error) {
+            if (error instanceof DashboardAuthenticationRequiredError) {
+                stopDashboard();
+                hidePlatformAdminPanel();
+                setPlatformLogoutButtonVisible(false);
+                setPlatformAuthMode("user");
+                showPlatformAuthOverlay();
+            }
+            statusBox.textContent = error.message || "KIWOOM replay failed.";
+        } finally {
+            runButton.disabled = false;
+        }
+    });
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeKiwoomVer11ReplayPanel
 );

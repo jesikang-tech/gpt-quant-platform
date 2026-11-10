@@ -280,6 +280,20 @@ AI Powered ETF Ranking System
   </div>
 </aside>
 <main class="ver11-main">
+<section id="kiwoom-ver11-replay-panel" class="historical-replay-section">
+    <h3>KIWOOM Ver1.1 Offline Replay</h3>
+    <p>Caller-supplied KIWOOM prices only. Source unverified; no database writes.</p>
+    <label for="kiwoom-ver11-replay-prices">Ticker prices JSON</label>
+    <textarea id="kiwoom-ver11-replay-prices" rows="8" spellcheck="false" placeholder='{"069500":[["2026-08-03","10000"]]}'>
+    </textarea>
+    <label for="kiwoom-ver11-replay-limit">Maximum results</label>
+    <input id="kiwoom-ver11-replay-limit" type="number" min="1" max="100" value="10">
+    <button id="kiwoom-ver11-replay-run" type="button">Run KIWOOM Replay</button>
+    <div id="kiwoom-ver11-replay-status" role="status" aria-live="polite"></div>
+    <section id="kiwoom-ver11-replay-result" class="historical-replay-result" hidden>
+        <pre id="kiwoom-ver11-replay-result-content"></pre>
+    </section>
+</section>
 <section id="kiwoom-ver11-panel" class="historical-replay-section">
   <h2>KIWOOM Ver1.1 Offline Analysis</h2>
   <p>Caller-supplied KIWOOM ka10086 data only. No API collection or database writes.</p>

@@ -63,3 +63,34 @@ def test_kiwoom_handler_does_not_write_or_collect_data():
     assert "/api/ver11-analysis/snapshots" not in handler
     assert "/api/historical-replay" not in handler
     assert "resultContent.innerHTML" not in handler
+
+
+def test_kiwoom_replay_browser_contract():
+    """Replay UI must use the existing authenticated, non-persistent API."""
+    html = HTML.read_text(encoding="utf-8")
+    script = JAVASCRIPT.read_text(encoding="utf-8")
+
+    for marker in (
+        'id="kiwoom-ver11-replay-panel"',
+        'id="kiwoom-ver11-replay-prices"',
+        'id="kiwoom-ver11-replay-limit"',
+        'id="kiwoom-ver11-replay-run"',
+        'id="kiwoom-ver11-replay-status"',
+        'id="kiwoom-ver11-replay-result"',
+        'id="kiwoom-ver11-replay-result-content"',
+    ):
+        assert marker in html
+
+    for marker in (
+        "function initializeKiwoomVer11ReplayPanel()",
+        'getElementById("ver11-analysis-date")',
+        'getElementById("ver11-analysis-period")',
+        '"/api/kiwoom-ver11-replay"',
+        'data.source !== "KIWOOM"',
+        'data.input_origin !== "CALLER_SUPPLIED_UNVERIFIED"',
+        "data.persistence !== false",
+        "data.db_write !== false",
+        "resultContent.textContent =",
+        "initializeKiwoomVer11ReplayPanel",
+    ):
+        assert marker in script

@@ -2147,6 +2147,12 @@ def portfolio_decision_intelligence_api():
 
     ranking_data = get_dashboard_api_data()
 
+    if not ranking_data.get("data"):
+        return jsonify({
+            "success": False,
+            "message": "Portfolio decision unavailable: ranking data is empty."
+        }), 422
+
     portfolio = optimize_portfolio_weight(
         ranking_data["data"],
         "balanced"
