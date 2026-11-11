@@ -1876,9 +1876,11 @@ async function requireDashboardApiResponse(response) {
     }
 
     if (!response.ok) {
-        throw new Error(
+        const error = new Error(
             `Dashboard API request failed: HTTP ${response.status}`
         );
+        error.httpStatus = response.status;
+        throw error;
     }
 
     return response.json();
@@ -1928,6 +1930,12 @@ function runDashboardRefresh(loader) {
                 return;
             }
 
+            if (error.httpStatus >= 400 && error.httpStatus < 500) {
+                dashboardRefreshFailures.delete(loader);
+                setDashboardConnectionErrorVisible(dashboardRefreshFailures.size > 0);
+                console.error("Dashboard request rejected", error);
+                return;
+            }
             dashboardRefreshFailures.add(loader);
             setDashboardConnectionErrorVisible(true);
             console.error("Dashboard refresh error", error);
@@ -2247,6 +2255,11 @@ async function loadPortfolioAdvisor(save=false){
             "portfolio-content"
         );
 
+
+    if (Array.isArray(result.portfolio) && result.portfolio.length === 0) {
+        panel.textContent = getDashboardText("ver11EmptyPortfolio");
+        return;
+    }
 
     let html = "";
 
@@ -7905,6 +7918,46 @@ applyDashboardLanguage();
 
 /* FINAL_DECISION_CONTROL_CARD_MARKER */
 
+/* KWS result presentation only; no API or persistence changes. */
+function createKwsResultElement(tag, className, value) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (value !== undefined) node.textContent = value == null ? "-" : String(value);
+    return node;
+}
+function createKwsResultTable(headers, rows) {
+    const wrap = createKwsResultElement("div", "historical-replay-table-wrap kws-result-table-wrap");
+    const table = createKwsResultElement("table", "historical-replay-table kws-result-table");
+    const head = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    headers.forEach((label) => {
+        const cell = createKwsResultElement("th", "", label);
+        cell.scope = "col";
+        headerRow.appendChild(cell);
+    });
+    head.appendChild(headerRow);
+    table.appendChild(head);
+    const body = document.createElement("tbody");
+    rows.forEach((values) => {
+        const row = document.createElement("tr");
+        values.forEach((value) => row.appendChild(createKwsResultElement("td", "", value)));
+        body.appendChild(row);
+    });
+    table.appendChild(body);
+    wrap.appendChild(table);
+    return wrap;
+}
+function createKwsResultSummary(items) {
+    const summary = createKwsResultElement("div", "kws-result-summary");
+    items.forEach(([label, value]) => {
+        const item = createKwsResultElement("div", "kws-result-summary-item");
+        item.appendChild(createKwsResultElement("span", "kws-result-summary-label", label));
+        item.appendChild(createKwsResultElement("strong", "kws-result-summary-value", value));
+        summary.appendChild(item);
+    });
+    return summary;
+}
+
 /* KIWOOM Ver1.1 caller-supplied offline analysis. No data collection or writes. */
 function initializeKiwoomVer11OfflinePanel() {
     const runButton = document.getElementById("kiwoom-ver11-run");
@@ -7982,26 +8035,30 @@ function initializeKiwoomVer11OfflinePanel() {
                 throw new Error("Unexpected KIWOOM analysis response.");
             }
 
-            const fields = [
-                ["Ticker", result.ticker],
-                ["Analysis date", result.analysis_date],
-                ["Period", result.period],
-                ["Available", result.available],
-                ["Observed days", result.observed_days],
-                ["Required days", result.required_days],
-                ["Return (%)", result.return],
-                ["Return score", result.return_score],
-                ["Trend score", result.trend_score],
-                ["Slope score", result.slope_score],
-                ["Uptrend ratio (%)", result.uptrend_ratio],
-                ["Final score", result.final_score],
-                ["Selection pass", result.selection_pass],
+            const summary = createKwsResultSummary([
+                ["종목코드", result.ticker],
+                ["최종 점수", result.final_score],
+                ["선정 통과", result.selection_pass]
+            ]);
+
+            const details = [
+                ["분석일자", result.analysis_date],
+                ["분석기간", result.period],
+                ["분석 가능", result.available],
+                ["관측일수", result.observed_days],
+                ["필요일수", result.required_days],
+                ["수익률 (%)", result.return],
+                ["수익률 점수", result.return_score],
+                ["추세 점수", result.trend_score],
+                ["기울기 점수", result.slope_score],
+                ["상승 비율 (%)", result.uptrend_ratio]
             ];
 
-            resultContent.textContent = fields
-                .map(([name, value]) => `${name}: ${value ?? "N/A"}`)
-                .join("\n");
-            resultContent.style.whiteSpace = "pre-wrap";
+            resultContent.replaceChildren(
+                summary,
+                createKwsResultTable(["분석 항목", "결과값"], details)
+            );
+
             resultPanel.hidden = false;
             statusBox.textContent =
                 "KIWOOM offline analysis complete. No data saved.";
@@ -8104,26 +8161,38 @@ function initializeKiwoomVer11ReplayPanel() {
                 throw new Error("Unexpected KIWOOM replay response.");
             }
 
-            const summary = [
-                "Source: KIWOOM",
-                "Input origin: CALLER_SUPPLIED_UNVERIFIED",
-                "Analysis date: " + data.analysis_date,
-                "Period: " + data.period,
-                "Selected: " + data.total_selected,
-                "Displayed: " + data.results.length,
-                "Unavailable: " + (data.unavailable_tickers || []).join(", "),
-                "Database writes: false",
-                ""
-            ];
+            const summary = createKwsResultSummary([
+                ["선정 종목", data.total_selected],
+                ["표시 종목", data.results.length],
+                ["분석일자", data.analysis_date]
+            ]);
 
-            const ranked = data.results.map((item, index) =>
-                (index + 1) + ". " + item.ticker +
-                " | Score: " + item.final_score +
-                " | Return: " + item.return +
-                " | Selection: " + item.selection_pass
+            const metadata = createKwsResultTable(
+                ["구분", "내용"],
+                [
+                    ["분석기간", data.period],
+                    ["데이터 출처", "KWS"],
+                    ["입력 데이터", "사용자 제공 · 독립 검증되지 않음"],
+                    ["분석 불가 종목", (data.unavailable_tickers || []).join(", ") || "없음"],
+                    ["DB 저장", "없음"]
+                ]
             );
 
-            resultContent.textContent = summary.concat(ranked).join("\n");
+            const rankedRows = data.results.map((item, index) => [
+                index + 1,
+                item.ticker,
+                item.final_score,
+                item.return,
+                item.selection_pass
+            ]);
+
+            const ranking = createKwsResultTable(
+                ["순위", "종목코드", "최종 점수", "수익률", "선정 통과"],
+                rankedRows.length ? rankedRows : [["-", "결과 없음", "-", "-", "-"]]
+            );
+
+            resultContent.replaceChildren(summary, metadata, ranking);
+
             resultPanel.hidden = false;
             statusBox.textContent = "KIWOOM offline replay complete. No data saved.";
         } catch (error) {

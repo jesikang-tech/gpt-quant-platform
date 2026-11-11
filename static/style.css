@@ -5260,8 +5260,8 @@ body > header p {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  margin: 0 0 24px;
-  padding: 24px;
+  margin: 0 0 16px;
+  padding: 18px;
   border: 1px solid #dbe3ef;
   border-radius: 16px;
   background: #ffffff;
@@ -5286,7 +5286,7 @@ body > header p {
 }
 
 .kiwoom-ver11-card .kiwoom-ver11-shared-conditions {
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   padding: 12px 15px;
   border-left: 4px solid #2563eb;
   border-radius: 8px;
@@ -5297,10 +5297,25 @@ body > header p {
 
 .kiwoom-ver11-card .kiwoom-ver11-field {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   min-width: 0;
-  gap: 8px;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.kiwoom-ver11-card .kiwoom-ver11-field > label {
+  flex: 0 0 170px;
+  min-width: 0;
+}
+
+.kiwoom-ver11-card .kiwoom-ver11-field > input,
+.kiwoom-ver11-card .kiwoom-ver11-field > textarea {
+  flex: 1 1 auto;
+}
+
+.kiwoom-ver11-card #kiwoom-ver11-ticker {
+  max-width: 220px;
 }
 
 .kiwoom-ver11-card .kiwoom-ver11-field label {
@@ -5323,7 +5338,7 @@ body > header p {
 
 .kiwoom-ver11-card .kiwoom-ver11-field textarea {
   display: block;
-  min-height: 210px;
+  min-height: 55px;
   resize: vertical;
   font-family: Consolas, "Courier New", monospace;
   font-size: 0.9rem;
@@ -5343,11 +5358,11 @@ body > header p {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 14px;
-  margin: 6px 0 18px;
+  margin: 4px 0 8px;
 }
 
 .kiwoom-ver11-card .kiwoom-ver11-limit-field {
-  flex: 0 1 180px;
+  flex: 0 1 290px;
   margin-bottom: 0;
 }
 
@@ -5377,10 +5392,14 @@ body > header p {
 }
 
 .kiwoom-ver11-card .kiwoom-ver11-status {
-  min-height: 1.5em;
-  margin: 8px 0;
+  min-height: 0;
+  margin: 0;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+
+.kiwoom-ver11-card .kiwoom-ver11-status:not(:empty) {
+  margin: 8px 0;
 }
 
 .kiwoom-ver11-card .kiwoom-ver11-output {
@@ -5406,6 +5425,19 @@ body > header p {
 }
 
 @media (max-width: 640px) {
+  .kiwoom-ver11-card .kiwoom-ver11-field {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .kiwoom-ver11-card .kiwoom-ver11-field > label {
+    flex: none;
+  }
+
+  .kiwoom-ver11-card #kiwoom-ver11-ticker {
+    max-width: 100%;
+  }
+
   .ver11-main > #kiwoom-ver11-panel,
   .ver11-main > #kiwoom-ver11-replay-panel {
     padding: 16px;
@@ -5424,3 +5456,52 @@ body > header p {
   }
 }
 /* KIWOOM VER1.1 SCOPED UI END */
+
+/* KWS Ver1.1 result presentation only. */
+.kiwoom-ver11-card .kws-result-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.kiwoom-ver11-card .kws-result-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(127, 127, 127, 0.2);
+  border-radius: 10px;
+  min-width: 0;
+}
+.kiwoom-ver11-card .kws-result-summary-label {
+  font-size: 12px;
+  opacity: 0.75;
+}
+.kiwoom-ver11-card .kws-result-summary-value {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.kiwoom-ver11-card .kws-result-table-wrap {
+  margin-top: 12px;
+  max-width: 100%;
+}
+.kiwoom-ver11-card .kws-result-table {
+  table-layout: auto;
+  width: 100%;
+}
+.kiwoom-ver11-card .kws-result-table th,
+.kiwoom-ver11-card .kws-result-table td {
+  width: auto;
+  padding: 9px 10px;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.kiwoom-ver11-card .kws-result-table th {
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .kiwoom-ver11-card .kws-result-summary {
+    grid-template-columns: 1fr;
+  }
+}
