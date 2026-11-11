@@ -34,7 +34,7 @@ def test_kiwoom_dashboard_uses_explicit_offline_api():
     assert 'api_id: "ka10086"' in script
     assert "response: suppliedResponse" in script
     assert "data.persistence !== false" in script
-    assert "resultContent.textContent = fields" in script
+    assert "resultContent.replaceChildren(" in script
 
 
 def test_existing_ver11_and_replay_controls_preserved():
