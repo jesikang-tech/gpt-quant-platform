@@ -122,6 +122,10 @@ def test_kiwoom_analysis_uses_caller_supplied_prices(client):
     assert data["input_origin"] == "CALLER_SUPPLIED_UNVERIFIED"
     assert data["persistence"] is False
     assert data["result"]["available"] is False
+    assert data["result"]["source"] == "KIWOOM"
+    assert data["result"]["observed_days"] == 2
+    assert data["result"]["required_days"] == 20
+    assert "final_score" not in data["result"]
 
 
 def test_kiwoom_replay_uses_caller_supplied_prices(client):

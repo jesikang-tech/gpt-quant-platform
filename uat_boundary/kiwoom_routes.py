@@ -84,11 +84,15 @@ def register_kiwoom_uat_routes(app):
                 period=body.get("period", "3m"),
             )
 
+            response_result = dict(result)
+            if response_result.get("available") is False:
+                response_result["source"] = "KIWOOM"
+
             return jsonify({
                 "success": True,
                 "input_origin": "CALLER_SUPPLIED_UNVERIFIED",
                 "persistence": False,
-                "result": result,
+                "result": response_result,
             })
 
         except ValueError as exc:
