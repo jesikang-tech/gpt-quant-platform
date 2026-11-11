@@ -35,6 +35,67 @@ def render_uat_dashboard():
 
     html = html.replace(_CHART_CDN_TAG, "")
 
+    # Adapt only the isolated UAT HTML response.
+    login_input = 'id="platform-auth-password"'
+    if html.count(login_input) != 1:
+        raise RuntimeError("Unexpected UAT login input contract")
+
+    html = html.replace(
+        login_input,
+        'id="platform-auth-password" data-uat-login="true"',
+        1,
+    )
+
+    dashboard_tag = '<script src="/static/dashboard.js"></script>'
+    if html.count(dashboard_tag) != 1:
+        raise RuntimeError("Unexpected dashboard script contract")
+
+    uat_script = """
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("platform-auth-password");
+    const adminToggle = document.getElementById("platform-admin-toggle");
+
+    if (!input || !adminToggle) {
+        return;
+    }
+
+    function applyUatPasswordInput() {
+        input.removeAttribute("maxlength");
+        input.removeAttribute("pattern");
+        input.setAttribute("inputmode", "text");
+        input.setAttribute("aria-label", "UAT password");
+    }
+
+    adminToggle.hidden = true;
+    adminToggle.disabled = true;
+
+    if (typeof setPlatformAuthMode === "function") {
+        const originalSetPlatformAuthMode = setPlatformAuthMode;
+
+        setPlatformAuthMode = function () {
+            originalSetPlatformAuthMode("user");
+            applyUatPasswordInput();
+        };
+    }
+
+    if (typeof isValidPlatformPassword === "function") {
+        isValidPlatformPassword = function (password) {
+            return typeof password === "string" && password.length > 0;
+        };
+    }
+
+    applyUatPasswordInput();
+});
+</script>
+"""
+
+    html = html.replace(
+        dashboard_tag,
+        dashboard_tag + uat_script,
+        1,
+    )
+
     response = make_response(html)
     response.headers["Content-Security-Policy"] = _UAT_CSP
     response.headers["X-Content-Type-Options"] = "nosniff"

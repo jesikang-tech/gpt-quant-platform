@@ -167,3 +167,36 @@ def test_non_kiwoom_source_is_rejected(client, path, payload):
     response = client.post(path, json=payload)
     assert response.status_code == 400
     assert response.get_json()["success"] is False
+def test_uat_login_browser_compatibility(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+
+    html = response.get_data(as_text=True)
+
+    assert 'data-uat-login="true"' in html
+    assert 'input.removeAttribute("maxlength")' in html
+    assert 'input.removeAttribute("pattern")' in html
+    assert 'input.setAttribute("inputmode", "text")' in html
+
+    assert 'const originalSetPlatformAuthMode = setPlatformAuthMode' in html
+    assert 'originalSetPlatformAuthMode("user")' in html
+    assert 'applyUatPasswordInput();' in html
+
+    assert "adminToggle.hidden = true" in html
+    assert "adminToggle.disabled = true" in html
+
+    assert 'password.length > 0' in html
+
+    assert "cdn.jsdelivr.net" not in html
+
+    csp = response.headers["Content-Security-Policy"]
+    assert "connect-src 'self'" in csp
+    assert "frame-ancestors 'none'" in csp
+
+    blocked = client.post(
+        "/api/auth/admin-login",
+        json={"password": "test-only"},
+    )
+
+    assert blocked.status_code == 403
