@@ -15,6 +15,7 @@ _UAT_CSP = "; ".join((
     "default-src 'none'",
     "script-src 'self' 'unsafe-inline'",
     "style-src 'self'",
+    "style-src-attr 'unsafe-inline'",
     "img-src 'self' data:",
     "font-src 'self'",
     "connect-src 'self'",
@@ -33,7 +34,11 @@ def render_uat_dashboard():
     if html.count(_CHART_CDN_TAG) != 1:
         raise RuntimeError("Unexpected dashboard CDN contract")
 
-    html = html.replace(_CHART_CDN_TAG, "")
+    html = html.replace(
+        _CHART_CDN_TAG,
+        '<script src="/uat-assets/chart.umd.js"></script>',
+        1,
+    )
 
     # Adapt only the isolated UAT HTML response.
     login_input = 'id="platform-auth-password"'
